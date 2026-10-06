@@ -1,0 +1,11 @@
+{
+  "name": "Fretwork Coach",
+  "short_name": "Fretwork",
+  "description": "Adaptive guitar coach: assessment, courses, tuner, metronome and tab player.",
+  "start_url": "./#/home",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#121014",
+  "theme_color": "#141216",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
