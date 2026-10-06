@@ -28,7 +28,7 @@ function timeInputHTML(mode = 'duration', mins = 45) {
   <div data-tpane="duration" ${mode !== 'duration' ? 'hidden' : ''}>
     <div class="hm"><label class="mini">Hours<div class="stepper s1"><button data-hm="h" data-d="-1">−</button><input type="number" inputmode="numeric" data-r="h" value="${Math.floor(mins / 60)}" min="0" max="8"><button data-hm="h" data-d="1">+</button></div></label>
     <label class="mini">Minutes<div class="stepper s1"><button data-hm="m" data-d="-5">−</button><input type="number" inputmode="numeric" data-r="m" value="${mins % 60}" min="0" max="59"><button data-hm="m" data-d="5">+</button></div></label></div>
-    <div class="quick">${[10, 15, 20, 30, 45, 60, 90].map(v => `<button class="chip" data-qmin="${v}">${v < 60 ? v + 'm' : (v / 60) + 'h' + (v % 60 ? (v % 60) : '')}</button>`).join('')}</div>
+    <div class="quick">${[10, 15, 20, 30, 45, 60, 90].map(v => `<button class="chip" data-qmin="${v}">${v < 60 ? v + 'm' : Math.floor(v / 60) + 'h' + (v % 60 ? ' ' + (v % 60) + 'm' : '')}</button>`).join('')}</div>
   </div>
   <div data-tpane="end" ${mode !== 'end' ? 'hidden' : ''}><label class="mini">I need to stop at<input type="time" data-r="end" value="${hh}:${mm}"></label></div>
   <div data-tpane="open" ${mode !== 'open' ? 'hidden' : ''}><p class="muted small">No countdown pressure: each exercise still gets a suggested time, and you move on when you’re ready.</p></div>`;
