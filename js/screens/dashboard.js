@@ -7,6 +7,8 @@ import { ALBUMS, GENRES, GENRE_BY_ID } from '../data/catalog.js';
 import { createCourse, suggestedDifficulty, tierName } from '../core/courses.js';
 import { DOMAINS } from '../assessment/engine.js';
 import { Shell } from '../ui/shell.js';
+import { progressPct } from '../core/progression.js';
+import { hasActiveRoutine } from './routine.js';
 
 export function mountDashboard(root, { navigate }) {
   const p = Store.profile;
@@ -24,6 +26,10 @@ export function mountDashboard(root, { navigate }) {
       <div class="dash-head"><div><div class="label">${new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div><h1>${greet}, ${esc(name)}.</h1></div>
         <div class="streak-badge ${st.streak ? 'hot' : ''}" title="Current streak"><b>${st.streak}</b><span>day${st.streak === 1 ? '' : 's'}<br>streak</span></div></div>
 
+      ${hasActiveRoutine() ? `<section class="card routine-cta live"><div class="label">Routine in progress</div><h3>Pick up where you left off</h3><a class="btn primary block" href="#/practice/run">▶ Resume routine</a></section>`
+        : `<section class="card routine-cta"><div class="label">Today’s routine</div><h3>Build a session for the time you have</h3>
+        <p class="muted small">Warm-up, review, stretch, theory and music, timed exercise by exercise from your course plan.</p>
+        <a class="btn primary block" href="#/practice">▶ Start today’s routine</a></section>`}
       <section class="card session ${act ? 'live' : ''}">${act ? liveSession(act) : idleSession(open)}</section>
 
       <section class="stats">
@@ -64,11 +70,10 @@ export function mountDashboard(root, { navigate }) {
   const stat = (k, v, cls = '') => `<div class="stat ${cls}"><div class="k">${k}</div><div class="v">${v}</div></div>`;
 
   function idleSession(open) {
-    return `<div class="label">Practice session</div>
-      <h3>Ready to play?</h3>
-      <p class="muted small">Start the timer to log time toward your stats and streak. Guided routines with per-exercise countdowns arrive in Phase B.</p>
+    return `<div class="label">Free practice</div>
+      <p class="muted small">Just playing or jamming? Run the timer so it counts toward your stats and streak.</p>
       ${open.length ? `<div class="chips" data-r="sesscourse">${open.map((c, i) => `<button class="chip ${i === 0 ? 'on' : ''}" data-sc="${c.id}">${esc(c.name)}</button>`).join('')}<button class="chip" data-sc="">Free practice</button></div>` : ''}
-      <button class="btn primary block" data-d="start">▶ Start practice</button>`;
+      <button class="btn block" data-d="start">⏱ Start free-practice timer</button>`;
   }
   function liveSession(act) {
     const c = act.courseId && p.courses.find(x => x.id === act.courseId);
@@ -80,6 +85,7 @@ export function mountDashboard(root, { navigate }) {
   }
 
   function courseCard(c) {
+    if (c.tree) c.progress = progressPct(c);
     const g = GENRE_BY_ID[c.genre];
     return `<a class="course" href="#/course/${c.id}">
       ${wikiTile(g ? g.wiki : c.genre, g ? g.name : c.genre, 'thumb')}

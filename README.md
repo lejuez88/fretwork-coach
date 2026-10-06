@@ -1,4 +1,4 @@
-# Fretwork Coach — Phase A
+# Fretwork Coach
 
 An adaptive guitar coach that runs in the browser: onboarding with genre and guitarist pickers, a skill assessment, auto-named courses, a practice dashboard, an accurate tuner, a metronome and a scrolling tab player.
 
@@ -23,6 +23,16 @@ Open **Settings** in the app and paste an Anthropic API key (create one at conso
 
 Without a key, the app still works: built-in guitarists can be picked, and course names are generated locally.
 
+## What's in Phase B
+
+| Area | Included |
+|---|---|
+| Course plans | Claude designs each course as a skill tree (units → skills → exercises) around your levels, goals and favorite players; a standard plan is used without an API key |
+| Progress tree | Locked / ready / in progress / mastered skills, review-due badges, per-exercise target, goal, best tempo and history |
+| Routines | Pick a course and your time (hours/minutes, an end time, or no limit), get a warm-up → review → stretch → theory → music plan; change the time mid-session and the rest re-fits |
+| Runner | Per-exercise countdown with a time-up alert, on-pace indicator, tab player or metronome/backing loop per exercise, tempo logged at the end of each exercise |
+| Progression | +3–5 BPM after two clean passes on separate days, mastery at the goal tempo, 3 sessions without a pass eases the target and suggests a prerequisite drill, mastered skills return on a 2/4/8/16/30-day review schedule |
+
 ## What's in Phase A
 
 | Area | Included |
@@ -38,7 +48,6 @@ Without a key, the app still works: built-in guitarists can be picked, and cours
 
 ## Roadmap
 
-- **Phase B:** course engine with a progress tree per course, daily routines built for the time you have (hours/minutes, an end time, or no limit, editable mid-session), per-exercise countdowns with an on-pace indicator, goal tempos with mastery logging.
 - **Phase C:** playing evaluation from the microphone (timing and note accuracy against the tab, measured locally, interpreted by Claude) and video form review (key frames sent to Claude), which add targeted exercises to your routine.
 - **Phase D:** song lessons (a one-day plan for a chosen song), practicing tabs you import with section highlighting and "help me with this part", and song recommendations for your style and level.
 

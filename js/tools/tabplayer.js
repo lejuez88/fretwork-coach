@@ -8,9 +8,9 @@ import { noteMidi, exerciseBeats } from './exercises.js';
 
 const ROW = 18, TOP = 26, BOTTOM = 12, PAD = 28;
 
-export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, onLog = null, beatsPerBar = 4 } = {}) {
+export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, onLog = null, beatsPerBar = 4, startBpm = null, compact = false, onBpm = null } = {}) {
   const state = {
-    bpm: ex.bpm || 80, sound: settings.tabAudio !== false, scroll: settings.tabScroll !== false,
+    bpm: startBpm || ex.bpm || 80, sound: settings.tabAudio !== false, scroll: settings.tabScroll !== false,
     click: true, loop: true, countIn: true, playing: false, t0: 0, nextIdx: 0, loopN: 0, raf: null, sched: null, clickBeat: 0
   };
   const total = exerciseBeats(ex, beatsPerBar);
@@ -21,11 +21,11 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
 
   el.innerHTML = `
   <div class="tabplayer">
-    <div class="tp-head">
+    ${compact ? '' : `<div class="tp-head">
       <div><div class="label">${esc(ex.unit || '')}${ex.swing ? ' · swing' : ''}</div><h3>${esc(ex.name)}</h3></div>
       <div class="tp-goal"><span>Goal</span><b>${ex.goalBpm || '—'}</b><span>BPM</span></div>
     </div>
-    ${ex.why ? `<p class="why">${esc(ex.why)}</p>` : ''}
+    ${ex.why ? `<p class="why">${esc(ex.why)}</p>` : ''}`}
     <div class="tp-view ${state.scroll ? 'scroll' : 'static'}" data-r="view"><div class="tp-track" data-r="track"></div><div class="tp-fixedhead" data-r="fixedhead"></div></div>
     <div class="tp-progress"><i data-r="prog"></i></div>
     <div class="bpmrow tp-tempo">
@@ -162,6 +162,7 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
     if (was != null && Audio.ctx) { state.t0 = Audio.ctx.currentTime - was * spb(); state.clickBeat = Math.ceil(was); recalcNext(was); }
     r('bpm').textContent = state.bpm; r('range').value = state.bpm;
     const g = ex.goalBpm; r('bpm').classList.toggle('goal-hit', !!g && state.bpm >= g);
+    if (onBpm) onBpm(state.bpm);
   }
   function recalcNext(beat) {
     const looped = beat % total; state.loopN = Math.floor(beat / total);
@@ -188,5 +189,8 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
   render();
   setBpm(state.bpm);
 
-  return () => { stop(); if (ro) ro.disconnect(); };
+  const cleanup = () => { stop(); if (ro) ro.disconnect(); };
+  cleanup.getBpm = () => state.bpm;
+  cleanup.stop = stop;
+  return cleanup;
 }

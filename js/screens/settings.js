@@ -45,7 +45,7 @@ export function mountSettings(root, { navigate }) {
     </section>
     <section class="card">
       <h3>About this version</h3>
-      <p class="small">Fretwork Coach · Phase A. Included: onboarding, assessment, dashboard, tuner, metronome, tab player. Coming next: courses with progress trees and timed routines (B), audio and video evaluation (C), songs and recommendations (D).</p>
+      <p class="small">Fretwork Coach · Phase B. Included: onboarding, assessment, dashboard, course plans with progress trees, timed daily routines with tempo progression, tuner, metronome, tab player. Coming next: audio and video evaluation (C), songs and recommendations (D).</p>
     </section>`;
   const r = n => root.querySelector(`[data-r="${n}"]`);
   const status = (msg, cls = '') => { r('status').textContent = msg; r('status').className = 'small ' + cls; };

@@ -15,6 +15,7 @@ import { mountTools } from './screens/tools.js';
 import { mountProfile } from './screens/profile.js';
 import { mountSettings, importFile } from './screens/settings.js';
 import { mountCourse } from './screens/course.js';
+import { mountRoutineSetup, mountRoutineRunner, mountRoutineSummary } from './screens/routine.js';
 
 const view = () => $('#view');
 let cleanup = null;
@@ -77,7 +78,7 @@ function applySettings() {
   Wiki.enabled = p.settings.wikiImages !== false;
 }
 
-const needsProfile = new Set(['home', 'tools', 'profile', 'course', 'results']);
+const needsProfile = new Set(['home', 'tools', 'profile', 'course', 'results', 'practice']);
 
 function route() {
   if (cleanup) { try { cleanup(); } catch { /* ignore */ } cleanup = null; }
@@ -90,7 +91,7 @@ function route() {
   const root = view();
   root.innerHTML = '';
   window.scrollTo(0, 0);
-  const tabFor = { home: 'home', course: 'home', tools: 'tools', profile: 'profile', results: 'profile', settings: 'settings' };
+  const tabFor = { home: 'home', course: 'home', practice: 'practice', tools: 'tools', profile: 'profile', results: 'profile', settings: 'settings' };
   Shell.tabs(!!ready && !['welcome', 'onboarding', 'assessment'].includes(page), tabFor[page]);
 
   switch (page) {
@@ -125,6 +126,11 @@ function route() {
     case 'home': cleanup = mountDashboard(root, { navigate }); break;
     case 'tools': cleanup = mountTools(root, { tab: parts[1] || 'tuner', exerciseId: parts[2] || null, navigate }); break;
     case 'course': cleanup = mountCourse(root, { id: parts[1], navigate }); break;
+    case 'practice':
+      if (parts[1] === 'run') cleanup = mountRoutineRunner(root, { navigate });
+      else if (parts[1] === 'summary') cleanup = mountRoutineSummary(root, { navigate });
+      else cleanup = mountRoutineSetup(root, { navigate, courseId: parts[1] === 'course' ? parts[2] : null, skillId: parts[1] === 'course' ? parts[3] || null : null });
+      break;
     case 'settings': cleanup = mountSettings(root, { navigate }); break;
     default: navigate('#/');
   }
