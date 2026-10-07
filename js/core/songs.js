@@ -106,7 +106,7 @@ export async function enrichSong(p, song) {
 Song: "${song.title}"${song.artist ? ` by ${song.artist}` : ''}.
 Student: ${JSON.stringify(studentBrief(p))}
 Rules: never include lyrics, tablature or note-by-note transcriptions. Describe sections only in technique terms. If you don't recognise the song, set "found" to false and estimate from the artist's style.
-Return JSON: {"found": bool, "title": canonical title, "artist": string, "year": int|null, "genre": one of ${JSON.stringify(GENRE_IDS)}, "difficulty": int 1-10 (main guitar part), "key": string|null, "tuning": "Standard"|"Drop D"|"E♭ standard"|..., "tuningMidi": [6 MIDI numbers, high string first], "capo": int|null, "tempo": int (approximate BPM of the recording), "timeSig": "4/4", "techniques": [3-6 short phrases], "prerequisites": [2-4 skills to have first], "sections": [{"name": "Intro", "desc": "what the guitar does, in technique terms"}], "summary": "1-2 sentences", "why": "one sentence on how this song stretches this student", "wikiTitle": "English Wikipedia article title for the song, or null"}`,
+Return JSON: {"found": bool, "title": canonical title, "artist": string, "year": int|null, "genre": one of ${JSON.stringify(GENRE_IDS)}, "difficulty": int 1-10 (main guitar part), "key": string|null, "tuning": "Standard"|"Drop D"|"E♭ standard"|..., "tuningMidi": [6 MIDI numbers, high string first], "capo": int|null, "tempo": int (approximate BPM of the recording), "timeSig": "4/4", "techniques": [3-6 short phrases], "picking": "alternate|strict|economy|down|fingers|hybrid" (how the main guitar part is picked), "prerequisites": [2-4 skills to have first], "sections": [{"name": "Intro", "desc": "what the guitar does, in technique terms"}], "summary": "1-2 sentences", "why": "one sentence on how this song stretches this student", "wikiTitle": "English Wikipedia article title for the song, or null"}`,
     maxTokens: 1400
   });
   if (!raw || typeof raw !== 'object') return { ok: false, source: 'claude' };
@@ -126,6 +126,7 @@ Return JSON: {"found": bool, "title": canonical title, "artist": string, "year":
     sections: (raw.sections || []).slice(0, 10).map(s => ({ name: str(s.name, 40), desc: str(s.desc, 200) })).filter(s => s.name),
     summary: str(raw.summary, 300), why: str(raw.why, 240) || I.why, enrichedBy: raw.found === false ? 'claude-unsure' : 'claude'
   });
+  if (['alternate', 'strict', 'economy', 'down', 'fingers', 'hybrid'].includes(raw.picking)) song.picking = raw.picking;
   syncRepertoire(p);
   return { ok: true, found: raw.found !== false, source: 'claude' };
 }
@@ -231,7 +232,7 @@ export function sectionExercise(p, song, from, to, { name = null } = {}) {
     watch: factsTip(f), simplify: from === to ? 'Loop just the first two beats, then the last two, then join them.' : 'Split the section in half: loop each half, then join them.',
     unit: f.fastest, goalBpm: goal, startBpm: Math.max(30, Math.round(goal * 0.5)), minutes: 6, libId: null,
     tab: { notes, swing: false, beats: (to - from + 1) * bpb, tuning: parsed.tuning }, chords: [], backing: [],
-    songId: song.id, sectionKey: sectionKey(from, to), bars: [from, to]
+    songId: song.id, sectionKey: sectionKey(from, to), bars: [from, to], pickKey: 'song-' + song.id, ...(song.picking ? { picking: song.picking } : {})
   };
 }
 
@@ -401,7 +402,7 @@ Rules:
 - NEVER write out the song's notes, riffs or lyrics. Song parts are referenced by bar numbers of the imported tab ("bars": [from, to]) or by section name.
 - Drills that isolate a technique are ORIGINAL; give them a "tab" only for single-note lines (string 1 = high e).
 - Every item has a startBpm the student can play cleanly today and a goalBpm (the song tempo for song parts).
-Return JSON: {"focus": "one sentence: today's goal for this song", "items":[{"block":"warmup|review|stretch|theory|music","kind":"drill|section|playalong","name":string,"minutes":number,"why":string,"instr":string,"watch":string,"simplify":string,"unit":string,"level":int 1-10,"domain": one of ${JSON.stringify(DOMAIN_KEYS)},"startBpm":int,"goalBpm":int,"bars":[from,to] (section items when a tab exists),"tab": optional {"step":0.25|0.333|0.5|1,"notes":[[string,fret,"h|p|/|b|~|pm" optional],...]}}]}`,
+Return JSON: {"focus": "one sentence: today's goal for this song", "items":[{"block":"warmup|review|stretch|theory|music","kind":"drill|section|playalong","name":string,"minutes":number,"why":string,"instr":string,"watch":string,"simplify":string,"unit":string,"level":int 1-10,"domain": one of ${JSON.stringify(DOMAIN_KEYS)},"startBpm":int,"goalBpm":int,"picking":"alternate|strict|economy|down|fingers|hybrid","bars":[from,to] (section items when a tab exists),"tab": optional {"step":0.25|0.333|0.5|1,"notes":[[string,fret,"h|p|/|b|~|pm" optional],...]}}]}`,
       maxTokens: 3500
     });
     const items = [];
@@ -463,7 +464,7 @@ function microLoop(p, song, parsed, from, to, spot) {
     why: 'The hardest beat of the passage, looped on its own with the note it lands on, so the move gets reps without the easy parts around it.',
     instr: 'Play the beat and land on the next note, rest, repeat. Exaggerate the slow, relaxed motion; speed comes after 10 clean reps.',
     watch: 'Tensing up before the hard move.', simplify: 'Play only the last two notes of the beat into the landing.',
-    tab: { notes, swing: false, beats: 4, tuning: parsed.tuning }, chords: [], backing: [], songId: song.id, sectionKey: `spot-${spot.bar}-${spot.beatInBar}`
+    tab: { notes, swing: false, beats: 4, tuning: parsed.tuning }, chords: [], backing: [], songId: song.id, sectionKey: `spot-${spot.bar}-${spot.beatInBar}`, pickKey: 'song-' + song.id
   };
 }
 
@@ -507,7 +508,7 @@ ${barsToText(parsed, from, to)}
 Measured facts: ${JSON.stringify(sectionFacts(parsed, from, to))}
 ${question ? `Their question: "${String(question).slice(0, 400)}"` : 'They want help making this part clean and up to tempo.'}
 Rules: discuss the passage by bar/beat; don't re-write the whole passage. Drills are ORIGINAL exercises that isolate the problem moves (a drill tab may reuse at most 6 notes of the passage). Every drill has startBpm (clean today) and goalBpm.
-Return JSON: {"summary":"2 sentences: what makes this passage hard for this student","hardParts":[{"where":"bar 3, beat 2","what":string,"fix":string}],"fingering":"fretting-hand fingering plan","picking":"picking-hand plan (directions, pick or fingers)","tips":[2-4 short tips],"answer":"direct answer to their question, or empty","drills":[{"name","domain": one of ${JSON.stringify(DOMAIN_KEYS)},"why","instr","watch","simplify","unit","level":int,"startBpm":int,"goalBpm":int,"minutes":int,"tab": optional {"step":0.25|0.333|0.5|1,"notes":[[string,fret,"h|p|/|b|~|pm" optional],...]}}]}`,
+Return JSON: {"summary":"2 sentences: what makes this passage hard for this student","hardParts":[{"where":"bar 3, beat 2","what":string,"fix":string}],"fingering":"fretting-hand fingering plan","picking":"picking-hand plan (directions, pick or fingers)","tips":[2-4 short tips],"answer":"direct answer to their question, or empty","drills":[{"name","domain": one of ${JSON.stringify(DOMAIN_KEYS)},"why","instr","watch","simplify","unit","level":int,"startBpm":int,"goalBpm":int,"minutes":int,"picking":"alternate|strict|economy|down|fingers|hybrid","tab": optional {"step":0.25|0.333|0.5|1,"notes":[[string,fret,"h|p|/|b|~|pm" optional],...]}}]}`,
       maxTokens: 2500
     });
     const used = new Set();

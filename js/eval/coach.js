@@ -2,6 +2,7 @@
 // prescriptions. Claude interprets when a key is set; local rules always run so
 // there is useful feedback offline too.
 import { Claude } from '../core/claude.js';
+import { suggestPicking } from '../tools/picking.js';
 import { normalizeExercise } from '../core/coursegen.js';
 import { CHORD_SHAPES } from '../assessment/engine.js';
 import { CHORD_MIDI } from '../core/audio.js';
@@ -87,7 +88,7 @@ export async function claudeFeedback({ profile, exercise, metrics, mode = 'audio
     levels: Object.fromEntries(Object.entries(profile.domains).map(([k, v]) => [k, v.level])),
     goals: q.goals, players: q.players.map(p => p.name), struggles: q.struggles
   };
-  const ex = { name: exercise.name, domain: exercise.domain, unit: exercise.unit, goalBpm: exercise.goalBpm, instructions: exercise.instr || exercise.why, tab: tabText(exercise) };
+  const ex = { name: exercise.name, domain: exercise.domain, unit: exercise.unit, goalBpm: exercise.goalBpm, instructions: exercise.instr || exercise.why, tab: tabText(exercise), picking: context.picking || ((profile.settings && profile.settings.pickModes) || {})[exercise.pickKey || exercise.id] || suggestPicking(exercise) };
   const blocks = [];
   frames.forEach((f, i) => {
     blocks.push({ type: 'text', text: `Frame ${i + 1} (t = ${f.t.toFixed(1)} s${f.label ? ', ' + f.label : ''}):` });
@@ -101,7 +102,7 @@ TAKE: ${mode === 'video' ? `video (${frames.length} frames above, camera framing
 MEASUREMENTS (from the app's audio analysis; trust these numbers, don't contradict them):
 ${metrics && !metrics.error ? JSON.stringify(metricsBrief(metrics)) : 'No usable audio measurements.'}
 How to read them: hitRate = share of tab notes heard. pitch.accuracy = share of checked notes that were the right pitch. timing.sdMs = spread of note timing (≤12 excellent, 13–22 good, >22 uneven). timing.meanMs = average early(−)/late(+) vs the click; only meaningful if timing.calibrated is true. driftMsPer10s = speeding up (−) or slowing down (+). dynamics.sdDb = note volume spread (≤3 even). legatoGapDb = hammer/pull volume vs picked (< −6 weak). problems = the spots in the pattern with the most errors.
-${mode === 'video' ? `For the frames: judge posture, guitar position, fretting hand (thumb placement, finger curvature, fingertips close behind the frets, wrist angle, finger lift height, visible tension) and picking hand (grip, anchoring, motion source wrist/elbow/fingers, pick angle) — only what is actually visible. Say when something can't be judged from these angles. Refer to frames by number.` : ''}
+${mode === 'video' ? `For the frames: judge posture, guitar position, fretting hand (thumb placement, finger curvature, fingertips close behind the frets, wrist angle, finger lift height, visible tension) and picking hand (grip, anchoring, motion source wrist/elbow/fingers, pick angle, and whether the stroke directions follow the exercise's picking approach) — only what is actually visible. Say when something can't be judged from these angles. Refer to frames by number.` : ''}
 
 Write feedback that is specific, honest and encouraging. Every issue must cite evidence (a number above${mode === 'video' ? ' or a frame' : ''}).
 Prescribe up to 3 short, measurable exercises that fix the biggest issues (tempo-based, with startBpm a tempo they can play cleanly now and a goalBpm). Tabs: string 1 = high e, 6 = low E; step = beat length of each note. Chords only from ${Object.keys(CHORD_SHAPES).join(', ')}; backing chords only from ${Object.keys(CHORD_MIDI).join(', ')}. metroMode may be "all", "backbeat" (click on 2&4) or "gap" (2 bars on, 2 off).
@@ -111,7 +112,7 @@ Return JSON:
  "strengths": ["..."],
  "issues": [{"title": string, "area": one of ${JSON.stringify(AREAS)}, "severity": "high|medium|low", "detail": string, "evidence": string, "fix": string}],
  ${mode === 'video' ? '"frameNotes": [{"frame": int, "note": string}],' : ''}
- "prescriptions": [{"name": string, "reason": string (which issue it fixes), "domain": "fretting|picking|rhythm|fretboard|theory|ear|improv", "unit": string, "level": int 1-10, "startBpm": int, "goalBpm": int, "minutes": int 3-6, "why": string, "instr": string, "watch": string, "simplify": string, "metroMode": optional, "tab": optional {"step": number, "notes": [[string, fret, "h|p|b|/|pm" optional]]}, "chords": optional [names], "backing": optional [names]}],
+ "prescriptions": [{"name": string, "reason": string (which issue it fixes), "domain": "fretting|picking|rhythm|fretboard|theory|ear|improv", "unit": string, "level": int 1-10, "startBpm": int, "goalBpm": int, "minutes": int 3-6, "why": string, "instr": string, "watch": string, "simplify": string, "metroMode": optional, "picking": "alternate|strict|economy|down|fingers|hybrid", "tab": optional {"step": number, "notes": [[string, fret, "h|p|b|/|pm" optional]]}, "chords": optional [names], "backing": optional [names]}],
  "nextStep": "one sentence"}`;
   blocks.push({ type: 'text', text });
   const raw = await Claude.json({

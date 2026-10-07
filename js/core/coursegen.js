@@ -23,7 +23,8 @@ export const GENRE_BACKING = {
 };
 
 /* ------------------------------ Normalizing ----------------------------- */
-const TECHS = ['h', 'p', '/', '\\', 'b', '~', 'pm'];
+const TECHS = ['h', 'p', '/', '\\', 'b', '~', 'pm', 't'];
+const PICKING = ['alternate', 'strict', 'economy', 'down', 'fingers', 'hybrid'];
 const validTuning = t => (Array.isArray(t) && t.length === 6 && t.every(m => Number.isInteger(m) && m >= 28 && m <= 76) ? t.slice() : null);
 function normTab(tab) {
   if (!tab || !Array.isArray(tab.notes)) return null;
@@ -75,7 +76,9 @@ export function normalizeExercise(raw, used = new Set()) {
     tab, // {notes, swing} | null
     chords: Array.isArray(raw.chords) ? raw.chords.filter(c => CHORD_SHAPES[c]).slice(0, 4) : [],
     backing: Array.isArray(raw.backing) ? raw.backing.filter(c => CHORD_MIDI[c]).slice(0, 8) : [],
-    ...(['backbeat', 'gap'].includes(raw.metroMode) ? { metroMode: raw.metroMode } : {})
+    ...(['backbeat', 'gap'].includes(raw.metroMode) ? { metroMode: raw.metroMode } : {}),
+    ...(PICKING.includes(raw.picking) ? { picking: raw.picking } : {}),
+    ...(raw.pickKey ? { pickKey: String(raw.pickKey).slice(0, 60) } : {})
   };
 }
 
@@ -143,7 +146,7 @@ Return JSON:
    "skills":[{"id":"kebab-slug","title":string,"domain":one of ${JSON.stringify(DOMAIN_KEYS)},"summary":string (1 sentence),"prereqs":[skill ids],
      "exercises":[{"id":"kebab-slug","name":string,"domain":string,"why":string (1-2 sentences),"instr":string (clear steps),"watch":string (common mistake),"simplify":string (easier variant if stuck),
        "unit":"8ths|16ths|triplets|quarter notes|2 beats per chord|...","level":int 1-10 (difficulty of this exercise),"startBpm":int (a tempo THIS student can already play cleanly, given their level in this exercise's domain),"goalBpm":int,"minutes":int (3-10),
-       "libId":optional,"tab":optional {"step":0.25|0.333|0.5|1,"swing":bool,"notes":[[string,fret,"h|p|/|b|~|pm" optional],...]},
+       "picking":"alternate|strict|economy|down|fingers|hybrid" (picking-hand approach for this exercise),"libId":optional,"tab":optional {"step":0.25|0.333|0.5|1,"swing":bool,"notes":[[string,fret,"h|p|/|b|~|pm|t" optional],...]},
        "chords":optional [names],"backing":optional [chord names]}]}]}]}`;
   const raw = await Claude.json({
     system: 'You are a world-class guitar teacher and curriculum designer who uses deliberate practice, the 70–85% success "edge zone", spaced repetition and interleaving.',
@@ -232,5 +235,6 @@ export function fallbackExercises(course) {
 export function toPlayerExercise(ex, bpm) {
   if (!ex.tab || !ex.tab.notes || !ex.tab.notes.length) return null;
   return { id: ex.id, name: ex.name, unit: ex.unit, why: ex.why, goalBpm: ex.goalBpm, bpm: bpm || ex.startBpm, notes: ex.tab.notes, swing: ex.tab.swing,
-    ...(ex.tab.beats ? { beats: ex.tab.beats } : {}), ...(ex.tab.tuning || ex.tuning ? { tuning: ex.tab.tuning || ex.tuning } : {}) };
+    ...(ex.tab.beats ? { beats: ex.tab.beats } : {}), ...(ex.tab.tuning || ex.tuning ? { tuning: ex.tab.tuning || ex.tuning } : {}),
+    instr: ex.instr, ...(ex.picking ? { picking: ex.picking } : {}), ...(ex.pickKey ? { pickKey: ex.pickKey } : {}) };
 }

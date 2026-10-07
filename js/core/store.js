@@ -48,7 +48,7 @@ export function emptyProfile() {
     customExercises: [],     // Phase D: exercises generated from "what do you want to work on?" {id, ex, request, state}
     songRecs: null,          // Phase D: cached recommendations {key, date, items, source}
     dashboard: { albumHistory: [] },
-    settings: { referenceA4: 440, tuning: 'standard', tabAudio: true, tabScroll: true, wikiImages: true, model: 'claude-sonnet-5-5', latency: null, headphones: false }
+    settings: { referenceA4: 440, tuning: 'standard', tabAudio: true, tabScroll: true, wikiImages: true, model: 'claude-sonnet-5-5', latency: null, headphones: false, tabPicks: true, pickModes: {} }
   };
 }
 

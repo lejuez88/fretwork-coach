@@ -44,11 +44,11 @@ Design 1–3 exercises that address exactly this request, in order: a focused dr
 Rules:
 - Calibrate to the student's level in the relevant domain. startBpm = a tempo they can play cleanly today; goalBpm = mastery tempo.${tempoInText(text) ? ` They mentioned ${tempoInText(text)} BPM: use it as the goal if realistic.` : ''}
 - Original material only (no copyrighted songs or solos). If they name a song, write original drills for its techniques and suggest using the Songs tab for the song itself.
-- Tabs: string 1 = high e, 6 = low E. notes are [string, fret, technique (h|p|/|\\\\|b|~|pm or null), beats (note length; default = step)]. Use [0, 0, null, beats] for a rest. Max 48 notes. Use "tuning" (6 MIDI numbers, high string first) only if not standard.
+- Tabs: string 1 = high e, 6 = low E. notes are [string, fret, technique (h|p|/|\\\\|b|~|pm|t or null), beats (note length; default = step)]. Use [0, 0, null, beats] for a rest. Max 48 notes. Use "tuning" (6 MIDI numbers, high string first) only if not standard.
 - Chord diagrams only from: ${Object.keys(CHORD_SHAPES).join(', ')}. Backing-loop chords only from: ${Object.keys(CHORD_MIDI).join(', ')}.
 - You may reuse a built-in exercise with "libId" (then omit tab): ${JSON.stringify(lib)}
 - If the request is vague, pick the most likely meaning and say what you assumed in the summary.
-Return JSON: {"summary": "1-2 sentences: what these exercises fix and how they'll know it's working", "exercises":[{"role":"drill|main|apply","name":string,"domain": one of ${JSON.stringify(DOMAIN_KEYS)},"why":string,"instr":string (clear steps),"watch":string,"simplify":string,"unit":string,"level":int 1-10,"startBpm":int,"goalBpm":int,"minutes":int 3-10,"metroMode":"all|backbeat|gap","libId": optional,"tab": optional {"step":0.25|0.333|0.5|1,"swing":bool,"tuning": optional,"notes":[...]},"chords": optional [names],"backing": optional [names]}]}`,
+Return JSON: {"summary": "1-2 sentences: what these exercises fix and how they'll know it's working", "exercises":[{"role":"drill|main|apply","name":string,"domain": one of ${JSON.stringify(DOMAIN_KEYS)},"why":string,"instr":string (clear steps),"watch":string,"simplify":string,"unit":string,"level":int 1-10,"startBpm":int,"goalBpm":int,"minutes":int 3-10,"metroMode":"all|backbeat|gap","picking":"alternate|strict|economy|down|fingers|hybrid" (picking-hand approach),"libId": optional,"tab": optional {"step":0.25|0.333|0.5|1,"swing":bool,"tuning": optional,"notes":[...]},"chords": optional [names],"backing": optional [names]}]}`,
     maxTokens: 3000
   });
   const used = new Set();

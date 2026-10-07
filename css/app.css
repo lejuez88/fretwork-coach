@@ -513,3 +513,15 @@ pre.tab.small{font-size:12px;padding:10px}
 .stepper.s1{grid-template-columns:44px minmax(48px,1fr) 44px}
 .stepper.s1 input{padding:4px 0;min-width:0;font-size:22px}
 .askresult .row .btn.primary{flex:2 1 220px}
+
+/* ------------------------------ Picking directions ------------------------------ */
+.tp-view.scroll.picks{height:170px}
+.tab-pick{fill:none;stroke:#d8cfbf;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+.tab-pick.on{stroke:var(--amber);stroke-width:2.4}
+.tab-finger{font:italic 600 12px var(--body);fill:#d8cfbf;text-anchor:middle}
+.tab-finger.on{fill:var(--amber)}
+.pickrow{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-top:10px}
+.pickrow label.mini{flex:0 0 220px}
+.pickrow select{margin-top:4px;padding:10px 12px}
+.pickkey{display:flex;gap:12px;flex-wrap:wrap;align-items:center;flex:1 1 220px;padding-bottom:6px}
+.pickkey svg{vertical-align:-2px;margin-right:2px}

@@ -36,6 +36,7 @@ Without a key, everything still works with built-in data: catalog guitarists and
 | Tab import | Paste or open a text tab (find one with the Songsterr / Ultimate Guitar search links). Bars, rhythm (read from spacing, or pick 8ths/16ths/triplets), techniques and alternate tunings (Drop D etc.) are read. Tap bars to select a part, loop it in the tab player with a tempo ladder, save named parts. |
 | Help with a part | “Help me with this part” on any selected bars: Claude explains what makes it hard, fingering and picking, answers your question and writes drills; offline, the app finds the hardest beat and builds a micro-loop from it. |
 | Check a part | The audio/video evaluator works on any selected bars, in any tuning. |
+| Pick direction | Every interactive tab can show the picking hand: ⊓ downstroke / V upstroke above each note, or p i m a for fingers. Choose alternate (in time), strict alternate, economy, all downstrokes, fingers or hybrid; each exercise and song remembers its choice. Toggle **Pick direction** under the tab player. |
 
 Claude never writes out a song’s notes or lyrics: it describes the song and writes original drills. The notes you practice come only from the tab you import, which stays in your browser.
 

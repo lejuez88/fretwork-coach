@@ -5,19 +5,24 @@
 import { Audio } from '../core/audio.js';
 import { esc, clamp, toast } from '../core/util.js';
 import { noteMidi, exerciseBeats, STD_TUNING } from './exercises.js';
+import { computePicks, suggestPicking, strokeSVG, PICK_MODES } from './picking.js';
 
 const PC = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 /** String labels for a tuning (string 1 first): standard gives e B G D A E. */
 export const stringNames = (tuning = STD_TUNING) => tuning.map((m, i) => { const n = PC[((m % 12) + 12) % 12]; return i === 0 && n === 'E' ? 'e' : n; });
 
-const ROW = 18, TOP = 26, BOTTOM = 12, PAD = 28;
+const ROW = 18, BOTTOM = 12, PAD = 28;
+const TOP_PLAIN = 26, TOP_PICKS = 46; // room above the strings: technique row, plus the picking row when shown
 
 export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, onLog = null, beatsPerBar = 4, startBpm = null, compact = false, onBpm = null, ramp = null, evalMode = false } = {}) {
   const state = {
     ramp: ramp ? Object.assign({ enabled: true, everyLoops: 2 }, ramp) : null, rampedLoops: 0, peakBpm: 0,
     bpm: startBpm || ex.bpm || 80, sound: !evalMode && settings.tabAudio !== false, scroll: settings.tabScroll !== false,
-    click: true, loop: true, countIn: true, playing: false, t0: 0, nextIdx: 0, loopN: 0, raf: null, sched: null, clickBeat: 0
+    click: true, loop: true, countIn: true, playing: false, t0: 0, nextIdx: 0, loopN: 0, raf: null, sched: null, clickBeat: 0,
+    picks: settings.tabPicks !== false
   };
+  const pickKey = ex.pickKey || ex.id;
+  state.pickMode = (settings.pickModes && settings.pickModes[pickKey]) || suggestPicking(ex);
   const total = exerciseBeats(ex, beatsPerBar);
   const minStep = Math.min(...ex.notes.map(n => n.d).filter(Boolean), 1);
   const pxBeat = clamp(Math.round(24 / minStep), 48, 100);
@@ -33,7 +38,7 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
       <div class="tp-goal"><span>Goal</span><b>${ex.goalBpm || '—'}</b><span>BPM</span></div>
     </div>
     ${ex.why ? `<p class="why">${esc(ex.why)}</p>` : ''}`}
-    <div class="tp-view ${state.scroll ? 'scroll' : 'static'}" data-r="view"><div class="tp-track" data-r="track"></div><div class="tp-fixedhead" data-r="fixedhead"></div></div>
+    <div class="tp-view ${state.scroll ? 'scroll' : 'static'}${state.picks ? ' picks' : ''}" data-r="view"><div class="tp-track" data-r="track"></div><div class="tp-fixedhead" data-r="fixedhead"></div></div>
     <div class="tp-progress"><i data-r="prog"></i></div>
     <div class="bpmrow tp-tempo">
       <button class="kbtn" data-d="-5">−5</button><button class="kbtn" data-d="-1">−1</button>
@@ -46,7 +51,11 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
     ${state.ramp ? `<div class="ramp-row">${toggle('rampOn', 'Tempo ladder', state.ramp.enabled)}<span class="small muted" data-r="ramptxt"></span></div>` : ''}
     <div class="toggles" ${evalMode ? 'hidden' : ''}>
       ${toggle('sound', 'Guitar sound', state.sound)}${toggle('click', 'Click', state.click)}
-      ${toggle('scroll', 'Scrolling tab', state.scroll)}${toggle('loop', 'Loop', state.loop)}${toggle('countIn', 'Count-in', state.countIn)}
+      ${toggle('scroll', 'Scrolling tab', state.scroll)}${toggle('loop', 'Loop', state.loop)}${toggle('countIn', 'Count-in', state.countIn)}${toggle('picks', 'Pick direction', state.picks)}
+    </div>
+    <div class="pickrow" data-r="pickrow" ${evalMode || !state.picks ? 'hidden' : ''}>
+      <label class="mini">Picking<select data-r="pickmode">${PICK_MODES.map(([k, l]) => `<option value="${k}" ${state.pickMode === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <div class="pickkey small muted"><span><svg viewBox="-7 -7 14 14" width="14" height="14"><path class="tab-pick" d="M-5 5V-4H5V5"/></svg> down</span><span><svg viewBox="-7 -7 14 14" width="14" height="14"><path class="tab-pick" d="M-5 -5L0 5L5 -5"/></svg> up</span><span data-r="pickhint"></span></div>
     </div>
   </div>`;
   const r = n => el.querySelector(`[data-r="${n}"]`);
@@ -56,7 +65,10 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
   function render() {
     const view = r('view'), track = r('track');
     track.innerHTML = ''; r('fixedhead').innerHTML = ''; systems = [];
-    view.className = 'tp-view ' + (state.scroll ? 'scroll' : 'static');
+    view.className = 'tp-view ' + (state.scroll ? 'scroll' : 'static') + (state.picks ? ' picks' : '');
+    const TOP = state.picks ? TOP_PICKS : TOP_PLAIN;
+    const picks = state.picks ? computePicks(notes, state.pickMode) : null;
+    const PICK_Y = TOP - 31;
     const width = view.clientWidth || 340;
     const barPx = pxBeat * beatsPerBar;
     const barsPerLine = state.scroll ? total / beatsPerBar : Math.max(1, Math.floor((width - PAD - 8) / barPx));
@@ -75,7 +87,14 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
         if (n.t < start || n.t >= end) return;
         const x = PAD + (n.t - start) * pxBeat + 4, y = TOP + (n.s - 1) * ROW, label = n.x === 'ghost' ? `(${n.f})` : String(n.f), wBox = 7 * label.length + 6;
         s += `<g class="tab-note" data-i="${i}"><rect x="${x - wBox / 2}" y="${y - 9}" width="${wBox}" height="18" rx="4"/><text x="${x}" y="${y + 5}">${label}</text></g>`;
-        if (n.x && n.x !== 'ghost' && !n.chord) s += `<text x="${x}" y="${TOP - 12}" class="tab-tech">${esc(n.x === 'pm' ? 'PM' : n.x === 'b' && n.bendTo != null ? 'b' + n.bendTo : n.x)}</text>`;
+        if (n.x && n.x !== 'ghost' && !n.chord) s += `<text x="${x}" y="${TOP - 12}" class="tab-tech">${esc(n.x === 'pm' ? 'PM' : n.x === 't' ? 'T' : n.x === 'b' && n.bendTo != null ? 'b' + n.bendTo : n.x)}</text>`;
+        if (picks && picks[i].lead) {
+          // Fingers for every note struck together (bass first), the stroke on the group's lowest string
+          const fingers = notes.map((m, j) => ({ m, j })).filter(o => Math.abs(o.m.t - n.t) < 1e-3 && picks[o.j].finger).sort((a, b) => b.m.s - a.m.s).map(o => picks[o.j].finger);
+          const st = picks[i].stroke, both = st && fingers.length;
+          if (st) s += strokeSVG(st, both ? x - 8 : x, PICK_Y, i).replace('class="tab-pick"', `class="tab-pick" data-pi="${i}"`);
+          if (fingers.length) s += `<text x="${both ? x + 7 : x}" y="${PICK_Y + 4}" class="tab-finger" data-pi="${i}">${fingers.join('')}</text>`;
+        }
       });
       s += `<line class="tab-head" x1="0" y1="${TOP - 16}" x2="0" y2="${TOP + ROW * 5 + 6}" style="display:none"/></svg>`;
       const wrap = document.createElement('div'); wrap.className = 'tab-sys'; wrap.innerHTML = s;
@@ -172,10 +191,13 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
       const x = PAD + Math.max(0, looped) * pxBeat;
       r('track').style.transform = `translateX(${Math.round(anchor - x)}px)`;
     }
-    el.querySelectorAll('.tab-note.on').forEach(g => g.classList.remove('on'));
+    el.querySelectorAll('.tab-note.on, [data-pi].on').forEach(g => g.classList.remove('on'));
     if (looped >= 0) notes.forEach((n, i) => {
       const st = swungT(n.t);
-      if (looped >= st && looped < st + Math.max(n.d, 0.2)) { const g = el.querySelector(`.tab-note[data-i="${i}"]`); if (g) g.classList.add('on'); }
+      if (looped >= st && looped < st + Math.max(n.d, 0.2)) {
+        const g = el.querySelector(`.tab-note[data-i="${i}"]`); if (g) g.classList.add('on');
+        el.querySelectorAll(`[data-pi="${i}"]`).forEach(x => x.classList.add('on'));
+      }
     });
     const m = r('meter');
     if (m && beat < 0 && state.playing) m.textContent = `Count-in: ${Math.ceil(-beat)}`;
@@ -210,10 +232,18 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
       b.classList.toggle('on', state[k]); b.setAttribute('aria-pressed', state[k]);
       if (k === 'sound') onSettings({ tabAudio: state.sound });
       if (k === 'scroll') { onSettings({ tabScroll: state.scroll }); render(); }
+      if (k === 'picks') { onSettings({ tabPicks: state.picks }); r('pickrow').hidden = !state.picks; render(); }
       if (k === 'loop' && state.playing && !state.loop) { /* finishes at end of current pass */ }
     }
   });
   r('range').addEventListener('input', e => setBpm(+e.target.value));
+  r('pickmode').addEventListener('change', e => {
+    state.pickMode = e.target.value;
+    onSettings({ pickModes: Object.assign({}, settings.pickModes || {}, { [pickKey]: state.pickMode }) });
+    pickHint(); render();
+  });
+  function pickHint() { const m = PICK_MODES.find(x => x[0] === state.pickMode); r('pickhint').textContent = m ? m[2] : ''; }
+  pickHint();
   const ro = window.ResizeObserver ? new ResizeObserver(() => { if (!state.scroll) render(); }) : null;
   if (ro) ro.observe(r('view'));
   render();
@@ -227,6 +257,7 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
   cleanup.play = () => { if (!state.playing) play(); };
   cleanup.isPlaying = () => state.playing;
   cleanup.set = (k, v) => { state[k] = v; };
+  cleanup.picks = () => (state.picks ? { mode: state.pickMode, strokes: computePicks(notes, state.pickMode) } : null);
   /** Timing info for the evaluator: beat 0 of loop 1 happens at t0 (audio-context seconds). */
   cleanup.timing = () => ({ t0: state.t0, bpm: state.bpm, totalBeats: total, notes, swing: !!ex.swing, beatsPerBar, playing: state.playing, tuning });
   return cleanup;
