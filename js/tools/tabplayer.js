@@ -4,7 +4,11 @@
 // tempo a run finished at.
 import { Audio } from '../core/audio.js';
 import { esc, clamp, toast } from '../core/util.js';
-import { noteMidi, exerciseBeats } from './exercises.js';
+import { noteMidi, exerciseBeats, STD_TUNING } from './exercises.js';
+
+const PC = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+/** String labels for a tuning (string 1 first): standard gives e B G D A E. */
+export const stringNames = (tuning = STD_TUNING) => tuning.map((m, i) => { const n = PC[((m % 12) + 12) % 12]; return i === 0 && n === 'E' ? 'e' : n; });
 
 const ROW = 18, TOP = 26, BOTTOM = 12, PAD = 28;
 
@@ -19,6 +23,8 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
   const pxBeat = clamp(Math.round(24 / minStep), 48, 100);
   const swungT = t => (ex.swing ? Math.floor(t) + (((t % 1) + 1) % 1 === 0.5 ? 2 / 3 : t % 1) : t);
   const notes = [...ex.notes].sort((a, b) => a.t - b.t);
+  const tuning = Array.isArray(ex.tuning) && ex.tuning.length === 6 ? ex.tuning : STD_TUNING;
+  const names = stringNames(tuning);
 
   el.innerHTML = `
   <div class="tabplayer">
@@ -59,7 +65,7 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
       const end = Math.min(total, start + beatsPerLine);
       const w = PAD + (end - start) * pxBeat + 10, h = TOP + ROW * 5 + BOTTOM;
       let s = `<svg class="tabsvg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Tab">`;
-      'eBGDAE'.split('').forEach((name, i) => {
+      names.forEach((name, i) => {
         const y = TOP + i * ROW;
         s += `<text x="6" y="${y + 4}" class="tab-sname">${name}</text><line x1="${PAD - 6}" y1="${y}" x2="${w - 6}" y2="${y}" class="tab-line"/>`;
       });
@@ -67,9 +73,9 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
       for (let b = start; b < end; b++) s += `<text x="${PAD + (b - start) * pxBeat - 2}" y="${h - 1}" class="tab-count">${(b % beatsPerBar) + 1}</text>`;
       notes.forEach((n, i) => {
         if (n.t < start || n.t >= end) return;
-        const x = PAD + (n.t - start) * pxBeat + 4, y = TOP + (n.s - 1) * ROW, label = String(n.f), wBox = 7 * label.length + 6;
+        const x = PAD + (n.t - start) * pxBeat + 4, y = TOP + (n.s - 1) * ROW, label = n.x === 'ghost' ? `(${n.f})` : String(n.f), wBox = 7 * label.length + 6;
         s += `<g class="tab-note" data-i="${i}"><rect x="${x - wBox / 2}" y="${y - 9}" width="${wBox}" height="18" rx="4"/><text x="${x}" y="${y + 5}">${label}</text></g>`;
-        if (n.x && !n.chord) s += `<text x="${x}" y="${TOP - 12}" class="tab-tech">${esc(n.x === 'pm' ? 'PM' : n.x)}</text>`;
+        if (n.x && n.x !== 'ghost' && !n.chord) s += `<text x="${x}" y="${TOP - 12}" class="tab-tech">${esc(n.x === 'pm' ? 'PM' : n.x === 'b' && n.bendTo != null ? 'b' + n.bendTo : n.x)}</text>`;
       });
       s += `<line class="tab-head" x1="0" y1="${TOP - 16}" x2="0" y2="${TOP + ROW * 5 + 6}" style="display:none"/></svg>`;
       const wrap = document.createElement('div'); wrap.className = 'tab-sys'; wrap.innerHTML = s;
@@ -141,7 +147,7 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
       if (t > ahead) break;
       if (state.sound && t >= c.currentTime - 0.01) {
         const spread = n.chord ? 0.012 * (6 - n.s) : 0;
-        Audio.guitar(noteMidi(n), t + spread, { dur: Math.max(0.25, n.d * spb() * 1.6), gain: n.chord ? 0.32 : 0.55, bright: n.x === 'pm' ? 0.3 : 0.55 });
+        Audio.guitar(noteMidi(n, tuning), t + spread, { dur: Math.max(0.25, n.d * spb() * 1.6), gain: n.chord ? 0.32 : 0.55, bright: n.x === 'pm' ? 0.3 : 0.55 });
       }
       state.nextIdx++;
     }
@@ -222,6 +228,6 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
   cleanup.isPlaying = () => state.playing;
   cleanup.set = (k, v) => { state[k] = v; };
   /** Timing info for the evaluator: beat 0 of loop 1 happens at t0 (audio-context seconds). */
-  cleanup.timing = () => ({ t0: state.t0, bpm: state.bpm, totalBeats: total, notes, swing: !!ex.swing, beatsPerBar, playing: state.playing });
+  cleanup.timing = () => ({ t0: state.t0, bpm: state.bpm, totalBeats: total, notes, swing: !!ex.swing, beatsPerBar, playing: state.playing, tuning });
   return cleanup;
 }

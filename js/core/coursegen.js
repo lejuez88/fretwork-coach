@@ -23,18 +23,32 @@ export const GENRE_BACKING = {
 };
 
 /* ------------------------------ Normalizing ----------------------------- */
+const TECHS = ['h', 'p', '/', '\\', 'b', '~', 'pm'];
+const validTuning = t => (Array.isArray(t) && t.length === 6 && t.every(m => Number.isInteger(m) && m >= 28 && m <= 76) ? t.slice() : null);
 function normTab(tab) {
   if (!tab || !Array.isArray(tab.notes)) return null;
+  const tuning = validTuning(tab.tuning);
+  // Already-timed notes (imported tab sections, library exercises): keep their rhythm
+  if (tab.notes.length && tab.notes.every(n => n && !Array.isArray(n) && typeof n === 'object')) {
+    const notes = tab.notes.slice(0, 400).filter(n => n.s >= 1 && n.s <= 6 && n.f >= 0 && n.f <= 24 && n.t >= 0 && n.d > 0)
+      .map(n => ({ t: +n.t, d: +n.d, s: +n.s, f: +n.f, ...(n.x ? { x: n.x } : {}), ...(n.chord ? { chord: true } : {}), ...(n.bendTo != null ? { bendTo: n.bendTo } : {}) }));
+    if (notes.length < 1) return null;
+    return { notes, swing: !!tab.swing, ...(tab.beats ? { beats: +tab.beats } : {}), ...(tuning ? { tuning } : {}) };
+  }
+  // Claude's compact form: [[string, fret, tech?, beats?], ...] with a default step
   const step = [0.25, 1 / 3, 0.5, 1].reduce((b, v) => (Math.abs(v - Number(tab.step)) < Math.abs(b - Number(tab.step)) ? v : b), 0.5);
-  const notes = [];
+  const notes = []; let t = 0;
   for (const n of tab.notes.slice(0, 64)) {
     if (!Array.isArray(n)) continue;
     const s = Number(n[0]), f = Number(n[1]);
+    const d = [0.25, 1 / 3, 0.5, 0.75, 1, 1.5, 2, 3, 4].find(v => Math.abs(v - Number(n[3])) < 0.02) || step;
+    if (s === 0 || n[0] === 'r') { t += d; continue; }            // rest
     if (!(s >= 1 && s <= 6 && f >= 0 && f <= 22 && Number.isInteger(s) && Number.isInteger(f))) continue;
-    const x = ['h', 'p', '/', '\\', 'b', '~', 'pm'].includes(n[2]) ? n[2] : undefined;
-    notes.push({ t: notes.length * step, d: step, s, f, ...(x ? { x } : {}) });
+    const x = TECHS.includes(n[2]) ? n[2] : undefined;
+    notes.push({ t: Math.round(t * 1000) / 1000, d, s, f, ...(x ? { x } : {}) });
+    t += d;
   }
-  return notes.length >= 3 ? { notes, swing: !!tab.swing && step === 0.5 } : null;
+  return notes.length >= 3 ? { notes, swing: !!tab.swing && step === 0.5, ...(tuning ? { tuning } : {}) } : null;
 }
 
 export function normalizeExercise(raw, used = new Set()) {
@@ -45,7 +59,7 @@ export function normalizeExercise(raw, used = new Set()) {
   const lib = raw.libId && EXERCISE_BY_ID[raw.libId];
   const goal = clampN(raw.goalBpm || (lib && lib.goalBpm), 30, 260, 100);
   const start = clampN(raw.startBpm || (lib && lib.bpm) || goal * 0.6, 30, goal, Math.round(goal * 0.6));
-  const tab = lib ? { notes: lib.notes, swing: !!lib.swing } : normTab(raw.tab);
+  const tab = lib ? { notes: lib.notes, swing: !!lib.swing, ...(lib.beats ? { beats: lib.beats } : {}) } : normTab(raw.tab);
   return {
     id, name: String(raw.name || (lib && lib.name) || 'Exercise').slice(0, 70),
     domain: DOMAIN_KEYS.includes(raw.domain) ? raw.domain : (lib ? lib.domain : 'fretting'),
@@ -217,5 +231,6 @@ export function fallbackExercises(course) {
 /** Convert an exercise spec into the tab player's format (null if it has no tab). */
 export function toPlayerExercise(ex, bpm) {
   if (!ex.tab || !ex.tab.notes || !ex.tab.notes.length) return null;
-  return { id: ex.id, name: ex.name, unit: ex.unit, why: ex.why, goalBpm: ex.goalBpm, bpm: bpm || ex.startBpm, notes: ex.tab.notes, swing: ex.tab.swing };
+  return { id: ex.id, name: ex.name, unit: ex.unit, why: ex.why, goalBpm: ex.goalBpm, bpm: bpm || ex.startBpm, notes: ex.tab.notes, swing: ex.tab.swing,
+    ...(ex.tab.beats ? { beats: ex.tab.beats } : {}), ...(ex.tab.tuning || ex.tuning ? { tuning: ex.tab.tuning || ex.tuning } : {}) };
 }

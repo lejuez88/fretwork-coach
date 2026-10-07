@@ -5,6 +5,9 @@ import { Store, Practice } from '../core/store.js';
 import { Audio } from '../core/audio.js';
 import { Claude } from '../core/claude.js';
 import { buildRoutine, rebudget, coachBriefing, BLOCKS } from '../core/routine.js';
+import { findSong, recordSongResult } from '../core/songs.js';
+import { recordCustom } from '../core/custom.js';
+import { mountAskBox } from '../ui/ask.js';
 import { buildCourseTree, toPlayerExercise } from '../core/coursegen.js';
 import { recordResult, recordPrescription, applyResult, newExerciseState, markReviewed, progressPct, ensureState } from '../core/progression.js';
 import { addEvidence, recomputeLevels } from '../core/skills.js';
@@ -22,7 +25,7 @@ export const hasActiveRoutine = () => !!getActive();
 
 /* ------------------------------ Time input ------------------------------ */
 /** Markup + reader for the 3-way time input. Returns {html, read(root)} */
-function timeInputHTML(mode = 'duration', mins = 45) {
+export function timeInputHTML(mode = 'duration', mins = 45) {
   const end = new Date(Date.now() + mins * 60000);
   const hh = String(end.getHours()).padStart(2, '0'), mm = String(Math.ceil(end.getMinutes() / 5) * 5 % 60).padStart(2, '0');
   return `
@@ -35,7 +38,7 @@ function timeInputHTML(mode = 'duration', mins = 45) {
   <div data-tpane="end" ${mode !== 'end' ? 'hidden' : ''}><label class="mini">I need to stop at<input type="time" data-r="end" value="${hh}:${mm}"></label></div>
   <div data-tpane="open" ${mode !== 'open' ? 'hidden' : ''}><p class="muted small">No countdown pressure: each exercise still gets a suggested time, and you move on when you’re ready.</p></div>`;
 }
-function wireTimeInput(root) {
+export function wireTimeInput(root) {
   root.addEventListener('click', e => {
     const t = e.target.closest('[data-tmode]');
     if (t) {
@@ -56,7 +59,7 @@ function wireTimeInput(root) {
   });
 }
 /** Returns {mode, minutes|null, deadline|null} or {error} */
-function readTime(root) {
+export function readTime(root) {
   const mode = (root.querySelector('[data-tmode].on') || {}).dataset?.tmode || 'duration';
   if (mode === 'open') return { mode, minutes: null, deadline: null };
   if (mode === 'duration') {
@@ -71,18 +74,37 @@ function readTime(root) {
   return { mode, minutes: m, deadline: d.getTime() };
 }
 
+/**
+ * Start any routine (course, song lesson or custom). t = {mode, minutes, deadline}
+ * from the time input, or omitted for no time limit.
+ */
+export function startRoutine(plan, t = { mode: 'open', minutes: null, deadline: null }, navigate) {
+  const p = Store.profile;
+  if (Practice.active()) { const e = Practice.stop(p); if (e && !e.discarded) toast(`Logged your running session (${fmtMinutes(e.minutes)}) first.`); }
+  if (t.minutes !== plan.budget) rebudget(plan, 0, t.minutes, 0);
+  saveActive({ routine: plan, idx: 0, startedAt: Date.now(), itemStart: Date.now(), pausedAt: null, pausedTotal: 0, itemPaused: 0, deadline: t.deadline, mode: t.mode, results: [], alerted: false });
+  Store.save(); navigate('#/practice/run');
+}
+
 /* -------------------------------- Setup --------------------------------- */
 export function mountRoutineSetup(root, { navigate, courseId = null, skillId = null }) {
   const p = Store.profile;
   if (getActive()) { navigate('#/practice/run'); return () => {}; }
   const open = p.courses.filter(c => c.status !== 'archived');
-  if (!open.length) { root.innerHTML = '<h1>Practice</h1><section class="card"><p>Create a course first; routines are built from your course plans.</p><a class="btn primary block" href="#/home">Go to dashboard</a></section>'; return () => {}; }
+  if (!open.length) {
+    root.innerHTML = '<h1>Practice</h1><section class="card askcard" data-r="askslot"></section><section class="card"><p>Create a course to get full daily routines built from a course plan.</p><a class="btn primary block" href="#/home">Go to dashboard</a></section>';
+    const offAsk = mountAskBox(root.querySelector('[data-r="askslot"]'), { start: plan => startRoutine(plan, undefined, navigate) });
+    return () => offAsk();
+  }
   let selected = (courseId && open.find(c => c.id === courseId)) || [...open].sort((a, b) => String(b.lastPracticed || '').localeCompare(String(a.lastPracticed || '')))[0];
-  let plan = null, building = false, briefing = null, timeSel = null;
+  let plan = null, building = false, briefing = null, timeSel = null, offAsk = null;
 
   function render() {
+    if (offAsk) { offAsk(); offAsk = null; }
     root.innerHTML = `
-      <h1>Today’s routine</h1>
+      <h1>Practice</h1>
+      <section class="card askcard" data-r="askslot"></section>
+      <h2 class="sechead">Today’s routine</h2>
       <section class="card"><div class="label">1 · Course</div>
         <div class="chips">${open.map(c => `<button class="chip ${c === selected ? 'on' : ''}" data-course="${c.id}">${esc(c.name)} · ${progressPct(c)}%</button>`).join('')}</div>
         ${selected.tree ? '' : `<p class="small muted" style="margin-top:10px">This course doesn’t have a lesson plan yet. It will be built when you continue${Claude.hasKey() ? ' (Claude takes about 30–60 seconds)' : ''}.</p>`}
@@ -91,6 +113,7 @@ export function mountRoutineSetup(root, { navigate, courseId = null, skillId = n
         <button class="btn primary block" data-r="build">Build my routine</button></section>
       <div data-r="preview"></div>`;
     wireTimeInput(root.querySelector('[data-r="time"]'));
+    offAsk = mountAskBox(root.querySelector('[data-r="askslot"]'), { start: plan => startRoutine(plan, undefined, navigate), courseId: selected ? selected.id : null });
     drawPreview();
   }
   function drawPreview() {
@@ -108,7 +131,7 @@ export function mountRoutineSetup(root, { navigate, courseId = null, skillId = n
   }
 
   async function build() {
-    const t = readTime(root); if (t.error) return toast(t.error);
+    const t = readTime(root.querySelector('[data-r="time"]')); if (t.error) return toast(t.error);
     timeSel = t; building = true;
     root.querySelector('[data-r="build"]').dataset.msg = !selected.tree ? (Claude.hasKey() ? 'Claude is writing your course plan (30–60 s)…' : 'Building your course plan…') : 'Building…';
     drawPreview();
@@ -123,12 +146,9 @@ export function mountRoutineSetup(root, { navigate, courseId = null, skillId = n
   }
   function start() {
     if (!plan) return;
-    const fresh = readTime(root);
+    const fresh = readTime(root.querySelector('[data-r="time"]'));
     const t = fresh.error ? timeSel : fresh;
-    if (Practice.active()) { const e = Practice.stop(p); if (e && !e.discarded) toast(`Logged your running session (${fmtMinutes(e.minutes)}) first.`); }
-    if (t.minutes !== plan.budget) rebudget(plan, 0, t.minutes, 0);
-    saveActive({ routine: plan, idx: 0, startedAt: Date.now(), itemStart: Date.now(), pausedAt: null, pausedTotal: 0, itemPaused: 0, deadline: t.deadline, mode: t.mode, results: [], alerted: false });
-    Store.save(); navigate('#/practice/run');
+    startRoutine(plan, t, navigate);
   }
 
   const onClick = e => {
@@ -139,7 +159,7 @@ export function mountRoutineSetup(root, { navigate, courseId = null, skillId = n
   const barClick = e => { if (e.target.closest('[data-r="start"]')) start(); };
   root.addEventListener('click', onClick); Shell.actionBar.addEventListener('click', barClick);
   render();
-  return () => { root.removeEventListener('click', onClick); Shell.actionBar.removeEventListener('click', barClick); Shell.actions(''); };
+  return () => { if (offAsk) offAsk(); root.removeEventListener('click', onClick); Shell.actionBar.removeEventListener('click', barClick); Shell.actions(''); };
 }
 
 /* -------------------------------- Runner -------------------------------- */
@@ -147,8 +167,16 @@ export function mountRoutineRunner(root, { navigate }) {
   const p = Store.profile;
   let A = getActive();
   if (!A) { navigate('#/practice'); return () => {}; }
-  const course = p.courses.find(c => c.id === A.routine.courseId);
+  const course = A.routine.courseId ? p.courses.find(c => c.id === A.routine.courseId) : null;
   if (course) ensureState(course);
+  /** Progress state behind an item (course, prescription, song section or saved exercise). */
+  const stateOf = it => {
+    if (course && it.fromTree) return course.state && course.state.exercises[it.exId];
+    if (it.prescriptionId) { const r = p.prescriptions.find(x => x.id === it.prescriptionId); return r && r.state; }
+    if (it.songId) { const s = findSong(p, it.songId); return s && s.state && s.state.sections[it.ex.sectionKey || it.exId]; }
+    if (it.customId) { const c = p.customExercises.find(x => x.id === it.customId); return c && c.state; }
+    return course && course.state && course.state.extras ? course.state.extras[it.exId] : null;
+  };
   let tool = null, offMetro = null, tick = null, phase = 'play'; // play | result
 
   const now = () => (A.pausedAt || Date.now());
@@ -171,7 +199,7 @@ export function mountRoutineRunner(root, { navigate }) {
   function render() {
     teardownTool();
     const it = cur(), ex = it.ex, B = BLOCKS[it.block];
-    const es = course && course.state && course.state.exercises[it.exId];
+    const es = stateOf(it);
     const tip = A.routine.coach && A.routine.coach.tips && A.routine.coach.tips[ex.name];
     const coachText = A.routine.coach && (it.block === 'theory' ? A.routine.coach.theory : it.block === 'music' ? A.routine.coach.music : null);
     root.innerHTML = `
@@ -271,15 +299,19 @@ export function mountRoutineRunner(root, { navigate }) {
         if (it.isReview && result.clean) markReviewed(course, it.skillId);
       } else if (it.prescriptionId) {
         decision = recordPrescription(p, it.prescriptionId, res);
+      } else if (it.songId) {
+        decision = recordSongResult(p, it.songId, it.ex, res);
+      } else if (it.customId) {
+        decision = recordCustom(p, it.customId, res);
       } else if (course) {
         const st = ensureState(course); st.extras = st.extras || {};
         const es = st.extras[it.exId] || (st.extras[it.exId] = newExerciseState(it.targetBpm));
         decision = applyResult(es, it.ex, res);
       }
       if (!decision) decision = { decision: result.clean ? 'hold' : 'retry', message: result.clean ? `Clean at ${result.tempo} BPM.` : `Logged ${result.tempo} BPM.` };
-      addEvidence(p, { key: (it.fromTree ? A.routine.courseId + ':' : '') + it.exId, domain: it.ex.domain, label: it.ex.name, level: decision.level || it.ex.level || (course && course.difficulty) || 4, tempo: result.tempo, goal: it.goalBpm, clean: result.clean, source: 'routine' });
+      addEvidence(p, { key: it.songId ? `song:${it.songId}:${it.ex.sectionKey || it.exId}` : it.customId ? 'custom:' + it.customId : (it.fromTree ? A.routine.courseId + ':' : '') + it.exId, domain: it.ex.domain, label: it.ex.name, level: decision.level || it.ex.level || (course && course.difficulty) || 4, tempo: result.tempo, goal: it.goalBpm, clean: result.clean, source: 'routine' });
       A.prefill = null; A.peakBpm = 0;
-      p.exerciseLog.push({ date: today(), at: Date.now(), exerciseId: it.exId, name: it.ex.name, courseId: A.routine.courseId, tempo: result.tempo, goalBpm: it.goalBpm, clean: result.clean, mastered: decision && decision.decision === 'mastered', source: 'routine' });
+      p.exerciseLog.push({ date: today(), at: Date.now(), exerciseId: it.exId, name: it.ex.name, courseId: A.routine.courseId, ...(it.songId ? { songId: it.songId } : {}), tempo: result.tempo, goalBpm: it.goalBpm, clean: result.clean, mastered: decision && decision.decision === 'mastered', source: A.routine.kind || 'routine' });
       toast(decision.message, 3800);
     }
     A.results.push({ key: it.key, name: it.ex.name, block: it.block, minutes: it.actualMin, tempo: result ? result.tempo : null, clean: result ? result.clean : null, skipped: !result, decision: decision ? decision.decision : 'skipped', message: decision ? decision.message : 'Skipped' });
@@ -293,8 +325,10 @@ export function mountRoutineRunner(root, { navigate }) {
     teardownTool();
     const activeMs = (A.pausedAt || Date.now()) - A.startedAt - A.pausedTotal;
     const minutes = Math.round(activeMs / 6000) / 10;
-    if (minutes >= 0.5) p.practiceLog.push({ id: Math.random().toString(36).slice(2, 10), date: today(new Date(A.startedAt)), start: A.startedAt, minutes, source: 'routine', courseId: A.routine.courseId, genre: A.routine.genre, note: A.routine.focusTitle });
+    if (minutes >= 0.5) p.practiceLog.push({ id: Math.random().toString(36).slice(2, 10), date: today(new Date(A.startedAt)), start: A.startedAt, minutes, source: A.routine.kind === 'song' ? 'song' : 'routine', courseId: A.routine.courseId, songId: A.routine.songId || null, genre: A.routine.genre, note: A.routine.focusTitle });
     if (course) { course.progress = progressPct(course); course.lastPracticed = today(); }
+    const song = A.routine.songId ? findSong(p, A.routine.songId) : null;
+    if (song) { song.lastPracticed = today(); (song.lessons = song.lessons || []).push({ date: today(), minutes, items: A.results.filter(r => !r.skipped).length }); if (song.lessons.length > 30) song.lessons.shift(); }
     const levelChanges = recomputeLevels(p);
     p.sessionLog.push({ date: today(), focus: `${A.routine.courseName}: ${A.routine.focusTitle}`, result: A.results.filter(r => !r.skipped).map(r => `${r.name} ${r.tempo} BPM${r.clean ? ' clean' : ''}`).join('; ') || 'no results logged' });
     Store.save();
@@ -376,6 +410,6 @@ export function mountRoutineSummary(root, { navigate }) {
     <section class="card"><h3>${esc(S.routine.courseName)}</h3>
       ${S.results.map(r => `<div class="resrow"><span class="ri">${icon[r.decision] || '•'}</span><div><b>${esc(r.name)}</b><div class="small muted">${esc(r.message)}</div></div><span class="rt">${r.tempo ? r.tempo + ' BPM' : ''}</span></div>`).join('')}
     </section>
-    <div class="row"><a class="btn primary" href="#/home">Dashboard</a><a class="btn" href="#/course/${S.routine.courseId}">View course tree</a></div>`;
+    <div class="row"><a class="btn primary" href="#/home">Dashboard</a>${S.routine.songId ? `<a class="btn" href="#/song/${S.routine.songId}">Back to the song</a>` : S.routine.courseId ? `<a class="btn" href="#/course/${S.routine.courseId}">View course tree</a>` : '<a class="btn" href="#/practice">Practice</a>'}</div>`;
   return () => {};
 }

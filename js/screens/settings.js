@@ -27,7 +27,7 @@ export function mountSettings(root, { navigate }) {
     <h1>Settings</h1>
     <section class="card">
       <h3>Claude</h3>
-      <p class="muted small">Claude identifies guitarists, names courses, and (in later phases) builds lessons and evaluates your playing. Your key is stored only in this browser and is never included in profile exports. Usage is billed to your Anthropic account.</p>
+      <p class="muted small">Claude identifies guitarists, writes your course plans and song lessons, creates exercises from your requests, recommends songs, helps with hard parts of a tab, and reviews your playing. Your key is stored only in this browser and is never included in profile exports. Usage is billed to your Anthropic account.</p>
       <div class="field"><label>Anthropic API key</label>
         <div class="row nowrap"><input type="password" data-r="key" placeholder="sk-ant-…" value="${esc(key)}" autocomplete="off" spellcheck="false"><button class="btn" data-s="show">Show</button></div></div>
       <div class="field"><label>Model</label><select data-r="model">${MODELS.map(m => `<option value="${m.id}" ${p && p.settings.model === m.id ? 'selected' : ''}>${esc(m.label)}</option>`).join('')}</select></div>
@@ -47,7 +47,7 @@ export function mountSettings(root, { navigate }) {
     </section>
     <section class="card">
       <h3>About this version</h3>
-      <p class="small">Fretwork Coach · Phase C. Included: onboarding and continuable assessment, dashboard, course plans with progress trees, timed routines with tempo ladders and level-matched tempos, audio and video evaluation with Claude coaching, tuner, metronome, tab player. Coming next: songs and recommendations (D).</p>
+      <p class="small">Fretwork Coach · Phase D. Included: onboarding and continuable assessment, dashboard, course plans with progress trees, timed routines with tempo ladders and level-matched tempos, exercises from your own requests, songs with recommendations, one-day song lessons, tab import with section looping and help, audio and video evaluation with Claude coaching, tuner, metronome, tab player.</p>
     </section>`;
   const r = n => root.querySelector(`[data-r="${n}"]`);
   const status = (msg, cls = '') => { r('status').textContent = msg; r('status').className = 'small ' + cls; };

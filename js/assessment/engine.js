@@ -63,7 +63,11 @@ const CHORD_SHAPES = {
   Em:{frets:'022000',fingers:'023000'}, Am:{frets:'x02210',fingers:'x02310'},
   G:{frets:'320003',fingers:'210003'}, C:{frets:'x32010',fingers:'x32010'},
   D:{frets:'xx0232',fingers:'xx0132'},
-  F:{frets:'133211',fingers:'134211',barre:1}, Bb:{frets:'x13331',fingers:'x12341',barre:1}
+  F:{frets:'133211',fingers:'134211',barre:1}, Bb:{frets:'x13331',fingers:'x12341',barre:1},
+  E:{frets:'022100',fingers:'023100'}, A:{frets:'x02220',fingers:'x01230'}, Dm:{frets:'xx0231',fingers:'xx0231'},
+  E7:{frets:'020100',fingers:'020100'}, A7:{frets:'x02020',fingers:'x02030'}, D7:{frets:'xx0212',fingers:'xx0213'},
+  Am7:{frets:'x02010',fingers:'x02010'}, Dm7:{frets:'xx0211',fingers:'xx0211'}, Cmaj7:{frets:'x32000',fingers:'x32000'},
+  B7:{frets:'x21202',fingers:'x21304'}, G7:{frets:'320001',fingers:'320001'}, Bm:{frets:'x24432',fingers:'x13421',barre:2}
 };
 function chordSVG(name){
   const s=CHORD_SHAPES[name]; if(!s) return '';

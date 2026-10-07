@@ -67,7 +67,7 @@ export function buildRoutine(profile, course, { budget = null, focusSkillId = nu
   // Prescriptions from evaluations go first in the stretch block (max 2)
   const rxs = (profile.prescriptions || []).filter(r => r.status === 'active' && (!r.courseId || r.courseId === course.id)).slice(0, 2);
   rxs.reverse().forEach(r => {
-    const it = item('stretch', r.ex, null, { prescriptionId: r.id, targetBpm: r.state.target, note: `From your ${r.source || 'evaluation'}: ${r.reason}` });
+    const it = item('stretch', r.ex, null, { prescriptionId: r.id, targetBpm: r.state.target, note: r.source === 'your request' ? r.reason : `From your ${r.source || 'evaluation'}: ${r.reason}` });
     stretch.unshift(it); if (stretch.length > 4) stretch.pop();
   });
 
@@ -106,6 +106,32 @@ export function buildRoutine(profile, course, { budget = null, focusSkillId = nu
     budget, focusSkillId: focus ? focus.id : null, focusTitle: focus ? focus.title : '',
     items, coach: null
   };
+}
+
+/**
+ * A routine that isn't built from a course: a song lesson or exercises the student asked for.
+ * items: [{block, ex, minutes, targetBpm, ramp (false to disable), note, extra}]
+ */
+export function makeAdhocRoutine({ title, focus = '', genre = null, items, budget = null, kind = 'custom', songId = null }) {
+  const RAMP_ON = { stretch: true, review: true, theory: false, music: false, warmup: false };
+  const out = items.filter(x => x && x.ex).map(x => {
+    const block = BLOCKS[x.block] ? x.block : 'stretch';
+    const target = Math.round(x.targetBpm || x.ex.startBpm || 60);
+    const lad = tempoLadder(target, Math.max(x.ex.goalBpm || target, target));
+    return {
+      key: uid(), block, exId: x.ex.id, skillId: null, skillTitle: null, ex: cloneEx(x.ex), minutes: Math.max(MIN_ITEM, round05(x.minutes || x.ex.minutes || 5)),
+      goalBpm: x.ex.goalBpm || target, ramp: { enabled: x.ramp === false ? false : RAMP_ON[block], step: lad.step, max: lad.max, rungs: lad.rungs },
+      fromTree: false, ...(x.note ? { note: x.note } : {}), ...(x.ex.songId ? { songId: x.ex.songId } : {}), ...(x.extra || {}), targetBpm: target
+    };
+  });
+  const order = ORDER;
+  out.sort((a, b) => order.indexOf(a.block) - order.indexOf(b.block));
+  if (budget != null && out.length) {
+    const sum = out.reduce((a, i) => a + i.minutes, 0);
+    out.forEach(i => { i.minutes = Math.max(MIN_ITEM, round05(i.minutes * budget / sum)); });
+    fit(out, Math.max(budget, out.length * MIN_ITEM));
+  }
+  return { id: uid(), courseId: null, courseName: title, genre, createdAt: Date.now(), date: today(), budget, focusSkillId: null, focusTitle: focus, items: out, coach: null, kind, songId };
 }
 
 /** Split the budget across blocks by share; keep the stretch block when time is short. */

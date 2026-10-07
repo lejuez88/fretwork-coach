@@ -16,7 +16,6 @@ a{color:inherit}
 header.top{display:flex;align-items:center;justify-content:space-between;padding:6px 0 14px}
 .logo{font-family:var(--head);letter-spacing:.14em;text-transform:uppercase;font-size:17px;display:flex;align-items:center;gap:10px;text-decoration:none}
 .top-settings{font-size:22px;text-decoration:none;color:var(--muted);padding:6px 10px}
-body.has-tabs .top-settings{display:none}
 .jewel{width:12px;height:12px;border-radius:50%;background:var(--red);box-shadow:0 0 10px var(--red),inset 0 -2px 3px rgba(0,0,0,.4)}
 h1,h2,h3{font-family:var(--head);font-weight:600;letter-spacing:.02em;line-height:1.2;margin:0 0 8px}
 h1{font-size:30px}h2{font-size:24px}h3{font-size:19px}
@@ -452,3 +451,65 @@ details summary{cursor:pointer}
 .dualmeter>div{display:grid;grid-template-columns:62px 1fr 56px;align-items:center;gap:8px;font-size:13px}
 .dualmeter .meter{height:14px}
 .dualmeter b{font:600 13px var(--mono);text-align:right}
+
+/* ---------------------------- Phase D: practice ask box ---------------------------- */
+.sechead{font-size:20px;margin:18px 0 10px}
+.askcard{border-color:rgba(245,165,36,.45)}
+.askbox{display:flex;gap:10px;align-items:stretch;background:var(--inset);border:1px solid var(--line);border-radius:16px;padding:8px}
+.askbox textarea{min-height:52px;border:0;background:transparent;padding:8px 6px;resize:none;flex:1}
+.askbox textarea:focus{outline:none}
+.askbox:focus-within{border-color:var(--amber);box-shadow:0 0 0 3px var(--amber-soft)}
+.askbox .btn{flex:none;align-self:flex-end}
+.askchips{margin-top:10px}
+.chip.sm{min-height:36px;padding:6px 12px;font-size:13px}
+.askresult{margin-top:12px}
+.askex{border:1px solid var(--line);border-left:4px solid var(--bc,var(--amber));border-radius:12px;padding:12px;margin:10px 0;background:rgba(255,255,255,.02)}
+.askex-h{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:4px}
+.askex-h .pblock{width:auto}
+.askex .instr{margin:8px 0}
+.askex-act{margin-top:10px}.askex-act .btn{flex:0 1 auto}
+.askreq{margin:-6px 0 10px 6px}
+.savedhead{margin-top:12px}
+pre.tab.small{font-size:12px;padding:10px}
+
+/* ------------------------------- Phase D: songs ------------------------------- */
+.addsong{display:grid;grid-template-columns:1.4fr 1fr;gap:8px}
+.songlist,.reclist{display:flex;flex-direction:column;gap:2px;margin-top:10px}
+.songrow{display:flex;gap:12px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--line);text-decoration:none}
+.songrow:last-child{border:0}
+.sr-main{display:flex;flex-direction:column;flex:1;min-width:0}
+.sr-main b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chev{color:var(--muted);font-size:24px}
+.reccard{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;padding:12px 0;border-bottom:1px solid var(--line)}
+.reccard:last-child{border:0}
+.rc-main p{margin:6px 0}
+.badge.diff.d1{border-color:var(--green);color:var(--green)}.badge.diff.d2{border-color:var(--amber);color:#ffd48a}.badge.diff.d3{border-color:var(--red);color:#ff8a80}
+.badge.fit{color:#c9b8f0;border-color:#6d5a9c}
+.techs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.techs span{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--inset);border:1px solid var(--line);color:var(--muted)}
+.chipselect{width:auto;min-height:36px;padding:6px 10px;font-size:13px;border-radius:999px}
+.songhead .songtop{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+.songhead h1{font-size:26px;margin:0 0 2px}
+.songfacts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.segtabs.status a{font-size:13px;padding:10px 2px}
+.tempofield .stepper{max-width:360px}
+.tabimport textarea{font:13px/1.35 var(--mono);min-height:150px;white-space:pre;overflow-x:auto}
+.findtabs{align-items:center;margin:8px 0}.findtabs .btn{flex:0 0 auto}
+.tabopts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.tabopts select{margin-top:4px}
+.bargrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:6px;margin:10px 0}
+.bargrid .bar{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--inset);color:var(--text);font:600 14px var(--body);cursor:pointer}
+.bargrid .bar.practiced{border-color:var(--amber-d)}
+.bargrid .bar.mastered{border-color:var(--green);color:var(--green)}
+.bargrid .bar.sel{background:var(--amber);border-color:var(--amber);color:#1b1205}
+.selbar{background:var(--amber-soft);border:1px solid rgba(245,165,36,.45);border-radius:12px;padding:10px 12px;margin:8px 0}
+.selbar .row{margin-top:8px}.selbar .row .btn{flex:1 1 auto}
+.secrow{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)}
+.secrow:last-child{border:0}
+.secrow>span.small.muted{flex:1}
+.linkbtn{background:none;border:0;color:var(--text);text-align:left;font:inherit;cursor:pointer;padding:0;flex:1}
+.lessonplan{margin-top:10px}
+@media(max-width:560px){.addsong{grid-template-columns:1fr}.reccard{grid-template-columns:auto 1fr}.reccard>.btn{grid-column:1/-1}.askbox{flex-direction:column}.askbox .btn{align-self:stretch}.segtabs.status a{font-size:11px}}
+.stepper.s1{grid-template-columns:44px minmax(48px,1fr) 44px}
+.stepper.s1 input{padding:4px 0;min-width:0;font-size:22px}
+.askresult .row .btn.primary{flex:2 1 220px}

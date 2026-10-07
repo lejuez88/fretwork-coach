@@ -38,7 +38,9 @@ export function normalizeTake(take) {
 }
 
 /** Expected events (chords grouped) between from..to (audio-context seconds). */
-export function buildExpected({ notes, swing, totalBeats, bpm, t0, beatsPerBar = 4 }, { from, to }) {
+export function buildExpected({ notes, swing, totalBeats, bpm, t0, beatsPerBar = 4, tuning = STD }, { from, to }) {
+  const TUN = Array.isArray(tuning) && tuning.length === 6 ? tuning : STD;
+  const names = TUN.map((m, i) => { const n = NAMES[((m % 12) + 12) % 12]; return i === 0 && n === 'E' ? 'e' : n; });
   const groups = new Map();
   notes.forEach(n => { const k = n.t.toFixed(4); if (!groups.has(k)) groups.set(k, { t: n.t, notes: [] }); groups.get(k).notes.push(n); });
   const arr = [...groups.values()].sort((a, b) => a.t - b.t);
@@ -48,9 +50,9 @@ export function buildExpected({ notes, swing, totalBeats, bpm, t0, beatsPerBar =
     const prevSingle = prev.notes.length === 1 ? prev.notes[0] : null;
     return {
       pos, t: g.t, isChord: !single,
-      midi: single ? STD[single.s - 1] + single.f : null, s: single ? single.s : null, f: single ? single.f : null,
+      midi: single && single.x !== 'mute' ? TUN[single.s - 1] + single.f : null, s: single ? single.s : null, f: single ? single.f : null,
       tech: single ? single.x || null : null,
-      label: single ? `${'eBGDAE'[single.s - 1]} string fret ${single.f}` : `chord (${g.notes.length} notes)`,
+      label: single ? `${names[single.s - 1]} string fret ${single.f}` : `chord (${g.notes.length} notes)`,
       where: beatLabel(g.t, beatsPerBar),
       stringChange: !!(single && prevSingle && prevSingle.s !== single.s),
       shift: !!(single && prevSingle && Math.abs(prevSingle.f - single.f) >= 4)

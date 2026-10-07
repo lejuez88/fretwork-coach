@@ -32,7 +32,7 @@ function levelStats(x) {
 
 /** Convert any exercise shape to tab-player format, or null if it has no tab. */
 export function playerFormat(ex, bpm) {
-  if (ex.notes && ex.notes.length) return { id: ex.id, name: ex.name, unit: ex.unit, why: ex.why, goalBpm: ex.goalBpm, bpm, notes: ex.notes, swing: !!ex.swing };
+  if (ex.notes && ex.notes.length) return { id: ex.id, name: ex.name, unit: ex.unit, why: ex.why, goalBpm: ex.goalBpm, bpm, notes: ex.notes, swing: !!ex.swing, ...(ex.beats ? { beats: ex.beats } : {}), ...(ex.tuning ? { tuning: ex.tuning } : {}) };
   return toPlayerExercise(ex, bpm);
 }
 function gridSpec(ex) {

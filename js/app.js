@@ -19,6 +19,7 @@ import { mountCourse } from './screens/course.js';
 import { mountRoutineSetup, mountRoutineRunner, mountRoutineSummary } from './screens/routine.js';
 import { mountReassessHub, mountReassessRun } from './screens/reassess.js';
 import { mountEvaluate } from './screens/evaluate.js';
+import { mountSongsHub, mountSongDetail } from './screens/songs.js';
 import { Recorder } from './eval/recorder.js';
 import { Audio as AudioEngine } from './core/audio.js';
 import { applyAudioPrefs } from './ui/audiosetup.js';
@@ -85,7 +86,7 @@ function applySettings() {
   applyAudioPrefs(p);
 }
 
-const needsProfile = new Set(['home', 'tools', 'profile', 'course', 'results', 'practice', 'reassess', 'evaluate']);
+const needsProfile = new Set(['home', 'tools', 'profile', 'course', 'results', 'practice', 'reassess', 'evaluate', 'songs', 'song']);
 
 function route() {
   if (cleanup) { try { cleanup(); } catch { /* ignore */ } cleanup = null; }
@@ -98,7 +99,7 @@ function route() {
   const root = view();
   root.innerHTML = '';
   window.scrollTo(0, 0);
-  const tabFor = { home: 'home', course: 'home', practice: 'practice', reassess: 'profile', evaluate: 'tools', tools: 'tools', profile: 'profile', results: 'profile', settings: 'settings' };
+  const tabFor = { home: 'home', course: 'home', practice: 'practice', reassess: 'profile', evaluate: 'tools', tools: 'tools', profile: 'profile', results: 'profile', songs: 'songs', song: 'songs' };
   Shell.tabs(!!ready && !['welcome', 'onboarding', 'assessment'].includes(page) && !(page === 'reassess' && parts[1] === 'run'), tabFor[page]);
 
   switch (page) {
@@ -143,6 +144,8 @@ function route() {
       else cleanup = mountReassessHub(root, { navigate, preselect: parts[1] || null });
       break;
     case 'evaluate': cleanup = mountEvaluate(root, { navigate, sub: parts[1] || null }); break;
+    case 'songs': cleanup = mountSongsHub(root, { navigate }); break;
+    case 'song': cleanup = mountSongDetail(root, { id: parts[1], navigate }); break;
     case 'settings': cleanup = mountSettings(root, { navigate }); break;
     default: navigate('#/');
   }

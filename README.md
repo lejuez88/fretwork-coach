@@ -16,12 +16,28 @@ To try it on your computer without hosting: run `python3 -m http.server 8000` in
 
 ## Connect Claude
 
-Open **Settings** in the app and paste an Anthropic API key (create one at console.anthropic.com). The key is stored only in your browser's local storage and is not included in profile exports. Calls go straight from your browser to the Anthropic API and are billed to your account. In Phase A, Claude:
+Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create one at console.anthropic.com). The key is stored only in your browser's local storage and is not included in profile exports. Calls go straight from your browser to the Anthropic API and are billed to your account. Claude:
 
-- identifies any guitarist you type in, with their genres, style qualities and signature techniques
-- names your courses so each name is unique to its style and difficulty
+- identifies any guitarist you type in and names your courses
+- writes course plans, song lessons and exercises from your requests
+- looks up and recommends songs, and helps with hard parts of a tab
+- reviews your recorded playing (audio measurements and video frames)
 
-Without a key, the app still works: built-in guitarists can be picked, and course names are generated locally.
+Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
+
+## What's in Phase D
+
+| Area | Included |
+|---|---|
+| Ask for an exercise | Practice tab → “What do you want to work on?”: type a request in your own words (“my bends sound out of tune”, “switching between F and C at 90 BPM”). Claude writes 1–3 exercises for it (drill → main → apply) with tab, a start tempo you can play cleanly and a goal tempo. Try each inline, practice them as a session, save them to “Your exercises”, or add them to your daily routines. Without a key, a built-in library of original drills is matched to your words. |
+| Songs | New Songs tab. Add any song; Claude looks up its key, tuning, tempo, sections and the techniques it needs (built-in data for 100+ well-known songs without a key). Status (want / learning / solid / mastered) feeds your repertoire level. |
+| Recommendations | Real songs matched to your song level and genres: one comfortable pick, mostly stretch songs, one reach. Filter by genre; Claude picks with a key, the built-in list without. |
+| Song lessons | A one-day plan for the time you have: warm-up for the song’s main technique, the next part of the song at a tempo you can play cleanly with a tempo ladder, theory in context, then linking the parts or playing along. Runs in the routine runner and tracks progress per part. |
+| Tab import | Paste or open a text tab (find one with the Songsterr / Ultimate Guitar search links). Bars, rhythm (read from spacing, or pick 8ths/16ths/triplets), techniques and alternate tunings (Drop D etc.) are read. Tap bars to select a part, loop it in the tab player with a tempo ladder, save named parts. |
+| Help with a part | “Help me with this part” on any selected bars: Claude explains what makes it hard, fingering and picking, answers your question and writes drills; offline, the app finds the hardest beat and builds a micro-loop from it. |
+| Check a part | The audio/video evaluator works on any selected bars, in any tuning. |
+
+Claude never writes out a song’s notes or lyrics: it describes the song and writes original drills. The notes you practice come only from the tab you import, which stays in your browser.
 
 ## What's in Phase C
 
@@ -64,21 +80,20 @@ Without a key, the app still works: built-in guitarists can be picked, and cours
 | Tab player | 8 starter exercises, scrolling or stationary tab, guitar tone (on/off), click, loop, count-in, tempo log toward a goal BPM |
 | Data | Saved in the browser, JSON export/import, v1 profiles migrate automatically |
 
-## Roadmap
-
-- **Phase D:** song lessons (a one-day plan for a chosen song), practicing tabs you import with section highlighting and "help me with this part", and song recommendations for your style and level.
-
 ## Project layout
 
 ```
 index.html          app shell
 css/app.css         theme and components
 js/app.js           boot + hash router
-js/core/            store (profile schema + stats), Claude client, Wikipedia images, audio engine, courses, album picks
-js/data/catalog.js  genres, guitarists, albums
+js/core/            store (profile schema + stats), Claude client, Wikipedia images, audio engine, courses, album picks,
+                    course/routine engines, tab parser, songs, drills, custom exercises
+js/data/            genres, guitarists, albums (catalog.js), song list (songs.js)
 js/assessment/      assessment engine (tests, leveling, profile builder)
 js/tools/           pitch detection, tuner, metronome, tab player, exercise library
-js/screens/         onboarding, assessment, dashboard, tools, course, profile, settings
+js/screens/         onboarding, assessment, dashboard, tools, course, routine, songs, evaluate, reassess, profile, settings
+js/eval/            recorder, onset/pitch analysis, latency calibration, coaching
+js/ui/              shell, audio setup, ask box
 sw.js               offline cache
 ```
 
