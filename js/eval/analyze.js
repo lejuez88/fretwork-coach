@@ -24,6 +24,19 @@ function beatLabel(t, bpb = 4) {
   return `bar ${bar}, beat ${whole}${sub}`;
 }
 
+/** Scale a take so its loud notes sit around half scale (quiet interface inputs analyze the same). */
+export function normalizeTake(take) {
+  const x = take.samples; if (!x || !x.length) return take;
+  const step = Math.max(1, Math.floor(x.length / 200000)), vals = [];
+  for (let i = 0; i < x.length; i += step) vals.push(Math.abs(x[i]));
+  vals.sort((a, b) => a - b);
+  const ref = vals[Math.floor(vals.length * 0.999)] || 0;
+  if (ref < 1e-4 || (ref > 0.3 && ref < 0.8)) return take;
+  const g = 0.5 / ref, y = new Float32Array(x.length);
+  for (let i = 0; i < x.length; i++) y[i] = x[i] * g;
+  return { ...take, samples: y };
+}
+
 /** Expected events (chords grouped) between from..to (audio-context seconds). */
 export function buildExpected({ notes, swing, totalBeats, bpm, t0, beatsPerBar = 4 }, { from, to }) {
   const groups = new Map();
@@ -95,6 +108,7 @@ export function align(events, onsets, latency = 0, { range = 0.3, pick = null } 
  * take: {samples, sampleRate, startTime}; player: tab-player timing(); opts: {latency (s), calibrated, endTime}
  */
 export function analyzeTab(take, player, { latency = 0, calibrated = false, endTime } = {}) {
+  take = normalizeTake(take);
   const sr = take.sampleRate, x = take.samples;
   const env = spectralFlux(x, sr);
   const onsets = detectOnsets(x, sr, { env }).map(o => ({ ...o, time: o.time + take.startTime }));
@@ -223,6 +237,7 @@ export function analyzeTab(take, player, { latency = 0, calibrated = false, endT
 
 /** Rhythm-only analysis against the metronome grid (chords, strumming, improv). */
 export function analyzeGrid(take, { t0, bpm, subdiv = 4, swing = false }, { latency = 0, calibrated = false, endTime } = {}) {
+  take = normalizeTake(take);
   const sr = take.sampleRate, x = take.samples, spb = 60 / bpm;
   const end = endTime || take.startTime + x.length / sr;
   let onsets = detectOnsets(x, sr).map(o => ({ ...o, time: o.time + take.startTime })).filter(o => o.time >= t0 - 0.06 && o.time <= end);

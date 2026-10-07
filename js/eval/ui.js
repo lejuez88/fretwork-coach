@@ -13,7 +13,8 @@ import { Metronome } from '../tools/metronome.js';
 import { Shell } from '../ui/shell.js';
 import { Recorder } from './recorder.js';
 import { analyzeTab, analyzeGrid, summarize } from './analyze.js';
-import { currentLatency, calibrate } from './latency.js';
+import { currentLatency, calibrate, saveLatency } from './latency.js';
+import { inputSummaryHTML, openAudioSheet } from '../ui/audiosetup.js';
 import { localFeedback, claudeFeedback, toPrescriptionExercises } from './coach.js';
 
 const FOCUS = { full: 'Whole guitar + both hands', fretting: 'Fretting-hand close-up', picking: 'Picking-hand close-up' };
@@ -22,6 +23,12 @@ const FOCUS_TIP = {
   fretting: 'Put the camera about 40 cm from the neck, looking at the fretting hand from the front, thumb visible if possible.',
   picking: 'Put the camera about 40 cm from the strings, looking at the picking hand from the front and slightly above.'
 };
+
+function levelStats(x) {
+  let pk = 0, clip = 0;
+  for (let i = 0; i < x.length; i++) { const v = Math.abs(x[i]); if (v > pk) pk = v; if (v >= 0.995) clip++; }
+  return { peakDb: Math.round(20 * Math.log10(Math.max(1e-6, pk))), clipped: clip > 10 };
+}
 
 /** Convert any exercise shape to tab-player format, or null if it has no tab. */
 export function playerFormat(ex, bpm) {
@@ -75,23 +82,25 @@ export function mountEvalSession(el, { profile = Store.profile, exercise, bpm, m
           <p class="small muted">${FOCUS_TIP[S.focus]}</p>
           <div class="chips"><button class="chip ${S.facing === 'user' ? 'on' : ''}" data-ev="facing" data-v="user">Front camera</button><button class="chip ${S.facing === 'environment' ? 'on' : ''}" data-ev="facing" data-v="environment">Back camera</button></div>
           ${Claude.hasKey() ? '' : '<p class="note warn">Video form review needs your Claude API key (Settings). Without it, only the audio is analyzed.</p>'}</div>` : ''}
-        <label class="switch"><input type="checkbox" data-r="hp" ${S.headphones ? 'checked' : ''}> I’m using headphones</label>
+        <div class="field"><label>Input</label>${inputSummaryHTML(profile)}</div>
+        ${Audio.isDirect() ? '' : `<label class="switch"><input type="checkbox" data-r="hp" ${S.headphones ? 'checked' : ''}> I’m using headphones</label>`}
         <p class="small">${latencyLine()} <a href="javascript:void 0" class="link small" data-ev="calib">${currentLatency(profile.settings).calibrated ? 'Recalibrate' : 'Calibrate now'}</a></p>
-        <p class="small muted">Tips: quiet room, guitar 30–60 cm from the mic, amp or unplugged acoustic at normal volume. The click switches to a high “tick” the analyzer ignores.</p>
+        <p class="small muted">${Audio.isDirect() ? 'Direct input: the cleanest signal. Turn off amp-sim effects with heavy delay/reverb if you can; a little drive is fine.' : 'Tips: quiet room, guitar 30–60 cm from the mic, amp or unplugged acoustic at normal volume. The click switches to a high “tick” the analyzer ignores.'}</p>
         <button class="btn primary block" data-ev="start">● Start recording</button>
       </div>`;
   }
 
   /* ------------------------------ Calibration ----------------------------- */
   async function runCalibration() {
-    const hp = S.headphones;
-    const sheet = Shell.sheet(`<h2>Calibrate timing</h2><p class="muted small">${hp ? 'With headphones the app can’t hear its own click, so you’ll tap along: mute the strings with your fretting hand and strike them exactly on each click (4 count-in clicks, then 12).' : 'The app plays 8 ticks through your speakers and listens for them. Stay quiet, volume up, no headphones.'}</p><p data-r="cst" class="small"></p><button class="btn primary block" data-r="cgo">Start</button>`);
+    const hp = S.headphones || Audio.isDirect();
+    const why = Audio.isDirect() ? 'Your guitar is plugged in directly, so the input can’t hear the speakers. You’ll tap along instead:' : 'With headphones the app can’t hear its own click, so you’ll tap along:';
+    const sheet = Shell.sheet(`<h2>Calibrate timing</h2><p class="small muted">For: ${esc(Audio.inputLabel())}</p><p class="muted small">${hp ? why + ' mute the strings with your fretting hand and strike them exactly on each click (4 count-in clicks, then 12).' : 'The app plays 8 ticks through your speakers and listens for them. Stay quiet, volume up, no headphones.'}</p><p data-r="cst" class="small"></p><button class="btn primary block" data-r="cgo">Start</button>`);
     const st = sheet.el.querySelector('[data-r="cst"]');
     sheet.el.querySelector('[data-r="cgo"]').addEventListener('click', async e => {
       e.target.disabled = true;
       try {
         const r = await calibrate(hp ? 'tap' : 'loopback', t => { st.textContent = t; });
-        profile.settings.latency = { ms: r.ms, method: r.method, spreadMs: r.spreadMs, at: Date.now() };
+        saveLatency(profile.settings, r);
         Store.save(); st.textContent = `✓ Calibrated: ${r.ms} ms (±${r.spreadMs} ms).`; st.className = 'small ok';
         setTimeout(() => { sheet.close(); render(); }, 900);
       } catch (err) { st.textContent = err.message || String(err); st.className = 'small bad'; e.target.disabled = false; e.target.textContent = 'Try again'; Audio.clickStyle = 'normal'; }
@@ -109,8 +118,9 @@ export function mountEvalSession(el, { profile = Store.profile, exercise, bpm, m
       Audio.get();
       if (S.mode === 'video') {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('Camera access needs a secure (https) page.');
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: S.facing, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
-        src = Audio.ctx.createMediaStreamSource(stream);
+        ({ stream } = await Audio.getInputStream({ video: { facingMode: S.facing, width: { ideal: 1280 }, height: { ideal: 720 } } }));
+        const tr = stream.getAudioTracks()[0], st = tr && tr.getSettings ? tr.getSettings() : {};
+        src = Audio.channelNode(Audio.ctx.createMediaStreamSource(stream), st.channelCount || 1, Audio.input.channel);
       } else src = await Audio.openMic();
     } catch (e) {
       toast(e.name === 'NotAllowedError' ? `${S.mode === 'video' ? 'Camera/microphone' : 'Microphone'} permission was denied. Allow it in your browser’s site settings.` : (e.message || 'Could not start recording.'), 5000);
@@ -199,6 +209,7 @@ export function mountEvalSession(el, { profile = Store.profile, exercise, bpm, m
         ? analyzeTab(take, timing, { latency: L.sec, calibrated: L.calibrated, endTime: stopAt })
         : analyzeGrid(take, { t0: fromTime, bpm: S.bpm, ...gridSpec(exercise) }, { latency: L.sec, calibrated: L.calibrated, endTime: stopAt });
     } catch (e) { S.metrics = { error: 'Analysis failed: ' + (e.message || e) }; }
+    if (!S.metrics.error && take) S.metrics.input = Object.assign({ source: Audio.inputLabel() }, levelStats(take.samples));
     S.feedback = S.metrics.error ? null : localFeedback(S.metrics, exercise, { level: context.level || exercise.level || 4 });
     S.phase = 'results';
     persist();
@@ -319,6 +330,7 @@ export function mountEvalSession(el, { profile = Store.profile, exercise, bpm, m
           ${tile('Drift', Math.abs(t.driftMsPer10s) < 10 ? 'steady' : (t.driftMsPer10s < 0 ? 'speeding up' : 'slowing down'))}
           ${tile('Evenness', '±' + m.dynamics.sdDb + ' dB', m.dynamics.sdDb <= 3 ? 'ok' : '')}
         </div>
+        ${m.input ? `<p class="small muted">Recorded from ${esc(m.input.source || '')} · peak ${m.input.peakDb} dBFS${m.input.clipped ? ' · <span class="bad">clipping: turn the input gain down</span>' : m.input.peakDb < -36 ? ' · <span class="bad">very quiet: turn the gain up</span>' : ''}</p>` : ''}
         ${m.pitch && m.pitch.tuningCents != null && Math.abs(m.pitch.tuningCents) >= 12 ? `<p class="note warn">Your guitar sounds ${Math.abs(m.pitch.tuningCents)} cents ${m.pitch.tuningCents < 0 ? 'flat' : 'sharp'}. <a class="link" href="#/tools/tuner">Tune up</a></p>` : ''}
         ${timelineSVG(m.points, m.bpm)}
         ${m.problems && m.problems.length ? `<div class="fbblock"><div class="label">Trouble spots</div>${m.problems.map(p => `<div class="fbrow">• <b>${esc(p.where)}</b> (${esc(p.note)})${p.miss ? ` · missed ${Math.round(p.miss * 100)}%` : ''}${p.timingMs > 20 ? ` · ±${p.timingMs} ms` : ''}${p.wrongPitch ? ` · wrong pitch ${Math.round(p.wrongPitch * 100)}%` : ''}${p.stringChange ? ' · string change' : ''}${p.shift ? ' · position shift' : ''}</div>`).join('')}</div>` : ''}
@@ -332,6 +344,7 @@ export function mountEvalSession(el, { profile = Store.profile, exercise, bpm, m
 
   /* -------------------------------- Events -------------------------------- */
   const onClick = e => {
+    if (e.target.closest('[data-audio="change"]')) { openAudioSheet(profile, () => { if (S.phase === 'setup') render(); }); return; }
     const b = e.target.closest('[data-ev]'); if (!b) return;
     const a = b.dataset.ev;
     if (a === 'mode') { S.mode = b.dataset.v; return render(); }

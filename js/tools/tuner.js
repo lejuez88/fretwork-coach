@@ -3,6 +3,8 @@
 import { Audio } from '../core/audio.js';
 import { detectPitch, rms, freqToMidi, midiToFreq, midiName, median, NOTE_NAMES } from './pitch.js';
 import { esc } from '../core/util.js';
+import { Store } from '../core/store.js';
+import { inputSummaryHTML, openAudioSheet } from '../ui/audiosetup.js';
 
 export const TUNINGS = {
   standard: { label: 'Standard (E A D G B E)', notes: [40, 45, 50, 55, 59, 64] },
@@ -40,6 +42,7 @@ export function mountTuner(el, settings, onSettings) {
     <div class="tuner-read"><span data-r="cents">— ¢</span><span data-r="hz">— Hz</span><span data-r="target">Auto</span></div>
     <div class="tuner-status" data-r="status">Tap Start and play one string at a time.</div>
     <button class="btn primary block" data-r="go">🎤 Start tuner</button>
+    <div data-r="inline">${Store.profile ? inputSummaryHTML(Store.profile) : ''}</div>
   </div>
   <div class="card">
     <div class="label">Strings</div>
@@ -140,6 +143,11 @@ export function mountTuner(el, settings, onSettings) {
 
   el.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.audio === 'change') {
+      const was = running; if (running) stop();
+      openAudioSheet(Store.profile, () => { const il = r('inline'); if (il) il.innerHTML = inputSummaryHTML(Store.profile); if (was) start(); });
+      return;
+    }
     if (b.dataset.r === 'go') return running ? stop() : start();
     if (b.dataset.a4) { a4 = Math.max(415, Math.min(466, a4 + Number(b.dataset.a4))); r('a4').textContent = a4; onSettings({ referenceA4: a4 }); return; }
     if (b.dataset.t != null) {

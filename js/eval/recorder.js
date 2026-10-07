@@ -47,7 +47,7 @@ export const Recorder = {
     if (ctx.audioWorklet && window.AudioWorkletNode) {
       if (!moduleReady) moduleReady = ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([WORKLET], { type: 'application/javascript' })));
       await moduleReady;
-      node = new AudioWorkletNode(ctx, 'fc-recorder', { numberOfInputs: 1, numberOfOutputs: 1, channelCount: 1 });
+      node = new AudioWorkletNode(ctx, 'fc-recorder', { numberOfInputs: 1, numberOfOutputs: 1, channelCount: 1, channelCountMode: 'explicit', channelInterpretation: 'speakers' });
       let resolveStop, stopping = false, stopTimer = null;
       const stopped = new Promise(r => { resolveStop = r; });
       node.port.onmessage = e => { onChunk(e.data.frame, e.data.data); if (stopping) { clearTimeout(stopTimer); stopTimer = setTimeout(resolveStop, 60); } };

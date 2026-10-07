@@ -444,3 +444,11 @@ input[type=time]{width:100%;background:#0f0d11;border:1px solid var(--line);colo
 .playback{width:100%;border-radius:10px;margin-top:8px;background:#000}
 details summary{cursor:pointer}
 @media(max-width:560px){.evres .stats{grid-template-columns:repeat(2,1fr)}.segtabs.four a{font-size:12px}}
+
+/* ---------- Audio input setup ---------- */
+.inputline{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--inset);margin-top:10px}
+.inputline span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.dualmeter{display:grid;gap:8px}
+.dualmeter>div{display:grid;grid-template-columns:62px 1fr 56px;align-items:center;gap:8px;font-size:13px}
+.dualmeter .meter{height:14px}
+.dualmeter b{font:600 13px var(--mono);text-align:right}

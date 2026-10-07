@@ -31,7 +31,8 @@ Without a key, the app still works: built-in guitarists can be picked, and cours
 | Video form check | Films you (front or back camera, framing guide for full view / fretting hand / picking hand), sends 10 key frames plus the audio measurements to Claude, which reviews posture and both hands frame by frame. You can watch and save the take. |
 | Coaching | Claude turns the numbers (and frames) into strengths, issues with evidence, and up to 3 prescribed exercises. Rule-based feedback works without a key. |
 | Prescriptions | Accepted prescriptions are added to your routines (first in the stretch block) and progress with the same tempo rules. |
-| Timing calibration | Speaker loopback test or headphone tap-along test measures your device's latency so early/late can be judged exactly. |
+| Audio input | Settings → Audio input & output: pick any input device (built-in mic, audio interface such as a Focusrite Scarlett, amp/pedal USB), choose which input the guitar is on (Input 1 / Input 2 / mix) with a live two-channel meter that detects it for you, and route the click to your interface's outputs. Quiet direct-input signals are normalized before analysis. |
+| Timing calibration | Speaker loopback test (microphone) or tap-along test (headphones or direct input) measures latency per input device, so early/late can be judged exactly. |
 | Routine integration | “Evaluate this take” on any exercise records it and fills in the tempo and clean/not-clean result from the measurement. |
 
 ### Also new

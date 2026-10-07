@@ -4,6 +4,7 @@ import { Store, normalize } from '../core/store.js';
 import { Claude, MODELS } from '../core/claude.js';
 import { Wiki } from '../core/wiki.js';
 import { exportProfile } from './profile.js';
+import { mountAudioSetup } from '../ui/audiosetup.js';
 
 export function importFile(file, onDone) {
   const r = new FileReader();
@@ -33,6 +34,7 @@ export function mountSettings(root, { navigate }) {
       <div class="row"><button class="btn primary" data-s="save">Save key</button><button class="btn" data-s="test">Test connection</button></div>
       <p class="small" data-r="status">${key ? 'A key is saved.' : 'No key saved yet. Get one at console.anthropic.com.'}</p>
     </section>
+    ${p ? `<section class="card"><h3>Audio input & output</h3><p class="muted small">Used by the tuner and playing evaluations. Pick your audio interface (e.g. a Focusrite Scarlett), amp/pedal USB, or microphone.</p><div data-r="audio"></div></section>` : ''}
     ${p ? `<section class="card">
       <h3>Display</h3>
       <label class="switch"><input type="checkbox" data-r="wiki" ${p.settings.wikiImages ? 'checked' : ''}> Load artist and album photos from Wikipedia</label>
@@ -74,5 +76,7 @@ export function mountSettings(root, { navigate }) {
     if (e.target.dataset.r === 'import' && e.target.files[0]) importFile(e.target.files[0], () => navigate('#/home'));
   };
   root.addEventListener('click', onClick); root.addEventListener('change', onChange);
-  return () => { root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); };
+  const audioSlot = root.querySelector('[data-r="audio"]');
+  const offAudio = audioSlot ? mountAudioSetup(audioSlot, { profile: p }) : null;
+  return () => { if (offAudio) offAudio(); root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); };
 }

@@ -21,6 +21,7 @@ import { mountReassessHub, mountReassessRun } from './screens/reassess.js';
 import { mountEvaluate } from './screens/evaluate.js';
 import { Recorder } from './eval/recorder.js';
 import { Audio as AudioEngine } from './core/audio.js';
+import { applyAudioPrefs } from './ui/audiosetup.js';
 
 const view = () => $('#view');
 let cleanup = null;
@@ -81,6 +82,7 @@ function applySettings() {
   const p = Store.profile; if (!p) return;
   Claude.model = p.settings.model || Claude.model;
   Wiki.enabled = p.settings.wikiImages !== false;
+  applyAudioPrefs(p);
 }
 
 const needsProfile = new Set(['home', 'tools', 'profile', 'course', 'results', 'practice', 'reassess', 'evaluate']);

@@ -18,6 +18,7 @@ export const Audio = {
       const body = this.ctx.createBiquadFilter(); body.type = 'peaking'; body.frequency.value = 220; body.gain.value = 3; body.Q.value = 1;
       this.guitarBus = this.ctx.createGain(); this.guitarBus.gain.value = 0.9;
       this.guitarBus.connect(body); body.connect(lp); lp.connect(this.master);
+      if (this.outputId && this.ctx.setSinkId) this.ctx.setSinkId(this.outputId).catch(() => {});
     }
     if (this.ctx.state === 'suspended') this.ctx.resume();
     return this.ctx;
@@ -106,28 +107,107 @@ export const Audio = {
     else if (a.type === 'chord') { a.notes.forEach((n, i) => this.guitar(n, t + i * 0.32, { dur: 1, gain: 0.5 })); this.strum(a.notes, t + a.notes.length * 0.32 + 0.35, { dur: 2 }); }
   },
 
-  /* ---------------------------- Microphone ---------------------------- */
-  mic: null, micSource: null, micUsers: 0,
+  /* ------------------- Audio input (microphone or interface) ------------------- */
+  // input prefs: {deviceId, label, channel: 'mix' | 0 | 1, type: 'mic' | 'direct'}
+  input: { deviceId: '', label: '', channel: 'mix', type: 'mic' },
+  outputId: '',
+  mic: null, micSource: null, micOut: null, micUsers: 0, micInfo: null,
+
+  setInputPrefs(prefs) {
+    const next = Object.assign({ deviceId: '', label: '', channel: 'mix', type: 'mic' }, prefs || {});
+    const changed = next.deviceId !== this.input.deviceId || next.channel !== this.input.channel;
+    this.input = next;
+    if (changed) this.resetMic();
+  },
+  isDirect() { return this.input.type === 'direct'; },
+
+  /** Raw-signal constraints for the chosen device (no echo cancellation/noise suppression/AGC). */
+  audioConstraints(deviceId = this.input.deviceId) {
+    const a = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: { ideal: 2 }, sampleRate: { ideal: 48000 } };
+    if (deviceId) a.deviceId = { exact: deviceId };
+    return a;
+  },
+
+  /** Open the chosen input (optionally with video). Falls back to a same-named device, then the default. */
+  async getInputStream(extra = {}) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('Audio input needs a secure (https) page.');
+    const tryOpen = id => navigator.mediaDevices.getUserMedia(Object.assign({ audio: this.audioConstraints(id) }, extra));
+    try { return { stream: await tryOpen(this.input.deviceId), fellBack: false }; }
+    catch (e) {
+      if (!this.input.deviceId || !['OverconstrainedError', 'NotFoundError', 'NotReadableError'].includes(e.name)) throw e;
+      // The saved deviceId can change between sessions: match by name, else use the default input
+      try {
+        const devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput');
+        const same = this.input.label && devs.find(d => d.label === this.input.label);
+        if (same) { this.input.deviceId = same.deviceId; return { stream: await tryOpen(same.deviceId), fellBack: false, renamed: true }; }
+      } catch { /* ignore */ }
+      return { stream: await tryOpen(''), fellBack: true };
+    }
+  },
+
+  /** Pick one channel of a multi-input device (e.g. Scarlett input 1) or downmix to mono. */
+  channelNode(source, channels, channel) {
+    const c = this.get();
+    if (channels >= 2 && (channel === 0 || channel === 1)) {
+      const split = c.createChannelSplitter(Math.max(2, channels));
+      const g = c.createGain(); g.channelCount = 1; g.channelCountMode = 'explicit';
+      source.connect(split); split.connect(g, channel);
+      return g;
+    }
+    const mono = c.createGain(); mono.channelCount = 1; mono.channelCountMode = 'explicit'; mono.channelInterpretation = 'speakers';
+    source.connect(mono);
+    return mono;
+  },
+
+  /** Shared input node for the tuner, calibration and audio evaluation. */
   async openMic() {
     const c = this.get(); if (!c) throw new Error('Web Audio is not supported in this browser.');
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('Microphone access needs a secure (https) page.');
     if (!this.mic) {
-      // Raw signal: echo cancellation, noise suppression and AGC all distort pitch.
-      this.mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
-      this.micSource = c.createMediaStreamSource(this.mic);
+      const { stream, fellBack } = await this.getInputStream();
+      this.mic = stream;
+      this.micSource = c.createMediaStreamSource(stream);
+      const tr = stream.getAudioTracks()[0], st = tr && tr.getSettings ? tr.getSettings() : {};
+      const channels = st.channelCount || 1;
+      this.micInfo = { label: (tr && tr.label) || 'Default input', deviceId: st.deviceId || '', channels, fellBack, latency: st.latency || null, sampleRate: st.sampleRate || c.sampleRate };
+      this.micOut = this.channelNode(this.micSource, channels, this.input.channel);
     }
     this.micUsers++;
-    return this.micSource;
+    return this.micOut;
   },
   closeMic() {
     this.micUsers = Math.max(0, this.micUsers - 1);
-    if (!this.micUsers && this.mic) {
-      this.mic.getTracks().forEach(t => t.stop());
-      try { this.micSource.disconnect(); } catch { /* ignore */ }
-      this.mic = null; this.micSource = null;
-    }
+    if (!this.micUsers) this.resetMic();
+  },
+  resetMic() {
+    this.micUsers = 0;
+    if (this.mic) this.mic.getTracks().forEach(t => t.stop());
+    try { this.micSource && this.micSource.disconnect(); this.micOut && this.micOut.disconnect(); } catch { /* ignore */ }
+    this.mic = null; this.micSource = null; this.micOut = null;
+  },
+  /** Human description of the current input. */
+  inputLabel() {
+    const name = (this.micInfo && this.micInfo.label) || this.input.label || 'Default input';
+    const ch = this.input.channel === 0 ? ' · Input 1' : this.input.channel === 1 ? ' · Input 2' : '';
+    return name.replace(/\s*\([0-9a-f]{4}:[0-9a-f]{4}\)\s*$/i, '') + ch;
+  },
+
+  /** Devices (labels appear once the user has granted microphone access). */
+  async listDevices() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return { inputs: [], outputs: [], labeled: false };
+    const devs = await navigator.mediaDevices.enumerateDevices();
+    const inputs = devs.filter(d => d.kind === 'audioinput'), outputs = devs.filter(d => d.kind === 'audiooutput');
+    return { inputs, outputs, labeled: inputs.some(d => d.label) };
+  },
+  outputSupported() { const AC = window.AudioContext || window.webkitAudioContext; return !!(AC && AC.prototype && 'setSinkId' in AC.prototype); },
+  async setOutput(deviceId) {
+    this.outputId = deviceId || '';
+    const c = this.ctx;
+    if (c && c.setSinkId) { try { await c.setSinkId(this.outputId); } catch { /* device gone: stay on current output */ } }
   }
 };
+
+/** Interfaces and amp/pedal USB inputs are usually direct (line/instrument) inputs. */
+export const DIRECT_INPUT_RE = /focusrite|scarlett|clarett|audient|\bid4\b|\bid14\b|motu|presonus|audiobox|steinberg|\bur\d|universal audio|apollo|\bvolt\b|babyface|\brme\b|line ?6|helix|pod go|boss|katana|\bgt-1|zoom|fractal|axe-fx|kemper|neural|quad cortex|irig|behringer|umc|m-audio|arturia|minifuse|ssl \d|tascam|roland|yamaha|positive grid|spark|usb audio codec|interface/i;
 
 /** Standard chord voicings (MIDI) used for backing loops. */
 export const CHORD_MIDI = {
