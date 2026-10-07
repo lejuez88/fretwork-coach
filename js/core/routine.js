@@ -6,7 +6,7 @@
 import { uid, today } from './util.js';
 import { Claude } from './claude.js';
 import { GENRE_BY_ID } from '../data/catalog.js';
-import { ensureState, allSkills, activeSkills, reviewDue } from './progression.js';
+import { ensureState, allSkills, activeSkills, reviewDue, calibratedTarget, tempoLadder, newExerciseState } from './progression.js';
 import { fallbackExercises } from './coursegen.js';
 
 export const BLOCKS = {
@@ -27,14 +27,27 @@ const cloneEx = e => JSON.parse(JSON.stringify(e));
  * budget: minutes number, or null for "no time limit". focusSkillId optionally forces the stretch skill.
  */
 export function buildRoutine(profile, course, { budget = null, focusSkillId = null } = {}) {
-  const st = ensureState(course);
+  const st = ensureState(course, profile);
   const fb = fallbackExercises(course);
-  const exState = id => st.exercises[id] || { target: null };
-  const item = (block, ex, skill, extra = {}) => ({
-    key: uid(), block, exId: ex.id, skillId: skill ? skill.id : null, skillTitle: skill ? skill.title : null,
-    ex: cloneEx(ex), minutes: ex.minutes || 5, targetBpm: exState(ex.id).target || ex.startBpm, goalBpm: ex.goalBpm,
-    fromTree: !!skill, ...extra
-  });
+  st.extras = st.extras || {};
+  const exState = id => st.exercises[id] || st.extras[id] || { target: null };
+  // Non-tree exercises (warm-ups, fallback drills) also progress, stored in course.state.extras
+  const extraTarget = ex => {
+    if (!st.extras[ex.id]) st.extras[ex.id] = newExerciseState(calibratedTarget(ex, ex.level || course.difficulty || 4, profile));
+    else if (!st.extras[ex.id].history.length) st.extras[ex.id].target = calibratedTarget(ex, ex.level || course.difficulty || 4, profile);
+    return st.extras[ex.id].target;
+  };
+  const RAMP_ON = { stretch: true, review: true, theory: false, music: false, warmup: false };
+  const item = (block, ex, skill, extra = {}) => {
+    const targetBpm = extra.targetBpm || (skill ? exState(ex.id).target : extraTarget(ex)) || ex.startBpm;
+    const lad = tempoLadder(targetBpm, Math.max(ex.goalBpm, targetBpm));
+    return {
+      key: uid(), block, exId: ex.id, skillId: skill ? skill.id : null, skillTitle: skill ? skill.title : null,
+      ex: cloneEx(ex), minutes: ex.minutes || 5, goalBpm: ex.goalBpm,
+      ramp: { enabled: RAMP_ON[block], step: lad.step, max: lad.max, rungs: lad.rungs },
+      fromTree: !!skill, ...extra, targetBpm
+    };
+  };
 
   const active = activeSkills(course);
   const focus = (focusSkillId && allSkills(course).find(s => s.id === focusSkillId)) || active[0] || allSkills(course)[0];
@@ -50,6 +63,13 @@ export function buildRoutine(profile, course, { budget = null, focusSkillId = nu
     stretch.push(take('stretch', e, s, es.stalled ? { note: `Stalled: ${e.simplify || 'slow down and isolate the hardest move'}` } : {}));
   }
   if (!stretch.length && focus) stretch.push(take('stretch', focus.exercises[0], focus, { variation: 'Mastered: push 5 BPM past the goal or play it in a new position' }));
+
+  // Prescriptions from evaluations go first in the stretch block (max 2)
+  const rxs = (profile.prescriptions || []).filter(r => r.status === 'active' && (!r.courseId || r.courseId === course.id)).slice(0, 2);
+  rxs.reverse().forEach(r => {
+    const it = item('stretch', r.ex, null, { prescriptionId: r.id, targetBpm: r.state.target, note: `From your ${r.source || 'evaluation'}: ${r.reason}` });
+    stretch.unshift(it); if (stretch.length > 4) stretch.pop();
+  });
 
   // Review: due mastered skills (harder variation), else earlier in-progress work
   const review = [];
@@ -67,7 +87,7 @@ export function buildRoutine(profile, course, { budget = null, focusSkillId = nu
   const stretchDomain = stretch[0] ? stretch[0].ex.domain : 'fretting';
   const warmPrefs = stretchDomain === 'picking' ? [fb.crossing, fb.warm] : stretchDomain === 'rhythm' ? [fb.subdiv, fb.warm] : [fb.warm, fb.subdiv];
   const warmEx = warmPrefs.find(e => !picked.has(e.id)) || fb.crossing;
-  const warmup = [item('warmup', warmEx, null, { targetBpm: Math.round(warmEx.startBpm * 0.9), variation: 'Easy tempo; focus on relaxation' })];
+  const warmup = [item('warmup', warmEx, null, { targetBpm: Math.round(extraTarget(warmEx) * 0.9), variation: 'Easy tempo, about 90% of your target; focus on relaxation' })];
 
   // Theory: a theory/fretboard exercise from the tree near the focus, else the key-chords drill
   const theoryCand = allSkills(course).filter(s => ['theory', 'fretboard', 'ear'].includes(s.domain) && st.skills[s.id].status !== 'locked')

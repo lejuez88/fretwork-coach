@@ -23,6 +23,23 @@ Open **Settings** in the app and paste an Anthropic API key (create one at conso
 
 Without a key, the app still works: built-in guitarists can be picked, and course names are generated locally.
 
+## What's in Phase C
+
+| Area | Included |
+|---|---|
+| Audio check | Records you playing an exercise along with the click (AudioWorklet, sample-accurate). Detects every note onset (to about 1 ms), aligns it to the tab, and measures: notes played, wrong notes (judged from the new energy at each onset, so ringing strings don't confuse it), timing spread, rushing/dragging, drift, volume evenness, weak hammer-ons/pull-offs, tuning, and the exact trouble spots (string changes, position shifts). Exercises without tab get a rhythm-only check against the click grid. |
+| Video form check | Films you (front or back camera, framing guide for full view / fretting hand / picking hand), sends 10 key frames plus the audio measurements to Claude, which reviews posture and both hands frame by frame. You can watch and save the take. |
+| Coaching | Claude turns the numbers (and frames) into strengths, issues with evidence, and up to 3 prescribed exercises. Rule-based feedback works without a key. |
+| Prescriptions | Accepted prescriptions are added to your routines (first in the stretch block) and progress with the same tempo rules. |
+| Timing calibration | Speaker loopback test or headphone tap-along test measures your device's latency so early/late can be judged exactly. |
+| Routine integration | “Evaluate this take” on any exercise records it and fills in the tempo and clean/not-clean result from the measurement. |
+
+### Also new
+- **Continue assessment:** test only the skill areas you skipped or stopped early on; harder tests on demand; levels update without touching courses.
+- **Level-matched starting tempos:** every exercise starts at a tempo your current level suggests you can play cleanly; the first two sessions calibrate it.
+- **Tempo ladders:** exercises step up automatically (+3–5 BPM every 2 loops or 4 bars) toward the goal; log the highest clean tempo you reached.
+- **Levels that learn:** clean results in routines, tools and evaluations feed your skill levels; courses suggest a rebuild when you outgrow them.
+
 ## What's in Phase B
 
 | Area | Included |
@@ -48,7 +65,6 @@ Without a key, the app still works: built-in guitarists can be picked, and cours
 
 ## Roadmap
 
-- **Phase C:** playing evaluation from the microphone (timing and note accuracy against the tab, measured locally, interpreted by Claude) and video form review (key frames sent to Claude), which add targeted exercises to your routine.
 - **Phase D:** song lessons (a one-day plan for a chosen song), practicing tabs you import with section highlighting and "help me with this part", and song recommendations for your style and level.
 
 ## Project layout

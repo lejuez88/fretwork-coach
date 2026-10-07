@@ -9,6 +9,7 @@ import { DOMAINS } from '../assessment/engine.js';
 import { Shell } from '../ui/shell.js';
 import { progressPct } from '../core/progression.js';
 import { hasActiveRoutine } from './routine.js';
+import { estimatedCount } from './reassess.js';
 
 export function mountDashboard(root, { navigate }) {
   const p = Store.profile;
@@ -30,6 +31,7 @@ export function mountDashboard(root, { navigate }) {
         : `<section class="card routine-cta"><div class="label">Today’s routine</div><h3>Build a session for the time you have</h3>
         <p class="muted small">Warm-up, review, stretch, theory and music, timed exercise by exercise from your course plan.</p>
         <a class="btn primary block" href="#/practice">▶ Start today’s routine</a></section>`}
+      ${estimatedCount(p) ? `<section class="card nudge"><div><b>Finish your assessment</b><div class="small muted">${estimatedCount(p)} skill area${estimatedCount(p) > 1 ? 's are' : ' is'} estimated or untested at the harder levels, so lessons may start too easy.</div></div><a class="btn sm primary" href="#/reassess">Continue</a></section>` : ''}
       <section class="card session ${act ? 'live' : ''}">${act ? liveSession(act) : idleSession(open)}</section>
 
       <section class="stats">

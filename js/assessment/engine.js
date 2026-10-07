@@ -393,11 +393,11 @@ const Assessment = {
     ds.phase='feedback';
   },
   zone(s){return s>=.9?'pass':s>=.7?'edge':'fail'},
-  next(p,key){
+  next(p,key,max=3){
     const recs=this.state(p,key).tests, last=recs[recs.length-1];
     if(!last) return {stop:true,why:''};
     const tiers=testsFor(key), tried=new Set(recs.map(r=>r.id));
-    if(recs.length>=3) return {stop:true,why:'Three tests is enough to place you.'};
+    if(recs.length>=max) return {stop:true,why:`${max} tests is enough to place you.`};
     if(last.score>=.9){
       const blockedAbove=recs.some(r=>r.level>last.level&&r.score<.9);
       const harder=tiers.find(t=>t.level>last.level&&!tried.has(t.id));
@@ -479,7 +479,7 @@ const REVIEW_VARIATION = {fretting:'+5 BPM or a new chord pair',picking:'+5 BPM'
 const THEORY_TOPIC_CONCEPT = {notes:'Note names on the fretboard',intervals:'Intervals',major:'Major scale',penta:'Pentatonic scales',chords:'Chord construction',keys:'Keys & key signatures',modes:'Modes'};
 
 const ProfileBuilder = {
-  build(p){
+  build(p,label='Onboarding assessment'){
     const q=p.questionnaire, today=U.today();
     const pri=Leveling.priors(q); p.assessment.priors=pri; p.assessment.date=today;
     const results={};
@@ -500,8 +500,8 @@ const ProfileBuilder = {
     p.weaknesses=this.weaknesses(p);
     p.focus=this.focus(p);
     const lv=DOMAINS.map(d=>`${d.short} ${p.domains[d.key].level}`).join(', ');
-    p.sessionLog=(p.sessionLog||[]).filter(s=>s.focus!=='Onboarding assessment'||s.date!==today);
-    p.sessionLog.push({date:today,focus:'Onboarding assessment',result:`Levels: ${lv}. First focus: ${DOMAIN_BY_KEY[p.focus.domain].name}.`});
+    p.sessionLog=(p.sessionLog||[]).filter(s=>s.focus!==label||s.date!==today);
+    p.sessionLog.push({date:today,focus:label,result:`Levels: ${lv}. First focus: ${DOMAIN_BY_KEY[p.focus.domain].name}.`});
     p.meta.updated=today;
     return p;
   },
@@ -581,7 +581,7 @@ const ProfileText = {
     const goals=[...q.goals.map(g=>lab(OPT.goals,g)),q.goalsOther.trim()].filter(Boolean).join('; ')||'—';
     const eq=q.equipment;
     const equip=[eq.guitar?lab(OPT.guitar,eq.guitar)+' guitar':'',eq.gear.map(g=>lab(OPT.gear,g)).join(', '),`metronome: ${eq.metronome==='yes'?'yes':'this app'}`,`looper: ${eq.looper||'no'}`,`DAW: ${eq.daw.trim()||'none'}`].filter(Boolean).join('; ');
-    const L=k=>d[k]?d[k].level:'?', E=k=>d[k]?d[k].edge+(d[k].basis==='estimated'?' [estimated]':''):'';
+    const L=k=>d[k]?d[k].level:'?', E=k=>d[k]?d[k].edge+(d[k].basis==='estimated'?' [estimated]':'')+(d[k].lessonNote?' '+d[k].lessonNote:''):'';
     const songs=p.repertoire.filter(s=>s.title.trim()).map(s=>`${s.title.trim()} (${s.status}, ${s.difficulty})`).join('; ')||'none yet';
     const lines=[
       `PLAYER PROFILE — updated ${p.meta.updated}`,

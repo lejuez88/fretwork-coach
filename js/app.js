@@ -6,6 +6,7 @@ import { Wiki } from './core/wiki.js';
 import { chooseAlbum } from './core/recommend.js';
 import { createStarterCourses } from './core/courses.js';
 import { ProfileBuilder } from './assessment/engine.js';
+import { rebuildProfile, ensureAssessed, recomputeLevels } from './core/skills.js';
 import { Metronome } from './tools/metronome.js';
 import { Shell } from './ui/shell.js';
 import { mountOnboarding } from './screens/onboarding.js';
@@ -16,6 +17,10 @@ import { mountProfile } from './screens/profile.js';
 import { mountSettings, importFile } from './screens/settings.js';
 import { mountCourse } from './screens/course.js';
 import { mountRoutineSetup, mountRoutineRunner, mountRoutineSummary } from './screens/routine.js';
+import { mountReassessHub, mountReassessRun } from './screens/reassess.js';
+import { mountEvaluate } from './screens/evaluate.js';
+import { Recorder } from './eval/recorder.js';
+import { Audio as AudioEngine } from './core/audio.js';
 
 const view = () => $('#view');
 let cleanup = null;
@@ -33,7 +38,7 @@ function workingProfile() {
 async function finishAssessment(p) {
   view().innerHTML = '<section class="card center"><div class="spinner"></div><h2>Building your profile…</h2><p class="muted">Calculating levels and creating your first courses.</p></section>';
   Shell.actions('');
-  ProfileBuilder.build(p);
+  rebuildProfile(p);
   await createStarterCourses(p);
   Store.replace(p); Store.draft.clear(); working = null;
   chooseAlbum(Store.profile); Store.save();
@@ -78,7 +83,7 @@ function applySettings() {
   Wiki.enabled = p.settings.wikiImages !== false;
 }
 
-const needsProfile = new Set(['home', 'tools', 'profile', 'course', 'results', 'practice']);
+const needsProfile = new Set(['home', 'tools', 'profile', 'course', 'results', 'practice', 'reassess', 'evaluate']);
 
 function route() {
   if (cleanup) { try { cleanup(); } catch { /* ignore */ } cleanup = null; }
@@ -91,8 +96,8 @@ function route() {
   const root = view();
   root.innerHTML = '';
   window.scrollTo(0, 0);
-  const tabFor = { home: 'home', course: 'home', practice: 'practice', tools: 'tools', profile: 'profile', results: 'profile', settings: 'settings' };
-  Shell.tabs(!!ready && !['welcome', 'onboarding', 'assessment'].includes(page), tabFor[page]);
+  const tabFor = { home: 'home', course: 'home', practice: 'practice', reassess: 'profile', evaluate: 'tools', tools: 'tools', profile: 'profile', results: 'profile', settings: 'settings' };
+  Shell.tabs(!!ready && !['welcome', 'onboarding', 'assessment'].includes(page) && !(page === 'reassess' && parts[1] === 'run'), tabFor[page]);
 
   switch (page) {
     case 'welcome': cleanup = welcome(root); break;
@@ -105,7 +110,7 @@ function route() {
         onComplete: () => {
           if (Object.keys(p.domains).length && Object.keys(p.assessment.domains).length) {
             // Editing answers of an existing profile: recompute without retesting
-            ProfileBuilder.build(p); Store.replace(p); Store.draft.clear(); working = null; navigate('#/profile');
+            rebuildProfile(p, 'Setup answers updated'); Store.replace(p); Store.draft.clear(); working = null; navigate('#/profile');
           } else navigate('#/assessment');
         }
       });
@@ -131,16 +136,23 @@ function route() {
       else if (parts[1] === 'summary') cleanup = mountRoutineSummary(root, { navigate });
       else cleanup = mountRoutineSetup(root, { navigate, courseId: parts[1] === 'course' ? parts[2] : null, skillId: parts[1] === 'course' ? parts[3] || null : null });
       break;
+    case 'reassess':
+      if (parts[1] === 'run') cleanup = mountReassessRun(root, { navigate });
+      else cleanup = mountReassessHub(root, { navigate, preselect: parts[1] || null });
+      break;
+    case 'evaluate': cleanup = mountEvaluate(root, { navigate, sub: parts[1] || null }); break;
     case 'settings': cleanup = mountSettings(root, { navigate }); break;
     default: navigate('#/');
   }
 }
 
 function boot() {
+  if (window.__FC_TEST__) window.__fc = { Recorder, Store, Audio: AudioEngine };
   Store.load();
   if (Store.profile) {
-    Store.save(); // migrates a v1 profile to v2 storage
     applySettings();
+    if (Object.keys(Store.profile.domains).length) { ensureAssessed(Store.profile); recomputeLevels(Store.profile); }
+    Store.save(); // migrates older profiles
     if (Object.keys(Store.profile.domains).length) { chooseAlbum(Store.profile); Store.save(); }
   }
   window.addEventListener('hashchange', route);

@@ -1,6 +1,6 @@
 // Offline cache for the app shell. Network-first for app files so updates show
 // up on the next load; images from Wikipedia are cached as they are viewed.
-const CACHE = 'fretwork-v2b-1';
+const CACHE = 'fretwork-v2c-1';
 const SHELL = [
   './', 'index.html', 'css/app.css', 'manifest.json', 'icon.svg',
   'js/app.js', 'js/core/util.js', 'js/core/store.js', 'js/core/claude.js', 'js/core/wiki.js', 'js/core/audio.js',
@@ -8,7 +8,9 @@ const SHELL = [
   'js/tools/metronome.js', 'js/tools/pitch.js', 'js/tools/tuner.js', 'js/tools/tabplayer.js', 'js/tools/exercises.js',
   'js/ui/shell.js', 'js/screens/onboarding.js', 'js/screens/assessment.js', 'js/screens/dashboard.js',
   'js/screens/tools.js', 'js/screens/profile.js', 'js/screens/settings.js', 'js/screens/course.js',
-  'js/screens/routine.js', 'js/core/routine.js', 'js/core/progression.js', 'js/core/coursegen.js'
+  'js/screens/routine.js', 'js/core/routine.js', 'js/core/progression.js', 'js/core/coursegen.js',
+  'js/core/skills.js', 'js/screens/reassess.js', 'js/screens/evaluate.js',
+  'js/eval/dsp.js', 'js/eval/analyze.js', 'js/eval/recorder.js', 'js/eval/latency.js', 'js/eval/coach.js', 'js/eval/ui.js'
 ];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {

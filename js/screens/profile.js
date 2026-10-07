@@ -5,6 +5,7 @@ import { Store } from '../core/store.js';
 import { DOMAINS, DOMAIN_BY_KEY, Charts, ProfileText } from '../assessment/engine.js';
 import { wikiTile, hydrateImages } from '../core/wiki.js';
 import { GENRE_BY_ID } from '../data/catalog.js';
+import { domainStatus } from './reassess.js';
 
 export function exportProfile(p) {
   const blob = new Blob([JSON.stringify(p, null, 2)], { type: 'application/json' });
@@ -26,11 +27,17 @@ export function mountProfile(root, { navigate, firstRun = false }) {
   const lv = Object.fromEntries(DOMAINS.map(x => [x.key, d[x.key] ? d[x.key].level : 1]));
   const sorted = [...DOMAINS].sort((a, b) => lv[b.key] - lv[a.key]);
   const top = sorted.filter(x => lv[x.key] === lv[sorted[0].key]), low = sorted.filter(x => lv[x.key] === lv[sorted[sorted.length - 1].key]);
-  const q = p.questionnaire;
+  const q = p.questionnaire, ds = domainStatus(p);
+  const open = DOMAINS.filter(x => ds[x.key].status !== 'placed' && x.key !== 'repertoire');
+  let flash = null; try { flash = sessionStorage.getItem('fretworkCoach.flash'); sessionStorage.removeItem('fretworkCoach.flash'); } catch { /* ignore */ }
+  if (flash) setTimeout(() => toast(flash, 5000), 50);
   root.innerHTML = `
     <div class="label">${firstRun ? 'Your results' : 'Player Profile'} · ${esc(p.meta.updated)}</div>
     <h1>${esc(q.name || 'Player')}’s Player Profile</h1>
     ${firstRun ? `<section class="card"><p>Your starter course${p.courses.length > 1 ? 's are' : ' is'} ready: ${p.courses.map(c => `<b>${esc(c.name)}</b>`).join(' and ')}.</p><a class="btn primary block" href="#/home">Go to my dashboard →</a></section>` : ''}
+    ${open.length ? `<section class="card levelup"><div class="label">Assessment not finished</div>
+      <p>${open.map(x => `<b>${esc(x.name)}</b>`).join(', ')} ${open.length === 1 ? 'is' : 'are'} ${open.some(x => ds[x.key].status === 'estimated') ? 'only estimated or ' : ''}stopped before the harder tests, so ${open.length === 1 ? 'that level' : 'those levels'} may be too low.</p>
+      <a class="btn primary block" href="#/reassess">Continue assessment</a></section>` : ''}
     <section class="card grille">${Charts.radar(lv)}${Charts.bars(lv)}</section>
     <section class="card"><div class="kpis">
       <div class="kpi"><div class="k">Strongest</div><div class="v">${top.map(x => x.name).join(', ')} · ${lv[top[0].key]}</div></div>
@@ -39,13 +46,16 @@ export function mountProfile(root, { navigate, firstRun = false }) {
       <p style="margin-top:12px">${esc(p.focus.reason || '')}</p></section>
     ${q.players.length ? `<section class="card"><h3>Players you’re learning from</h3><div class="pcards">${q.players.map(pl => `<div class="pcard">${wikiTile(pl.wikiTitle || pl.name, pl.name, 'round sm')}<div class="pbody"><b>${esc(pl.name)}</b><div class="muted small">${esc((pl.genres || []).map(g => GENRE_BY_ID[g] ? GENRE_BY_ID[g].name : g).join(' · '))}</div><div class="small">${esc(pl.style || '')}</div></div></div>`).join('')}</div></section>` : ''}
     <section class="card edgelist"><h3>Current edges</h3>
-      ${DOMAINS.map(x => `<div class="e"><div class="h"><span>${x.name}<span class="tag">${esc(d[x.key] ? d[x.key].basis : '')}</span></span><span>${lv[x.key]}/10</span></div><div class="muted small">${esc(d[x.key] ? d[x.key].edge : '')}</div></div>`).join('')}</section>
+      ${DOMAINS.map(x => { const dm = d[x.key] || {}; return `<div class="e"><div class="h"><span>${x.name}<span class="tag">${esc(dm.basis || '')}</span></span><span>${lv[x.key]}/10</span></div>
+        <div class="muted small">${esc(dm.edge || '')}</div>
+        ${dm.lessonNote ? `<div class="small lesson">📈 ${esc(dm.lessonNote)}${dm.assessedLevel != null && dm.assessedLevel !== dm.level ? ` Assessed ${dm.assessedLevel}, now ${dm.level} from lessons.` : ''}</div>` : ''}
+        ${x.key !== 'repertoire' && ds[x.key].status !== 'placed' ? `<a class="link small" href="#/reassess/${x.key}">${ds[x.key].status === 'estimated' ? 'Test this area →' : 'Test further →'}</a>` : ''}</div>`; }).join('')}</section>
     <section class="card"><h3>Player Profile text</h3><p class="muted small">Paste this into a coaching chat.</p>
       <pre class="profile">${esc(ProfileText.render(p))}</pre>
       <button class="btn primary block" data-pf="copy">Copy profile</button></section>
     <section class="card"><h3>Manage</h3>
       <div class="row"><button class="btn" data-pf="export">Export (JSON)</button><a class="btn" href="#/settings">Import & settings</a></div>
-      <div class="row" style="margin-top:10px"><button class="btn" data-pf="retake">Retake assessment</button><button class="btn" data-pf="edit">Edit setup answers</button></div></section>`;
+      <div class="row" style="margin-top:10px"><a class="btn" href="#/reassess">Continue assessment</a><button class="btn" data-pf="retake">Retake everything</button><button class="btn" data-pf="edit">Edit setup answers</button></div></section>`;
   hydrateImages(root);
   const onClick = e => {
     const b = e.target.closest('[data-pf]'); if (!b) return;

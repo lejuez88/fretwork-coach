@@ -8,9 +8,10 @@ import { noteMidi, exerciseBeats } from './exercises.js';
 
 const ROW = 18, TOP = 26, BOTTOM = 12, PAD = 28;
 
-export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, onLog = null, beatsPerBar = 4, startBpm = null, compact = false, onBpm = null } = {}) {
+export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, onLog = null, beatsPerBar = 4, startBpm = null, compact = false, onBpm = null, ramp = null, evalMode = false } = {}) {
   const state = {
-    bpm: startBpm || ex.bpm || 80, sound: settings.tabAudio !== false, scroll: settings.tabScroll !== false,
+    ramp: ramp ? Object.assign({ enabled: true, everyLoops: 2 }, ramp) : null, rampedLoops: 0, peakBpm: 0,
+    bpm: startBpm || ex.bpm || 80, sound: !evalMode && settings.tabAudio !== false, scroll: settings.tabScroll !== false,
     click: true, loop: true, countIn: true, playing: false, t0: 0, nextIdx: 0, loopN: 0, raf: null, sched: null, clickBeat: 0
   };
   const total = exerciseBeats(ex, beatsPerBar);
@@ -35,8 +36,9 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
     </div>
     <input type="range" min="30" max="${Math.max(240, (ex.goalBpm || 0) + 40)}" value="${state.bpm}" data-r="range" aria-label="Tempo">
     <div class="tp-meter" data-r="meter"></div>
-    <div class="row"><button class="btn primary" data-r="play">▶ Play</button>${onLog ? '<button class="btn" data-r="log">Log this tempo</button>' : ''}</div>
-    <div class="toggles">
+    <div class="row" ${evalMode ? 'hidden' : ''}><button class="btn primary" data-r="play">▶ Play</button>${onLog ? '<button class="btn" data-r="log">Log this tempo</button>' : ''}</div>
+    ${state.ramp ? `<div class="ramp-row">${toggle('rampOn', 'Tempo ladder', state.ramp.enabled)}<span class="small muted" data-r="ramptxt"></span></div>` : ''}
+    <div class="toggles" ${evalMode ? 'hidden' : ''}>
       ${toggle('sound', 'Guitar sound', state.sound)}${toggle('click', 'Click', state.click)}
       ${toggle('scroll', 'Scrolling tab', state.scroll)}${toggle('loop', 'Loop', state.loop)}${toggle('countIn', 'Count-in', state.countIn)}
     </div>
@@ -84,9 +86,13 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
   const spb = () => 60 / state.bpm;
   function currentBeat() { return (Audio.now() - state.t0) / spb(); }
 
+  function rampText() {
+    const R = state.ramp, t = r('ramptxt'); if (!R || !t) return;
+    t.textContent = R.enabled ? `+${R.step} BPM every ${R.everyLoops} loop${R.everyLoops > 1 ? 's' : ''}, up to ${R.max}` : 'Holding this tempo';
+  }
   function play() {
     const c = Audio.get(); if (!c) return toast('Audio is not supported here.');
-    state.playing = true; state.nextIdx = 0; state.loopN = 0; state.clickBeat = state.countIn ? -beatsPerBar : 0;
+    state.playing = true; state.nextIdx = 0; state.loopN = 0; state.rampedLoops = 0; state.peakBpm = state.bpm; state.clickBeat = state.countIn ? -beatsPerBar : 0;
     const lead = 0.12 + (state.countIn ? beatsPerBar * spb() : 0);
     state.t0 = c.currentTime + lead;
     state.sched = setInterval(schedule, 25); schedule();
@@ -100,6 +106,21 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
   }
   function schedule() {
     const c = Audio.ctx, ahead = c.currentTime + 0.15;
+    // Tempo ladder: step the tempo at loop boundaries, keeping the boundary on time
+    if (state.ramp && state.loop) {
+      const nextBoundary = (state.rampedLoops + 1) * total, boundaryTime = state.t0 + nextBoundary * spb();
+      if (boundaryTime < ahead) {
+        state.rampedLoops++;
+        const R = state.ramp;
+        if (R.enabled && state.rampedLoops % R.everyLoops === 0 && state.bpm < R.max) {
+          state.bpm = Math.min(R.max, state.bpm + R.step);
+          state.t0 = boundaryTime - nextBoundary * spb();
+          state.peakBpm = Math.max(state.peakBpm, state.bpm);
+          const v = state.bpm;
+          setTimeout(() => { if (!el.isConnected) return; r('bpm').textContent = v; r('range').value = v; r('bpm').classList.toggle('goal-hit', !!ex.goalBpm && v >= ex.goalBpm); if (onBpm) onBpm(v); }, Math.max(0, (boundaryTime - c.currentTime) * 1000));
+        }
+      }
+    }
     // Clicks (including count-in)
     while (state.t0 + state.clickBeat * spb() < ahead) {
       const b = state.clickBeat, t = state.t0 + b * spb();
@@ -175,6 +196,9 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
     if (b.dataset.d) setBpm(state.bpm + Number(b.dataset.d));
     else if (b.dataset.r === 'play') state.playing ? stop() : play();
     else if (b.dataset.r === 'log') { onLog({ exerciseId: ex.id, name: ex.name, tempo: state.bpm, goalBpm: ex.goalBpm || null }); }
+    else if (b.dataset.tg === 'rampOn' && state.ramp) {
+      state.ramp.enabled = !state.ramp.enabled; b.classList.toggle('on', state.ramp.enabled); b.setAttribute('aria-pressed', state.ramp.enabled); rampText();
+    }
     else if (b.dataset.tg) {
       const k = b.dataset.tg; state[k] = !state[k];
       b.classList.toggle('on', state[k]); b.setAttribute('aria-pressed', state[k]);
@@ -189,8 +213,15 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
   render();
   setBpm(state.bpm);
 
+  rampText();
   const cleanup = () => { stop(); if (ro) ro.disconnect(); };
   cleanup.getBpm = () => state.bpm;
+  cleanup.getPeakBpm = () => Math.max(state.peakBpm, state.bpm);
   cleanup.stop = stop;
+  cleanup.play = () => { if (!state.playing) play(); };
+  cleanup.isPlaying = () => state.playing;
+  cleanup.set = (k, v) => { state[k] = v; };
+  /** Timing info for the evaluator: beat 0 of loop 1 happens at t0 (audio-context seconds). */
+  cleanup.timing = () => ({ t0: state.t0, bpm: state.bpm, totalBeats: total, notes, swing: !!ex.swing, beatsPerBar, playing: state.playing });
   return cleanup;
 }

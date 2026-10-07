@@ -41,8 +41,11 @@ export function emptyProfile() {
     practiceLog: [],         // {id, date, start, minutes, source, courseId, genre, note}
     exerciseLog: [],         // Phase B: {date, exerciseId, tempo, goalTempo, mastered}
     evaluations: [],         // Phase C: audio/video evaluation results
+    prescriptions: [],       // Phase C: exercises prescribed by evaluations {id, ex, reason, status, state, ...}
+    skillEvidence: {},       // lesson results that feed live skill levels (key → {domain, level, frac, value, ...})
+    levelHistory: [],        // {date, domain, from, to}
     dashboard: { albumHistory: [] },
-    settings: { referenceA4: 440, tuning: 'standard', tabAudio: true, tabScroll: true, wikiImages: true, model: 'claude-sonnet-5-5' }
+    settings: { referenceA4: 440, tuning: 'standard', tabAudio: true, tabScroll: true, wikiImages: true, model: 'claude-sonnet-5-5', latency: null, headphones: false }
   };
 }
 
@@ -68,7 +71,8 @@ export function normalize(p) {
     dashboard: Object.assign(b.dashboard, p.dashboard || {}),
     settings: Object.assign(b.settings, p.settings || {})
   });
-  ['courses', 'practiceLog', 'exerciseLog', 'evaluations', 'repertoire', 'sessionLog', 'activeExercises', 'reviewQueue', 'weaknesses']
+  if (!out.skillEvidence || typeof out.skillEvidence !== 'object' || Array.isArray(out.skillEvidence)) out.skillEvidence = {};
+  ['courses', 'practiceLog', 'exerciseLog', 'evaluations', 'prescriptions', 'levelHistory', 'repertoire', 'sessionLog', 'activeExercises', 'reviewQueue', 'weaknesses']
     .forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
   return out;
 }

@@ -6,7 +6,9 @@ import { Audio } from '../core/audio.js';
 import { Claude } from '../core/claude.js';
 import { buildRoutine, rebudget, coachBriefing, BLOCKS } from '../core/routine.js';
 import { buildCourseTree, toPlayerExercise } from '../core/coursegen.js';
-import { recordResult, markReviewed, progressPct, ensureState } from '../core/progression.js';
+import { recordResult, recordPrescription, applyResult, newExerciseState, markReviewed, progressPct, ensureState } from '../core/progression.js';
+import { addEvidence, recomputeLevels } from '../core/skills.js';
+import { openEvalSheet } from '../eval/ui.js';
 import { mountTabPlayer } from '../tools/tabplayer.js';
 import { Metronome, mountMetronome } from '../tools/metronome.js';
 import { chordSVG } from '../assessment/engine.js';
@@ -183,6 +185,7 @@ export function mountRoutineRunner(root, { navigate }) {
         <h2>${esc(ex.name)}</h2>
         <div class="tempo-row"><span>Today’s target <b>${it.targetBpm}</b></span><span>Goal <b class="goal">${it.goalBpm}</b> BPM</span>${es && es.best ? `<span>Best <b>${es.best}</b></span>` : ''}</div>
         <div class="bar thin"><i style="width:${Math.min(100, Math.round(((es ? es.target : it.targetBpm) - ex.startBpm) / Math.max(1, it.goalBpm - ex.startBpm) * 100))}%"></i></div>
+        ${it.ramp && it.ramp.rungs && it.ramp.rungs.length > 1 ? `<div class="ladder"><span class="muted small">Tempo ladder</span>${it.ramp.rungs.map(v => `<span class="rung ${v === it.targetBpm ? 'start' : ''}" data-rung="${v}">${v}</span>`).join('<i>›</i>')}</div>` : ''}
         ${it.note ? `<div class="note warn">⚠ ${esc(it.note)}</div>` : ''}${it.variation ? `<div class="note">↻ ${esc(it.variation)}</div>` : ''}
         ${ex.why ? `<p class="why">${esc(ex.why)} <span class="muted">${esc(B.why)}</span></p>` : `<p class="why">${esc(B.why)}</p>`}
         ${coachText ? `<p class="coach">${esc(coachText)}</p>` : ''}
@@ -191,6 +194,7 @@ export function mountRoutineRunner(root, { navigate }) {
         ${ex.watch ? `<div class="watch">⚠ Watch for: ${esc(ex.watch)}</div>` : ''}
         ${ex.chords && ex.chords.length ? `<div class="diagrams">${ex.chords.map(chordSVG).join('')}</div>` : ''}
         <div data-r="tool"></div>
+        <button class="btn block evalbtn" data-r="evaluate">🎤 Evaluate this take</button>
       </section>
       <div class="row run-ctrl"><button class="btn" data-r="pause">${A.pausedAt ? '▶ Resume' : '❚❚ Pause'}</button><button class="btn" data-r="time">⏱ Change time</button><button class="btn ghost" data-r="end">End session</button></div>`;
     Shell.actions(`<button class="btn" data-r="skip">Skip</button><button class="btn primary" data-r="next">Done → log tempo</button>`);
@@ -202,26 +206,39 @@ export function mountRoutineRunner(root, { navigate }) {
   function mountTool() {
     const it = cur(), slot = root.querySelector('[data-r="tool"]');
     const px = toPlayerExercise(it.ex, it.targetBpm);
+    const R = it.ramp && it.ramp.rungs && it.ramp.rungs.length > 1 ? it.ramp : null;
+    const start = A.lastToolBpm || it.targetBpm;
+    peak = Math.max(peak, start);
     if (px) {
-      tool = mountTabPlayer(slot, px, { settings: p.settings, onSettings: patch => { Object.assign(p.settings, patch); Store.save(); }, startBpm: it.targetBpm, compact: true });
+      tool = mountTabPlayer(slot, px, { settings: p.settings, onSettings: patch => { Object.assign(p.settings, patch); Store.save(); }, startBpm: start, compact: true,
+        ramp: R ? { enabled: R.enabled, step: R.step, everyLoops: 2, max: R.max } : null, onBpm: v => { peak = Math.max(peak, v); markRung(v); } });
     } else {
-      Metronome.configure({ bpm: it.targetBpm, mode: 'all', backing: it.ex.backing && it.ex.backing.length ? it.ex.backing : null, beatsPerBar: 4, subdiv: 1 });
+      Metronome.configure({ bpm: start, mode: it.ex.metroMode || 'all', backing: it.ex.backing && it.ex.backing.length ? it.ex.backing : null, beatsPerBar: 4, subdiv: 1,
+        ramp: R ? { enabled: R.enabled, step: R.step, everyBars: 4, max: R.max } : null });
       offMetro = mountMetronome(slot, { compact: false });
+      const offBpm = Metronome.on(e => { if (e.type === 'bpm') { peak = Math.max(peak, e.bpm); markRung(e.bpm); } });
+      const o = offMetro; offMetro = () => { o(); offBpm(); };
     }
+    markRung(start);
   }
+  function markRung(v) { root.querySelectorAll('.rung').forEach(x => x.classList.toggle('on', +x.dataset.rung <= v)); }
+  let peak = 0;
   const toolBpm = () => (tool && tool.getBpm ? tool.getBpm() : Metronome.bpm);
 
   function renderResult() {
     teardownTool();
-    const it = cur(), bpm = A.lastToolBpm || it.targetBpm;
+    const it = cur(), bpm = A.prefill ? A.prefill.tempo : (A.lastToolBpm || it.targetBpm);
+    const reached = [...new Set([...(it.ramp && it.ramp.rungs || []), it.targetBpm, A.peakBpm || 0])].filter(v => v && v <= Math.max(A.peakBpm || 0, it.targetBpm)).sort((a, b) => a - b);
     root.querySelector('[data-r="tool"]').innerHTML = `
       <div class="result-step"><h3>How did it go?</h3>
-        <label class="mini">Tempo you finished at</label>
+        ${A.prefill ? `<div class="note">🎤 Measured: ${esc(A.prefill.summary)}</div>` : ''}
+        <label class="mini">Highest tempo you played cleanly (or where you stopped)</label>
+        ${reached.length > 1 ? `<div class="quick">${reached.map(v => `<button class="chip" data-rset="${v}">${v}</button>`).join('')}</div>` : ''}
         <div class="stepper"><button data-rs="-5">−5</button><button data-rs="-1">−1</button><input type="number" inputmode="numeric" data-r="rtempo" value="${bpm}"><button data-rs="1">+1</button><button data-rs="5">+5</button></div>
         <div class="unit">BPM · target ${it.targetBpm} · goal ${it.goalBpm}</div>
         <p class="small" style="margin-top:12px">Clean means 4 reps in a row with no flubbed notes, at that tempo.</p>
-        <div class="rubric"><button data-clean="1"><span class="n">✓</span><span>Clean at this tempo</span></button>
-        <button data-clean="0"><span class="n">~</span><span>Not clean yet</span></button></div>
+        <div class="rubric"><button data-clean="1" class="${A.prefill && A.prefill.clean ? 'on' : ''}"><span class="n">✓</span><span>Clean at this tempo</span></button>
+        <button data-clean="0" class="${A.prefill && !A.prefill.clean ? 'on' : ''}"><span class="n">~</span><span>Not clean yet</span></button></div>
       </div>`;
     Shell.actions('<button class="btn" data-r="back">← Back to exercise</button>');
   }
@@ -248,17 +265,27 @@ export function mountRoutineRunner(root, { navigate }) {
     it.actualMin = Math.round(itemElapsed() / 6) / 10;
     let decision = null;
     if (result) {
+      const res = { tempo: result.tempo, clean: result.clean, date: today() };
       if (course && it.fromTree) {
-        decision = recordResult(course, it.exId, { tempo: result.tempo, clean: result.clean, date: today() });
+        decision = recordResult(course, it.exId, res);
         if (it.isReview && result.clean) markReviewed(course, it.skillId);
-      } else decision = { decision: result.clean ? 'hold' : 'retry', message: result.clean ? `Clean at ${result.tempo} BPM.` : `Logged ${result.tempo} BPM.` };
+      } else if (it.prescriptionId) {
+        decision = recordPrescription(p, it.prescriptionId, res);
+      } else if (course) {
+        const st = ensureState(course); st.extras = st.extras || {};
+        const es = st.extras[it.exId] || (st.extras[it.exId] = newExerciseState(it.targetBpm));
+        decision = applyResult(es, it.ex, res);
+      }
+      if (!decision) decision = { decision: result.clean ? 'hold' : 'retry', message: result.clean ? `Clean at ${result.tempo} BPM.` : `Logged ${result.tempo} BPM.` };
+      addEvidence(p, { key: (it.fromTree ? A.routine.courseId + ':' : '') + it.exId, domain: it.ex.domain, label: it.ex.name, level: decision.level || it.ex.level || (course && course.difficulty) || 4, tempo: result.tempo, goal: it.goalBpm, clean: result.clean, source: 'routine' });
+      A.prefill = null; A.peakBpm = 0;
       p.exerciseLog.push({ date: today(), at: Date.now(), exerciseId: it.exId, name: it.ex.name, courseId: A.routine.courseId, tempo: result.tempo, goalBpm: it.goalBpm, clean: result.clean, mastered: decision && decision.decision === 'mastered', source: 'routine' });
       toast(decision.message, 3800);
     }
     A.results.push({ key: it.key, name: it.ex.name, block: it.block, minutes: it.actualMin, tempo: result ? result.tempo : null, clean: result ? result.clean : null, skipped: !result, decision: decision ? decision.decision : 'skipped', message: decision ? decision.message : 'Skipped' });
     Store.save();
     if (A.idx >= A.routine.items.length - 1) return finish();
-    A.idx++; A.itemStart = Date.now(); A.itemPaused = 0; A.alerted = false; A.lastToolBpm = null; phase = 'play';
+    A.idx++; A.itemStart = Date.now(); A.itemPaused = 0; A.alerted = false; A.lastToolBpm = null; A.prefill = null; A.peakBpm = 0; peak = 0; phase = 'play';
     saveActive(A); render(); window.scrollTo(0, 0);
   }
 
@@ -268,9 +295,10 @@ export function mountRoutineRunner(root, { navigate }) {
     const minutes = Math.round(activeMs / 6000) / 10;
     if (minutes >= 0.5) p.practiceLog.push({ id: Math.random().toString(36).slice(2, 10), date: today(new Date(A.startedAt)), start: A.startedAt, minutes, source: 'routine', courseId: A.routine.courseId, genre: A.routine.genre, note: A.routine.focusTitle });
     if (course) { course.progress = progressPct(course); course.lastPracticed = today(); }
+    const levelChanges = recomputeLevels(p);
     p.sessionLog.push({ date: today(), focus: `${A.routine.courseName}: ${A.routine.focusTitle}`, result: A.results.filter(r => !r.skipped).map(r => `${r.name} ${r.tempo} BPM${r.clean ? ' clean' : ''}`).join('; ') || 'no results logged' });
     Store.save();
-    const summary = { ...A, minutes, finishedAt: Date.now(), progress: course ? course.progress : null };
+    const summary = { ...A, minutes, finishedAt: Date.now(), progress: course ? course.progress : null, levelChanges };
     saveActive(null);
     try { sessionStorage.setItem('fretworkCoach.lastSummary', JSON.stringify(summary)); } catch { /* ignore */ }
     navigate('#/practice/summary');
@@ -307,11 +335,21 @@ export function mountRoutineRunner(root, { navigate }) {
     if (d.r === 'time') return changeTime();
     if (d.r === 'end') { if (confirm('End the session now? Time so far is logged.')) finish(); return; }
     if (d.rs) { const inp = root.querySelector('[data-r="rtempo"]'); inp.value = Math.max(20, (+inp.value || 0) + Number(d.rs)); return; }
+    if (d.rset) { root.querySelector('[data-r="rtempo"]').value = d.rset; return; }
+    if (d.r === 'evaluate') {
+      const it = cur(); A.lastToolBpm = toolBpm(); teardownTool();
+      openEvalSheet({
+        profile: p, exercise: it.ex, bpm: A.lastToolBpm || it.targetBpm, context: { courseId: A.routine.courseId, exId: it.exId, level: it.ex.level || (course && course.difficulty) || 4, source: 'routine' },
+        onUse: r => { A.prefill = { tempo: r.tempo, clean: r.clean, summary: r.summary }; A.peakBpm = Math.max(A.peakBpm || 0, r.tempo); phase = 'result'; saveActive(A); render(); },
+        onClose: () => { if (phase === 'play') { teardownTool(); mountTool(); } }
+      });
+      return;
+    }
     if (d.clean != null) { const v = +root.querySelector('[data-r="rtempo"]').value; if (!v) return toast('Enter the tempo.'); advance({ tempo: v, clean: d.clean === '1' }); }
   };
   const barClick = e => {
     const b = e.target.closest('button'); if (!b) return;
-    if (b.dataset.r === 'next') { A.lastToolBpm = toolBpm(); phase = 'result'; saveActive(A); renderResult(); }
+    if (b.dataset.r === 'next') { A.lastToolBpm = toolBpm(); A.peakBpm = Math.max(peak, toolBpm(), tool && tool.getPeakBpm ? tool.getPeakBpm() : 0); phase = 'result'; saveActive(A); renderResult(); }
     else if (b.dataset.r === 'skip') advance(null);
     else if (b.dataset.r === 'back') { phase = 'play'; render(); }
   };
@@ -325,7 +363,7 @@ export function mountRoutineRunner(root, { navigate }) {
 export function mountRoutineSummary(root, { navigate }) {
   let S = null; try { S = JSON.parse(sessionStorage.getItem('fretworkCoach.lastSummary') || 'null'); } catch { /* ignore */ }
   if (!S) { navigate('#/home'); return () => {}; }
-  const icon = { mastered: '🏆', advance: '⬆', hold: '✓', retry: '•', regress: '↓', skipped: '–' };
+  const icon = { mastered: '🏆', advance: '⬆', jump: '⏫', calibrate: '🎯', hold: '✓', retry: '•', regress: '↓', skipped: '–' };
   root.innerHTML = `
     <div class="label">Session complete</div><h1>Nice work.</h1>
     <section class="stats">
@@ -334,6 +372,7 @@ export function mountRoutineSummary(root, { navigate }) {
       <div class="stat"><div class="k">Course</div><div class="v">${S.progress != null ? S.progress + '%' : '—'}</div></div>
       <div class="stat ${S.minutes >= 15 ? 'ok' : ''}"><div class="k">Streak day</div><div class="v">${S.minutes >= 15 ? '✓' : '< 15m'}</div></div>
     </section>
+    ${S.levelChanges && S.levelChanges.length ? `<section class="card levelup"><div class="label">Skill levels updated</div>${S.levelChanges.map(c => `<div class="lvchg"><b>${esc(c.name)}</b><span>${c.from} → <b class="${c.to > c.from ? 'ok' : 'bad'}">${c.to}</b></span></div>`).join('')}<p class="small muted">Levels blend your assessment with what you prove in lessons. New exercises now start at tempos matched to them.</p></section>` : ''}
     <section class="card"><h3>${esc(S.routine.courseName)}</h3>
       ${S.results.map(r => `<div class="resrow"><span class="ri">${icon[r.decision] || '•'}</span><div><b>${esc(r.name)}</b><div class="small muted">${esc(r.message)}</div></div><span class="rt">${r.tempo ? r.tempo + ' BPM' : ''}</span></div>`).join('')}
     </section>

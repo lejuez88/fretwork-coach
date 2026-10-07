@@ -4,6 +4,7 @@ import { clamp, esc, toast } from '../core/util.js';
 
 export const Metronome = {
   bpm: 80, beatsPerBar: 4, subdiv: 1, mode: 'all', backing: null, volume: 1,
+  ramp: null, // {enabled, step, everyBars, max}: tempo ladder
   running: false, nextTime: 0, tickIdx: 0, bar: 0, timerId: null, listeners: new Set(), wake: null,
   startedAt: 0,
 
@@ -33,7 +34,16 @@ export const Metronome = {
       const inBar = this.tickIdx % ticksPerBar, beat = Math.floor(inBar / this.subdiv), sub = inBar % this.subdiv;
       this.schedule(beat, sub, this.bar, this.nextTime, perBeat);
       this.nextTime += step; this.tickIdx++;
-      if (this.tickIdx % ticksPerBar === 0) this.bar++;
+      if (this.tickIdx % ticksPerBar === 0) {
+        this.bar++;
+        const R = this.ramp;
+        if (R && R.enabled && this.bar % R.everyBars === 0 && this.bpm < R.max) {
+          this.bpm = Math.min(R.max, this.bpm + R.step);
+          const at = this.nextTime, v = this.bpm;
+          setTimeout(() => this.emit({ type: 'bpm', bpm: v, ramp: true }), Math.max(0, (at - c.currentTime) * 1000));
+          return; // re-enter with the new step size
+        }
+      }
     }
   },
   schedule(beat, sub, bar, t, perBeat) {
@@ -50,8 +60,9 @@ export const Metronome = {
       setTimeout(() => { if (this.running) this.emit({ type: 'beat', beat, bar, silent: !audible, time: t }); }, delay);
     }
   },
-  configure({ bpm, mode, backing, beatsPerBar, subdiv } = {}) {
+  configure({ bpm, mode, backing, beatsPerBar, subdiv, ramp = null } = {}) {
     if (bpm != null) this.setBpm(bpm);
+    this.ramp = ramp;
     if (mode) this.mode = mode;
     this.backing = backing || null;
     if (beatsPerBar) this.beatsPerBar = beatsPerBar;
@@ -88,9 +99,12 @@ export function mountMetronome(el, opts = {}) {
       <label class="mini">Clicks<select data-r="sub">${[[1, 'Quarters'], [2, '8ths'], [3, 'Triplets'], [4, '16ths']].map(([v, l]) => `<option value="${v}" ${Metronome.subdiv === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
     </div>`}
     ${Metronome.backing ? `<div class="backing">♫ Backing: ${esc(Metronome.backing.join(' – '))}</div>` : ''}
+    ${Metronome.ramp ? `<div class="ramp-row"><button class="tgl ${Metronome.ramp.enabled ? 'on' : ''}" data-r="ramp">Tempo ladder</button><span class="small muted" data-r="ramptxt"></span></div>` : ''}
   </div>`;
   const r = n => el.querySelector(`[data-r="${n}"]`);
+  const rampText = () => { const R = Metronome.ramp; const el2 = r('ramptxt'); if (R && el2) el2.textContent = R.enabled ? `+${R.step} BPM every ${R.everyBars} bars, up to ${R.max}` : 'Holding this tempo'; };
   const sync = () => {
+    rampText();
     r('bpm').textContent = Metronome.bpm; r('range').value = Metronome.bpm;
     const b = r('toggle'); b.className = 'btn ' + (Metronome.running ? 'stop' : 'primary'); b.textContent = Metronome.running ? '■ Stop' : '▶ Start';
     const beats = r('beats'); if (beats.children.length !== Metronome.beatsPerBar) beats.innerHTML = '<i></i>'.repeat(Metronome.beatsPerBar);
@@ -104,6 +118,7 @@ export function mountMetronome(el, opts = {}) {
     const b = ev.target.closest('button'); if (!b || !el.contains(b)) return;
     if (b.dataset.d) Metronome.setBpm(Metronome.bpm + Number(b.dataset.d));
     else if (b.dataset.r === 'toggle') Metronome.toggle();
+    else if (b.dataset.r === 'ramp' && Metronome.ramp) { Metronome.ramp.enabled = !Metronome.ramp.enabled; b.classList.toggle('on', Metronome.ramp.enabled); rampText(); }
     else if (b.dataset.r === 'tap') {
       const now = performance.now(); if (taps.length && now - taps[taps.length - 1] > 2000) taps.length = 0;
       taps.push(now); if (taps.length > 6) taps.shift();
@@ -116,5 +131,6 @@ export function mountMetronome(el, opts = {}) {
     r('bpb').addEventListener('change', e => { Metronome.beatsPerBar = +e.target.value; sync(); });
     r('sub').addEventListener('change', e => { Metronome.subdiv = +e.target.value; });
   }
+  rampText();
   return () => off();
 }

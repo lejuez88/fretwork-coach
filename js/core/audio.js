@@ -25,9 +25,16 @@ export const Audio = {
   now() { const c = this.get(); return c ? c.currentTime : 0; },
   freq(m) { return 440 * Math.pow(2, (m - 69) / 12); },
 
+  clickStyle: 'normal', // 'eval' = high sine blip the playing analyzer filters out
   click(t, accent, vol = 1) {
     const c = this.get(); if (!c) return;
     const o = c.createOscillator(), g = c.createGain();
+    if (this.clickStyle === 'eval') {
+      o.type = 'sine'; o.frequency.value = accent ? 4400 : 3800;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5 * vol, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+      o.connect(g); g.connect(this.master); o.start(t); o.stop(t + 0.04);
+      return;
+    }
     o.type = 'square'; o.frequency.value = accent ? 1600 : 1050;
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime((accent ? 0.45 : 0.3) * vol, t + 0.002);

@@ -55,11 +55,13 @@ export function normalizeExercise(raw, used = new Set()) {
     simplify: String(raw.simplify || '').slice(0, 200),
     unit: String(raw.unit || (lib && lib.unit) || 'quarter notes').slice(0, 30),
     goalBpm: goal, startBpm: start,
+    level: raw.level != null ? clampN(raw.level, 1, 10, null) : (lib ? lib.level : null),
     minutes: clampN(raw.minutes, 2, 20, 5),
     libId: lib ? lib.id : null,
     tab, // {notes, swing} | null
     chords: Array.isArray(raw.chords) ? raw.chords.filter(c => CHORD_SHAPES[c]).slice(0, 4) : [],
-    backing: Array.isArray(raw.backing) ? raw.backing.filter(c => CHORD_MIDI[c]).slice(0, 8) : []
+    backing: Array.isArray(raw.backing) ? raw.backing.filter(c => CHORD_MIDI[c]).slice(0, 8) : [],
+    ...(['backbeat', 'gap'].includes(raw.metroMode) ? { metroMode: raw.metroMode } : {})
   };
 }
 
@@ -76,6 +78,11 @@ export function normalizeTree(raw, meta) {
     }
     if (skills.length) units.push({ id: 'u' + units.length, title: String(u.title || `Unit ${units.length + 1}`).slice(0, 60), summary: String(u.summary || '').slice(0, 240), skills });
   }
+  // Exercise difficulty: climb from the course level to +2 across the units when not given
+  const base = clampN(meta.difficulty, 1, 10, 4);
+  units.forEach((u, ui) => u.skills.forEach(s => s.exercises.forEach(e => {
+    if (e.level == null) e.level = Math.max(1, Math.min(10, Math.round(base - 0.5 + ui * (2.5 / Math.max(1, units.length - 1)))));
+  })));
   // Drop unknown prereqs; default each skill to depend on the previous unit's last skill
   const all = new Set(units.flatMap(u => u.skills.map(s => s.id)));
   units.forEach((u, ui) => u.skills.forEach(s => {
@@ -121,14 +128,14 @@ Return JSON:
  "units":[{"title":string,"summary":string,
    "skills":[{"id":"kebab-slug","title":string,"domain":one of ${JSON.stringify(DOMAIN_KEYS)},"summary":string (1 sentence),"prereqs":[skill ids],
      "exercises":[{"id":"kebab-slug","name":string,"domain":string,"why":string (1-2 sentences),"instr":string (clear steps),"watch":string (common mistake),"simplify":string (easier variant if stuck),
-       "unit":"8ths|16ths|triplets|quarter notes|2 beats per chord|...","startBpm":int,"goalBpm":int,"minutes":int (3-10),
+       "unit":"8ths|16ths|triplets|quarter notes|2 beats per chord|...","level":int 1-10 (difficulty of this exercise),"startBpm":int (a tempo THIS student can already play cleanly, given their level in this exercise's domain),"goalBpm":int,"minutes":int (3-10),
        "libId":optional,"tab":optional {"step":0.25|0.333|0.5|1,"swing":bool,"notes":[[string,fret,"h|p|/|b|~|pm" optional],...]},
        "chords":optional [names],"backing":optional [chord names]}]}]}]}`;
   const raw = await Claude.json({
     system: 'You are a world-class guitar teacher and curriculum designer who uses deliberate practice, the 70–85% success "edge zone", spaced repetition and interleaving.',
     content, maxTokens: 12000
   });
-  const tree = normalizeTree(raw, { generatedBy: 'claude' });
+  const tree = normalizeTree(raw, { generatedBy: 'claude', difficulty: course.difficulty });
   if (!tree.units.length) throw new Error('Claude returned an empty course.');
   return tree;
 }
@@ -185,7 +192,7 @@ export function generateTreeLocal(course) {
         { id: 'style-solo', title: `Soloing in the style`, domain: 'improv', summary: 'Phrasing, space and vocabulary over a loop.', prereqs: ['box2'], exercises: [T.improvLoop] }] }
     ]
   };
-  return normalizeTree(raw, { generatedBy: 'local' });
+  return normalizeTree(raw, { generatedBy: 'local', difficulty: course.difficulty });
 }
 
 /** Generate and attach a tree (Claude first, local fallback). Returns {tree, usedClaude, error}. */
