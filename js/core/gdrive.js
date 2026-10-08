@@ -10,7 +10,7 @@ const FILE_STORE = 'fretworkCoach.driveFile';
 const FILE_NAME = 'Fretwork Coach profile.json';
 // The app's OAuth client ID (public by design). Set once the Google Cloud client exists;
 // a client ID saved in Settings takes its place.
-export const DEFAULT_CLIENT_ID = '';
+export const DEFAULT_CLIENT_ID = '827964771236-27h8njnn8b1nv2k3k0obcl6mji9ks155.apps.googleusercontent.com';
 
 export function getClientId() { try { return (localStorage.getItem(CLIENT_STORE) || DEFAULT_CLIENT_ID).trim(); } catch { return DEFAULT_CLIENT_ID; } }
 export function setClientId(id) { try { id = String(id || '').trim(); if (id) localStorage.setItem(CLIENT_STORE, id); else localStorage.removeItem(CLIENT_STORE); } catch { /* storage off */ } }
