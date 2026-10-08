@@ -100,7 +100,7 @@ function studentBrief(p) {
 /** Fill in key, tuning, tempo, techniques and sections (Claude), or catalog data. */
 export async function enrichSong(p, song) {
   if (!Claude.hasKey()) return { ok: false, source: 'local' };
-  const raw = await Claude.json({
+  const raw = await Claude.json({ feature: 'song-info',
     system: 'You are a guitar teacher with encyclopedic knowledge of recorded music. Be accurate; say when you are unsure.',
     content: `Identify this song for a guitar student and describe what it takes to play the main guitar part.
 Song: "${song.title}"${song.artist ? ` by ${song.artist}` : ''}.
@@ -159,7 +159,7 @@ export async function recommendSongs(p, { genre = null, count = 6 } = {}) {
   if (!Claude.hasKey()) return { items: localRecommendations(p, { genre, count }), source: 'local' };
   try {
     const have = p.songs.map(s => `${s.title} – ${s.artist}`).concat((p.repertoire || []).filter(r => !r.songId).map(r => r.title));
-    const raw = await Claude.json({
+    const raw = await Claude.json({ feature: 'song-recs',
       system: 'You are a guitar teacher who picks songs that sit at the edge of a student\'s ability and match their taste.',
       content: `Recommend ${count} real, well-known recorded songs for this guitar student to learn.
 Student: ${JSON.stringify(studentBrief(p))}. Song-playing level (hands and timing): ${songLevelFor(p)}/10.
@@ -391,7 +391,7 @@ export async function buildSongLesson(p, song, budget) {
     return { bars: [c.from, c.to], name: c.name || null, facts: sectionFacts(parsed, c.from, c.to), progress: st ? { target: st.target, best: st.best, mastered: st.mastered } : null };
   }) : null;
   try {
-    const raw = await Claude.json({
+    const raw = await Claude.json({ feature: 'song-lesson',
       system: 'You are a world-class guitar teacher. You plan one focused practice session at the edge of the student\'s ability (70–85% success).',
       content: `Plan today's ${budget == null ? 'open-ended (~40 min)' : budget + '-minute'} lesson on one song.
 SONG: ${JSON.stringify({ title: song.title, artist: song.artist, difficulty: song.difficulty, key: song.info.key, tuning: song.info.tuning, capo: song.info.capo, tempo: songTempo(song), techniques: song.info.techniques, sections: song.info.sections, status: song.status })}
@@ -499,7 +499,7 @@ export async function sectionHelp(p, song, from, to, question = '') {
   if (!Claude.hasKey() || !local) return local;
   const parsed = tabParsed(song);
   try {
-    const raw = await Claude.json({
+    const raw = await Claude.json({ feature: 'tab-help',
       system: 'You are an expert guitar teacher looking at a passage a student is stuck on. Be specific: name bars, beats, fingers and pick directions.',
       content: `Song: "${song.title}" by ${song.artist || 'unknown'} (${tuningName(parsed.tuning)} tuning, song tempo ${songTempo(song)} BPM).
 Student: ${JSON.stringify(studentBrief(p))}

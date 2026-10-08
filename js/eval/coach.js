@@ -115,7 +115,7 @@ Return JSON:
  "prescriptions": [{"name": string, "reason": string (which issue it fixes), "domain": "fretting|picking|rhythm|fretboard|theory|ear|improv", "unit": string, "level": int 1-10, "startBpm": int, "goalBpm": int, "minutes": int 3-6, "why": string, "instr": string, "watch": string, "simplify": string, "metroMode": optional, "picking": "alternate|strict|economy|down|fingers|hybrid", "tab": optional {"step": number, "notes": [[string, fret, "h|p|b|/|pm" optional]]}, "voicings": optional [{"name": string, "frets": string}], "chords": optional [names], "backing": optional [names]}],
  "nextStep": "one sentence"}`;
   blocks.push({ type: 'text', text });
-  const raw = await Claude.json({
+  const raw = await Claude.json({ feature: 'evaluation',
     system: 'You are a world-class guitar teacher. You combine objective measurements with what you can see to give precise, actionable feedback. Never invent observations that the data or frames do not support.',
     messages: [{ role: 'user', content: blocks }], maxTokens: 2500
   });

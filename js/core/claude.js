@@ -1,6 +1,8 @@
 // Claude API client. Calls the Messages API directly from the browser with the
 // user's own key. The key lives only in this browser's localStorage and is never
 // written into the exported profile.
+import { recordUsage } from './usage.js';
+
 const KEY_STORE = 'fretworkCoach.anthropicKey';
 const ENDPOINT = 'https://api.anthropic.com/v1/messages';
 
@@ -25,7 +27,7 @@ export const Claude = {
    * Send a request. `content` may be a string or an array of content blocks.
    * images: [{mediaType, data(base64)}] are prepended to the user turn.
    */
-  async message({ system, content, messages, maxTokens = 1500, model, images = [], signal } = {}) {
+  async message({ system, content, messages, maxTokens = 1500, model, images = [], signal, feature = 'other' } = {}) {
     const key = this.getKey();
     if (!key) throw new ClaudeError('no_key', 'Add your Anthropic API key in Settings to use Claude features.');
     let msgs = messages;
@@ -65,6 +67,8 @@ export const Claude = {
       throw new ClaudeError(map[res.status] || 'http_' + res.status, friendly[res.status] || `Claude error ${res.status}: ${detail}`);
     }
     const data = await res.json();
+    // the reply carries the exact tokens it was billed for; keep the spend ledger
+    try { recordUsage(data.model || model || this.model, data.usage, feature); } catch { /* never block a reply */ }
     return (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
   },
 

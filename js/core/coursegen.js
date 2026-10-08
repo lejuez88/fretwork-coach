@@ -181,7 +181,7 @@ Return JSON:
        "unit":"8ths|16ths|triplets|quarter notes|2 beats per chord|...","level":int 1-10,"startBpm":int,"goalBpm":int,"minutes":int (3-10),
        "picking":"alternate|strict|economy|down|fingers|hybrid","libId":optional,"tab":optional {"step":0.25|0.333|0.5|1,"swing":bool,"notes":[[string,fret,"h|p|/|b|~|pm|t" optional, beats optional],...]},
        "voicings":optional [{"name":string,"frets":string}],"chords":optional [symbols],"backing":optional [symbols],"beatsPerBar":optional int (odd meters)}]}]}]}`;
-  const raw = await Claude.json({
+  const raw = await Claude.json({ feature: 'course-plan',
     system: 'You are a world-class guitar teacher and curriculum designer who uses deliberate practice, the 70–85% success "edge zone", spaced repetition and interleaving.',
     content, maxTokens: 12000
   });

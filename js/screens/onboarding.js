@@ -123,7 +123,7 @@ export function mountOnboarding(root, { profile, startStep = 0, onComplete, onEx
     }
     identifying = true; render();
     try {
-      const res = await Claude.json({
+      const res = await Claude.json({ feature: 'players',
         system: 'You are an expert guitar teacher and music historian. Identify guitarists so a practice app can build a learning roadmap from their style.',
         content: `Identify each of these guitarists: ${JSON.stringify(unknown)}.
 Allowed genre ids: ${JSON.stringify(GENRES.map(g => g.id))}.

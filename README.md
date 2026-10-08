@@ -34,6 +34,8 @@ Without a key, everything still works with built-in data: catalog guitarists and
 | Variations in routines | Pick any variation from the routine runner. Routines use them automatically: warm-ups rotate through technique variations day to day, reviews of mastered skills come back as a harder variation, and a stalled exercise starts from an easier one. The course page lists every exercise’s variations. |
 | Routines on the dashboard | Course selection and the time budget moved to the dashboard’s Today’s routine card (build, preview, start). Links from the course page open it with the course and skill preselected. |
 | Quick tuner | A tuning-fork button on every screen opens a compact tuner that starts listening right away and stops the mic when closed. |
+| Library topics | The library opens as 8 topic buttons, each with its own picture (a spider fingering, a pick with stroke marks, a bend arrow, a chord box, a metronome, a pentatonic box, a triad on the note circle, call and response). Tap a topic to show its exercises below it; tap again to close. Search opens every topic with a match. |
+| Claude API spend | Settings shows what Claude has cost this billing period, by feature and by model, plus last period. It adds up the exact token usage Anthropic returns with every reply, priced at Anthropic’s published rates. Pick the day your billing period starts. Anthropic’s own cost report can’t be read from a browser, so this counts Fretwork Coach’s requests in this browser; the Claude Console has the official total. |
 
 ## Earlier: Track of the Day
 

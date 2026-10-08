@@ -8,6 +8,7 @@ import { exportProfile } from './profile.js';
 import { getKey as ytGetKey, setKey as ytSetKey, testKey as ytTestKey } from '../core/youtube.js';
 import { mountAudioSetup } from '../ui/audiosetup.js';
 import { importBlockHTML, wireImport } from '../ui/importui.js';
+import { periodFor, summarize, billingDay, setBillingDay, clearUsage, priceFor, fmtUSD, fmtTokens, FEATURE_LABEL, PRICES_AS_OF } from '../core/usage.js';
 
 export function mountSettings(root, { navigate, applySettings }) {
   const p = Store.profile;
@@ -26,6 +27,7 @@ export function mountSettings(root, { navigate, applySettings }) {
       <div class="row"><button class="btn primary" data-s="save">Save key</button><button class="btn" data-s="test">Test connection</button></div>
       <p class="small" data-r="status">${key ? 'A key is saved.' : 'No key saved yet. Get one at console.anthropic.com.'}</p>
     </section>
+    <section class="card" data-r="spend"></section>
     <section class="card">
       <h3>YouTube (optional)</h3>
       <p class="muted small">Track of the Day plays each track from YouTube. Without a key, the app finds videos through Wikidata, which lists official videos for many well-known songs, and skips to another track when it can't find one. Add a free YouTube Data API key and the app can search YouTube for any track, favoring the artist's own uploads. The key is stored only in this browser and is never included in profile exports.</p>
@@ -63,6 +65,29 @@ export function mountSettings(root, { navigate, applySettings }) {
   const status = (msg, cls = '') => { r('status').textContent = msg; r('status').className = 'small ' + cls; };
   const ytStatus = (msg, cls = '') => { r('ytstatus').textContent = msg; r('ytstatus').className = 'small ' + cls; };
 
+  /** Claude API spend for the current billing period (from the app's own usage ledger). */
+  function renderSpend() {
+    const per = periodFor(), prev = periodFor(new Date(per.start.getTime() - 86400000));
+    const cur = summarize(per), last = summarize(prev);
+    const day = billingDay();
+    const fmtD = d => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const lastDay = new Date(per.end.getTime() - 86400000);
+    const sinceTxt = cur.since ? new Date(cur.since + 'T12:00:00').toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : null;
+    const rows = (obj, label) => Object.entries(obj).sort((a, b) => b[1].usd - a[1].usd)
+      .map(([k, x]) => `<div class="spend-row"><span class="sl">${esc(label(k))}</span><b>${fmtUSD(x.usd)}</b><span class="muted sd">${x.n} request${x.n === 1 ? '' : 's'} · ${fmtTokens(x.in + x.read + x.write)} tokens in · ${fmtTokens(x.out)} out</span></div>`).join('');
+    r('spend').innerHTML = `
+      <div class="sec-head"><h3>Claude API spend</h3><span class="small muted">${fmtD(per.start)} – ${fmtD(lastDay)}</span></div>
+      <div class="spend-total"><b>${fmtUSD(cur.total.usd)}</b><span class="muted small">this billing period · ${cur.total.n} request${cur.total.n === 1 ? '' : 's'} · ${fmtTokens(cur.total.in + cur.total.read + cur.total.write)} tokens in · ${fmtTokens(cur.total.out)} out</span></div>
+      ${cur.total.n ? `<div class="spend-sub">By feature</div><div class="spend-rows">${rows(cur.byFeature, k => FEATURE_LABEL[k] || k)}</div>
+        <div class="spend-sub">By model</div><div class="spend-rows">${rows(cur.byModel, k => priceFor(k).name)}</div>` : `<p class="small muted">${sinceTxt ? 'No Claude requests yet this period.' : 'Nothing counted yet. Spend is tracked from now on, each time the app asks Claude something.'}</p>`}
+      <p class="small">Last period (${fmtD(prev.start)} – ${fmtD(new Date(prev.end.getTime() - 86400000))}): <b>${fmtUSD(last.total.usd)}</b>${last.total.n ? ` · ${last.total.n} requests` : ''}</p>
+      <div class="field"><label>Billing period starts on day</label>
+        <select data-r="billday" style="max-width:260px">${Array.from({ length: 28 }, (_, i) => i + 1).map(d => `<option value="${d}" ${d === day ? 'selected' : ''}>${d}${d === 1 ? ' (calendar month)' : ''}</option>`).join('')}</select></div>
+      <p class="muted small">Counted from the exact token usage Anthropic reports with every reply, priced at Anthropic’s published rates (${PRICES_AS_OF}), before tax. It covers Claude requests Fretwork Coach made in this browser${sinceTxt ? ` since ${sinceTxt}` : ''}; other apps, other devices and any credits or discounts aren’t included. Your official total is on the <a class="link" href="https://platform.claude.com/cost" target="_blank" rel="noopener">Cost page in the Claude Console</a>.</p>
+      ${cur.since ? '<button class="btn ghost sm" data-s="clearspend">Reset spend history</button>' : ''}`;
+  }
+  renderSpend();
+
   const onClick = async e => {
     const b = e.target.closest('[data-s]'); if (!b) return;
     switch (b.dataset.s) {
@@ -72,7 +97,7 @@ export function mountSettings(root, { navigate, applySettings }) {
         Claude.setKey(r('key').value); Claude.model = r('model').value;
         if (p) { p.settings.model = Claude.model; Store.save(); }
         status('Testing…');
-        try { const t = await Claude.message({ content: 'Reply with exactly: ready', maxTokens: 10 }); status(`Connected to ${Claude.model}. Reply: “${t.trim()}”`, 'ok'); }
+        try { const t = await Claude.message({ content: 'Reply with exactly: ready', maxTokens: 10, feature: 'test' }); status(`Connected to ${Claude.model}. Reply: “${t.trim()}”`, 'ok'); renderSpend(); }
         catch (err) { status(err.message, 'bad'); }
         break;
       }
@@ -86,6 +111,7 @@ export function mountSettings(root, { navigate, applySettings }) {
         catch (err) { ytStatus(`YouTube said: ${err.message}`, 'bad'); }
         break;
       }
+      case 'clearspend': if (confirm('Clear the spend history kept in this browser? This doesn’t change anything with Anthropic.')) { clearUsage(); renderSpend(); } break;
       case 'export': exportProfile(p); break;
       case 'reset':
         if (confirm('Delete your profile, courses and practice history from this browser? Export a backup first if you want to keep it.')) { Store.reset(); navigate('#/welcome'); }
@@ -93,6 +119,7 @@ export function mountSettings(root, { navigate, applySettings }) {
     }
   };
   const onChange = e => {
+    if (e.target.dataset.r === 'billday') { setBillingDay(e.target.value); renderSpend(); return; }
     if (e.target.dataset.r === 'wiki') { p.settings.wikiImages = e.target.checked; Wiki.enabled = e.target.checked; Store.save(); }
   };
   root.addEventListener('click', onClick); root.addEventListener('change', onChange);

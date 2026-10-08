@@ -40,7 +40,7 @@ async function withClaude(p, text) {
   const lib = EXERCISES.map(e => ({ libId: e.id, name: e.name, domain: e.domain, level: e.level, goalBpm: e.goalBpm }));
   const req = parseRequest(text);
   const hint = { topics: req.topics, chordTypes: req.chordTypes, chords: req.chords, key: req.key ? `${(req.key.minor ? 'minor ' : '')}pc${req.key.pc}` : null, scale: req.scale, progression: req.progression, genre: req.genre };
-  const raw = await Claude.json({
+  const raw = await Claude.json({ feature: 'request',
     system: 'You are a world-class guitar teacher who designs deliberate-practice exercises at the edge of a student\'s ability (70–85% success). You give exactly what was asked for, never a generic substitute.',
     content: `The student typed what they want to work on: "${String(text).slice(0, 600)}"
 STUDENT: ${JSON.stringify(brief(p))}

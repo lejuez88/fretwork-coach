@@ -39,7 +39,7 @@ export async function createCourse(profile, { genreId, style, difficulty, player
   let name = null, tagline = '';
   if (Claude.hasKey()) {
     try {
-      const r = await Claude.json({
+      const r = await Claude.json({ feature: 'course-name',
         system: 'You name guitar courses for a practice app. Names are short, vivid and specific to the style and level.',
         content: `Create a course name.
 Genre: ${genre.name}. Style focus: ${style}. Difficulty: ${difficulty}/10 (${tierName(difficulty)}).

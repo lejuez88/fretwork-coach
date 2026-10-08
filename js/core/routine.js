@@ -253,7 +253,7 @@ export async function coachBriefing(profile, routine) {
   const q = profile.questionnaire, g = GENRE_BY_ID[routine.genre];
   const items = routine.items.map(i => ({ block: i.block, name: i.ex.name, domain: i.ex.domain, target: i.targetBpm, goal: i.goalBpm, minutes: i.minutes, note: i.note || i.variation || '' }));
   try {
-    return await Claude.json({
+    return await Claude.json({ feature: 'briefing',
       system: 'You are a direct, encouraging guitar coach. Keep everything short and concrete.',
       content: `Write the briefing for today's practice routine.
 Student: ${q.name}, levels ${JSON.stringify(Object.fromEntries(Object.entries(profile.domains).map(([k, v]) => [k, v.level])))}, players they love: ${q.players.map(p => p.name).join(', ') || 'n/a'}.

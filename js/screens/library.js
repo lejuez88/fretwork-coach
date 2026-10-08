@@ -16,6 +16,7 @@ import { variationChipsHTML, variationNoteHTML, levelRange } from '../ui/variati
 import { mountTabPlayer } from '../tools/tabplayer.js';
 import { Metronome, mountMetronome } from '../tools/metronome.js';
 import { Shell } from '../ui/shell.js';
+import { TOPIC_ART, TOPIC_HUE } from '../ui/topicart.js';
 import { startRoutine, hasActiveRoutine } from './routine.js';
 
 const UI_KEY = 'fretworkCoach.libUI';
@@ -38,9 +39,12 @@ function startQueue(navigate) {
 }
 
 /* --------------------------------- List --------------------------------- */
+// Topics are buttons with a picture; tapping one opens its exercises below it.
+// Searching opens every topic that has a match and shows only the matches.
 export function mountLibrary(root, { navigate }) {
   const p = Store.profile;
-  const ui = Object.assign({ cat: 'all', q: '' }, getUI());
+  const ui = Object.assign({ open: [], q: '' }, getUI());
+  if (!Array.isArray(ui.open)) ui.open = [];
   const entries = libraryEntries(p);
   let offAsk = null, fillTimer = null;
 
@@ -48,10 +52,9 @@ export function mountLibrary(root, { navigate }) {
     <h1>Practice</h1>
     ${hasActiveRoutine() ? '<section class="card routine-cta live"><div class="label">Routine in progress</div><h3>Pick up where you left off</h3><a class="btn primary block" href="#/practice/run">▶ Resume routine</a></section>' : ''}
     <section class="card askcard" data-r="askslot"></section>
-    <div class="libhead"><h2 class="sechead">Exercise library</h2><span class="muted small">${entries.length} exercises, each with variations from easier to harder</span></div>
+    <div class="libhead"><h2 class="sechead">Exercise library</h2><span class="muted small">${entries.length} exercises in ${CATEGORIES.length} topics, each with variations from easier to harder</span></div>
     <input type="search" class="libsearch" data-r="q" placeholder="Search: bends, F chord, funk, spider…" value="${esc(ui.q)}" autocomplete="off">
-    <div class="chips libcats" data-r="cats">${[['all', 'All'], ...CATEGORIES.map(([id, name]) => [id, name])].map(([id, name]) => `<button class="chip sm ${ui.cat === id ? 'on' : ''}" data-cat="${id}">${esc(name)}</button>`).join('')}</div>
-    <div data-r="list"></div>
+    <div class="topics" data-r="list"></div>
     <p class="muted small center">Course routines are built on the <a class="link" href="#/home">dashboard</a>.</p>`;
   offAsk = mountAskBox(root.querySelector('[data-r="askslot"]'), { start: plan => startRoutine(plan, undefined, navigate) });
 
@@ -60,26 +63,48 @@ export function mountLibrary(root, { navigate }) {
     const hay = `${e.ex.name} ${CATEGORY_BY_ID[e.cat].name} ${e.ex.why} ${e.ex.unit} ${e.ex.domain} ${(e.ex.chords || []).join(' ')} ${e.id.replace(/-/g, ' ')}`.toLowerCase();
     return q.toLowerCase().split(/\s+/).filter(Boolean).every(w => hay.includes(w));
   };
+  const progressOf = id => {
+    const keys = Object.keys(p.varState || {}).filter(k => k.startsWith(`lib:${id}~`));
+    return { mastered: keys.filter(k => p.varState[k].mastered).length, practiced: keys.filter(k => (p.varState[k].history || []).length).length };
+  };
   function row(e) {
-    const dom = DOMAIN_BY_KEY[e.ex.domain];
-    const keys = Object.keys(p.varState || {}).filter(k => k.startsWith(`lib:${e.id}~`));
-    const mastered = keys.filter(k => p.varState[k].mastered).length, practiced = keys.filter(k => (p.varState[k].history || []).length).length;
+    const dom = DOMAIN_BY_KEY[e.ex.domain], pr = progressOf(e.id);
     const queued = Queue.get().filter(x => x.id === e.id).length;
     return `<a class="librow" href="#/practice/ex/${e.id}">
       <div class="lrmain"><b>${esc(e.ex.name)}</b>
         <div class="small muted">${esc(dom ? dom.short || dom.name : e.ex.domain)} · <span data-vc="${e.id}">variations</span></div>
-        ${practiced ? `<div class="small"><span class="ok">${mastered} mastered</span> · ${practiced} practiced</div>` : ''}</div>
+        ${pr.practiced ? `<div class="small"><span class="ok">${pr.mastered} mastered</span> · ${pr.practiced} practiced</div>` : ''}</div>
       ${queued ? '<span class="badge">In session</span>' : '<span class="chev">›</span>'}</a>`;
   }
+  function topicHTML(cat, list, open, searching) {
+    const c = CATEGORY_BY_ID[cat];
+    const all = entries.filter(e => e.cat === cat);
+    const mastered = all.reduce((a, e) => a + progressOf(e.id).mastered, 0);
+    return `<section class="topic ${open ? 'open' : ''}" data-topic="${cat}" style="--h:${TOPIC_HUE[cat] || 30}">
+      <button class="topic-btn" data-tg="${cat}" aria-expanded="${open}" aria-controls="tb-${cat}">
+        <span class="topic-img">${TOPIC_ART[cat] || ''}</span>
+        <span class="topic-txt"><b>${esc(c.name)}</b><span class="small muted">${esc(c.blurb)}</span>
+          <span class="small topic-meta">${searching ? `${list.length} match${list.length === 1 ? '' : 'es'}` : `${all.length} exercises`} · your level ${levelFor(p, cat)}${mastered ? ` · <span class="ok">${mastered} mastered</span>` : ''}</span></span>
+        <span class="topic-chev" aria-hidden="true">›</span>
+      </button>
+      <div class="topic-body" id="tb-${cat}" ${open ? '' : 'hidden'}>${open ? `<div class="liblist">${list.map(row).join('')}</div>` : ''}</div>
+    </section>`;
+  }
   function drawList() {
-    const q = ui.q.trim();
-    const shown = entries.filter(e => (ui.cat === 'all' || e.cat === ui.cat) && match(e, q));
-    const groups = ui.cat === 'all' && !q ? CATEGORIES.map(([id]) => [id, shown.filter(e => e.cat === id)]).filter(g => g[1].length) : [[ui.cat === 'all' ? null : ui.cat, shown]];
-    root.querySelector('[data-r="list"]').innerHTML = shown.length ? groups.map(([cat, list]) => `
-      ${cat ? `<div class="libcat"><h3>${esc(CATEGORY_BY_ID[cat].name)}</h3><span class="small muted">${esc(CATEGORY_BY_ID[cat].blurb)} · your level ${levelFor(p, cat)}</span></div>` : ''}
-      <div class="liblist">${list.map(row).join('')}</div>`).join('')
+    const q = ui.q.trim(), searching = !!q;
+    const groups = CATEGORIES.map(([id]) => [id, entries.filter(e => e.cat === id && match(e, q))]).filter(([, list]) => !searching || list.length);
+    root.querySelector('[data-r="list"]').innerHTML = groups.length
+      ? groups.map(([cat, list]) => topicHTML(cat, list, searching || ui.open.includes(cat), searching)).join('')
       : '<p class="muted">No exercises match. Try another word, or ask for exactly what you need in the box above.</p>';
     fillCounts();
+  }
+  function toggle(cat) {
+    const q = ui.q.trim();
+    if (q) { ui.q = ''; root.querySelector('[data-r="q"]').value = ''; ui.open = [cat]; }
+    else ui.open = ui.open.includes(cat) ? ui.open.filter(x => x !== cat) : [...ui.open, cat];
+    setUI(ui); drawList();
+    const sec = root.querySelector(`[data-topic="${cat}"]`);
+    if (sec && ui.open.includes(cat) && sec.scrollIntoView) { try { sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch { /* ignore */ } }
   }
   // Variation counts are computed in small batches so the list appears at once.
   function fillCounts() {
@@ -93,10 +118,7 @@ export function mountLibrary(root, { navigate }) {
     step();
   }
 
-  const onClick = e => {
-    const c = e.target.closest('[data-cat]');
-    if (c) { ui.cat = c.dataset.cat; setUI(ui); root.querySelectorAll('[data-cat]').forEach(x => x.classList.toggle('on', x === c)); drawList(); }
-  };
+  const onClick = e => { const t = e.target.closest('[data-tg]'); if (t) toggle(t.dataset.tg); };
   const onInput = e => { if (e.target.dataset.r === 'q') { ui.q = e.target.value; setUI(ui); drawList(); } };
   const barClick = e => { const b = e.target.closest('[data-q]'); if (!b) return; if (b.dataset.q === 'clear') { Queue.clear(); queueBar(); drawList(); } else startQueue(navigate); };
   root.addEventListener('click', onClick); root.addEventListener('input', onInput); Shell.actionBar.addEventListener('click', barClick);
