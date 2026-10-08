@@ -15,13 +15,15 @@ Content runs edit **only** these files. They never edit anything else in `js/`, 
 
 ## The technique library (`TECHNIQUES`)
 
-A technique is a named skill a player might ask for ("rolling 5s", "hybrid picking", "travis picking for beginners"). Requests and master classes that name it get its skills, and artists reuse them.
+A technique is a named skill a player might ask for ("rolling 5s", "hybrid picking", "travis picking for beginners"). Every technique appears automatically in the app's **Technique Library** (`#/techniques`), where players filter by level (beginner 1–3, intermediate 4–6, advanced 7–10) and skill area and rebuild the lessons at any level inside `level`. Requests and master classes that name it get its skills, and artists reuse them.
 
 ```js
 { id: 'rolling5s',                 // camelCase or kebab-case, unique
   title: 'Rolling 5s',             // how players name it
   re: /rolling (5|five)'?s?|groups? of (5|five)/,  // matches the ways people write it; must match its own title (lowercased)
   domain: 'picking',               // fretting | picking | rhythm | fretboard | theory | ear | improv
+  level: [5, 9],                   // recommended level range (1–10): the Technique Library filters and sorts by it
+  ctx: { key: 9, minor: true, prog: 'minorRock' },  // optional: key and backing for its lessons (default A minor)
   summary: 'One sentence on what it is.',
   skills: [S('rolling5s-box', 'Rolling 5s in box 1', 'picking', 'One sentence.', [c => ejRolling5s(c), ...])] }
 ```

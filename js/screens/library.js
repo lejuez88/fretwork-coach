@@ -62,6 +62,10 @@ export function mountLibrary(root, { navigate }) {
     <div class="libhead"><h2 class="sechead">Exercise library</h2><span class="muted small">${entries.length} exercises in ${CATEGORIES.length} topics, each with variations from easier to harder</span></div>
     <input type="search" class="libsearch" data-r="q" placeholder="Search: bends, F chord, funk, spider…" value="${esc(ui.q)}" autocomplete="off">
     <div class="topics" data-r="list"></div>
+    <div class="lib-more">
+      <a class="lib-more-card" href="#/techniques"><span class="lm-ic" aria-hidden="true">🎯</span><span><b>Technique library</b><span class="small muted">Rolling 5s, spread triads, tapping and more, from beginner to advanced. Lessons rebuilt for your level.</span></span><span class="mc-go">›</span></a>
+      <a class="lib-more-card" href="#/artist"><span class="lm-ic" aria-hidden="true">🎸</span><span><b>Artist series</b><span class="small muted">Lessons on the signature techniques of great players, plus their famous songs.</span></span><span class="mc-go">›</span></a>
+    </div>
     <p class="muted small center">Course routines are built on the <a class="link" href="#/home">dashboard</a>.</p>`;
   offAsk = mountAskBox(root.querySelector('[data-r="askslot"]'), { start: plan => startRoutine(plan, undefined, navigate) });
 

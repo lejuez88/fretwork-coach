@@ -45,9 +45,12 @@ for (const t of TECHNIQUES) {
   if (!(t.re instanceof RegExp)) err(w, '"re" must be a RegExp');
   else if (!t.re.test(t.title.toLowerCase())) warn(w, `its regex doesn't match its own title "${t.title}" (requests using that name won't find it)`);
   if (!t.skills || !t.skills.length) err(w, 'no skills');
-  for (const s of t.skills || []) for (const [i, e] of (s.ex || []).entries()) {
-    const c = { key: 9, minor: true, lvl: 5, genre: 'rock', prog: 'minorRock' };
-    if (typeof e === 'function') { try { checkExercise(`${w} › ${s.id} #${i + 1}`, e(c)); } catch (x) { err(`${w} › ${s.id} #${i + 1}`, 'generator threw: ' + x.message); } }
+  if (!Array.isArray(t.level) || t.level.length !== 2 || !(t.level[0] >= 1 && t.level[1] <= 10 && t.level[0] <= t.level[1])) err(w, '"level" must be [lo, hi] within 1–10 (the Technique Library sorts and filters by it)');
+  if (!DOMAINS.includes(t.domain)) err(w, `domain "${t.domain}" is not one of ${DOMAINS.join(', ')}`);
+  const ctx = t.ctx || { key: 9, minor: true, prog: 'minorRock' };
+  for (const lvl of new Set([...(Array.isArray(t.level) ? t.level : [5])])) for (const s of t.skills || []) for (const [i, e] of (s.ex || []).entries()) {
+    const c = { key: ctx.key, minor: !!ctx.minor, lvl, genre: 'rock', prog: ctx.prog };
+    if (typeof e === 'function') { try { checkExercise(`${w} › ${s.id} #${i + 1} (level ${lvl})`, e(c)); } catch (x) { err(`${w} › ${s.id} #${i + 1} (level ${lvl})`, 'generator threw: ' + x.message); } }
   }
 }
 

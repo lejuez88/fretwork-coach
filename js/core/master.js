@@ -816,3 +816,24 @@ export function artistLessonList(p, artistId) {
     }).filter(Boolean));
   });
 }
+
+/* ---------------------------- Technique Library ---------------------------- */
+/** The level to show a technique at: your level in its skill area, inside its recommended range. */
+export function techniqueLevelFor(p, techId) {
+  const t = TECHNIQUES.find(x => x.id === techId); if (!t) return 4;
+  const [lo, hi] = Array.isArray(t.level) ? t.level : [3, 8];
+  return clamp(Math.round(levelOf(p, t.domain) || avgLevel(p)), lo, hi);
+}
+/** A technique's lessons built at a level: [{skill, ex}], normalized like course exercises. */
+export function techniqueLessonList(p, techId, lvl = null) {
+  const t = TECHNIQUES.find(x => x.id === techId); if (!t) return [];
+  const L = clamp(Math.round(lvl || techniqueLevelFor(p, techId)), 1, 10);
+  const ctx = t.ctx || { key: 9, minor: true, prog: 'minorRock' };
+  const c = { key: ctx.key, minor: !!ctx.minor, lvl: L, genre: (p.questionnaire.genres || [])[0] || 'rock', prog: ctx.prog };
+  const used = new Set();
+  return t.skills.flatMap(s => s.ex.map(e => runEntry(c, e, L, s.domain)).filter(Boolean).map(raw => {
+    const ex = normalizeExercise({ ...raw, id: `tech-${techId}-${raw.id || raw.name}` }, used);
+    if (ex && ex.level == null) ex.level = L;
+    return ex ? { skill: s, ex } : null;
+  }).filter(Boolean));
+}

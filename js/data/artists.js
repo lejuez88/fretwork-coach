@@ -417,43 +417,51 @@ const S = (id, title, domain, summary, ex) => ({ id, title, domain, summary, ex 
 const U = (title, summary, skills) => ({ title, summary, skills });
 
 export const TECHNIQUES = [
-  { id: 'rolling5s', title: 'Rolling 5s', re: /rolling (5|five)'?s?|groups? of (5|five)|\bin (5|five)s\b|quintuplet/, domain: 'picking',
+  { id: 'rolling5s', title: 'Rolling 5s', re: /rolling (5|five)'?s?|groups? of (5|five)|\bin (5|five)s\b|quintuplet/, domain: 'picking', level: [5, 9],
     summary: 'Pentatonic in groups of five, played in 16ths so the accent rolls across the beat.',
     skills: [S('rolling5s-box', 'Rolling 5s in box 1', 'picking', 'Groups of five down and up the box.', [c => ejRolling5s(c, { dir: 'down' }), c => ejRolling5s(c, { dir: 'up' })]),
       S('rolling5s-neck', 'Rolling 5s along the neck', 'picking', 'The same groups on the diagonal three-notes-per-string shape.', [c => ejRolling5s(c, { dir: 'down', diagonal: true })])] },
-  { id: 'speedPent', title: 'Speed pentatonics', re: /speed pentatonic|fast pentatonic|pentatonic (speed|runs?|sextuplets?|sixes)|sextuplets?|pentatonic sixes|\bsixes\b/, domain: 'picking',
+  { id: 'speedPent', title: 'Speed pentatonics', re: /speed pentatonic|fast pentatonic|pentatonic (speed|runs?|sextuplets?|sixes)|sextuplets?|pentatonic sixes|\bsixes\b/, domain: 'picking', level: [5, 9],
     summary: 'Six-note cells on three strings, one per beat, in one box and then across all five.',
     skills: [S('speedpent-cells', 'Pentatonic sixes', 'picking', 'The six-note cell, picked and legato.', [c => ejSixes(c), c => ejSixes(c, { legato: true })]),
       S('speedpent-across', 'Speed pentatonics across the neck', 'fretboard', 'The cell through all five boxes.', [c => ejSixesAcross(c)])] },
-  { id: 'spreadTriads', title: 'Spread triads', re: /spread(-| )?triads?|open(-| )?(voiced )?triads?|wide triads?|spread voicings?|10ths?\b|tenths/, domain: 'theory',
+  { id: 'spreadTriads', title: 'Spread triads', re: /spread(-| )?triads?|open(-| )?(voiced )?triads?|wide triads?|spread voicings?|10ths?\b|tenths/, domain: 'theory', level: [4, 8],
     summary: 'Root, 5th and 10th on non-adjacent strings: shapes, the chords of a key, and progressions.',
     skills: [S('spread-shapes', 'Spread triad shapes', 'fretboard', 'Major and minor on three string sets.', [c => ejSpreadShapes(c, { root: 9 })]),
       S('spread-use', 'Spread triads in a key', 'theory', 'Diatonic chords and a progression in spread voicings.', [c => ejSpreadDiatonic(c, { key: 9 }), c => ejSpreadProgression(c, { key: 9 })])] },
-  { id: 'hexatonic', title: 'Pentatonic plus the 9th', re: /hexatonic|added (2nd|9th|ninth)|pentatonic (\+|plus|with) (the )?(2|9|2nd|9th)/, domain: 'fretboard',
+  { id: 'hexatonic', title: 'Pentatonic plus the 9th', re: /hexatonic|added (2nd|9th|ninth)|pentatonic (\+|plus|with) (the )?(2|9|2nd|9th)/, domain: 'fretboard', level: [4, 7],
     summary: 'The minor pentatonic with the 2nd added: a brighter, more open run.',
     skills: [S('hexatonic', 'Pentatonic plus the 9th', 'fretboard', 'The added note in box 1.', [c => ejAddedNotes(c)])] },
-  { id: 'tapping', title: 'Two-hand tapping', re: /tapping|tapped|two.?hand(ed)? tap|\btaps?\b|eruption/, domain: 'fretting',
+  { id: 'tapping', title: 'Two-hand tapping', re: /tapping|tapped|two.?hand(ed)? tap|\btaps?\b|eruption/, domain: 'fretting', level: [5, 9],
     summary: 'Tap–pull–hammer arpeggios on one string, and tapped extensions of the pentatonic.',
     skills: [S('tap-triplets', 'Tapped triplet arpeggios', 'fretting', 'Tap, pull off, hammer: one chord per bar.', [c => evhTapTriplets(c), c => evhTapTriplets(c, { sixteenths: true, chords: ['Am', 'G', 'F', 'E'] })]),
       S('tap-pent', 'Tapped pentatonic octaves', 'fretting', 'The box with a tapped note an octave up.', [c => evhPentTap(c)])] },
-  { id: 'openPulls', title: 'Open-string pull-offs', re: /open.?string (pull|legato)|pull.?offs? to (the )?open/, domain: 'fretting',
+  { id: 'openPulls', title: 'Open-string pull-offs', re: /open.?string (pull|legato)|pull.?offs? to (the )?open/, domain: 'fretting', level: [4, 7],
     summary: 'Legato against the open string.', skills: [S('open-pulls', 'Pull-offs to the open string', 'fretting', 'One finger walks the scale; the open string keeps the line moving.', [c => evhOpenPulloffs(c)])] },
-  { id: 'pgSix', title: 'The six-note picking lick', re: /paul gilbert lick|gilbert lick|(six|6).?note (picking )?(lick|pattern|cell)/, domain: 'picking',
+  { id: 'pgSix', title: 'The six-note picking lick', re: /paul gilbert lick|gilbert lick|(six|6).?note (picking )?(lick|pattern|cell)/, domain: 'picking', level: [5, 9],
     summary: 'A two-string pentatonic cell that trains inside string changes.',
     skills: [S('pg-six', 'Six-note picking lick', 'picking', 'On every string pair, then through the boxes.', [c => pgSixNote(c), c => pgSixNote(c, { across: true })])] },
-  { id: 'skipArps', title: 'String-skipped arpeggios', re: /string.?skip/, domain: 'picking',
+  { id: 'skipArps', title: 'String-skipped arpeggios', re: /string.?skip/, domain: 'picking', level: [6, 9],
     summary: 'Triads with a skipped string, alternate picked.', skills: [S('skip-arps', 'String-skipped arpeggios', 'picking', 'Root and 3rd on string 4, 5th and octave on string 2.', [c => pgSkipArps(c)])] },
-  { id: 'pent6s', title: 'Pentatonic in sixes', re: /pentatonic in (6'?s|sixes)|groups? of (6|six)/, domain: 'picking',
+  { id: 'pent6s', title: 'Pentatonic in sixes', re: /pentatonic in (6'?s|sixes)|groups? of (6|six)/, domain: 'picking', level: [5, 8],
     summary: 'The box in six-note sequences.', skills: [S('pent-6s', 'Pentatonic in groups of six', 'picking', 'One group per beat, up and down.', [c => pgPent6s(c)])] },
-  { id: 'stretchPent', title: 'Stretched pentatonic', re: /(3|three).?notes?.?per.?string pentatonic|stretch(ed)? pentatonic|pentatonic stretch/, domain: 'fretting',
+  { id: 'stretchPent', title: 'Stretched pentatonic', re: /(3|three).?notes?.?per.?string pentatonic|stretch(ed)? pentatonic|pentatonic stretch/, domain: 'fretting', level: [5, 8],
     summary: 'Three notes per string for long, even runs.', skills: [S('stretch-pent', 'Three-notes-per-string pentatonic', 'fretting', 'Wide stretches, alternate picked.', [c => pgStretchPent(c)])] },
-  { id: 'sharp9', title: 'The 7♯9 chord', re: /7.?(♯|#|sharp) ?9|hendrix chord/, domain: 'rhythm',
+  { id: 'sharp9', title: 'The 7♯9 chord', re: /7.?(♯|#|sharp) ?9|hendrix chord/, domain: 'rhythm', level: [3, 6],
     summary: 'The Hendrix chord in a groove.', skills: [S('sharp9', 'The 7♯9 groove', 'rhythm', 'Grip, rhythm and moving it.', [c => hxSharp9(c)])] },
-  { id: 'octaves', title: 'Octaves', re: /octaves?/, domain: 'fretting',
+  { id: 'octaves', title: 'Octaves', re: /octaves?/, domain: 'fretting', level: [3, 6],
     summary: 'Melodies in octaves with the middle string muted.', skills: [S('octaves', 'Octave melodies', 'fretting', 'Strings 5 & 3, then 4 & 2.', [c => hxOctaves(c)])] }
 ];
 export const TECHNIQUE_BY_ID = Object.fromEntries(TECHNIQUES.map(t => [t.id, t]));
 const techSkills = (...ids) => ids.flatMap(id => TECHNIQUE_BY_ID[id].skills);
+
+/** Recommended level range of a technique ([lo, hi], 1–10). */
+export const techniqueLevel = t => (Array.isArray(t.level) && t.level.length === 2 ? t.level : [3, 8]);
+/** Artists whose lessons use a technique. */
+export function artistsUsing(techId) {
+  const t = TECHNIQUE_BY_ID[techId]; if (!t) return [];
+  return ARTISTS.filter(a => a.units.some(u => u.skills.some(sk => t.skills.includes(sk))));
+}
 
 /** Techniques named in a request, in the order they appear. */
 export function matchTechniques(text) {

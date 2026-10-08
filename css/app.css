@@ -992,3 +992,24 @@ body.has-actions .tunepop{bottom:calc(140px + env(safe-area-inset-bottom))}
 .riff-act{display:flex;gap:6px;flex:none}
 @media (max-width:620px){.artist-head{flex-direction:column}.artist-head .wimg.artist-photo{width:100%;height:180px}}
 @media (min-width:1000px){.artist-cols{grid-template-columns:minmax(0,1fr) 340px;align-items:start}.artist-side{position:sticky;top:12px}}
+
+/* ---------- Technique library ---------- */
+.tech-filters{display:flex;flex-direction:column;gap:8px;margin:12px 0 16px}
+.tech-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.tech-card{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:14px;color:var(--text);text-decoration:none;transition:border-color .15s,transform .15s}
+.tech-card:hover{border-color:var(--amber);transform:translateY(-1px)}
+.tech-card p{margin:0}
+.tc-top{display:flex;justify-content:space-between;gap:8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.tc-dom{color:var(--amber)}.tc-lv{color:var(--muted)}
+.tc-meter{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;margin-top:4px}
+.tc-meter i{height:6px;border-radius:3px;background:rgba(255,255,255,.08);position:relative}
+.tc-meter i.in{background:rgba(245,165,36,.55)}
+.tc-meter i.you{outline:2px solid #ece6da;outline-offset:1px}
+.tc-fit.fit{color:#7fd49a}.tc-fit.stretch{color:#f5a524}.tc-fit.review{color:var(--muted)}
+.tech-level .chips{margin-top:6px}
+.lib-more{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin:16px 0}
+.lib-more-card{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:14px;color:var(--text);text-decoration:none;margin-bottom:12px}
+.lib-more .lib-more-card{margin-bottom:0}
+.lib-more-card:hover{border-color:var(--amber)}
+.lib-more-card > span:nth-child(2){display:flex;flex-direction:column;gap:2px;flex:1}
+.lm-ic{font-size:26px;flex:none}
