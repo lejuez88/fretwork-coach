@@ -98,7 +98,7 @@ export function mountSettings(root, { navigate, applySettings }) {
   async function driveSave(chooseAccount) {
     if (!driveReady()) { driveSay('Google sign-in isn’t set up yet: add the client ID below.', 'bad'); return; }
     driveSay('Saving to Google Drive…');
-    try { Store.save(); const f = await saveToDrive(Store.profile, { chooseAccount }); driveSay(`Saved to your Drive: <a class="link" href="${esc(f.webViewLink || 'https://drive.google.com')}" target="_blank" rel="noopener">${esc(f.name)}</a> · ${new Date(f.modifiedTime || Date.now()).toLocaleString()}`, 'ok'); }
+    try { Store.save(); const f = await saveToDrive(Store.profile, { chooseAccount }); driveSay(`Saved to your Drive: <a class="link" href="${esc(f.webViewLink || 'https://drive.google.com')}" target="_blank" rel="noopener">${esc(f.name || 'Fretwork Coach profile.json')}</a> · ${new Date(f.modifiedTime || Date.now()).toLocaleString()}`, 'ok'); }
     catch (err) { driveSay(esc(err.message), 'bad'); }
   }
   async function driveLoad(chooseAccount) {
