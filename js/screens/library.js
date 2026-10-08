@@ -22,7 +22,7 @@ import { mountTabPlayer } from '../tools/tabplayer.js';
 import { Metronome, mountMetronome } from '../tools/metronome.js';
 import { Shell } from '../ui/shell.js';
 import { TOPIC_ART, TOPIC_HUE } from '../ui/topicart.js';
-import { startRoutine, hasActiveRoutine } from './routine.js';
+import { startRoutine } from './routine.js';
 
 const UI_KEY = 'fretworkCoach.libUI';
 const getUI = () => { try { return JSON.parse(sessionStorage.getItem(UI_KEY) || '{}') || {}; } catch { return {}; } };
@@ -50,12 +50,12 @@ export function mountLibrary(root, { navigate }) {
   const p = Store.profile;
   const ui = Object.assign({ open: [], q: '' }, getUI());
   if (!Array.isArray(ui.open)) ui.open = [];
+  ui.open = ui.open.slice(0, 1); // one topic open at a time
   const entries = libraryEntries(p);
   let offAsk = null, fillTimer = null;
 
   root.innerHTML = `
     <h1>Practice</h1>
-    ${hasActiveRoutine() ? '<section class="card routine-cta live"><div class="label">Routine in progress</div><h3>Pick up where you left off</h3><a class="btn primary block" href="#/practice/run">▶ Resume routine</a></section>' : ''}
     <section class="card askcard" data-r="askslot"></section>
     <div class="libhead"><h2 class="sechead">Exercise library</h2><span class="muted small">${entries.length} exercises in ${CATEGORIES.length} topics, each with variations from easier to harder</span></div>
     <input type="search" class="libsearch" data-r="q" placeholder="Search: bends, F chord, funk, spider…" value="${esc(ui.q)}" autocomplete="off">
@@ -112,7 +112,7 @@ export function mountLibrary(root, { navigate }) {
   function toggle(cat) {
     const q = ui.q.trim();
     if (q) { ui.q = ''; root.querySelector('[data-r="q"]').value = ''; ui.open = [cat]; }
-    else ui.open = ui.open.includes(cat) ? ui.open.filter(x => x !== cat) : [...ui.open, cat];
+    else ui.open = ui.open.includes(cat) ? [] : [cat]; // opening a topic closes the one that was open
     setUI(ui); drawList();
     const sec = root.querySelector(`[data-topic="${cat}"]`);
     if (sec && ui.open.includes(cat) && sec.scrollIntoView) { try { sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch { /* ignore */ } }

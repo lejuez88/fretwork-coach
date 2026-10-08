@@ -54,6 +54,7 @@ export function exerciseCardHTML(ex, { i, role = null, target = null, saved = nu
 export function mountAskBox(el, { start, courseId = null }) {
   const p = Store.profile;
   let busy = false, result = null, request = '', tryTool = null, tryIdx = null, showSaved = false;
+  let expanded = false; // starts folded to the text box; tapping the box opens the rest
   try { const d = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || 'null'); if (d) { result = d.result; request = d.request; } } catch { /* ignore */ }
   const keep = () => { try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ result, request })); } catch { /* ignore */ } };
 
@@ -62,18 +63,32 @@ export function mountAskBox(el, { start, courseId = null }) {
   function render() {
     stopTry();
     const saved = p.customExercises;
+    el.classList.add('askfold'); el.classList.toggle('collapsed', !expanded);
     el.innerHTML = `
-      <div class="label">What do you want to work on?</div>
+      <div class="askhead"><div class="label">What do you want to work on?</div>
+        ${result && !expanded ? `<span class="badge">${result.items.length} exercise${result.items.length > 1 ? 's' : ''} ready</span>` : ''}
+        <button class="askchev" data-ask="toggle" aria-expanded="${expanded}" aria-label="${expanded ? 'Collapse' : 'Expand'}">›</button></div>
       <div class="askbox">
         <textarea data-r="ask" rows="2" maxlength="600" placeholder="Tell me in your own words, e.g. “my bends sound out of tune” or “switching between F and C”">${esc(request)}</textarea>
         <button class="btn primary" data-ask="go" ${busy ? 'disabled' : ''}>${busy ? '<span class="spinner sm"></span>Creating…' : 'Create exercise'}</button>
       </div>
+      <div class="ask-more">
       <button class="btn ghost sm askmc" data-ask="master">${MC_ICON} Or build a whole master class on it</button>
       ${!result && !busy ? `<div class="chips askchips">${ASK_EXAMPLES.slice(0, 6).map(x => `<button class="chip sm" data-ex="${esc(x)}">${esc(x)}</button>`).join('')}</div>` : ''}
       ${!Claude.hasKey() ? '<p class="small muted">Without a Claude key, exercises come from the built-in drill library. <a class="link small" href="#/settings">Add key</a></p>' : ''}
       <div data-r="out">${result ? resultHTML() : ''}</div>
       ${saved.length ? `<div class="savedhead"><button class="btn ghost sm" data-ask="toggleSaved">${showSaved ? '▾' : '▸'} Your exercises (${saved.length})</button></div>
-        ${showSaved ? `<div class="savedlist">${saved.map((c, i) => exerciseCardHTML(c.ex, { i: 's' + i, target: c.state.target, saved: c, actions: ['practice', 'try', 'add', 'remove'] }) + (c.request ? `<p class="small muted askreq">You asked: “${esc(c.request)}”</p>` : '')).join('')}</div>` : ''}` : ''}`;
+        ${showSaved ? `<div class="savedlist">${saved.map((c, i) => exerciseCardHTML(c.ex, { i: 's' + i, target: c.state.target, saved: c, actions: ['practice', 'try', 'add', 'remove'] }) + (c.request ? `<p class="small muted askreq">You asked: “${esc(c.request)}”</p>` : '')).join('')}</div>` : ''}` : ''}
+      </div>`;
+  }
+  /** Open or fold the box without redrawing it, so typing focus is kept. */
+  function setExpanded(on) {
+    if (expanded === on) return;
+    expanded = on;
+    if (!on) stopTry();
+    el.classList.toggle('collapsed', !on);
+    const chev = el.querySelector('[data-ask="toggle"]'); if (chev) { chev.setAttribute('aria-expanded', String(on)); chev.setAttribute('aria-label', on ? 'Collapse' : 'Expand'); }
+    const badge = el.querySelector('.askhead .badge'); if (badge && on) badge.remove();
   }
 
   function resultHTML() {
@@ -94,7 +109,7 @@ export function mountAskBox(el, { start, courseId = null }) {
   async function go() {
     const ta = el.querySelector('[data-r="ask"]'); request = (ta.value || '').trim();
     if (request.length < 3) return toast('Tell me what you’d like to work on.');
-    busy = true; result = null; render();
+    expanded = true; busy = true; result = null; render();
     try { result = await generateExercises(p, request); }
     catch (e) { toast(e.message || 'Could not create exercises.'); }
     busy = false; keep(); render();
@@ -139,8 +154,10 @@ export function mountAskBox(el, { start, courseId = null }) {
     if (chip) { const ta = el.querySelector('[data-r="ask"]'); ta.value = chip.dataset.ex; ta.focus(); return; }
     const tv = e.target.closest('[data-tvid]');
     if (tv && tryIdx != null) return tryIt(tryIdx, tv.dataset.tvid);
-    const b = e.target.closest('[data-ask]'); if (!b) return;
+    const b = e.target.closest('[data-ask]');
+    if (!b) { if (!expanded && e.target.closest('.askhead, .askbox')) setExpanded(true); return; }
     const a = b.dataset.ask, i = b.dataset.i;
+    if (a === 'toggle') { setExpanded(!expanded); if (!expanded) { const ta = el.querySelector('[data-r="ask"]'); if (ta) ta.blur(); } return; }
     if (a === 'go') return go();
     if (a === 'master') {
       const t = ((el.querySelector('[data-r="ask"]') || {}).value || request || '').trim();
@@ -162,7 +179,8 @@ export function mountAskBox(el, { start, courseId = null }) {
   };
   const onKey = e => { if (e.target.dataset.r === 'ask' && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); go(); } };
   const onInput = e => { if (e.target.dataset.r === 'ask') request = e.target.value; };
-  el.addEventListener('click', onClick); el.addEventListener('keydown', onKey); el.addEventListener('input', onInput);
+  const onFocus = e => { if (e.target.dataset.r === 'ask') setExpanded(true); };
+  el.addEventListener('click', onClick); el.addEventListener('keydown', onKey); el.addEventListener('input', onInput); el.addEventListener('focusin', onFocus);
   render();
-  return () => { stopTry(); el.removeEventListener('click', onClick); el.removeEventListener('keydown', onKey); el.removeEventListener('input', onInput); };
+  return () => { stopTry(); el.removeEventListener('click', onClick); el.removeEventListener('keydown', onKey); el.removeEventListener('input', onInput); el.removeEventListener('focusin', onFocus); el.classList.remove('askfold', 'collapsed'); };
 }
