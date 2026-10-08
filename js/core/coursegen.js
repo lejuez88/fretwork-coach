@@ -84,13 +84,14 @@ export function normalizeExercise(raw, used = new Set()) {
     ...(PICKING.includes(raw.picking) ? { picking: raw.picking } : {}),
     ...(raw.pickKey ? { pickKey: String(raw.pickKey).slice(0, 60) } : {}),
     ...(normGen(raw.gen) ? { gen: normGen(raw.gen) } : {}),
-    ...(typeof raw.family === 'string' && /^[a-z]{2,20}$/.test(raw.family) ? { family: raw.family } : {})
+    ...(typeof raw.family === 'string' && /^[a-z]{2,20}$/.test(raw.family) ? { family: raw.family } : {}),
+    ...(typeof raw.xform === 'string' && /^[a-z0-9-]{1,20}$/.test(raw.xform) ? { xform: raw.xform } : {})
   };
 }
 
 /** How a generated exercise was made ({atom, opts, c}); lets variations re-run it. */
 function normGen(g) {
-  if (!g || typeof g !== 'object' || typeof g.atom !== 'string' || !/^[a-zA-Z]{2,30}$/.test(g.atom) || !g.c || typeof g.c !== 'object') return null;
+  if (!g || typeof g !== 'object' || typeof g.atom !== 'string' || !/^[a-zA-Z][a-zA-Z0-9]{1,30}$/.test(g.atom) || !g.c || typeof g.c !== 'object') return null;
   try {
     const opts = JSON.parse(JSON.stringify(g.opts || {}));
     if (JSON.stringify(opts).length > 600) return null;

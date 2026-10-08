@@ -25,7 +25,14 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: exercise library, variations everywhere, quick tuner
+## Latest: any key, string or chords; interval trainer
+
+| Area | Included |
+|---|---|
+| Any key, string, chords | No exercise is stuck in one key, on one string or on one set of chords. Each library exercise has pickers for what applies: key (or note), start fret for chromatic drills like the spider, which string or strings, string set, chord progression (25 to choose from) and chord type. Generated exercises are rebuilt in the new key; written tabs are transposed or moved to other strings with the same notes; a chosen variation (reversed, half-time, looped and so on) stays applied. Choices are remembered per exercise, and the routine runner has the same pickers under “Variations” / “Key & strings”. Rhythm-only drills have no key, and song sections keep their tab. |
+| Interval trainer | New in Practice → Theory on the neck. It shows a key and an interval (♭3, 5, 7…); you play that note (the microphone listens, any octave counts) or tap it on the neck. It starts in one key, measured from the root. Every setting can be changed, and each musical one can be randomized: key (any of 12, random each round, random every prompt, cycle of 4ths), scale (14 plus chromatic), intervals (the scale’s degrees, your own pick, or a random 3–4), 9ths/11ths/13ths, root included, measure from the root or the last note, order, label style (♭3 / m3 / minor 3rd), string, neck area, roots shown or hidden, prompts per round, time limit, and a reference tone. Misses show where the note is plus its shape from the root. Each round scores accuracy, seconds per note and each interval, suggests a harder or easier step, and offers a drill of your weakest intervals. Results count toward Fretboard and Theory. |
+
+## Earlier: exercise library, variations everywhere, quick tuner
 
 | Area | Included |
 |---|---|

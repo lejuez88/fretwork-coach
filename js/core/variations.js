@@ -156,6 +156,14 @@ function ideaVariations(ex) {
   return (IDEAS[ex.domain] || []).map(([vid, label, change, dl, instr]) => ({ vid: 'i-' + vid, label, change, dl, ex: { ...clone(ex), instr: `${instr}${ex.instr ? ' ' + ex.instr : ''}` } }));
 }
 
+/** Re-apply a general transform (or a practice idea) to a rebuilt exercise. Returns the new exercise or null. */
+export function reapplyTransform(xform, ex) {
+  if (!xform || !ex) return null;
+  if (xform.startsWith('i-')) { const v = ideaVariations(ex).find(x => x.vid === xform); return v ? v.ex : null; }
+  for (const fn of GENERIC) { try { const v = fn(ex); if (v && v.vid === xform) return v.ex; } catch { /* skip */ } }
+  return null;
+}
+
 export function transposeChords(list, semis) {
   const out = list.map(nm => { const c = parseChord(nm); return c ? chordName(mod12(c.root.pc + semis), c.type) : null; });
   return out.every(Boolean) ? out : null;
@@ -477,7 +485,8 @@ export function variationsFor(base, ctx = {}) {
     const s = sig(v.ex); if (seen.has(s)) continue;
     seen.add(s); seenVid.add(v.vid);
     const level = clampL(v.level != null ? v.level : L0 + (v.dl || 0));
-    const ex = { ...v.ex, id: `${baseId}~${v.vid}`, level, varLabel: v.label };
+    // general transforms remember themselves so a key/strings change can re-apply them to the rebuilt exercise
+    const ex = { ...v.ex, id: `${baseId}~${v.vid}`, level, varLabel: v.label, ...(v.prio >= 1.5 ? { xform: v.vid } : {}) };
     if (!ex.name) ex.name = base.name;
     // specific = a real technique variation (family pattern, setting); general = tempo, key, transforms
     const kind = v.prio < 2 && !['key', 'easy', 'hard'].includes(v.vid) ? 'specific' : 'general';

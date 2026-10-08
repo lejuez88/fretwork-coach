@@ -12,6 +12,8 @@ import { toPlayerExercise } from '../core/coursegen.js';
 import { recordResult, recordPrescription, applyResult, newExerciseState, markReviewed, progressPct, ensureState, calibratedTarget, tempoLadder } from '../core/progression.js';
 import { variationsFor, findVariation } from '../core/variations.js';
 import { variationChipsHTML } from '../ui/variationpicker.js';
+import { paramDims, resolveParams, withParams, describeParams } from '../core/params.js';
+import { paramControlsHTML } from '../ui/paramcontrols.js';
 import { addEvidence, recomputeLevels } from '../core/skills.js';
 import { openEvalSheet } from '../eval/ui.js';
 import { mountTabPlayer } from '../tools/tabplayer.js';
@@ -167,13 +169,28 @@ export function mountRoutineRunner(root, { navigate }) {
     update();
   }
 
+  /** The exercise before key/strings/chords were applied: the chosen variation, or the original. */
+  const preParamsEx = it => {
+    if (it.vid && it.vid !== 'base') { const v = findVariation(varsOf(it), it.vid); if (v) return v.ex; }
+    return it.baseEx || it.ex;
+  };
+  const dimsOf = it => (it.songId ? [] : paramDims(preParamsEx(it)));
   function varRowHTML(it) {
-    const list = varsOf(it);
-    if (list.length < 2) return it.variation ? `<div class="note">↻ ${esc(it.variation)}</div>` : '';
-    const v = findVariation(list, it.vid);
-    return `<div class="varrow"><span class="vtxt">↻ <b>${esc(v.label)}</b> · L${v.level}${v.base ? '' : ` · ${esc(v.change)}`}</span>
-        <button class="btn sm ghost" data-r="vartoggle">${varOpen ? 'Close' : `Variations (${list.length})`}</button></div>
-      ${varOpen ? variationChipsHTML(list, { current: v.vid, attr: 'data-rvid', stateOf: vid => { const k = `${scopeOf(it)}~${vid}`; return vid === 'base' && !it.libId ? stateOfBase(it) : (p.varState || {})[k] || null; } }) : ''}`;
+    const list = varsOf(it), dims = dimsOf(it);
+    if (list.length < 2 && !dims.length) return it.variation ? `<div class="note">↻ ${esc(it.variation)}</div>` : '';
+    const v = list.length ? findVariation(list, it.vid) : null;
+    const pdesc = it.resolved && Object.keys(it.resolved).length ? describeParams(dims, it.resolved) : '';
+    return `<div class="varrow"><span class="vtxt">↻ <b>${esc(v ? v.label : 'Standard')}</b>${v ? ` · L${v.level}` : ''}${v && !v.base ? ` · ${esc(v.change)}` : ''}${pdesc ? `<br><span class="small">${esc(pdesc)}</span>` : ''}</span>
+        <button class="btn sm ghost" data-r="vartoggle">${varOpen ? 'Close' : list.length > 1 ? `Variations (${list.length})` : 'Key & strings'}</button></div>
+      ${varOpen && list.length > 1 ? variationChipsHTML(list, { current: v.vid, attr: 'data-rvid', stateOf: vid => { const k = `${scopeOf(it)}~${vid}`; return vid === 'base' && !it.libId ? stateOfBase(it) : (p.varState || {})[k] || null; } }) : ''}
+      ${varOpen && dims.length ? paramControlsHTML(dims, it.params || {}) : ''}`;
+  }
+  /** Apply key / strings / chords to the current exercise. */
+  function applyItemParams(it) {
+    const pre = preParamsEx(it), dims = paramDims(pre);
+    if (!it.baseEx) { it.baseEx = it.ex; it.baseTarget = it.targetBpm; it.baseVariation = it.variation || null; }
+    it.resolved = resolveParams(it.params || {}, dims);
+    it.ex = withParams(pre, it.resolved);
   }
   const stateOfBase = it => { const saved = { vid: it.vid }; it.vid = null; const st = stateOf(it); it.vid = saved.vid; return st; };
   /** Switch the current exercise to another variation. */
@@ -183,6 +200,7 @@ export function mountRoutineRunner(root, { navigate }) {
     teardownTool();
     if (!it.baseEx) { it.baseEx = it.ex; it.baseTarget = it.targetBpm; it.baseVariation = it.variation || null; }
     it.vid = v.vid; it.ex = JSON.parse(JSON.stringify(v.ex)); it.goalBpm = v.ex.goalBpm;
+    if (it.params && Object.keys(it.params).length) applyItemParams(it);
     const st = usesVarState(it) ? (p.varState || {})[varKeyOf(it)] : null;
     it.targetBpm = v.base && !it.libId ? (it.baseTarget || it.targetBpm) : st ? st.target : calibratedTarget(v.ex, v.level, p);
     const lad = tempoLadder(it.targetBpm, Math.max(it.goalBpm, it.targetBpm));
@@ -357,10 +375,17 @@ export function mountRoutineRunner(root, { navigate }) {
     else if (b.dataset.r === 'skip') advance(null);
     else if (b.dataset.r === 'back') { phase = 'play'; render(); }
   };
-  root.addEventListener('click', onClick); Shell.actionBar.addEventListener('click', barClick);
+  const onChange = e => {
+    const sel = e.target.closest('[data-param]'); if (!sel) return;
+    const it = cur(); A.lastToolBpm = toolBpm(); teardownTool();
+    it.params = { ...(it.params || {}), [sel.dataset.param]: sel.value };
+    const d = dimsOf(it).find(x => x.id === sel.dataset.param); if (d && String(d.value) === sel.value) delete it.params[sel.dataset.param];
+    applyItemParams(it); saveActive(A); render();
+  };
+  root.addEventListener('click', onClick); root.addEventListener('change', onChange); Shell.actionBar.addEventListener('click', barClick);
   render();
   tick = setInterval(update, 250);
-  return () => { clearInterval(tick); teardownTool(); root.removeEventListener('click', onClick); Shell.actionBar.removeEventListener('click', barClick); Shell.actions(''); };
+  return () => { clearInterval(tick); teardownTool(); root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); Shell.actionBar.removeEventListener('click', barClick); Shell.actions(''); };
 }
 
 /* -------------------------------- Summary ------------------------------- */

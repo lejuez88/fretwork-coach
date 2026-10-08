@@ -709,3 +709,62 @@ body.tuning .tunefab{border-color:var(--amber);background:var(--amber-soft)}
 .spend-row{display:grid;grid-template-columns:1fr auto;column-gap:12px;row-gap:1px;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px;align-items:baseline}
 .spend-row:last-child{border:0}.spend-row .sd{grid-column:1/-1;font-size:13px}.spend-row b{font-family:var(--mono);font-weight:600}
 .spend-sub{font:600 12px var(--head);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:14px 0 2px}
+/* Key / strings / chords pickers (library + routine runner) */
+.params{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;align-items:end;margin:6px 0 4px}
+.params label.mini.param{flex:none;min-width:0}
+.params label.mini.param span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.params label.mini select{width:100%}
+.params>.btn{min-height:46px}
+.librow.special{border-color:rgba(185,166,239,.45);background:linear-gradient(135deg,rgba(185,166,239,.14),var(--inset) 60%)}
+.librow.special b::before{content:'◎ ';color:#b9a6ef}
+/* Fretboard area + string focus */
+.fb-dim{fill:rgba(10,7,5,.58);pointer-events:none}
+.fb-focus{fill:rgba(245,165,36,.16);stroke:rgba(245,165,36,.45);stroke-width:1;pointer-events:none}
+.fb-mark.target circle{stroke:#fff;stroke-width:2.2}
+.fb-mark.wrong circle{fill:#e2483d}
+.fb-mark.wrong text{fill:#fff}
+/* Interval trainer */
+.itplay{text-align:left}
+.it-summary{font-size:15px;color:#c9b8f0;margin:2px 0 8px}
+.it-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.it-keychip{font:500 16px var(--body);padding:6px 14px;border-radius:999px;background:var(--inset);border:1px solid var(--line)}
+.it-keychip b{font:600 20px var(--head);color:#ffd48a;margin:0 2px}
+.it-keychip small{color:var(--muted);font-size:13px}
+.it-keychip.new{border-color:var(--amber);box-shadow:0 0 0 3px var(--amber-soft);animation:itpulse .6s ease-out}
+@keyframes itpulse{from{transform:scale(1.08)}to{transform:scale(1)}}
+.it-prompt{text-align:center;margin:10px 0 4px}
+.it-int{font:600 92px/1 var(--head);color:var(--text);letter-spacing:.01em;text-shadow:0 4px 18px rgba(245,165,36,.25)}
+.it-int.long{font-size:44px;line-height:1.15}
+.it-sub{font-size:15px;color:var(--muted);margin-top:6px}
+.it-sub b{color:var(--text)}
+.it-status{text-align:center;font-weight:600;min-height:26px;margin:8px 0 6px}
+.it-status.ok{color:var(--green)}.it-status.bad{color:#ff8a80}.it-status.mid{color:#ffd48a}
+.it-shape{text-align:center;color:#c9b8f0;margin:0 0 8px}
+.it-time{margin:4px 0 8px}
+.it-time i{transition:width .1s linear}
+.it-meter{height:4px;border-radius:3px;background:#0d0b0f;overflow:hidden;margin:2px 0 6px}
+.it-meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#3f8f4a,var(--green));transition:width .08s linear}
+.it-board.tapping{outline:1px dashed rgba(245,165,36,.4);outline-offset:-1px}
+.it-btns{margin-top:8px}.it-btns>.btn{flex:1 1 90px}
+.it-how{margin:10px 0 0}
+.it-res{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.it-res .bigres{font-size:46px;line-height:1}
+.bigres.ok{color:var(--green)}.bigres.bad{color:#ff8a80}
+.it-per{display:grid;gap:4px;margin:12px 0}
+.it-prow{display:grid;grid-template-columns:52px 1fr 44px 56px;align-items:center;gap:10px}
+.it-prow b{font:600 18px var(--head)}
+.it-prow .bar{display:block;margin:0}
+.it-prow span.small{text-align:right}
+.itset fieldset{border:0;margin:0;padding:0;min-width:0}
+.itset fieldset[disabled]{opacity:.55}
+.it-sublabel{margin:14px 0 4px;color:#c9b8f0}
+.it-setbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.it-custom{margin:4px 0 8px}.it-custom .chip{min-width:48px}
+.it-stats{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px}
+.istat{display:flex;flex-direction:column;align-items:center;min-width:64px;padding:6px 10px;border-radius:12px;border:1px solid var(--line);background:var(--inset)}
+.istat b{font:600 20px var(--head)}.istat small{font-size:11px;color:var(--muted);white-space:nowrap}
+.istat.good{border-color:rgba(92,196,107,.6)}.istat.good b{color:var(--green)}
+.istat.mid{border-color:rgba(245,165,36,.5)}.istat.mid b{color:#ffd48a}
+.istat.weak{border-color:rgba(226,72,61,.6)}.istat.weak b{color:#ff8a80}
+@media(max-width:560px){.it-int{font-size:76px}.it-int.long{font-size:34px}.params{grid-template-columns:1fr 1fr}.it-prow{grid-template-columns:44px 1fr 40px 50px}}
+@media(max-width:560px){.itset .params select{font-size:15px;padding:8px}}

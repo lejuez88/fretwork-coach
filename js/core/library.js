@@ -8,6 +8,7 @@ import { normalizeExercise } from './coursegen.js';
 import { drillLibrary, stringNotesDrill } from './drills.js';
 import { EXERCISE_BY_ID } from '../tools/exercises.js';
 import { variationsFor, findVariation, pickVariation } from './variations.js';
+import { paramDims, resolveParams, withParams } from './params.js';
 import { calibratedTarget, newExerciseState, applyResult } from './progression.js';
 import { addEvidence, recomputeLevels } from './skills.js';
 import { today } from './util.js';
@@ -96,6 +97,28 @@ const ENTRIES = [
   ['target-solo', 'ear', L => runAtom(C(A, true, L, 'blues'), 'targetSolo', { chords: '$blues' })]
 ];
 
+// Titles for the library list: what the exercise is, not the one key or chord set it starts in
+const TITLES = {
+  spider: 'Chromatic spider', trills: 'Finger-pair trills', 'vibrato-holds': 'Vibrato on target notes', 'speed-burst': '16th-note bursts on two strings',
+  'alt-burst': 'Single-string 16th bursts', 'string-cross': 'String crossing', 'string-skip': 'String skipping', gallop: 'Palm-muted gallop', sweep: 'Sweep arpeggios',
+  hybrid: 'Hybrid picking', travis: 'Travis picking', pima: 'p-i-m-a arpeggios', picado: 'Picado runs', rasgueado: 'Rasgueado',
+  bends: 'Bend to pitch', 'bend-lick': 'Bends in a lick', legato: '3-notes-per-string legato', slides: 'In-time slides', tapping: 'Tap–pull–hammer', 'double-stops': 'Double-stops in 3rds and 6ths', 'power-shifts': 'Power-chord shifts',
+  'open-changes': 'Open-chord changes', 'barre-changes': 'Barre-chord changes', 'power-riff': 'Power-chord riffs', 'triad-shapes': 'Chord shapes across the neck', 'triad-prog': 'Triad inversions over a progression',
+  'seventh-qualities': '7th-chord qualities', inversions: 'Chord inversions', shells: 'Shell voicings', drop2: 'Drop-2 comping', embellish: 'Hammer-on embellishments',
+  strum: 'Strumming patterns', funk: 'Funk 16th-note scratch', shuffle: 'Boogie shuffle', subdivisions: 'Subdivision ladder', 'gap-click': 'Gap click', 'odd-meter': 'Odd-meter riffs', 'boom-chicka': 'Boom-chicka', chug: 'Palm-muted chugs with stabs',
+  penta: 'Pentatonic positions', 'major-scale': 'Scales, 3 notes per string', 'blues-scale': 'Blues scale positions', connect: 'Connecting positions', 'note-finder': 'Find a note everywhere', 'string-notes': 'Notes on one string', intervals: 'Interval shapes', arpeggio: 'Arpeggios, two octaves',
+  'interval-trainer': 'Interval trainer', 'key-chords': 'Chords of a key', modes: 'Mode comparison', 'guide-tones': 'Guide-tone lines',
+  echo: 'Echo phrases by ear', 'find-key': 'Find the key by ear', 'call-response': 'Call and response', 'target-solo': 'Target chord tones'
+};
+// Keys of written drills (so they can be moved to any key)
+const KEY_PC = { bends: 9, gallop: 4, 'power-shifts': 4, tapping: 9, slides: 9, hybrid: 0, 'string-cross': 9 };
+// Interactive exercises with their own screen
+const SPECIAL = {
+  'interval-trainer': { cat: 'theory', ex: { id: 'lib-interval-trainer', name: 'Interval trainer', domain: 'fretboard', level: 3,
+    why: 'Find any interval from the root, in any key, as fast as you can: the app shows the interval and listens for the note (or you tap it on the neck). This is what makes scales, arpeggios and chord tones automatic.' } }
+};
+export const isSpecial = id => !!SPECIAL[id];
+
 /** Player's level for a category (their level in the matching skill area). */
 export function levelFor(p, cat) {
   const d = p && p.domains && p.domains[CAT_DOMAIN[cat] || 'fretting'];
@@ -105,6 +128,7 @@ export function levelFor(p, cat) {
 const cache = new Map();
 /** One library entry, built for the player's level: {id, cat, ex}. */
 export function libEntry(p, id) {
+  if (SPECIAL[id]) return { id, cat: SPECIAL[id].cat, title: TITLES[id] || SPECIAL[id].ex.name, special: true, ex: { ...SPECIAL[id].ex } };
   const e = ENTRIES.find(x => x[0] === id); if (!e) return null;
   const L = levelFor(p, e[1]);
   const ck = id + '|' + L;
@@ -117,12 +141,30 @@ export function libEntry(p, id) {
   ex.id = 'lib-' + id;
   if (raw.family && !ex.family) ex.family = raw.family;
   if (raw.level && !ex.level) ex.level = raw.level;
-  const entry = { id, cat: e[1], ex };
+  if (KEY_PC[id] != null) ex.keyPc = KEY_PC[id];
+  const entry = { id, cat: e[1], ex, title: TITLES[id] || ex.name };
   cache.set(ck, entry);
   return entry;
 }
-export function libraryEntries(p) { return ENTRIES.map(e => libEntry(p, e[0])).filter(Boolean); }
-export function libVariations(p, entry) { return variationsFor(entry.ex, { level: levelFor(p, entry.cat) }); }
+export function libraryEntries(p) {
+  const list = ENTRIES.map(e => libEntry(p, e[0])).filter(Boolean);
+  // interactive exercises go first in their topic
+  Object.keys(SPECIAL).forEach(id => { const en = libEntry(p, id); const at = list.findIndex(x => x.cat === en.cat); list.splice(at < 0 ? list.length : at, 0, en); });
+  return list;
+}
+export function libVariations(p, entry) { return entry.special ? [] : variationsFor(entry.ex, { level: levelFor(p, entry.cat) }); }
+
+/* ------------------------- Key / strings / chords ------------------------- */
+const PARAMS_KEY = 'fretworkCoach.libParams';
+export function getLibParams(id) { try { return (JSON.parse(localStorage.getItem(PARAMS_KEY) || '{}') || {})[id] || {}; } catch { return {}; } }
+export function setLibParams(id, params) {
+  try { const all = JSON.parse(localStorage.getItem(PARAMS_KEY) || '{}') || {}; all[id] = params; localStorage.setItem(PARAMS_KEY, JSON.stringify(all)); } catch { /* storage off */ }
+}
+/** The exercise to play for a variation with the stored key/strings/chords choices. */
+export function instanceOf(v, params) {
+  const dims = paramDims(v.ex), resolved = resolveParams(params, dims);
+  return { dims, resolved, ex: withParams(v.ex, resolved) };
+}
 
 /* ------------------------------- Progress ------------------------------- */
 export const libKey = (id, vid) => `lib:${id}~${vid || 'base'}`;
@@ -166,10 +208,11 @@ const BLOCK_FOR = { warmup: 'warmup', theory: 'theory', ear: 'music', scales: 'r
 /** Items for makeAdhocRoutine from the queue. */
 export function queueItems(p) {
   return Queue.get().map(({ id, vid }) => {
-    const entry = libEntry(p, id); if (!entry) return null;
+    const entry = libEntry(p, id); if (!entry || entry.special) return null;
     const v = findVariation(libVariations(p, entry), vid);
-    return { block: BLOCK_FOR[entry.cat] || 'stretch', ex: v.ex, targetBpm: libTarget(p, entry, v), minutes: v.ex.minutes || 5,
-      extra: { libId: entry.id, vid: v.vid, exId: entry.ex.id, baseEx: entry.ex, ...(v.vid !== 'base' ? { variation: `${v.label}: ${v.change}` } : {}) } };
+    const params = getLibParams(entry.id), inst = instanceOf(v, params);
+    return { block: BLOCK_FOR[entry.cat] || 'stretch', ex: inst.ex, targetBpm: libTarget(p, entry, v), minutes: v.ex.minutes || 5,
+      extra: { libId: entry.id, vid: v.vid, exId: entry.ex.id, baseEx: entry.ex, params, resolved: inst.resolved, ...(v.vid !== 'base' ? { variation: `${v.label}: ${v.change}` } : {}) } };
   }).filter(Boolean);
 }
 export { EXERCISE_BY_ID };

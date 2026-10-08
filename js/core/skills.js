@@ -16,13 +16,13 @@ export function demonstrated(level, frac) {
  * Add evidence. key identifies the exercise (one entry per exercise; the best
  * run is kept). Returns the stored entry.
  */
-export function addEvidence(profile, { key, domain, label, level, tempo, goal, clean, source, weight = 1 }) {
+export function addEvidence(profile, { key, domain, label, level, tempo, goal, clean, source, weight = 1, unit = null }) {
   if (!domain || !goal || !tempo) return null;
   const ev = profile.skillEvidence || (profile.skillEvidence = {});
   const frac = (clean ? 1 : 0.8) * tempo / goal;     // unclean runs count, discounted
   const value = demonstrated(level || 4, frac);
   const prev = ev[key];
-  if (!prev || value >= prev.value) ev[key] = { domain, label, level: level || 4, tempo, goal, frac: +frac.toFixed(3), value: +value.toFixed(2), clean: !!clean, source, date: today(), weight };
+  if (!prev || value >= prev.value) ev[key] = { domain, label, level: level || 4, tempo, goal, frac: +frac.toFixed(3), value: +value.toFixed(2), clean: !!clean, source, date: today(), weight, ...(unit ? { unit } : {}) };
   else prev.date = today();
   return ev[key];
 }
@@ -61,7 +61,7 @@ export function recomputeLevels(profile) {
     dm.lessonCount = n;
     if (n) {
       const best = mine[0];
-      dm.lessonNote = `Best lesson result: ${best.label} at ${best.tempo} BPM${best.clean ? ' clean' : ''} (goal ${best.goal}).`;
+      dm.lessonNote = `Best lesson result: ${best.label} at ${best.tempo} ${best.unit || 'BPM'}${best.clean ? ' clean' : ''} (goal ${best.goal}).`;
       dm.basis = dm.basis === 'estimated' && level !== A ? 'lessons' : dm.basis === 'estimated' ? 'estimated' : 'tested + lessons';
     }
   }

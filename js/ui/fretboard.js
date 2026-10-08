@@ -57,9 +57,10 @@ export function exerciseDiagramsHTML(ex, opts = {}) {
 
 /**
  * Horizontal fretboard (string 1 at the top, like tab).
- * marks: [{s, f, label, family, ghost, cls}]; muted: [string numbers]; opts: {maxFret, interactive, frets (selected frets for build mode)}
+ * marks: [{s, f, label, family, ghost, cls}]; muted: [string numbers]; opts: {maxFret, interactive,
+ * highlightFrets: [lo, hi] (frets outside are dimmed), focusString: string number to highlight}
  */
-export function fretboardSVG({ marks = [], muted = [], maxFret = 15, interactive = false, highlightFrets = null } = {}) {
+export function fretboardSVG({ marks = [], muted = [], maxFret = 15, interactive = false, highlightFrets = null, focusString = null } = {}) {
   const NUT = 38, FW = 46, ROW = 26, TOP = 18, H = TOP + ROW * 5 + 30, W = NUT + maxFret * FW + 12;
   let o = `<svg class="fboard ${interactive ? 'interactive' : ''}" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Fretboard">`;
   // inlays
@@ -68,7 +69,14 @@ export function fretboardSVG({ marks = [], muted = [], maxFret = 15, interactive
   // frets and nut
   for (let f = 0; f <= maxFret; f++) { const x = NUT + f * FW; o += `<line x1="${x}" y1="${TOP}" x2="${x}" y2="${TOP + ROW * 5}" class="${f === 0 ? 'fb-nut' : 'fb-fret'}"/>`; if (f > 0) o += `<text x="${x - FW / 2}" y="${H - 6}" text-anchor="middle" class="fb-num ${[3, 5, 7, 9, 12, 15].includes(f) ? 'em' : ''}">${f}</text>`; }
   // strings (thicker for low)
+  if (focusString >= 1 && focusString <= 6) o += `<rect x="${NUT - 30}" y="${TOP + (focusString - 1) * ROW - 8}" width="${W - NUT + 24}" height="16" rx="8" class="fb-focus"/>`;
   for (let s = 1; s <= 6; s++) { const y = TOP + (s - 1) * ROW; o += `<line x1="${NUT - 30}" y1="${y}" x2="${W - 6}" y2="${y}" class="fb-str" style="stroke-width:${0.8 + (s - 1) * 0.35}"/>`; o += `<text x="4" y="${y + 4}" class="fb-sname">${['e', 'B', 'G', 'D', 'A', 'E'][s - 1]}</text>`; }
+  // dim the frets outside the practice area
+  if (Array.isArray(highlightFrets)) {
+    const [lo, hi] = highlightFrets, y = TOP - 12, h = ROW * 5 + 24;
+    if (lo > 0) o += `<rect x="${NUT - 30}" y="${y}" width="${(lo - 1) * FW + 30}" height="${h}" class="fb-dim"/>`;
+    if (hi < maxFret) o += `<rect x="${NUT + hi * FW}" y="${y}" width="${W - (NUT + hi * FW)}" height="${h}" class="fb-dim"/>`;
+  }
   // click targets
   if (interactive) for (let s = 1; s <= 6; s++) for (let f = 0; f <= maxFret; f++) {
     const x = f === 0 ? NUT - 26 : NUT + (f - 1) * FW, w = f === 0 ? 26 : FW, y = TOP + (s - 1) * ROW - ROW / 2;

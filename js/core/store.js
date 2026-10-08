@@ -77,6 +77,7 @@ export function normalize(p) {
   });
   if (!out.skillEvidence || typeof out.skillEvidence !== 'object' || Array.isArray(out.skillEvidence)) out.skillEvidence = {};
   if (!out.varState || typeof out.varState !== 'object' || Array.isArray(out.varState)) out.varState = {};
+  if (out.intervalStats != null && (typeof out.intervalStats !== 'object' || Array.isArray(out.intervalStats))) delete out.intervalStats;
   ['courses', 'practiceLog', 'exerciseLog', 'evaluations', 'prescriptions', 'levelHistory', 'repertoire', 'sessionLog', 'activeExercises', 'reviewQueue', 'weaknesses', 'songs', 'customExercises']
     .forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
   return out;
