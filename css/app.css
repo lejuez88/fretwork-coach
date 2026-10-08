@@ -958,3 +958,7 @@ body.has-actions .tunepop{bottom:calc(140px + env(safe-area-inset-bottom))}
 /* API keys: what is saved, without showing it */
 .keyfp{font:600 13px var(--mono);color:#ffd48a;word-break:break-all}
 .keynote{margin-top:6px}
+.keyqr{margin:12px 0 4px;text-align:center}
+.keyqr svg{width:260px;max-width:100%;height:auto;background:#fff;border-radius:12px;padding:8px;display:block;margin:0 auto 8px}
+.keyline{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--line)}
+.keyline:last-of-type{border:0}

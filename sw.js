@@ -1,6 +1,6 @@
 // Offline cache for the app shell. Network-first for app files so updates show
 // up on the next load; images from Wikipedia are cached as they are viewed.
-const CACHE = 'fretwork-v2k-2';
+const CACHE = 'fretwork-v2k-3';
 const SHELL = [
   './', 'index.html', 'css/app.css', 'manifest.json', 'icon.svg',
   'js/app.js', 'js/core/util.js', 'js/core/store.js', 'js/core/claude.js', 'js/core/wiki.js', 'js/core/audio.js',
@@ -15,7 +15,7 @@ const SHELL = [
   'js/core/theory.js', 'js/core/atoms.js', 'js/core/styles.js', 'js/core/topics.js', 'js/ui/fretboard.js', 'js/screens/chords.js',
   'js/core/intervals.js', 'js/core/params.js', 'js/screens/intervals.js', 'js/ui/paramcontrols.js',
   'js/core/master.js', 'js/ui/mastersheet.js', 'js/core/songsterr.js',
-  'js/core/tempo.js', 'js/ui/chordsync.js', 'js/ui/temporow.js', 'js/core/keys.js'
+  'js/core/tempo.js', 'js/ui/chordsync.js', 'js/ui/temporow.js', 'js/core/keys.js', 'js/vendor/qrcode.js'
 ];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {
@@ -25,7 +25,9 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.hostname === 'api.anthropic.com') return;
   if (url.origin === location.origin) {
-    e.respondWith(fetch(e.request).then(r => { const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return r; }).catch(() => caches.match(e.request)));
+    // app files: ask the server every time (a quick "not modified" when nothing changed), so a new release shows up on the next load
+    const fresh = e.request.mode === 'navigate' ? fetch(e.request) : fetch(e.request, { cache: 'no-cache' });
+    e.respondWith(fresh.then(r => { if (r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); } return r; }).catch(() => caches.match(e.request)));
   } else if (url.hostname === 'upload.wikimedia.org') {
     e.respondWith(caches.match(e.request).then(hit => hit || fetch(e.request).then(r => { const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return r; })));
   }

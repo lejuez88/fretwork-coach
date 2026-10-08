@@ -8,6 +8,7 @@
 // Any of these makes the key fail on that device only.
 
 const INVISIBLE = /[\s\u00A0\u1680\u180E\u2000-\u200F\u2028-\u202F\u205F-\u2064\u3000\uFEFF]/g;
+const EM_DASH = /\u2014/g; // a typed "--" becomes "—" on iPhone
 const DASHES = /[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g;
 const QUOTES = /["'\u2018\u2019\u201C\u201D`<>]/g;
 const FULL = { anthropic: /^sk-ant-[A-Za-z0-9_-]{30,}$/, youtube: /^AIza[0-9A-Za-z_-]{35}$/ };
@@ -18,7 +19,7 @@ const fixCase = (k, kind) => (kind === 'anthropic' ? k.replace(/^sk-ant-/i, 'sk-
 export function cleanKey(raw, kind) {
   let s = String(raw == null ? '' : raw);
   try { s = s.normalize('NFKC'); } catch { /* old browser */ }
-  s = s.replace(DASHES, '-').replace(QUOTES, ' ');
+  s = s.replace(EM_DASH, '--').replace(DASHES, '-').replace(QUOTES, ' ');
   // A whole key among other words ("My key: sk-ant-…"): take it as it is
   const prose = /[^A-Za-z0-9_\-\s\u00A0\u200B-\u200D\u2060\uFEFF]/.test(s);
   const tokens = s.split(INVISIBLE).filter(Boolean).map(t => fixCase(t, kind));
@@ -98,4 +99,24 @@ export function networkAdvice(host) {
   const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
   return offline ? 'This device is offline.'
     : `Couldn’t reach ${host}. Check the connection; on a phone, a content blocker, VPN, Private Relay or a Wi-Fi filter can also block it.`;
+}
+
+/* ------------------------ Moving keys to another device ------------------------ */
+// The keys travel inside the link's # part, which browsers never send to a server.
+/** A link that opens the app on another device and offers to save these keys there. */
+export function keysLink({ anthropic = '', youtube = '' } = {}, base = location.origin + location.pathname) {
+  const q = new URLSearchParams();
+  if (anthropic) q.set('a', anthropic);
+  if (youtube) q.set('y', youtube);
+  return `${base.replace(/index\.html$/, '')}#/keys/${q.toString()}`;
+}
+/** Keys from a link (or from the part after "#/keys/"). */
+export function parseKeysLink(text) {
+  const s = String(text || '').trim();
+  const at = s.indexOf('#/keys/');
+  const part = at >= 0 ? s.slice(at + 7) : s;
+  let q;
+  try { q = new URLSearchParams(part.replace(/^\?/, '')); } catch { return null; }
+  const anthropic = cleanKey(q.get('a') || '', 'anthropic'), youtube = cleanKey(q.get('y') || '', 'youtube');
+  return anthropic || youtube ? { anthropic, youtube } : null;
 }

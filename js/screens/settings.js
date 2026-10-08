@@ -1,12 +1,13 @@
 // Settings: Claude API key + model, optional YouTube key, audio, images,
 // data import/export, reset. Keys live only in this browser, never in exports.
 import { esc, toast } from '../core/util.js';
-import { Store } from '../core/store.js';
+import { Store, BUILD } from '../core/store.js';
 import { Claude, MODELS } from '../core/claude.js';
 import { Wiki } from '../core/wiki.js';
 import { exportProfile } from './profile.js';
 import { getKey as ytGetKey, setKey as ytSetKey, testKey as ytTestKey } from '../core/youtube.js';
-import { cleanKey, keyProblems, fingerprint, storageAdvice, homeScreenNote } from '../core/keys.js';
+import { cleanKey, keyProblems, fingerprint, storageAdvice, homeScreenNote, keysLink, parseKeysLink } from '../core/keys.js';
+import qrcode from '../vendor/qrcode.js';
 import { mountAudioSetup } from '../ui/audiosetup.js';
 import { importBlockHTML, wireImport } from '../ui/importui.js';
 import { periodFor, summarize, billingDay, setBillingDay, clearUsage, priceFor, fmtUSD, fmtTokens, FEATURE_LABEL, PRICES_AS_OF } from '../core/usage.js';
@@ -50,6 +51,16 @@ export function mountSettings(root, { navigate, applySettings }) {
         </ol>
       </details>
     </section>
+    <section class="card" data-r="transfer">
+      <h3>Use your keys on another device</h3>
+      <p class="muted small">Typing a 39- or 100-character key on a phone is easy to get wrong (I and l, O and 0 look alike). Instead, show a QR code here and scan it with your phone’s camera: the app opens on the phone and offers to save the same keys there. The keys travel inside the link itself; they never pass through a server.</p>
+      <div class="row" data-r="sendrow" ${key || ytKey ? '' : 'hidden'}><button class="btn" data-s="qr">Show QR code</button><button class="btn" data-s="copylink">Copy link</button></div>
+      <div class="keyqr" data-r="qr" hidden></div>
+      <p class="small muted" data-r="qrnote">${key || ytKey ? 'Anyone who scans the code or gets the link can use your keys, so show it only to your own device.' : 'Save a key above first; then you can send it to your other devices from here.'}</p>
+      <div class="field"><label>Got a key link from your other device? Paste it here</label>
+        <div class="row nowrap"><input type="text" data-r="keylink" placeholder="https://…#/keys/…" ${KEY_ATTRS}><button class="btn" data-s="uselink">Add keys</button></div></div>
+      <p class="small" data-r="linkstatus"></p>
+    </section>
     ${p ? `<section class="card"><h3>Audio input & output</h3><p class="muted small">Used by the tuner and playing evaluations. Pick your audio interface (e.g. a Focusrite Scarlett), amp/pedal USB, or microphone.</p><div data-r="audio"></div></section>` : ''}
     ${p ? `<section class="card">
       <h3>Display</h3>
@@ -64,9 +75,11 @@ export function mountSettings(root, { navigate, applySettings }) {
     </section>
     <section class="card">
       <h3>About this version</h3>
+      <p class="small"><b>Build ${BUILD}</b>. If another device shows a different build, reload it (or close and reopen the app) to get the latest.</p>
       <p class="small">Fretwork Coach · Phase D. Included: onboarding and continuable assessment, dashboard, course plans with progress trees, timed routines with tempo ladders and level-matched tempos, exercises from your own requests, songs with recommendations, one-day song lessons, tab import with section looping and help, audio and video evaluation with Claude coaching, tuner, metronome, tab player with pick directions, chord glossary with chord finder, style-specific course plans, Track of the Day with YouTube playback.</p>
     </section>`;
   const r = n => root.querySelector(`[data-r="${n}"]`);
+  let qrTimer = null;
   const status = (msg, cls = '') => { r('status').textContent = msg; r('status').className = 'small ' + cls; };
   const ytStatus = (msg, cls = '') => { r('ytstatus').textContent = msg; r('ytstatus').className = 'small ' + cls; };
   /**
@@ -81,6 +94,7 @@ export function mountSettings(root, { navigate, applySettings }) {
     box.value = cleaned;
     if (!cleaned) { say(kind === 'anthropic' ? 'Key removed from this browser.' : 'YouTube key removed from this browser.', 'ok'); return ''; }
     const fixed = cleaned !== raw.trim() ? ' Removed spaces, line breaks or hidden characters that came with the paste.' : '';
+    const send = r('sendrow'); if (send) send.hidden = false;
     const probs = keyProblems(cleaned, kind);
     say(`Saved in this browser: ${fingerprint(cleaned, kind)}.${fixed}${probs.length ? ' Check it: ' + probs.join(' ') : ''}`, probs.length ? 'bad' : 'ok');
     return cleaned;
@@ -135,6 +149,28 @@ export function mountSettings(root, { navigate, applySettings }) {
         catch (err) { ytStatus(err.message, 'bad'); }
         break;
       }
+      case 'qr': case 'copylink': {
+        const link = keysLink({ anthropic: Claude.getKey(), youtube: ytGetKey() });
+        if (b.dataset.s === 'copylink') {
+          try { await navigator.clipboard.writeText(link); r('qrnote').textContent = 'Link copied. Send it to your own phone (AirDrop, or a note to yourself), open it there, and tap Save.'; }
+          catch { r('qrnote').textContent = 'This browser wouldn’t copy the link. Use the QR code instead.'; }
+          break;
+        }
+        const box = r('qr');
+        if (!box.hidden) { box.hidden = true; box.innerHTML = ''; b.textContent = 'Show QR code'; break; }
+        const q = qrcode(0, 'L'); q.addData(link); q.make();
+        box.innerHTML = q.createSvgTag({ cellSize: 4, margin: 4, scalable: true, title: 'Your keys for another device' }) + '<div class="small muted">Point your phone’s camera at the code and open the link it shows. Hides itself in 2 minutes.</div>';
+        box.hidden = false; b.textContent = 'Hide QR code';
+        clearTimeout(qrTimer); qrTimer = setTimeout(() => { if (!root.isConnected) return; box.hidden = true; box.innerHTML = ''; const qb = root.querySelector('[data-s="qr"]'); if (qb) qb.textContent = 'Show QR code'; }, 120000);
+        break;
+      }
+      case 'uselink': {
+        const keys = parseKeysLink(r('keylink').value);
+        if (!keys) { r('linkstatus').textContent = 'That doesn’t look like a key link. On your other device, use Copy link above and paste the whole link here.'; r('linkstatus').className = 'small bad'; break; }
+        r('keylink').value = '';
+        sessionKeys = keys; navigate('#/keys');
+        break;
+      }
       case 'clearspend': if (confirm('Clear the spend history kept in this browser? This doesn’t change anything with Anthropic.')) { clearUsage(); renderSpend(); } break;
       case 'export': exportProfile(p); break;
       case 'reset':
@@ -152,5 +188,49 @@ export function mountSettings(root, { navigate, applySettings }) {
   const offImport = wireImport(root, {
     onDone: (prof) => { if (applySettings) applySettings(); setTimeout(() => navigate(Object.keys(prof.domains || {}).length ? '#/home' : '#/onboarding'), 900); }
   });
-  return () => { if (offAudio) offAudio(); offImport(); root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); };
+  return () => { clearTimeout(qrTimer); if (offAudio) offAudio(); offImport(); root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); };
+}
+
+/* ------------------------- Keys from another device ------------------------- */
+// Keys handed over by #/keys/<link> (QR code) or pasted in Settings, waiting for "Save".
+let sessionKeys = null;
+/** Take keys out of the address bar right away, so they don't sit in the URL or history. */
+export function takeKeysFromUrl(payload) {
+  const keys = parseKeysLink(payload);
+  if (keys) sessionKeys = keys;
+  try { history.replaceState(null, '', location.pathname + location.search + '#/keys'); } catch { /* ignore */ }
+  return keys;
+}
+export function mountKeyImport(root, { navigate }) {
+  const keys = sessionKeys;
+  const note = homeScreenNote();
+  if (!keys) {
+    root.innerHTML = `<h1>Add keys</h1><section class="card"><p>No keys to add. On the device where your keys work, open Settings → “Use your keys on another device” and show the QR code or copy the link.</p><a class="btn block" href="#/settings">Open Settings</a></section>`;
+    return () => {};
+  }
+  const line = (label, k, kind) => (k ? `<div class="keyline"><span>${label}</span><span class="keyfp">${esc(fingerprint(k, kind))}</span></div>` : '');
+  root.innerHTML = `
+    <h1>Add your keys to this device</h1>
+    <section class="card">
+      <p>These keys came from your other device. Saving keeps them in this browser only, like typing them into Settings.</p>
+      ${line('Claude', keys.anthropic, 'anthropic')}${line('YouTube', keys.youtube, 'youtube')}
+      <div class="row" style="margin-top:12px"><button class="btn primary" data-k="save">Save on this device</button><button class="btn ghost" data-k="cancel">Cancel</button></div>
+      <p class="small" data-r="kstatus"></p>
+      ${note ? `<p class="small muted keynote">📱 ${esc(note)}</p>` : ''}
+    </section>`;
+  const onClick = e => {
+    const b = e.target.closest('[data-k]'); if (!b) return;
+    if (b.dataset.k === 'cancel') { sessionKeys = null; navigate('#/settings'); return; }
+    const results = [];
+    if (keys.anthropic) results.push(Claude.setKey(keys.anthropic));
+    if (keys.youtube) results.push(ytSetKey(keys.youtube));
+    const bad = results.find(x => !x.ok);
+    const st = root.querySelector('[data-r="kstatus"]');
+    if (bad) { st.textContent = storageAdvice(bad.reason); st.className = 'small bad'; return; }
+    sessionKeys = null;
+    toast('Keys saved on this device. Test them below.', 3500);
+    navigate('#/settings');
+  };
+  root.addEventListener('click', onClick);
+  return () => root.removeEventListener('click', onClick);
 }

@@ -14,7 +14,7 @@ import { mountAssessment } from './screens/assessment.js';
 import { mountDashboard } from './screens/dashboard.js';
 import { mountTools } from './screens/tools.js';
 import { mountProfile } from './screens/profile.js';
-import { mountSettings } from './screens/settings.js';
+import { mountSettings, mountKeyImport, takeKeysFromUrl } from './screens/settings.js';
 import { importBlockHTML, wireImport } from './ui/importui.js';
 import { prepareProfile } from './core/importer.js';
 import { mountCourse } from './screens/course.js';
@@ -163,6 +163,7 @@ function route() {
     case 'songs': cleanup = mountSongsHub(root, { navigate }); break;
     case 'song': cleanup = mountSongDetail(root, { id: parts[1], navigate }); break;
     case 'settings': cleanup = mountSettings(root, { navigate, applySettings }); break;
+    case 'keys': if (parts[1]) takeKeysFromUrl(parts.slice(1).join('/')); cleanup = mountKeyImport(root, { navigate }); break;
     default: navigate('#/');
   }
 }
