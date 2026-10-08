@@ -408,6 +408,257 @@ export function hxOctaves(c) {
   });
 }
 
+/* ------------------------------ Gilmour style ------------------------------ */
+/** Pre-bends and releases in box 1: bend silently, pick, let the note fall to a scale tone. */
+export function dgPrebends(c) {
+  const key = minorKey(c), B = byString(pentBox(key, 1));
+  if (!B[1] || !B[4] || B[1][1] + 3 > 22) return null;
+  const notes = []; let t = 0;
+  const pb = (s, f, up) => { notes.push(N(s, f, t, 1, 'b', { bendTo: f + up }), N(s, f, t + 1, 1)); t += 2; };
+  // bar 1: G string 4th → 5th; bar 2: B string ♭7 → root; bar 3: e string ♭3 → 4th; bar 4: back down, resolve on the root
+  pb(3, B[3][1], 2); notes.push(N(3, B[3][0], t, 2, '~')); t += 2;
+  pb(2, B[2][1], 2); notes.push(N(2, B[2][0], t, 2, '~')); t += 2;
+  pb(1, B[1][1], 2); notes.push(N(1, B[1][0], t, 2, '~')); t += 2;
+  if ((c.lvl || 4) >= 6) { pb(2, B[2][0], 3); notes.push(N(2, B[2][0], t, 2, '~')); t += 2; } // 1½-step pre-bend: 5th up to ♭7
+  pb(3, B[3][1], 2); notes.push(N(4, B[4][1], t, 2, '~'));
+  return make(c, {
+    id: 'dg-prebend', name: `Pre-bends and releases in ${nameOf(key)} minor, box 1 (Gilmour style)`, domain: 'fretting', unit: 'quarter notes', goal: 80, start: 50, minutes: 5,
+    why: 'Bending silently, then picking and letting the note fall, makes a melody sigh down into place: a Gilmour signature. It only works if the silent bend is exactly in pitch.',
+    instr: `The note marked b is bent BEFORE you pick it: push the string up to the target (whole step = two frets) without sound, pick, then release over one beat to the fretted note and move on. Bar 1: G string, the 4th up to the 5th. Bar 2: B string, ♭7 up to the root. Bar 3: high e, ♭3 up to the 4th.${(c.lvl || 4) >= 6 ? ' Then a 1½-step pre-bend on the B string (the 5th up to the ♭7).' : ''} Last bar resolves to the root on the D string. Pass: every pre-bend matches the target when you check it against the fretted note two frets up.`,
+    watch: 'Pre-bends that start flat: you hear the note creep up after you pick. Check the target first, then bend to it.', simplify: 'Bend up and release with sound (no pre-bend) to learn the distance first.', tab: { notes }
+  });
+}
+
+/* ------------------------- General technique library ------------------------- */
+// Open chord grips (low E … high e) for the fingerstyle and hybrid drills.
+const OPEN_SHAPES = { C: [null, 3, 2, 0, 1, 0], Am: [null, 0, 2, 2, 1, 0], G: [3, 2, 0, 0, 0, 3], Em: [0, 2, 2, 0, 0, 0], D: [null, null, 0, 2, 3, 2] };
+const onString = (name, s) => OPEN_SHAPES[name][6 - s];
+/** Bass strings for an alternating thumb: the root string, and the next useful string up. */
+function bassPair(name) {
+  const low = 6 - OPEN_SHAPES[name].findIndex(f => f != null);
+  return [low, low === 4 ? 3 : 4];
+}
+const openVoicings = names => [...new Set(names)].map(n => ({ name: n, frets: OPEN_SHAPES[n].slice() }));
+/** Chords of the key as names: minor i–♭VI–♭VII–V, major I–vi–IV–V. */
+function keyChords(c) {
+  if (c.minor) { const k = mod12(c.key); return [nameOf(k) + 'm', nameOf(k + 8), nameOf(k + 10), nameOf(k + 7)]; }
+  const k = mod12(c.key); return [nameOf(k), nameOf(k + 9) + 'm', nameOf(k + 5), nameOf(k + 7)];
+}
+/** A closed triad on strings 3-2-1 (no open strings), the closest to fret `near`. */
+function topTriad(name, near = 6) {
+  const ch = chordInfo(name); if (!ch) return null;
+  let best = null;
+  for (let a = 1; a <= 17; a++) for (let b = 1; b <= 17; b++) for (let e = 1; e <= 17; e++) {
+    const fs = [a, b, e]; if (Math.max(...fs) - Math.min(...fs) > 3) continue;
+    const pcs = [mod12(OPEN[3] + a), mod12(OPEN[2] + b), mod12(OPEN[1] + e)];
+    if (!pcs.every(p => ch.pcs.includes(p)) || new Set(pcs).size < 3) continue;
+    const score = Math.abs((a + b + e) / 3 - near);
+    if (!best || score < best.score) best = { 3: a, 2: b, 1: e, score, name: ch.name };
+  }
+  return best;
+}
+/** The next chord tone above fret f on string s, within `range` frets. */
+function nextToneUp(name, s, f, range = 5) {
+  const ch = chordInfo(name); if (!ch) return null;
+  for (let x = f + 1; x <= Math.min(22, f + range); x++) if (ch.pcs.includes(mod12(OPEN[s] + x))) return x;
+  return null;
+}
+
+/** Travis picking, built in three stages: thumb alone, thumb + one finger, the full pattern. */
+export function travisStages(c, { stage = 3 } = {}) {
+  const lvl = c.lvl || 4;
+  const chords = stage === 3 ? ['C', 'Am', 'Em', 'G'] : ['C', 'Am', 'G', 'C'];
+  const notes = [];
+  chords.forEach((nm, bar) => {
+    const [b1, b2] = bassPair(nm), T = bar * 4;
+    const thumb = [b1, b2, b1, b2];
+    const pinches = stage === 3 ? (lvl >= 5 ? [0, 2] : [0]) : [];
+    thumb.forEach((s, i) => notes.push(N(s, onString(nm, s), T + i, 1, null, pinches.includes(i) ? { chord: true } : null)));
+    if (stage === 2) [1.5, 3.5].forEach(t => notes.push(N(2, onString(nm, 2), T + t, 0.5)));
+    if (stage === 3) {
+      pinches.forEach(i => notes.push(N(1, onString(nm, 1), T + i, 1, null, { chord: true })));
+      [[0.5, 2], [1.5, 3], [2.5, 2], [3.5, 1]].forEach(([t, s]) => notes.push(N(s, onString(nm, s), T + t, 0.5)));
+    }
+  });
+  const label = { 1: 'the thumb alone', 2: 'thumb plus one finger', 3: 'the full pattern' }[stage];
+  return make(c, {
+    id: `travis-stage-${stage}`, name: `Travis picking, step ${stage}: ${label} (${chords.join(' – ')})`, domain: 'picking',
+    unit: stage === 1 ? 'quarter notes' : '8th notes', goal: stage === 1 ? 100 : 88, start: stage === 1 ? 60 : 48, minutes: 5, dl: stage - 3, picking: 'fingers',
+    why: stage === 1 ? 'Travis picking only works when the thumb runs on autopilot: an alternating bass on every beat, root string then the next string up, that never waits for the fingers.'
+      : stage === 2 ? 'Adding one finger on the off-beats is the hardest moment in Travis picking: the thumb must keep its quarter notes while the finger plays between them.'
+        : 'The full pattern: thumb on every beat, fingers filling the “ands”, and a pinch (thumb and finger together) on beat 1 to anchor the bar. This is the accompaniment behind folk, country and fingerstyle pop.',
+    instr: stage === 1 ? 'Thumb (p) only. Each bar: root string, the next string up, root, next string up, one per click. Hold the full chord shape anyway so it rings. Pass: four bars with the thumb never stopping at the chord changes.'
+      : stage === 2 ? 'Thumb exactly as in step 1. The middle finger (m) plucks the B string on the “and” of 2 and the “and” of 4. Count “1 2 & 3 4 &” out loud. Pass: four bars where the thumb stays even while the finger joins.'
+        : `Thumb on every beat as before. Fingers: index (i) on the G string, middle (m) on the B string, ring or middle on the high e. Beat 1${lvl >= 5 ? ' and beat 3 are pinches' : ' is a pinch'} (thumb and high e together), then the off-beats go B, G, B, e. Pass: all four bars at the goal tempo without the thumb hesitating.`,
+    watch: 'The thumb copying the fingers’ rhythm, or the bass skipping a beat when the chord changes.', simplify: stage === 1 ? 'One chord, half the tempo.' : 'Drop back a step for two minutes, then return.',
+    voicings: openVoicings(chords), chords, ...(stage === 3 ? { backing: chords } : {}), tab: { notes }
+  });
+}
+
+/** Slides between pentatonic boxes 1 and 2 on the top three strings. */
+export function slideBoxes(c) {
+  const key = minorKey(c), B1 = byString(pentBox(key, 1)), B2 = byString(pentBox(key, 2));
+  if ([1, 2, 3].some(s => !B1[s] || !B2[s] || B2[s][1] <= B1[s][1])) return null;
+  const notes = []; let t = 0;
+  for (const s of [3, 2, 1]) { // up: shift up into box 2 and back
+    const [lo, hi] = B1[s], top = B2[s][1];
+    [[lo, 0.5], [hi, 0.5], [top, 1, '/'], [hi, 1, '\\'], [lo, 1]].forEach(([f, d, x]) => { notes.push(N(s, f, t, d, x)); t += d; });
+  }
+  for (const s of [1, 2, 3]) { // down: start in box 2, slide down, climb back with a slide
+    const [lo, hi] = B1[s], top = B2[s][1];
+    [[top, 1], [hi, 1, '\\'], [lo, 1], [hi, 1, '/']].forEach(([f, d, x]) => { notes.push(N(s, f, t, d, x)); t += d; });
+  }
+  const k = nameOf(key);
+  return make(c, {
+    id: 'slides-box1-2', name: `Slides between boxes 1 and 2 (${k} minor pentatonic, top strings)`, domain: 'fretting', unit: '8th notes', goal: 100, start: 56, minutes: 5, dl: -1,
+    why: 'A slide joins two notes with one pick stroke and moves the hand to a new position at the same time: it is how players connect pentatonic boxes and make a line sing instead of stepping note to note.',
+    instr: `Bars 1–3: on the G, B and high e strings, play the two box-1 notes, then slide the ring finger up to the box-2 note (/) without picking again, slide back (\\) and pick the low note. Bars 4–6 come down from box 2. Keep pressure on the string the whole way so the note never dies, and arrive exactly on the beat. Pass: every slide lands in tune and on time.`,
+    watch: 'Easing off the string during the slide (the note fades) or overshooting the target fret.', simplify: 'Pick the target note again when you arrive (a shift slide) at half tempo.', tab: { notes }
+  });
+}
+
+/** The minor pentatonic along one string, joined by slides: horizontal playing. */
+export function slideOneString(c, { string = 2 } = {}) {
+  const key = minorKey(c), pcs = [0, 3, 5, 7, 10].map(x => mod12(key + x));
+  const frets = []; for (let f = 1; f <= 17; f++) if (pcs.includes(mod12(OPEN[string] + f))) frets.push(f);
+  const up = frets.slice(0, 8); if (up.length < 6) return null;
+  const fast = (c.lvl || 4) >= 5, step = fast ? 0.5 : 1;
+  const seq = [...up.map((f, i) => [string, f, i % 2 ? '/' : null]), ...up.slice().reverse().map((f, i) => [string, f, i % 2 ? '\\' : null])];
+  const k = nameOf(key);
+  return make(c, {
+    id: `slides-one-string-${string}`, name: `${k} minor pentatonic along the ${string === 2 ? 'B' : string === 3 ? 'G' : 'high e'} string, with slides`, domain: 'fretboard',
+    unit: fast ? '8th notes' : 'quarter notes', goal: fast ? 84 : 96, start: 50, minutes: 5, dl: -1,
+    why: 'Playing a scale up one string shows how the boxes connect horizontally and trains the slide as a way to change position. You hear the notes of the scale as distances on a single string.',
+    instr: `Start at fret ${up[0]}. Pick a note, slide (/) to the next scale note with the same finger, pick the next, slide again, all the way up to fret ${up[up.length - 1]}; then come back down the same way (\\). Say the scale degree of each note you land on (R, ♭3, 4, 5, ♭7). Pass: two clean trips with every slide landing on the beat.`,
+    watch: 'Looking at the fretboard so long that the slide arrives late.', simplify: 'Pick every note, no slides, until the frets are memorized.', tab: { notes: fromSeq(seq, step) }
+  });
+}
+
+/** Hybrid picking: pick on the bass, middle and ring fingers pinch the top two strings. */
+export function hybridPinches(c) {
+  const chords = (c.lvl || 4) >= 5 ? ['G', 'Em', 'C', 'D'] : ['G', 'C', 'D', 'G'];
+  const notes = [];
+  chords.forEach((nm, bar) => {
+    const [b1, b2] = bassPair(nm), T = bar * 4;
+    [b1, b2, b1, b2].forEach((s, i) => {
+      notes.push(N(s, onString(nm, s), T + i, 0.5));
+      notes.push(N(2, onString(nm, 2), T + i + 0.5, 0.5, null, { chord: true }), N(1, onString(nm, 1), T + i + 0.5, 0.5, null, { chord: true }));
+    });
+  });
+  return make(c, {
+    id: 'hybrid-pinches', name: `Hybrid picking: pick the bass, pluck the top pair (${chords.join(' – ')})`, domain: 'picking', unit: '8th notes', goal: 112, start: 60, minutes: 5, picking: 'hybrid',
+    why: 'Hybrid picking holds the pick for the bass and uses the middle and ring fingers for the top strings, so you get fingerstyle sounds without putting the pick down. Plucking two strings together is the first step: it trains the fingers to fire in time with the pick.',
+    instr: 'Pick downstrokes on the beat: the root, then the alternate bass note. On every “and”, the middle finger (B string) and ring finger (high e) pluck together, snapping up and away from the guitar. Let the chord ring. Pass: four bars where the plucks are as loud as the pick and exactly between the beats.',
+    watch: 'The plucked pair arriving early, crowding the bass note, or the hand lifting off its anchor to pluck.', simplify: 'Middle finger only on the B string.', voicings: openVoicings(chords), chords, backing: chords, tab: { notes }
+  });
+}
+
+/** Hybrid-picked banjo-style rolls: pick, middle, ring across strings 3-2-1 through the chords of the key. */
+export function hybridRolls(c, { cross = null } = {}) {
+  const lvl = c.lvl || 4; cross = cross == null ? lvl >= 6 : cross; const step = cross ? 0.25 : 1 / 3, perBar = cross ? 16 : 12;
+  const chords = keyChords(c).slice(0, 3); chords.push(chords[0]);
+  const notes = [], voicings = [], used = []; let near = 6, i = 0;
+  chords.forEach((nm, bar) => {
+    const tr = topTriad(nm, near); if (!tr) return; near = (tr[1] + tr[2] + tr[3]) / 3;
+    for (let k = 0; k < perBar; k++, i++) { const s = [3, 2, 1][i % 3]; notes.push(N(s, tr[s], bar * 4 + k * step, step)); }
+    voicings.push({ name: tr.name, frets: [null, null, null, tr[3], tr[2], tr[1]] }); used.push(tr.name);
+  });
+  if (used.length < 4) return null;
+  return make(c, {
+    id: `hybrid-rolls-${cross ? '16' : '3'}`, name: `Hybrid-picked rolls on the top three strings${cross ? ' in 16ths' : ''} (${used.join(' – ')})`, domain: 'picking',
+    unit: cross ? '16th notes' : '8th-note triplets', goal: cross ? 96 : 100, start: 50, minutes: 6, dl: cross ? 1 : 0, picking: 'hybrid',
+    why: cross ? 'A three-note roll played in 16ths starts on a different part of the beat every time: the cascading banjo-roll sound of country hybrid picking. The hand has to keep a three-note cycle against a four-note pulse.'
+      : 'Pick, middle, ring across three strings is the core motion of hybrid picking. Played as triplets, each beat is one complete roll, so you can lock every finger to the click.',
+    instr: `Pick (downstroke) on the G string, middle finger on the B string, ring finger on the high e, over and over${cross ? ', without restarting at the bar line: the roll keeps cycling, so the accent moves' : ', one roll per beat'}. One chord per bar: grip the triad shown and change shapes without breaking the roll. Pass: all four bars even in volume at the goal tempo.`,
+    watch: 'The ring finger being weaker than the others, or the pick digging in louder than the fingers.', simplify: cross ? 'Play it as triplets (one roll per beat) first.' : 'One chord, half tempo.',
+    voicings, chords: used, backing: used, tab: { notes }
+  });
+}
+
+/** Economy picking through a three-notes-per-string scale: sweep the string changes. */
+export function economyScale(c, { fast = null } = {}) {
+  const key = minorKey(c), rf = rootFret6(key) || 12;
+  const pts = scaleNps(key, 'minor', rf, 3) || scaleNps(key, 'minor', rf - 12 >= 0 ? rf - 12 : rf, 3);
+  if (!pts || Math.max(...pts.map(p => p.f)) > 22) return null;
+  fast = fast == null ? (c.lvl || 4) >= 6 : fast; const step = fast ? 1 / 6 : 1 / 3;
+  const up = pts.map(p => [p.s, p.f]), seq = [...up, ...up.slice().reverse()];
+  const k = nameOf(key);
+  return make(c, {
+    id: `economy-3nps-${fast ? '6' : '3'}`, name: `Economy picking: ${k} natural minor, three notes per string${fast ? ' (two strings per beat)' : ''}`, domain: 'picking',
+    unit: fast ? '16th-note sextuplets' : '8th-note triplets', goal: fast ? 84 : 120, start: fast ? 44 : 60, minutes: 5, dl: fast ? 1 : 0, picking: 'economy',
+    why: 'Economy picking alternates on a string but sweeps through the string change when the next string lies in the same direction. With three notes per string, every new string ascending starts with a downstroke and every new string descending with an upstroke, so the pick never jumps back over a string.',
+    instr: `Ascending: down-up-down on each string, then keep the downstroke falling onto the next string (down-up-down, down…). Descending: up-down-up on each string, then let the upstroke carry onto the next string down. ${fast ? 'Two strings per beat.' : 'One string per beat: the first note of each string lands on the click.'} Say the pick directions out loud at the start tempo. Pass: up and down twice with the sweep feeling like one motion, not two separate strokes.`,
+    watch: 'Turning the string change into a rushed flick: the two strokes in the same direction must be as evenly spaced as the rest.', simplify: 'Two strings only (the G and B), looped.', tab: { notes: fromSeq(seq, step) }
+  });
+}
+
+/** The two-string economy cell: six up, six down, on every string pair. */
+export function economyCell(c) {
+  const key = minorKey(c), rf = rootFret6(key) || 12;
+  const pts = scaleNps(key, 'minor', rf, 3); if (!pts) return null;
+  const B = {}; pts.forEach(p => (B[p.s] = B[p.s] || []).push(p.f)); Object.values(B).forEach(a => a.sort((x, y) => x - y));
+  const seq = [];
+  for (const hi of [5, 4, 3, 2, 1]) {
+    const lo = hi + 1; if (!B[lo] || !B[hi] || B[lo].length < 3 || B[hi].length < 3) return null;
+    const upCell = [...B[lo].map(f => [lo, f]), ...B[hi].map(f => [hi, f])];
+    const cell = [...upCell, ...upCell.slice().reverse()];
+    seq.push(...cell, ...cell);
+  }
+  const k = nameOf(key);
+  return make(c, {
+    id: 'economy-cell', name: `Economy picking cell on every string pair (${k} natural minor)`, domain: 'picking', unit: '16th-note sextuplets', goal: 92, start: 46, minutes: 6, dl: 1, picking: 'economy',
+    why: 'Six notes up across two strings and six back down puts a sweep in both directions inside one beat pair. It isolates the exact motion economy picking depends on, on every string pair.',
+    instr: 'Going up: down-up-down on the lower string, down-up-down on the upper (the two downstrokes in a row are the sweep). Coming down: up-down-up on the upper string, up-down-up on the lower. Each six-note group is one beat; play the cell twice, then move up a string pair. Pass: all five string pairs clean at the goal tempo.',
+    watch: 'Letting the swept notes ring together: lift each finger as soon as the next string sounds.', simplify: 'One string pair (G and B) in 8th-note triplets.', tab: { notes: fromSeq(seq, 1 / 6) }
+  });
+}
+
+/** Sweeps through the chords of a key: 3-string shapes, or 5-string shapes from the A string. */
+export function sweepChanges(c, { strings = 3, fast: fastOpt = null } = {}) {
+  const lvl = c.lvl || 4, chords = keyChords(c);
+  const notes = [], used = [], voicings = []; let t = 0, near = 7;
+  if (strings === 5) {
+    for (const nm of chords) {
+      const ch = chordInfo(nm); if (!ch) return null;
+      let plan = null;
+      const roots = []; for (let f = 3; f <= 15; f++) if (mod12(OPEN[5] + f) === ch.pc) roots.push(f);
+      roots.sort((a, b) => Math.abs(a - near) - Math.abs(b - near));
+      for (const r of roots) {
+        const tones = []; for (let m = OPEN[5] + r; tones.length < 7; m++) if (ch.pcs.includes(mod12(m))) tones.push(m);
+        const p = [[5, 0], [5, 1], [4, 2], [3, 3], [2, 4], [1, 5], [1, 6]].map(([s, i]) => [s, tones[i] - OPEN[s]]);
+        const fs = p.map(x => x[1]);
+        if (Math.min(...fs) >= 1 && Math.max(...fs) <= 20 && Math.max(...fs) - Math.min(...fs) <= 5) { plan = p; near = r; break; }
+      }
+      if (!plan) return null;
+      const up = plan.map(([s, f], i) => [s, f, i === 1 || i === 6 ? 'h' : null]);
+      const down = [[1, plan[5][1], 'p'], [2, plan[4][1]], [3, plan[3][1]], [4, plan[2][1]], [5, plan[1][1]]];
+      for (let r = 0; r < 2; r++) [...up, ...down].forEach(([s, f, x]) => { notes.push(N(s, f, t, 1 / 6, x)); t += 1 / 6; });
+      used.push(ch.name);
+      const frets = [null, null, null, null, null, null]; plan.forEach(([s, f], i) => { if (i !== 1 && i !== 6) frets[6 - s] = f; });
+      voicings.push({ name: ch.name, frets });
+    }
+  } else {
+    const fast = fastOpt == null ? lvl >= 7 : fastOpt, step = fast ? 1 / 6 : 1 / 3, reps = fast ? 4 : 2;
+    for (const nm of chords) {
+      const tr = topTriad(nm, near); if (!tr) return null; near = (tr[1] + tr[2] + tr[3]) / 3;
+      const top = nextToneUp(nm, 1, tr[1]); if (top == null) return null;
+      const cell = [[3, tr[3]], [2, tr[2]], [1, tr[1]], [1, top, 'h'], [1, tr[1], 'p'], [2, tr[2]]];
+      for (let r = 0; r < reps; r++) cell.forEach(([s, f, x]) => { notes.push(N(s, f, t, step, x)); t += step; });
+      used.push(tr.name); voicings.push({ name: tr.name, frets: [null, null, null, tr[3], tr[2], tr[1]] });
+    }
+  }
+  const five = strings === 5, fast = five || (fastOpt == null ? lvl >= 7 : fastOpt);
+  return make(c, {
+    id: `sweep-changes-${strings}${!five && fast ? '-fast' : ''}`, name: `${strings}-string sweeps${!five && fast ? ' in sextuplets' : ''} through ${used.join(' – ')}`, domain: 'picking',
+    unit: fast ? '16th-note sextuplets' : '8th-note triplets', goal: five ? 76 : fast ? 80 : 108, start: five ? 40 : fast ? 42 : 50, minutes: 6, dl: five ? 3 : 2, picking: 'economy',
+    why: 'Sweeping one shape is a trick; sweeping through chord changes is music. Each bar is a new chord, so you must see the next shape before you get there and keep the pick flowing through the change, the way shred and neoclassical players outline a progression.',
+    instr: five ? 'Each chord: root on the A string, hammer to the next chord tone, one push of the pick through strings 4, 3, 2 and 1, hammer on the top note, then pull off and pull the pick back up through the strings. Twice per chord, one chord per bar. Mute behind the sweep with the fretting fingers’ undersides and the picking palm. Pass: each chord clean twice at the goal tempo, with no notes ringing together.'
+      : `Each chord: one downward push through the G, B and e strings, hammer to the next chord tone on the e string, pull off, then upstroke on the B string; ${fast ? 'four' : 'two'} times per chord, one chord per bar. Roll the fingertip when two notes share a fret. Pass: the changes land on beat 1 with no gap.`,
+    watch: 'The sweep turning into a strum because fretted notes stay down; and a hesitation at each chord change.', simplify: five ? 'The 3-string version of the same changes.' : 'One chord at a time, picking each note separately.',
+    voicings, chords: used, backing: used, tab: { notes }
+  });
+}
+
 /* ------------------------------- Shared specs ------------------------------- */
 const W = (id, name, domain, unit, start, goal, why, instr, watch, simplify, minutes = 5) => ({ spec: { id, name, domain, unit, startBpm: start, goalBpm: goal, why, instr, watch, simplify, minutes } });
 
@@ -450,7 +701,27 @@ export const TECHNIQUES = [
   { id: 'sharp9', title: 'The 7♯9 chord', re: /7.?(♯|#|sharp) ?9|hendrix chord/, domain: 'rhythm', level: [3, 6],
     summary: 'The Hendrix chord in a groove.', skills: [S('sharp9', 'The 7♯9 groove', 'rhythm', 'Grip, rhythm and moving it.', [c => hxSharp9(c)])] },
   { id: 'octaves', title: 'Octaves', re: /octaves?/, domain: 'fretting', level: [3, 6],
-    summary: 'Melodies in octaves with the middle string muted.', skills: [S('octaves', 'Octave melodies', 'fretting', 'Strings 5 & 3, then 4 & 2.', [c => hxOctaves(c)])] }
+    summary: 'Melodies in octaves with the middle string muted.', skills: [S('octaves', 'Octave melodies', 'fretting', 'Strings 5 & 3, then 4 & 2.', [c => hxOctaves(c)])] },
+  { id: 'travis', level: [2, 4], ctx: { key: 0, minor: false, prog: 'folkAxis' }, title: 'Travis picking', re: /travis(-| )?pick|travis (pattern|style)|alternating(-| )thumb|alternating bass fingerpick/, domain: 'picking',
+    summary: 'An alternating thumb bass with the fingers playing between the beats, built up in three steps.',
+    skills: [S('travis-thumb', 'The alternating thumb', 'picking', 'Thumb alone, then one finger on the off-beats.', [c => travisStages(c, { stage: 1 }), c => travisStages(c, { stage: 2 })]),
+      S('travis-full', 'The full Travis pattern', 'picking', 'Pinch on beat 1, fingers filling the ands.', [c => travisStages(c, { stage: 3 }), ['travisPattern', { chords: ['G', 'Em', 'C', 'D'] }]])] },
+  { id: 'slides', level: [2, 4], title: 'Slides', re: /\bslid(es?|ing)\b(?! guitar)|legato slides?|shift slides?/, domain: 'fretting',
+    summary: 'Legato and shift slides that connect notes and move the hand to a new position.',
+    skills: [S('slides-boxes', 'Sliding between boxes', 'fretting', 'Slides joining pentatonic boxes 1 and 2.', [c => slideBoxes(c)]),
+      S('slides-one-string', 'One-string scales with slides', 'fretboard', 'The scale along a single string.', [c => slideOneString(c, { string: 2 }), c => slideOneString(c, { string: 3 })])] },
+  { id: 'hybridPicking', level: [4, 6], ctx: { key: 7, minor: false, prog: 'country' }, title: 'Hybrid picking', re: /hybrid.?pick|pick (and|&|\+) fingers?|chicken.?pick/, domain: 'picking',
+    summary: 'Pick plus middle and ring fingers: pinches over a bass line, then rolls across three strings.',
+    skills: [S('hybrid-pinch', 'Bass and pinches', 'picking', 'Pick the bass, pluck two strings together.', [c => hybridPinches(c)]),
+      S('hybrid-rolls', 'Hybrid rolls', 'picking', 'Pick, middle, ring across strings 3-2-1.', [c => hybridRolls(c, { cross: false }), c => hybridRolls(c, { cross: true })])] },
+  { id: 'economyPicking', level: [5, 7], title: 'Economy picking', re: /economy.?pick/, domain: 'picking',
+    summary: 'Alternate picking on a string, sweeping through the string change when it goes the same way.',
+    skills: [S('economy-scale', 'Economy picking a 3nps scale', 'picking', 'Down-up-down, then sweep onto the next string.', [c => economyScale(c, { fast: false }), c => economyScale(c, { fast: true })]),
+      S('economy-cell', 'The two-string economy cell', 'picking', 'Six up, six down, on every string pair.', [c => economyCell(c)])] },
+  { id: 'sweepChanges', level: [7, 9], title: 'Sweeps through chord changes', re: /sweep(s|ing)? (through|over|across) (a |the )?(chord )?(changes|progression)|sweep(s|ing)? (with|on) chord changes|progression sweeps?/, domain: 'picking',
+    summary: 'Three- and five-string sweeps that change shape with every chord of a progression.',
+    skills: [S('sweep-changes-3', 'Three-string sweeps through changes', 'picking', 'Triad sweeps on the top strings, one chord per bar.', [c => sweepChanges(c, { strings: 3, fast: false }), c => sweepChanges(c, { strings: 3, fast: true })]),
+      S('sweep-changes-5', 'Five-string sweeps through changes', 'picking', 'A-string shapes for each chord.', [c => sweepChanges(c, { strings: 5 })])] }
 ];
 export const TECHNIQUE_BY_ID = Object.fromEntries(TECHNIQUES.map(t => [t.id, t]));
 const techSkills = (...ids) => ids.flatMap(id => TECHNIQUE_BY_ID[id].skills);
@@ -572,8 +843,7 @@ export const ARTISTS = [
     ctx: { key: 11, minor: true, prog: 'minorRock' },
     units: [
       U('The box', 'B minor pentatonic, played slowly.', [S('dg-box', 'B minor pentatonic', 'fretboard', 'Box 1 in triplets.', [['scaleRun', { scale: 'minorPent', box: 1, unit: 'triplets' }], ['connectPositions', { scale: 'minorPent', from: 1, to: 2 }]])]),
-      U('Bends in tune', 'Every bend lands on pitch.', [S('dg-bend', 'Bends to pitch', 'fretting', 'Check each bend against the fretted target.', [['bendLick'], W('dg-prebend', 'Pre-bends and releases', 'fretting', 'one per 2 beats', 50, 80,
-        'Bending silently, then picking and releasing, makes a note fall into place: a Gilmour signature.', 'Bend the G string at fret 14 up a whole step without picking, then pick and release slowly over two beats. Check the pre-bend against fret 16.', 'Pre-bends that start sharp or flat.', 'Half-step pre-bends.')])]),
+      U('Bends in tune', 'Every bend lands on pitch.', [S('dg-bend', 'Bends to pitch', 'fretting', 'Check each bend against the fretted target.', [['bendLick'], c => dgPrebends(c)])]),
       U('Vibrato', 'Slow, wide vibrato.', [S('dg-vib', 'Vibrato', 'fretting', 'Even, slow vibrato on held notes.', [['vibratoHolds']])]),
       U('Color', 'The Dorian 6th.', [S('dg-dorian', 'Minor pentatonic vs Dorian', 'theory', 'Adding the 2nd and 6th.', [['modeCompare', { modes: ['minor', 'dorian'] }]])]),
       U('Putting it together', 'Fewer notes, more meaning.', [S('dg-solo', 'Slow phrasing', 'improv', 'Space between phrases.', [['callResponse', { chords: '$minorRock' }], ['targetSolo', { chords: '$slowBlues' }]])])
