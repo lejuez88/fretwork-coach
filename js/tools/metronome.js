@@ -2,6 +2,7 @@
 import { Audio, CHORD_MIDI } from '../core/audio.js';
 import { chordMidi } from '../core/theory.js';
 import { clamp, esc, toast } from '../core/util.js';
+import { findDiagrams, highlightChord } from '../ui/chordsync.js';
 
 export const Metronome = {
   bpm: 80, beatsPerBar: 4, subdiv: 1, mode: 'all', backing: null, volume: 1,
@@ -59,7 +60,8 @@ export const Metronome = {
     }
     if (sub === 0) {
       const delay = Math.max(0, (t - Audio.ctx.currentTime) * 1000);
-      setTimeout(() => { if (this.running) this.emit({ type: 'beat', beat, bar, silent: !audible, time: t }); }, delay);
+      const chord = this.backing && this.backing.length ? this.backing[bar % this.backing.length] : null;
+      setTimeout(() => { if (this.running) this.emit({ type: 'beat', beat, bar, silent: !audible, time: t, chord }); }, delay);
     }
   },
   configure({ bpm, mode, backing, beatsPerBar, subdiv, ramp = null } = {}) {
@@ -81,6 +83,7 @@ const MODES = { all: 'Every beat', backbeat: '2 & 4 only', gap: 'Gap: 2 on / 2 o
  */
 export function mountMetronome(el, opts = {}) {
   const taps = [];
+  let lastChord = null;
   el.innerHTML = `
   <div class="metro ${opts.compact ? 'compact' : ''}">
     <div class="beats" data-r="beats">${'<i></i>'.repeat(Metronome.beatsPerBar)}</div>
@@ -100,7 +103,7 @@ export function mountMetronome(el, opts = {}) {
       <label class="mini">Beats<select data-r="bpb">${[2, 3, 4, 5, 6, 7].map(n => `<option ${Metronome.beatsPerBar === n ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
       <label class="mini">Clicks<select data-r="sub">${[[1, 'Quarters'], [2, '8ths'], [3, 'Triplets'], [4, '16ths']].map(([v, l]) => `<option value="${v}" ${Metronome.subdiv === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
     </div>`}
-    ${Metronome.backing ? `<div class="backing">♫ Backing: ${esc(Metronome.backing.join(' – '))}</div>` : ''}
+    ${Metronome.backing ? `<div class="backing">♫ Backing: ${esc(Metronome.backing.join(' – '))} <b class="backnow" data-r="backnow"></b></div>` : ''}
     ${Metronome.ramp ? `<div class="ramp-row"><button class="tgl ${Metronome.ramp.enabled ? 'on' : ''}" data-r="ramp">Tempo ladder</button><span class="small muted" data-r="ramptxt"></span></div>` : ''}
   </div>`;
   const r = n => el.querySelector(`[data-r="${n}"]`);
@@ -114,7 +117,12 @@ export function mountMetronome(el, opts = {}) {
   const off = Metronome.on(e => {
     if (e.type === 'beat') {
       [...r('beats').children].forEach((d, i) => { d.className = i === e.beat ? 'on' + (i === 0 && Metronome.mode !== 'backbeat' ? ' acc' : '') + (e.silent ? ' silent' : '') : ''; });
-    } else { sync(); if (e.type === 'state' && !e.running) [...r('beats').children].forEach(d => { d.className = ''; }); }
+      // light up the chord box of the backing chord that is playing
+      if (e.chord !== lastChord) { lastChord = e.chord; highlightChord(findDiagrams(el), e.chord); const bk = r('backnow'); if (bk) bk.textContent = e.chord || ''; }
+    } else {
+      sync();
+      if (e.type === 'state' && !e.running) { [...r('beats').children].forEach(d => { d.className = ''; }); lastChord = null; highlightChord(findDiagrams(el), null); const bk = r('backnow'); if (bk) bk.textContent = ''; }
+    }
   });
   el.addEventListener('click', ev => {
     const b = ev.target.closest('button'); if (!b || !el.contains(b)) return;
@@ -134,5 +142,5 @@ export function mountMetronome(el, opts = {}) {
     r('sub').addEventListener('change', e => { Metronome.subdiv = +e.target.value; });
   }
   rampText();
-  return () => off();
+  return () => { off(); highlightChord(findDiagrams(el), null); };
 }

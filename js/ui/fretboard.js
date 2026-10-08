@@ -49,10 +49,27 @@ export function chordDiagramSVG(v, { mode = 'interval', title = null, selected =
   return o + '</svg>';
 }
 
-/** Diagrams for an exercise: explicit voicings first, else chord names. */
+/**
+ * The chord boxes an exercise shows, in order: its own voicings, else its chord
+ * names (each once), else the chords of its backing track (not for ear
+ * training, where naming the chords would give the answer away).
+ * Returns { list: [voicing], source: 'voicings' | 'chords' | 'backing' | null }.
+ */
+export function diagramList(ex) {
+  if (!ex) return { list: [], source: null };
+  const uniq = names => [...new Set((names || []).filter(Boolean))];
+  if (ex.voicings && ex.voicings.length) return { list: ex.voicings.filter(v => v && v.frets).slice(0, 8), source: 'voicings' };
+  if (ex.chords && ex.chords.length) return { list: uniq(ex.chords).map(voicingForName).filter(Boolean).slice(0, 8), source: 'chords' };
+  if (ex.backing && ex.backing.length && ex.domain !== 'ear') return { list: uniq(ex.backing).map(voicingForName).filter(Boolean).slice(0, 8), source: 'backing' };
+  return { list: [], source: null };
+}
+
+/** Diagrams for an exercise. Each box carries its index and chord name so players can light it up while it sounds. */
 export function exerciseDiagramsHTML(ex, opts = {}) {
-  const list = (ex.voicings && ex.voicings.length ? ex.voicings : (ex.chords || []).map(voicingForName)).filter(Boolean).slice(0, 8);
-  return list.length ? `<div class="diagrams">${list.map(v => chordDiagramSVG(v, opts)).join('')}</div>` : '';
+  const { list, source } = diagramList(ex);
+  if (!list.length) return '';
+  const boxes = list.map((v, i) => chordDiagramSVG(v, opts).replace('<svg ', `<svg data-di="${i}" data-name="${esc(v.name || '')}" `)).join('');
+  return `<div class="diagrams" data-sync>${source === 'backing' ? '<div class="diagrams-cap small muted">Backing chords</div>' : ''}${boxes}</div>`;
 }
 
 /**
@@ -60,17 +77,17 @@ export function exerciseDiagramsHTML(ex, opts = {}) {
  * marks: [{s, f, label, family, ghost, cls}]; muted: [string numbers]; opts: {maxFret, interactive,
  * highlightFrets: [lo, hi] (frets outside are dimmed), focusString: string number to highlight}
  */
-export function fretboardSVG({ marks = [], muted = [], maxFret = 15, interactive = false, highlightFrets = null, focusString = null } = {}) {
-  const NUT = 38, FW = 46, ROW = 26, TOP = 18, H = TOP + ROW * 5 + 30, W = NUT + maxFret * FW + 12;
-  let o = `<svg class="fboard ${interactive ? 'interactive' : ''}" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Fretboard">`;
+export function fretboardSVG({ marks = [], muted = [], maxFret = 15, interactive = false, highlightFrets = null, focusString = null, fw = 46, cls = '', names = null } = {}) {
+  const NUT = 38, FW = fw, ROW = 26, TOP = 18, H = TOP + ROW * 5 + 30, W = NUT + maxFret * FW + 12;
+  let o = `<svg class="fboard ${interactive ? 'interactive' : ''} ${cls}" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Fretboard">`;
   // inlays
-  [3, 5, 7, 9, 15, 17].filter(f => f <= maxFret).forEach(f => { o += `<circle cx="${NUT + (f - 0.5) * FW}" cy="${TOP + ROW * 2.5}" r="5" class="fb-inlay"/>`; });
-  if (maxFret >= 12) { o += `<circle cx="${NUT + 11.5 * FW}" cy="${TOP + ROW * 1.5}" r="5" class="fb-inlay"/><circle cx="${NUT + 11.5 * FW}" cy="${TOP + ROW * 3.5}" r="5" class="fb-inlay"/>`; }
+  [3, 5, 7, 9, 15, 17, 19, 21].filter(f => f <= maxFret).forEach(f => { o += `<circle cx="${NUT + (f - 0.5) * FW}" cy="${TOP + ROW * 2.5}" r="5" class="fb-inlay"/>`; });
+  [12, 24].filter(f => f <= maxFret).forEach(f => { o += `<circle cx="${NUT + (f - 0.5) * FW}" cy="${TOP + ROW * 1.5}" r="5" class="fb-inlay"/><circle cx="${NUT + (f - 0.5) * FW}" cy="${TOP + ROW * 3.5}" r="5" class="fb-inlay"/>`; });
   // frets and nut
-  for (let f = 0; f <= maxFret; f++) { const x = NUT + f * FW; o += `<line x1="${x}" y1="${TOP}" x2="${x}" y2="${TOP + ROW * 5}" class="${f === 0 ? 'fb-nut' : 'fb-fret'}"/>`; if (f > 0) o += `<text x="${x - FW / 2}" y="${H - 6}" text-anchor="middle" class="fb-num ${[3, 5, 7, 9, 12, 15].includes(f) ? 'em' : ''}">${f}</text>`; }
+  for (let f = 0; f <= maxFret; f++) { const x = NUT + f * FW; o += `<line x1="${x}" y1="${TOP}" x2="${x}" y2="${TOP + ROW * 5}" class="${f === 0 ? 'fb-nut' : 'fb-fret'}"/>`; if (f > 0) o += `<text x="${x - FW / 2}" y="${H - 6}" text-anchor="middle" class="fb-num ${[3, 5, 7, 9, 12, 15, 17, 19, 21, 24].includes(f) ? 'em' : ''}">${f}</text>`; }
   // strings (thicker for low)
   if (focusString >= 1 && focusString <= 6) o += `<rect x="${NUT - 30}" y="${TOP + (focusString - 1) * ROW - 8}" width="${W - NUT + 24}" height="16" rx="8" class="fb-focus"/>`;
-  for (let s = 1; s <= 6; s++) { const y = TOP + (s - 1) * ROW; o += `<line x1="${NUT - 30}" y1="${y}" x2="${W - 6}" y2="${y}" class="fb-str" style="stroke-width:${0.8 + (s - 1) * 0.35}"/>`; o += `<text x="4" y="${y + 4}" class="fb-sname">${['e', 'B', 'G', 'D', 'A', 'E'][s - 1]}</text>`; }
+  for (let s = 1; s <= 6; s++) { const y = TOP + (s - 1) * ROW; o += `<line x1="${NUT - 30}" y1="${y}" x2="${W - 6}" y2="${y}" class="fb-str" style="stroke-width:${0.8 + (s - 1) * 0.35}"/>`; o += `<text x="4" y="${y + 4}" class="fb-sname">${esc((names || ['e', 'B', 'G', 'D', 'A', 'E'])[s - 1])}</text>`; }
   // dim the frets outside the practice area
   if (Array.isArray(highlightFrets)) {
     const [lo, hi] = highlightFrets, y = TOP - 12, h = ROW * 5 + 24;

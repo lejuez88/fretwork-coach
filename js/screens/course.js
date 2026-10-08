@@ -2,6 +2,7 @@
 // Nodes show locked / available / in progress / mastered, plus review due.
 import { esc, fmtMinutes, toast, today } from '../core/util.js';
 import { Store } from '../core/store.js';
+import { beatLabel } from '../core/tempo.js';
 import { Claude } from '../core/claude.js';
 import { wikiTile, hydrateImages } from '../core/wiki.js';
 import { GENRE_BY_ID } from '../data/catalog.js';
@@ -82,7 +83,7 @@ export function mountCourse(root, { id, navigate }) {
       <h2>${esc(s.title)}</h2><p class="muted">${esc(s.summary)}</p>
       ${s.exercises.map(e => { const es = c.state.exercises[e.id]; const pct = Math.min(100, Math.round((es.target - e.startBpm) / Math.max(1, e.goalBpm - e.startBpm) * 100));
         return `<div class="exsheet"><div class="sec-head"><b>${esc(e.name)}</b>${es.mastered ? '<span class="badge ok">Mastered</span>' : es.stalled ? '<span class="badge warn">Stalled</span>' : ''}</div>
-        <div class="small muted">${esc(e.unit)} · target ${es.target} BPM → goal ${e.goalBpm} BPM${es.best ? ` · best ${es.best}` : ''} · ${es.passes.length}/2 passes</div>
+        <div class="small muted">${esc(e.unit)} · ${esc(beatLabel(e))} at ${es.target} BPM → goal ${e.goalBpm} BPM${es.best ? ` · best ${es.best}` : ''} · ${es.passes.length}/2 passes</div>
         <div class="bar thin"><i style="width:${es.mastered ? 100 : Math.max(0, pct)}%"></i></div>
         ${e.why ? `<p class="small">${esc(e.why)}</p>` : ''}
         ${varsLine(e)}

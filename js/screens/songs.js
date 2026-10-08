@@ -17,6 +17,7 @@ import { addEvidence, recomputeLevels, describeChanges } from '../core/skills.js
 import { toPlayerExercise } from '../core/coursegen.js';
 import { tuningName } from '../core/tabparse.js';
 import { mountTabPlayer } from '../tools/tabplayer.js';
+import { tempoShort } from '../ui/temporow.js';
 import { openEvalSheet } from '../eval/ui.js';
 import { exerciseCardHTML } from '../ui/ask.js';
 import { timeInputHTML, wireTimeInput, readTime, startRoutine, hasActiveRoutine } from './routine.js';
@@ -274,7 +275,7 @@ export function mountSongDetail(root, { id, navigate }) {
     return `<div class="lessonplan">
       ${lesson.focus ? `<p class="coach">🎯 ${esc(lesson.focus)}</p>` : ''}
       ${lesson.error ? `<p class="small muted">Claude couldn’t plan it (${esc(lesson.error)}), so this is the standard lesson.</p>` : ''}
-      ${lesson.items.map(it => `<div class="planrow b-${it.block}"><span class="pblock">${BLOCKS[it.block].label}</span><div class="pname"><b>${esc(it.ex.name)}</b><span class="muted small">${it.targetBpm} → ${it.ex.goalBpm} BPM${it.note ? ' · ' + esc(it.note) : ''}</span></div><span class="pmin">${it.minutes}m</span></div>`).join('')}
+      ${lesson.items.map(it => `<div class="planrow b-${it.block}"><span class="pblock">${BLOCKS[it.block].label}</span><div class="pname"><b>${esc(it.ex.name)}</b><span class="muted small">${esc(tempoShort(it.ex, it.targetBpm, it.ex.goalBpm))}${it.note ? ' · ' + esc(it.note) : ''}</span></div><span class="pmin">${it.minutes}m</span></div>`).join('')}
       <p class="small muted">${fmtMinutes(total)} · ${lesson.source === 'claude' ? 'planned by Claude' : 'standard song lesson'}</p></div>`;
   }
 

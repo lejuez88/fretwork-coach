@@ -25,7 +25,18 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: Songsterr tabs, YouTube embed player
+## Latest: tab player controls, live fretboard, chord highlights, roomier layout
+
+| Area | Included |
+|---|---|
+| Tab player | **Play / Pause** keeps your place (Resume picks up from there, with the count-in if it is on) and **⏮** goes back to the start. Scroll through the tab (drag, swipe, or a mouse wheel over the long tab) and click or tap any note to move the playhead there. Click and drag across notes (or drag along the bar strip under the tab, which also works on phones) to select them: the selection lights up in the tab, on the bar strip and on the fretboard, and loops when you play. **✕ Clear loop** goes back to the whole exercise. Bar numbers are shown on the tab and the strip, and the meter says where you are (bar, beat, loop). |
+| Fretboard under every tab | Every lesson with a tab shows the neck under it: each note of the exercise is marked, and the notes light up as they sound (or, when paused, the notes at the playhead). It scrolls along with the music on narrow screens, follows alternate tunings, and fades the positions outside a looped selection. Tap any fret to hear it. Turn it off with the **Fretboard** toggle. |
+| Chord boxes light up | In lessons with chords or backing chords, the chord box of the chord that is sounding is highlighted: from the tab (strums, arpeggios, Travis patterns, triads, single-note lines over the changes) and from the metronome's backing track. Exercises with only a backing track show those chords as "Backing chords" (not for ear training, where that would give the answer away). |
+| Beat type with every tempo | Tempos now say what you play against the click: "Target 8th notes at 60 BPM → goal 113", "16th notes", "8th-note triplets", "swung 8th notes", "quarter-note click" for soloing, and so on, on exercise pages, the routine runner, the routine preview, the course page, song lessons, request results and in the player's BPM display. The BPM is always the metronome click (one per quarter note; odd-meter riffs say when the click is on 8ths). |
+| Fuller exercises | The chromatic spider now moves along the neck as well as across the strings: up the strings at frets 1–4, shift up a fret and back down, climbing to frets 5–8 and back so the loop joins up. Every finger order, string skipping, the wide stretch, 16ths and triplets climb too; new variations are **One position** (the old version), **Climb from fret 5** and **Along each string** (frets 1–4, 5–8, 9–12 on one string and back). Other short drills became four-bar exercises that travel: bends in two positions across three strings, vibrato up the neck, a moving gallop riff, power-chord shifts along the neck and across strings, Travis picking over C–Am–Fmaj7–G, hybrid-picked sixths up and down the neck, tapped Am–F–C–G arpeggios, picking bursts that change string and position, slides to the 17th fret, double-stop 3rds up the neck, more Drop D moves, finger-pair trills through every pair on two strings, and string crossing through Am–F–C–G. Key changes still work on the wider drills. |
+| Layout | On wide windows the app uses the space: a wider page, more padding, a two-column dashboard (routine, practice and courses on one side; track, master classes and calendar on the other), library topics side by side, exercise pages with variations next to the instructions and the player full width, a two-column routine runner, settings and profile in two columns, and the songs page with "Add a song" beside "My songs". Phones keep the single column. |
+
+## Earlier: Songsterr tabs, YouTube embed player
 
 | Area | Included |
 |---|---|

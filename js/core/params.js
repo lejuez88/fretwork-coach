@@ -51,14 +51,20 @@ export function moveStrings(notes, delta) {
   return null;
 }
 /** Transpose a tab by semitones, choosing the octave that stays closest to the original position. */
+const TOP_FRET = 22;
 export function transposeTab(notes, semis) {
   if (!semis) return notes;
   const lo = Math.min(...notes.map(n => n.f)), hi = Math.max(...notes.map(n => n.f));
-  const fits = d => lo + d >= 0 && hi + d <= 19;
+  const fits = d => lo + d >= 0 && hi + d <= TOP_FRET;
+  const move = (n, d) => ({ ...n, f: n.f + d, ...(n.bendTo != null ? { bendTo: n.bendTo + d } : {}) });
   const options = [semis, semis - 12, semis + 12].filter(fits).sort((a, b) => Math.abs(a) - Math.abs(b));
-  if (!options.length) return null;
-  const d = options[0];
-  return notes.map(n => ({ ...n, f: n.f + d, ...(n.bendTo != null ? { bendTo: n.bendTo + d } : {}) }));
+  if (options.length) return notes.map(n => move(n, options[0]));
+  // A line that covers most of the neck: move it, folding the few notes that fall off an octave back in
+  for (const d of [semis, semis - 12, semis + 12].sort((a, b) => Math.abs(a) - Math.abs(b))) {
+    const out = notes.map(n => { let m = move(n, d); if (m.f < 0) m = move(m, 12); else if (m.f > TOP_FRET || (m.bendTo != null && m.bendTo > TOP_FRET)) m = move(m, -12); return m; });
+    if (out.every(n => n.f >= 0 && n.f <= TOP_FRET)) return out;
+  }
+  return null;
 }
 export function transposeChordList(list, semis) {
   if (!semis) return list;
@@ -213,7 +219,7 @@ export function withParams(ex, vals = {}) {
       const exact = vals.shift != null;
       if (notesOf(out).length) {
         const t = exact ? out.tab.notes.map(n => ({ ...n, f: n.f + semis, ...(n.bendTo != null ? { bendTo: n.bendTo + semis } : {}) })) : transposeTab(out.tab.notes, semis > 6 ? semis - 12 : semis);
-        if (!t || t.some(n => n.f < 0 || n.f > 20)) return ex;
+        if (!t || t.some(n => n.f < 0 || n.f > TOP_FRET)) return ex;
         out.tab = { ...out.tab, notes: t }; delete out.libId;
       }
       if ((out.chords || []).length) out.chords = transposeChordList(out.chords, semis) || out.chords;

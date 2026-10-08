@@ -1,6 +1,7 @@
 // Today's routine, built on the dashboard: pick a course, say how much time
 // you have, preview the plan (warm-up, review, stretch, theory, music), start.
 import { esc, toast, fmtMinutes } from '../core/util.js';
+import { tempoShort } from './temporow.js';
 import { Store } from '../core/store.js';
 import { Claude } from '../core/claude.js';
 import { buildRoutine, coachBriefing, BLOCKS } from '../core/routine.js';
@@ -62,7 +63,7 @@ export function mountRoutineBuilder(el, { navigate, courseId = null, skillId = n
     const total = plan.items.reduce((a, i) => a + i.minutes, 0);
     return `<div class="planbox"><div class="label">Your plan · ${fmtMinutes(total)}${plan.budget == null ? ' suggested' : ''}</div>
       ${briefing && briefing.focus ? `<p class="coach">🎯 ${esc(briefing.focus)}</p>` : `<p class="small muted">Focus: <b>${esc(plan.focusTitle)}</b></p>`}
-      ${plan.items.map(it => `<div class="planrow b-${it.block}"><span class="pblock">${BLOCKS[it.block].label}</span><div class="pname"><b>${esc(it.ex.name)}</b><span class="muted small">${it.targetBpm} → ${it.goalBpm} BPM${it.note ? ' · ' + esc(it.note) : it.variation ? ' · ↻ ' + esc(it.variation) : ''}</span></div><span class="pmin">${it.minutes}m</span></div>`).join('')}
+      ${plan.items.map(it => `<div class="planrow b-${it.block}"><span class="pblock">${BLOCKS[it.block].label}</span><div class="pname"><b>${esc(it.ex.name)}</b><span class="muted small">${esc(tempoShort(it.ex, it.targetBpm, it.goalBpm))}${it.note ? ' · ' + esc(it.note) : it.variation ? ' · ↻ ' + esc(it.variation) : ''}</span></div><span class="pmin">${it.minutes}m</span></div>`).join('')}
       <button class="btn primary block" data-r="start">▶ Start routine</button></div>`;
   }
   async function build() {

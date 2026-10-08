@@ -34,8 +34,8 @@ const ENTRIES = [
   // Warm-ups
   ['spider', 'warmup', L => ({ ...normalizeExercise({ libId: 'spider-1234', id: 'spider', name: 'Chromatic spider', domain: 'fretting', minutes: 4, startBpm: 60, goalBpm: Math.round(110 + L * 4), instr: 'One finger per fret, strict alternate picking. Keep the fingers close to the strings and leave each finger down until it has to move.', watch: 'Fingers flying off the strings, and squeezing the neck.', simplify: 'Two strings only, 8th notes.' }), family: 'spider', level: Math.max(1, L - 2) })],
   ['trills', 'warmup', L => ({ id: 'trills', name: 'Finger-pair trills', domain: 'fretting', family: 'trill', unit: '16ths', level: Math.max(1, L - 1), startBpm: 50, goalBpm: 90 + L * 3, minutes: 4,
-    why: 'Fast hammer-on/pull-off trills between finger pairs build strength and independence in the weaker fingers.', instr: 'Pick the first note, then hammer and pull between the two frets for the whole bar. Keep the volume even.', watch: 'The trill slowing down as the fingers tire.', simplify: 'Quarter-note hammer and pull.',
-    tab: { notes: [3, 3, 3, 3].flatMap((s, i) => Array.from({ length: 8 }, (_, k) => ({ t: i * 2 + k * 0.25, d: 0.25, s, f: k % 2 ? 7 : 5, ...(k ? { x: k % 2 ? 'h' : 'p' } : {}) }))) } })],
+    why: 'Fast hammer-on/pull-off trills between finger pairs build strength and independence in the weaker fingers.', instr: 'Pick the first note, then hammer and pull between the two frets for two beats. Every finger pair gets a turn (1–2, 2–3, 3–4, 1–3) on the G string at the 5th fret, then the same pairs on the B string two frets higher. Keep the volume even as you move.', watch: 'The trill slowing down as the fingers tire, or a gap when you move to the next pair.', simplify: 'Quarter-note hammer and pull.',
+    tab: { notes: [[3, 5, 6], [3, 6, 7], [3, 7, 8], [3, 5, 7], [2, 7, 8], [2, 8, 9], [2, 9, 10], [2, 7, 9]].flatMap(([s, lo, hi], i) => Array.from({ length: 8 }, (_, k) => ({ t: i * 2 + k * 0.25, d: 0.25, s, f: k % 2 ? hi : lo, ...(k ? { x: k % 2 ? 'h' : 'p' } : {}) }))) } })],
   ['vibrato-holds', 'warmup', L => runAtom(C(A, true, L), 'vibratoHolds')],
   ['speed-burst', 'warmup', L => runAtom(C(A, true, L), 'speedBurst')],
   // Picking
@@ -111,7 +111,7 @@ const TITLES = {
   echo: 'Echo phrases by ear', 'find-key': 'Find the key by ear', 'call-response': 'Call and response', 'target-solo': 'Target chord tones'
 };
 // Keys of written drills (so they can be moved to any key)
-const KEY_PC = { bends: 9, gallop: 4, 'power-shifts': 4, tapping: 9, slides: 9, hybrid: 0, 'string-cross': 9 };
+const KEY_PC = { bends: 9, gallop: 4, 'power-shifts': 4, tapping: 9, slides: 9, hybrid: 7, 'string-cross': 9 };
 // Interactive exercises with their own screen
 const SPECIAL = {
   'interval-trainer': { cat: 'theory', ex: { id: 'lib-interval-trainer', name: 'Interval trainer', domain: 'fretboard', level: 3,

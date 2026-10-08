@@ -19,6 +19,8 @@ import { mountAskBox } from '../ui/ask.js';
 import { exerciseDiagramsHTML } from '../ui/fretboard.js';
 import { variationChipsHTML, variationNoteHTML, levelRange } from '../ui/variationpicker.js';
 import { mountTabPlayer } from '../tools/tabplayer.js';
+import { tempoRowHTML } from '../ui/temporow.js';
+import { beatLabel } from '../core/tempo.js';
 import { Metronome, mountMetronome } from '../tools/metronome.js';
 import { Shell } from '../ui/shell.js';
 import { TOPIC_ART, TOPIC_HUE } from '../ui/topicart.js';
@@ -159,27 +161,33 @@ export function mountLibraryExercise(root, { navigate, id, vid = null }) {
     const queued = Queue.has(entry.id, v.vid);
     root.innerHTML = `
       <a class="link" href="#/practice">← Exercise library</a>
-      <div class="label">${esc(cat.name)}</div>
-      <h1>${esc(entry.title || entry.ex.name)}</h1>
-      ${entry.ex.why ? `<p class="why">${esc(entry.ex.why)}</p>` : ''}
+      <div class="exhead">
+        <div class="label">${esc(cat.name)}</div>
+        <h1>${esc(entry.title || entry.ex.name)}</h1>
+        ${entry.ex.why ? `<p class="why">${esc(entry.ex.why)}</p>` : ''}
+      </div>
       <button class="mcbtn" data-a="master">${MC_ICON} <span>Master class: <b>${esc(mtopic.title)}</b></span><span class="small muted">a whole course on this topic ›</span></button>
-      <section class="card">
-        <div class="sec-head"><div class="label">Variations · ${list.length} · ${levelRange(list)}</div><span class="small muted">Your level: ${levelFor(p, entry.cat)}</span></div>
-        ${variationChipsHTML(list, { current: v.vid, edge: edge && edge.vid, stateOf: x => libState(p, entry.id, x) })}
-        ${variationNoteHTML(v)}
-        ${inst.dims.length ? `<div class="label" style="margin-top:14px">Key, strings and chords</div>${paramControlsHTML(inst.dims, params)}` : ''}
-      </section>
-      <section class="card">
-        <h3>${esc(ex.name)}</h3>
-        <div class="tempo-row"><span>Target <b>${target}</b></span><span>Goal <b class="goal">${ex.goalBpm}</b> BPM</span>${st && st.best ? `<span>Best <b>${st.best}</b></span>` : ''}${st && st.mastered ? '<span class="ok">Mastered</span>' : ''}</div>
-        <div class="small muted">${esc(ex.unit || '')}${ex.minutes ? ` · about ${ex.minutes} min` : ''}</div>
-        ${ex.instr ? `<div class="instr">${esc(ex.instr)}</div>` : ''}
-        ${ex.watch ? `<div class="watch">⚠ Watch for: ${esc(ex.watch)}</div>` : ''}
-        ${ex.simplify && v.vid !== 'simp' ? `<div class="small muted">Too hard? ${esc(ex.simplify)}</div>` : ''}
-        ${exerciseDiagramsHTML(ex)}
-        <div data-r="tool"></div>
-      </section>
-      <section class="card" data-r="logcard"></section>`;
+      <div class="exgrid">
+        <section class="card exvar">
+          <div class="sec-head"><div class="label">Variations · ${list.length} · ${levelRange(list)}</div><span class="small muted">Your level: ${levelFor(p, entry.cat)}</span></div>
+          ${variationChipsHTML(list, { current: v.vid, edge: edge && edge.vid, stateOf: x => libState(p, entry.id, x) })}
+          ${variationNoteHTML(v)}
+          ${inst.dims.length ? `<div class="label" style="margin-top:14px">Key, strings and chords</div>${paramControlsHTML(inst.dims, params)}` : ''}
+        </section>
+        <section class="card exinfo">
+          <h3>${esc(ex.name)}</h3>
+          ${tempoRowHTML(ex, target, { best: st && st.best, mastered: st && st.mastered })}
+          <div class="small muted">${esc(ex.unit || '')}${ex.minutes ? ` · about ${ex.minutes} min` : ''}</div>
+          ${ex.instr ? `<div class="instr">${esc(ex.instr)}</div>` : ''}
+          ${ex.watch ? `<div class="watch">⚠ Watch for: ${esc(ex.watch)}</div>` : ''}
+          ${ex.simplify && v.vid !== 'simp' ? `<div class="small muted">Too hard? ${esc(ex.simplify)}</div>` : ''}
+        </section>
+        <section class="card explayer">
+          ${exerciseDiagramsHTML(ex)}
+          <div data-r="tool"></div>
+        </section>
+        <section class="card exlog" data-r="logcard"></section>
+      </div>`;
     Shell.actions(`<button class="btn" data-a="queue">${queued ? '✓ In session' : '+ Add to session'}</button><button class="btn primary" data-a="timer">▶ Practice with timer</button>`);
     mountTool(target);
     drawLog();
@@ -192,7 +200,7 @@ export function mountLibraryExercise(root, { navigate, id, vid = null }) {
         <div class="sec-head"><h3>Log a result</h3>${st && st.history.length ? `<span class="small muted">${st.history.length} logged</span>` : ''}</div>
         ${logOpen ? `<label class="mini">Highest tempo you played cleanly (or where you stopped)</label>
           <div class="stepper"><button data-rs="-5">−5</button><button data-rs="-1">−1</button><input type="number" inputmode="numeric" data-r="rtempo" value="${curBpm() || target}"><button data-rs="1">+1</button><button data-rs="5">+5</button></div>
-          <div class="unit">BPM · target ${target} · goal ${ex.goalBpm}</div>
+          <div class="unit">BPM (${esc(beatLabel(ex))}) · target ${target} · goal ${ex.goalBpm}</div>
           <p class="small" style="margin-top:10px">Clean means 4 reps in a row with no flubbed notes, at that tempo.</p>
           <div class="rubric"><button data-clean="1"><span class="n">✓</span><span>Clean at this tempo</span></button><button data-clean="0"><span class="n">~</span><span>Not clean yet</span></button></div>`
           : '<button class="btn block" data-r="openlog">Log tempo for this variation</button>'}

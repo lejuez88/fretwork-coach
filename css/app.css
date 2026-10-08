@@ -844,3 +844,114 @@ body.has-actions .tunepop{bottom:calc(140px + env(safe-area-inset-bottom))}
 .sst-kind.k-bass{filter:hue-rotate(160deg)}
 .sstcard .btn.primary{flex-direction:column;gap:0}
 .sstcard .btn.primary .small{font-weight:500;opacity:.8}
+/* ---------------- Tab player: transport, seek/loop strip, live fretboard ---------------- */
+.tp-view.scroll,.tp-view.scroll.picks{height:auto;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:#4a4251 transparent;-webkit-overflow-scrolling:touch}
+.tp-view.scroll .tp-track{display:flex;position:static;width:max-content;padding:8px 0 2px}
+.tp-view.scroll .tab-sys{overflow:visible}
+.tp-view.seekable .tabsvg{cursor:pointer}
+.tp-view.static .tab-sys{opacity:.8}
+.tab-selrect{fill:rgba(245,165,36,.12);stroke:rgba(245,165,36,.55);stroke-width:1;pointer-events:none}
+.tab-note.insel rect{fill:#3a2a10}
+.tab-note.insel text{fill:#ffd48a}
+.tab-note.on rect{fill:var(--amber)}
+.tab-note.on text{fill:#1b1205}
+.tab-barno{font:600 9px var(--mono);fill:#6d6472}
+.tab-head{pointer-events:none}
+.tp-ruler{position:relative;height:28px;margin:2px 0 6px;background:var(--inset);border:1px solid var(--line);border-radius:8px;overflow:hidden;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none}
+.tp-ruler.ro{cursor:default;touch-action:auto}
+.tp-rfill{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(245,165,36,.16);pointer-events:none}
+.tp-rsel{position:absolute;top:0;bottom:0;background:rgba(245,165,36,.26);border-left:2px solid var(--amber);border-right:2px solid var(--amber);pointer-events:none}
+.tp-rsel[hidden]{display:none}
+.tp-rhead{position:absolute;top:0;bottom:0;left:0;width:2px;margin-left:-1px;background:var(--amber);box-shadow:0 0 8px var(--amber);pointer-events:none}
+.tp-rbars{position:absolute;inset:0;pointer-events:none}
+.tp-rbar{position:absolute;top:0;bottom:0;border-left:1px solid #3d3742;font:600 10px var(--mono);color:var(--muted);padding:6px 0 0 4px;line-height:1}
+.tp-rbar.minor{border-left-color:#29242d}
+.tp-selbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:6px 6px 6px 12px;margin:0 0 6px;border-radius:10px;border:1px solid rgba(245,165,36,.45);background:var(--amber-soft);font-size:14px}
+.tp-selbar[hidden]{display:none}
+.tp-selbar b{color:#ffd48a}
+.tp-selbar .btn{flex:none}
+.tp-hint{margin:0 0 8px}
+.tpneck{margin:4px 0 10px}
+.tpneck[hidden]{display:none}
+.tpneck svg.tpboard{width:100%;height:auto;min-width:660px}
+.tpboard .fb-mark{opacity:.3;transition:opacity .08s}
+.tpboard .fb-mark.out{opacity:.08}
+.tpboard .fb-mark.on,.tpboard .fb-mark.tap{opacity:1}
+.tpboard .fb-mark.on circle{stroke:#fff;stroke-width:2.2;filter:drop-shadow(0 0 5px rgba(245,165,36,.95))}
+.tp-controls{display:grid;gap:10px;margin-top:6px}
+.tp-transport{display:flex;gap:10px}
+.tp-transport[hidden]{display:none}
+.tp-transport .tp-play{flex:1 1 auto}
+.tp-transport .tp-restart{min-width:58px;font-size:18px}
+.tp-transport .btn:not(.tp-play){flex:0 1 auto}
+.btn.pause{background:var(--panel2);border-color:var(--amber);color:#ffd48a}
+.tp-tempo .bpm span{letter-spacing:.04em;font-size:12px;white-space:nowrap}
+.tp-tempo-wrap input[type=range]{margin:4px 0 0}
+.tp-goal span:last-child{letter-spacing:.04em;text-transform:none}
+/* Chord boxes light up while their chord sounds */
+.cdiag{transition:transform .12s ease,background-color .12s,box-shadow .12s;border-radius:12px}
+.cdiag.playing{background:rgba(245,165,36,.14);box-shadow:0 0 0 2px var(--amber),0 0 18px rgba(245,165,36,.45);transform:translateY(-2px) scale(1.05)}
+.cdiag.playing .cd-name{fill:#ffd48a}
+.cdiag.playing .cd-str,.cdiag.playing .cd-fret{stroke:#ffd48a}
+.diagrams-cap{flex-basis:100%;text-align:center;margin-bottom:-4px}
+.backnow{color:var(--amber);margin-left:6px;font-weight:700}
+/* Tempo lines: what the BPM means */
+.tempo-row{align-items:baseline}
+.tempo-row .tr-main{color:var(--muted)}
+.tempo-row b.tv{font:600 16px var(--body);color:#ffd48a}
+
+/* ---------------- Wide windows: more room, columns ---------------- */
+.exgrid>.card{min-width:0}
+@media(min-width:900px){
+  .wrap{max-width:1240px;padding-left:32px;padding-right:32px}
+  #actionbar .inner,#tabbar .inner{max-width:1240px}
+  header.top{padding:10px 0 20px}
+  .card{padding:22px 24px;margin-bottom:18px}
+  h1{font-size:34px}
+  .view.v-welcome,.view.v-onboarding,.view.v-assessment{max-width:880px;margin:0 auto}
+  .sheet{max-width:880px}
+  .stats{gap:14px;margin-bottom:18px}
+  .tp-controls{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);align-items:center;gap:20px}
+  .tp-meter{margin-top:6px}
+  .diagrams{gap:16px}
+  .diagrams .cdiag{width:118px}
+}
+@media(min-width:1000px){
+  /* dashboard: main column + side column */
+  .dash-cols{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:0 24px;align-items:start}
+  .dash-side .card.track{display:block}
+  .dash-side .track-body{padding:16px 22px 20px}
+  .dash-side .mc-recs{grid-template-columns:1fr 1fr}
+  /* practice library: topics side by side, the open one full width */
+  .v-practice .topics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+  .v-practice .topic.open{grid-column:1/-1}
+  .v-practice .topic-body .liblist{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+  /* exercise page: variations | about, then the player and the log full width */
+  .exgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 20px}
+  .exgrid .explayer,.exgrid .exlog{grid-column:1/-1}
+  .exhead .why{max-width:820px}
+  /* routine runner: timer and tempo | what to do */
+  .run-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:0 30px;align-items:start}
+  .run-grid .countdown{text-align:left}
+  .run-b .why:first-child{margin-top:4px}
+  /* long single-column screens flow into two columns */
+  .view.v-settings,.view.v-profile,.view.v-results{columns:2;column-gap:20px}
+  .view.v-settings>*,.view.v-profile>*,.view.v-results>*{break-inside:avoid}
+  .view.v-settings>h1,.view.v-settings>.link,.view.v-settings>.label,.view.v-profile>h1,.view.v-profile>.link,.view.v-profile>.label,.view.v-results>h1,.view.v-results>.label{column-span:all}
+}
+@media(min-width:1400px){
+  .wrap{max-width:1360px}
+  #actionbar .inner,#tabbar .inner{max-width:1360px}
+}
+@media(min-width:900px){
+  .tpneck svg.tpboard{max-width:1040px;margin:0 auto;display:block}
+}
+@media(min-width:1000px){
+  /* songs hub: add a song | my songs, recommendations in two columns */
+  .view.v-songs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px;align-items:start}
+  .view.v-songs>*:not(section.card:nth-of-type(1)):not(section.card:nth-of-type(2)){grid-column:1/-1}
+  .v-songs .reclist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px}
+  .v-songs .reccard:last-child{border-bottom:1px solid var(--line)}
+  /* tools: keep the tuner and metronome a comfortable size */
+  .view.v-tools .tuner,.view.v-tools .metro{max-width:880px;margin-left:auto;margin-right:auto}
+}

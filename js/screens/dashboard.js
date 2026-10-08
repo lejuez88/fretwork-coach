@@ -21,8 +21,14 @@ export function mountDashboard(root, { navigate, courseId = null, skillId = null
   let calMonth = today().slice(0, 7); // YYYY-MM
   let tick = null;
   // Stable regions (routine builder, track player) are mounted once; the rest re-renders.
-  root.innerHTML = '<div data-r="head"></div><section class="card routine-cta" data-r="routine"></section><div data-r="top"></div><section class="card track" data-r="track"></section><div data-r="bottom"></div>';
-  const head = root.querySelector('[data-r="head"]'), top = root.querySelector('[data-r="top"]'), bottom = root.querySelector('[data-r="bottom"]');
+  // Two columns on wide screens (the main column: routine, practice, courses; the side: track,
+  // master classes, calendar, levels); one column, in the same order, on phones.
+  root.innerHTML = `<div data-r="head"></div>
+    <div class="dash-cols">
+      <div class="dash-main"><section class="card routine-cta" data-r="routine"></section><div data-r="top"></div></div>
+      <div class="dash-side"><section class="card track" data-r="track"></section><div data-r="side"></div><div data-r="bottom"></div></div>
+    </div>`;
+  const head = root.querySelector('[data-r="head"]'), top = root.querySelector('[data-r="top"]'), side = root.querySelector('[data-r="side"]'), bottom = root.querySelector('[data-r="bottom"]');
   let builder = null;
 
   function render() {
@@ -49,7 +55,11 @@ export function mountDashboard(root, { navigate, courseId = null, skillId = null
         <div class="sec-head"><h3>Your courses</h3><button class="btn sm" data-d="newcourse">+ New course</button></div>
         ${open.length ? open.map(courseCard).join('') : '<p class="muted">No courses yet. Create one to get a full learning path.</p>'}
       </section>
-      ${masterCard()}`;
+      ${Object.keys(p.domains || {}).length ? `<section class="card">
+        <div class="sec-head"><h3>Skill levels</h3><a class="link" href="#/profile">Player Profile →</a></div>
+        ${DOMAINS.map(d => { const l = p.domains[d.key] ? p.domains[d.key].level : 1; return `<div class="lv"><span>${d.short}</span><div class="bar"><i style="width:${l * 10}%"></i></div><b>${l}</b></div>`; }).join('')}
+      </section>` : ''}`;
+    side.innerHTML = masterCard();
 
     bottom.innerHTML = `
       <section class="card">
@@ -57,13 +67,8 @@ export function mountDashboard(root, { navigate, courseId = null, skillId = null
         ${calendar(st)}
         <div class="cal-foot"><span><i class="dot done"></i>15+ min</span><span><i class="dot some"></i>under 15</span><span>Best streak: <b>${st.best}</b> days</span></div>
         <button class="btn ghost sm block" data-d="manual">+ Log practice done away from the app</button>
-      </section>
-
-      ${Object.keys(p.domains || {}).length ? `<section class="card">
-        <div class="sec-head"><h3>Skill levels</h3><a class="link" href="#/profile">Player Profile →</a></div>
-        ${DOMAINS.map(d => { const l = p.domains[d.key] ? p.domains[d.key].level : 1; return `<div class="lv"><span>${d.short}</span><div class="bar"><i style="width:${l * 10}%"></i></div><b>${l}</b></div>`; }).join('')}
-      </section>` : ''}`;
-    hydrateImages(top); hydrateImages(bottom);
+      </section>`;
+    hydrateImages(top); hydrateImages(side); hydrateImages(bottom);
     if (builder) builder.refresh();
     clearInterval(tick);
     if (act) tick = setInterval(() => { const c = top.querySelector('[data-r="clock"]'); if (c) c.textContent = fmtClock(Practice.elapsedSec()); }, 1000);

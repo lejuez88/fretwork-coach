@@ -105,6 +105,9 @@ function route() {
   if (needsProfile.has(page) && !ready) page = 'welcome';
   const root = view();
   root.innerHTML = '';
+  // per-screen class, so wide windows can lay each screen out in columns
+  const sub = String(parts[1] || '').replace(/[^a-z0-9-]/gi, '');
+  root.className = `view v-${page}${sub ? ` v-${page}-${sub}` : ''}`;
   window.scrollTo(0, 0);
   const tabFor = { home: 'home', course: 'home', practice: 'practice', reassess: 'profile', evaluate: 'tools', tools: 'tools', profile: 'profile', results: 'profile', songs: 'songs', song: 'songs' };
   Shell.tabs(!!ready && !['welcome', 'onboarding', 'assessment'].includes(page) && !(page === 'reassess' && parts[1] === 'run'), tabFor[page]);

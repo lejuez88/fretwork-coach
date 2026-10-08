@@ -15,6 +15,7 @@
 import { runAtom, styleTreeRaw } from './styles.js';
 import { normalizeExercise } from './coursegen.js';
 import { parseChord, chordName, mod12, ROOT_BY_PC } from './theory.js';
+import { spiderClimb } from '../tools/exercises.js';
 
 const clampL = v => Math.max(1, Math.min(10, Math.round(v)));
 const keyName = pc => ROOT_BY_PC[mod12(pc)].name;
@@ -303,19 +304,23 @@ const FAMILIES = {
   spider(base, L) {
     const b = { ...base, picking: 'alternate', unit: '8ths' };
     const mk = (vid, label, change, dl, line, step = 0.5, extra = {}) => ({ vid, label, change, dl, ex: spec(b, { name: base.name, ...extra, tab: { notes: seqNotes(line, step) } }) });
+    const climb = o => spiderClimb(o);
+    // along each string: frets 1–4, 5–8, 9–12 and back, one string at a time (pure horizontal movement)
+    const along = [6, 5, 4, 3, 2, 1].flatMap(st => { const up = Array.from({ length: 12 }, (_, i) => [st, i + 1]); return [...up, ...[...up].reverse()]; });
+    // spider walk: two strings at once, fingers 1&3 on the lower string and 2&4 on the higher, climbing a fret each pass
+    const walkAt = (pos, upward) => { const w = []; [[6, 5], [5, 4], [4, 3], [3, 2], [2, 1]].forEach(([a, c]) => w.push([a, pos], [c, pos + 1], [a, pos + 2], [c, pos + 3])); return upward ? w : [...w].reverse(); };
     const list = [
-      mk('pos5', 'Position 5', 'Same drill at frets 5–8: smaller stretches, easier on the hand.', -1, spiderLine({ pos: 5 })),
-      ...SPIDER_PERMS.map(([p, dl, ch]) => mk('p' + p, p.split('').join('-'), ch, dl, spiderLine({ perm: p.split('').map(Number) }))),
-      mk('diag', 'Diagonal', 'Move up one fret on each new string.', 1, spiderLine({ diagonal: true })),
-      mk('skip', 'String skipping', 'Strings 6-4-5-3-4-2-3-1: skip a string every move.', 2, spiderLine({ strings: [6, 4, 5, 3, 4, 2, 3, 1] })),
-      mk('wide', 'Wide stretch', 'Frets 1-2-3-5: the pinky reaches an extra fret.', 2, spiderLine({ frets: [0, 1, 2, 4] })),
-      mk('x16', '16th notes', 'Four notes per click.', 2, spiderLine({}), 0.25, { unit: '16ths', ...tempoScale(base, 0.65) }),
-      mk('trip', 'Triplets', 'Four fingers over three-note beats: the accent moves every beat.', 2, spiderLine({}), 1 / 3, { unit: 'triplets', ...tempoScale(base, 0.8) })
+      mk('pos1', 'One position', 'Frets 1–4 only: straight across the strings and back, no shifting.', -1, spiderLine({})),
+      mk('pos5', 'Climb from fret 5', 'The same climb from frets 5–8 up to 9–12 and back: smaller stretches, easier on the hand.', -1, climb({ from: 5, top: 9 })),
+      ...SPIDER_PERMS.map(([p, dl, ch]) => mk('p' + p, p.split('').join('-'), `${ch} Shift up a fret after each pass across the strings.`, dl, climb({ perm: p.split('').map(Number) }))),
+      mk('horiz', 'Along each string', 'Frets 1–4, 5–8, 9–12 on one string and back down, then the next string: long, clean shifts along the neck.', 1, along),
+      mk('diag', 'Diagonal', 'Move up one fret on each new string, then back down.', 1, spiderLine({ diagonal: true })),
+      mk('skip', 'String skipping', 'Strings 6-4-5-3-4-2-3-1 while climbing the neck: skip a string on every move.', 2, climb({ strings: [6, 4, 5, 3, 4, 2, 3, 1] })),
+      mk('wide', 'Wide stretch', 'Frets 1-2-3-5 while climbing: the pinky reaches an extra fret.', 2, climb({ frets: [0, 1, 2, 4], top: 4 })),
+      mk('x16', '16th notes', 'Four notes per click, still climbing the neck.', 2, climb({}), 0.25, { unit: '16ths', ...tempoScale(base, 0.65) }),
+      mk('trip', 'Triplets', 'Four fingers over three-note beats: the accent moves every beat while you climb.', 2, climb({}), 1 / 3, { unit: 'triplets', ...tempoScale(base, 0.8) }),
+      mk('walk', 'Spider walk', 'Alternate two strings (1 and 3 on the lower string, 2 and 4 on the higher one), up a fret on each pass.', 3, [...walkAt(1, true), ...walkAt(2, false), ...walkAt(3, true), ...walkAt(2, false)])
     ];
-    // spider walk: two strings at once, fingers 1&2 then 3&4 crawling across
-    const walk = [];
-    [[6, 5], [5, 4], [4, 3], [3, 2], [2, 1]].forEach(([a, c]) => walk.push([a, 1], [c, 2], [a, 3], [c, 4]));
-    list.push(mk('walk', 'Spider walk', 'Alternate two strings: 1 and 3 on the lower string, 2 and 4 on the higher one.', 3, [...walk, ...[...walk].reverse()]));
     return list;
   },
   bends(base) {

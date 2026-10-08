@@ -275,5 +275,8 @@ export function toPlayerExercise(ex, bpm) {
   if (!ex.tab || !ex.tab.notes || !ex.tab.notes.length) return null;
   return { id: ex.id, name: ex.name, unit: ex.unit, why: ex.why, goalBpm: ex.goalBpm, bpm: bpm || ex.startBpm, notes: ex.tab.notes, swing: ex.tab.swing,
     ...(ex.tab.beats ? { beats: ex.tab.beats } : {}), ...(ex.tab.tuning || ex.tuning ? { tuning: ex.tab.tuning || ex.tuning } : {}),
-    instr: ex.instr, ...(ex.picking ? { picking: ex.picking } : {}), ...(ex.pickKey ? { pickKey: ex.pickKey } : {}), ...(ex.beatsPerBar ? { beatsPerBar: ex.beatsPerBar } : {}) };
+    instr: ex.instr, ...(ex.picking ? { picking: ex.picking } : {}), ...(ex.pickKey ? { pickKey: ex.pickKey } : {}), ...(ex.beatsPerBar ? { beatsPerBar: ex.beatsPerBar } : {}),
+    // chord boxes, so the player can light up the one that is sounding
+    ...(ex.voicings && ex.voicings.length ? { voicings: ex.voicings } : {}), ...(ex.chords && ex.chords.length ? { chords: ex.chords } : {}),
+    ...(ex.backing && ex.backing.length ? { backing: ex.backing } : {}), ...(ex.domain ? { domain: ex.domain } : {}) };
 }

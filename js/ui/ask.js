@@ -7,6 +7,7 @@ import { Store } from '../core/store.js';
 import { Claude } from '../core/claude.js';
 import { DOMAIN_BY_KEY } from '../assessment/engine.js';
 import { exerciseDiagramsHTML } from './fretboard.js';
+import { tempoShort } from './temporow.js';
 import { generateExercises, saveCustom, removeCustom, addToRoutines, roleBlock, ASK_EXAMPLES } from '../core/custom.js';
 import { makeAdhocRoutine } from '../core/routine.js';
 import { toPlayerExercise } from '../core/coursegen.js';
@@ -28,7 +29,7 @@ export function exerciseCardHTML(ex, { i, role = null, target = null, saved = nu
   const tab = ex.tab && ex.tab.notes && ex.tab.notes.length ? notesToText(ex.tab.notes, { tuning: ex.tab.tuning || undefined, maxBars: 2 }) : '';
   return `<div class="askex b-${role ? roleBlock(role) : 'stretch'}">
     <div class="askex-h">${role ? `<span class="pblock">${ROLE[role] || role}</span>` : ''}<b>${esc(ex.name)}</b></div>
-    <div class="small muted">${dom ? esc(dom.short || dom.name) : esc(ex.domain)}${ex.level ? ` · level ${ex.level}` : ''} · ${target || ex.startBpm} → ${ex.goalBpm} BPM · ${ex.minutes || 5} min${ex.unit ? ' · ' + esc(ex.unit) : ''}</div>
+    <div class="small muted">${dom ? esc(dom.short || dom.name) : esc(ex.domain)}${ex.level ? ` · level ${ex.level}` : ''} · ${esc(tempoShort(ex, target || ex.startBpm, ex.goalBpm))} · ${ex.minutes || 5} min${ex.unit ? ' · ' + esc(ex.unit) : ''}</div>
     ${ex.why ? `<p class="why">${esc(ex.why)}</p>` : ''}
     ${ex.instr ? `<div class="instr small">${esc(ex.instr)}</div>` : ''}
     ${ex.watch ? `<div class="watch">⚠ ${esc(ex.watch)}</div>` : ''}
@@ -127,7 +128,7 @@ export function mountAskBox(el, { start, courseId = null }) {
     const v = list.length ? findVariation(list, vid) : null;
     const ex = v ? v.ex : it.ex;
     const target = !v || v.base ? (it.targetBpm || it.ex.startBpm) : calibratedTarget(v.ex, v.level, p);
-    slot.innerHTML = `${list.length > 1 ? `<div class="label" style="margin-top:10px">Variations · ${list.length}</div>${variationChipsHTML(list, { current: v.vid, attr: 'data-tvid' })}${variationNoteHTML(v)}` : ''}<div data-r="trytool"></div>`;
+    slot.innerHTML = `${list.length > 1 ? `<div class="label" style="margin-top:10px">Variations · ${list.length}</div>${variationChipsHTML(list, { current: v.vid, attr: 'data-tvid' })}${variationNoteHTML(v)}` : ''}${v && !v.base ? exerciseDiagramsHTML(ex) : ''}<div data-r="trytool"></div>`;
     const host = slot.querySelector('[data-r="trytool"]');
     const px = toPlayerExercise(ex, target);
     if (px) tryTool = mountTabPlayer(host, px, { settings: p.settings, onSettings: patch => { Object.assign(p.settings, patch); Store.save(); }, startBpm: target, compact: true });

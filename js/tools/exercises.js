@@ -19,12 +19,31 @@ function chord(shape, t, d) {
 
 const PENTA = [[6, 5], [6, 8], [5, 5], [5, 7], [4, 5], [4, 7], [3, 5], [3, 7], [2, 5], [2, 8], [1, 5], [1, 8]];
 
+/**
+ * The spider moving both ways: across the strings (low E to high e) with one
+ * finger per fret, then up one fret and back across (high e to low E), climbing
+ * to `top` and back down to where it started, so the loop joins up.
+ */
+export function spiderClimb({ from = 1, top = 5, perm = [1, 2, 3, 4], strings = [6, 5, 4, 3, 2, 1], frets = null } = {}) {
+  const fr = k => (frets ? frets[k - 1] : k - 1);
+  const positions = [];
+  for (let p = from; p <= top; p++) positions.push(p);
+  for (let p = top - 1; p > from; p--) positions.push(p);
+  const out = [];
+  positions.forEach((pos, i) => {
+    const across = i % 2 === 0 ? strings : [...strings].reverse();
+    const order = i % 2 === 0 ? perm : [...perm].reverse();
+    across.forEach(s => order.forEach(k => out.push([s, pos + fr(k)])));
+  });
+  return out;
+}
+
 export const EXERCISES = [
   {
-    id: 'spider-1234', name: 'Chromatic spider 1-2-3-4', domain: 'fretting', level: 2, tags: ['finger independence', 'alternate picking'],
-    why: 'One finger per fret builds independence and economy of motion in the fretting hand.',
-    bpm: 60, goalBpm: 120, unit: '8ths', beats: 12,
-    notes: seq([6, 5, 4, 3, 2, 1].flatMap(s => [1, 2, 3, 4].map(f => [s, f])), 0.5)
+    id: 'spider-1234', name: 'Chromatic spider 1-2-3-4, climbing the neck', domain: 'fretting', level: 2, tags: ['finger independence', 'alternate picking', 'position shifts'],
+    why: 'One finger per fret builds independence and economy of motion; shifting up a fret after every pass across the strings adds clean, relaxed position shifts.',
+    bpm: 60, goalBpm: 120, unit: '8ths',
+    notes: seq(spiderClimb(), 0.5)
   },
   {
     id: 'penta-box1', name: 'A minor pentatonic, box 1', domain: 'fretboard', level: 2, tags: ['scales', 'alternate picking'],
@@ -74,9 +93,10 @@ export const EXERCISES = [
   },
   {
     id: 'string-skip', name: 'Alternate picking, string crossing', domain: 'picking', level: 4, tags: ['alternate picking', 'outside picking'],
-    why: 'A repeating 3-string pattern isolates the hardest motion in picking: changing strings cleanly.',
-    bpm: 70, goalBpm: 120, unit: '16ths', beats: 8,
-    notes: seq(Array.from({ length: 4 }, () => [[3, 7], [2, 5], [1, 5], [2, 5], [3, 7], [2, 5], [1, 7], [2, 5]]).flat(), 0.25)
+    why: 'A repeating 3-string pattern isolates the hardest motion in picking: changing strings cleanly. Here it walks through Am – F – C – G, so the hand also moves between shapes.',
+    bpm: 70, goalBpm: 120, unit: '16ths', beats: 16, chords: ['Am', 'F', 'C', 'G'],
+    // [G-string, B-string, e-string, top e-string note] for each chord shape
+    notes: seq([[5, 5, 5, 8], [5, 6, 5, 8], [5, 5, 3, 8], [4, 3, 3, 7]].flatMap(([g, b, e, top]) => Array.from({ length: 2 }, () => [[3, g], [2, b], [1, e], [2, b], [3, g], [2, b], [1, top], [2, b]]).flat()), 0.25)
   },
   {
     id: 'sweep-am', name: '3-string A minor sweep', domain: 'picking', level: 8, tags: ['sweep picking', 'muting'],

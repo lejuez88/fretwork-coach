@@ -19,6 +19,8 @@ import { openEvalSheet } from '../eval/ui.js';
 import { mountTabPlayer } from '../tools/tabplayer.js';
 import { Metronome, mountMetronome } from '../tools/metronome.js';
 import { exerciseDiagramsHTML } from '../ui/fretboard.js';
+import { tempoRowHTML } from '../ui/temporow.js';
+import { beatLabel } from '../core/tempo.js';
 import { Shell } from '../ui/shell.js';
 import { topicForExercise, topicForEntry } from '../core/master.js';
 import { libEntry } from '../core/library.js';
@@ -149,18 +151,24 @@ export function mountRoutineRunner(root, { navigate }) {
       </div>
       <div class="run-steps">${A.routine.items.map((x, i) => `<i class="${i < A.idx ? 'done' : i === A.idx ? 'cur' : ''} b-${x.block}" style="flex:${x.minutes}"></i>`).join('')}</div>
       <section class="card runcard" data-r="card">
-        <div class="countdown"><div class="cd-time" data-r="cd">${fmtClock(Math.max(0, remaining()))}</div><div class="cd-sub" data-r="cdsub">of ${it.minutes} min</div></div>
-        <h2>${esc(ex.name)}</h2>
-        <div class="tempo-row"><span>Today’s target <b>${it.targetBpm}</b></span><span>Goal <b class="goal">${it.goalBpm}</b> BPM</span>${es && es.best ? `<span>Best <b>${es.best}</b></span>` : ''}</div>
-        <div class="bar thin"><i style="width:${Math.min(100, Math.round(((es ? es.target : it.targetBpm) - ex.startBpm) / Math.max(1, it.goalBpm - ex.startBpm) * 100))}%"></i></div>
-        ${it.ramp && it.ramp.rungs && it.ramp.rungs.length > 1 ? `<div class="ladder"><span class="muted small">Tempo ladder</span>${it.ramp.rungs.map(v => `<span class="rung ${v === it.targetBpm ? 'start' : ''}" data-rung="${v}">${v}</span>`).join('<i>›</i>')}</div>` : ''}
-        ${it.note ? `<div class="note warn">⚠ ${esc(it.note)}</div>` : ''}
-        <div data-r="varbox">${varRowHTML(it)}</div>
-        ${ex.why ? `<p class="why">${esc(ex.why)} <span class="muted">${esc(B.why)}</span></p>` : `<p class="why">${esc(B.why)}</p>`}
-        ${coachText ? `<p class="coach">${esc(coachText)}</p>` : ''}
-        ${ex.instr ? `<div class="instr">${esc(ex.instr)}</div>` : ''}
-        ${tip ? `<p class="coach small">💡 ${esc(tip)}</p>` : ''}
-        ${ex.watch ? `<div class="watch">⚠ Watch for: ${esc(ex.watch)}</div>` : ''}
+        <div class="run-grid">
+          <div class="run-a">
+            <div class="countdown"><div class="cd-time" data-r="cd">${fmtClock(Math.max(0, remaining()))}</div><div class="cd-sub" data-r="cdsub">of ${it.minutes} min</div></div>
+            <h2>${esc(ex.name)}</h2>
+            ${tempoRowHTML(ex, it.targetBpm, { goal: it.goalBpm, best: es && es.best, lead: 'Today’s target' })}
+            <div class="bar thin"><i style="width:${Math.min(100, Math.round(((es ? es.target : it.targetBpm) - ex.startBpm) / Math.max(1, it.goalBpm - ex.startBpm) * 100))}%"></i></div>
+            ${it.ramp && it.ramp.rungs && it.ramp.rungs.length > 1 ? `<div class="ladder"><span class="muted small">Tempo ladder</span>${it.ramp.rungs.map(v => `<span class="rung ${v === it.targetBpm ? 'start' : ''}" data-rung="${v}">${v}</span>`).join('<i>›</i>')}</div>` : ''}
+            ${it.note ? `<div class="note warn">⚠ ${esc(it.note)}</div>` : ''}
+            <div data-r="varbox">${varRowHTML(it)}</div>
+          </div>
+          <div class="run-b">
+            ${ex.why ? `<p class="why">${esc(ex.why)} <span class="muted">${esc(B.why)}</span></p>` : `<p class="why">${esc(B.why)}</p>`}
+            ${coachText ? `<p class="coach">${esc(coachText)}</p>` : ''}
+            ${ex.instr ? `<div class="instr">${esc(ex.instr)}</div>` : ''}
+            ${tip ? `<p class="coach small">💡 ${esc(tip)}</p>` : ''}
+            ${ex.watch ? `<div class="watch">⚠ Watch for: ${esc(ex.watch)}</div>` : ''}
+          </div>
+        </div>
         ${exerciseDiagramsHTML(ex)}
         <div data-r="tool"></div>
         <button class="btn block evalbtn" data-r="evaluate">🎤 Evaluate this take</button>
@@ -252,7 +260,7 @@ export function mountRoutineRunner(root, { navigate }) {
         <label class="mini">Highest tempo you played cleanly (or where you stopped)</label>
         ${reached.length > 1 ? `<div class="quick">${reached.map(v => `<button class="chip" data-rset="${v}">${v}</button>`).join('')}</div>` : ''}
         <div class="stepper"><button data-rs="-5">−5</button><button data-rs="-1">−1</button><input type="number" inputmode="numeric" data-r="rtempo" value="${bpm}"><button data-rs="1">+1</button><button data-rs="5">+5</button></div>
-        <div class="unit">BPM · target ${it.targetBpm} · goal ${it.goalBpm}</div>
+        <div class="unit">BPM (${esc(beatLabel(it.ex))}) · target ${it.targetBpm} · goal ${it.goalBpm}</div>
         <p class="small" style="margin-top:12px">Clean means 4 reps in a row with no flubbed notes, at that tempo.</p>
         <div class="rubric"><button data-clean="1" class="${A.prefill && A.prefill.clean ? 'on' : ''}"><span class="n">✓</span><span>Clean at this tempo</span></button>
         <button data-clean="0" class="${A.prefill && !A.prefill.clean ? 'on' : ''}"><span class="n">~</span><span>Not clean yet</span></button></div>
