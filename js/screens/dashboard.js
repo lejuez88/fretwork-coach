@@ -15,6 +15,7 @@ import { mountTrackCard } from '../ui/trackcard.js';
 import { mountRoutineBuilder } from '../ui/routinebuilder.js';
 import { forYou, recommendedTopics, isMaster, MASTER_BY_ID } from '../core/master.js';
 import { openMasterSheet, topicArtHTML, MC_ICON } from '../ui/mastersheet.js';
+import { artistCardHTML, onArtistCardClick } from './artist.js';
 
 export function mountDashboard(root, { navigate, courseId = null, skillId = null }) {
   const p = Store.profile;
@@ -55,6 +56,7 @@ export function mountDashboard(root, { navigate, courseId = null, skillId = null
         <div class="sec-head"><h3>Your courses</h3><button class="btn sm" data-d="newcourse">+ New course</button></div>
         ${open.length ? open.map(courseCard).join('') : '<p class="muted">No courses yet. Create one to get a full learning path.</p>'}
       </section>
+      ${artistCardHTML(p)}
       ${Object.keys(p.domains || {}).length ? `<section class="card">
         <div class="sec-head"><h3>Skill levels</h3><a class="link" href="#/profile">Player Profile →</a></div>
         ${DOMAINS.map(d => { const l = p.domains[d.key] ? p.domains[d.key].level : 1; return `<div class="lv"><span>${d.short}</span><div class="bar"><i style="width:${l * 10}%"></i></div><b>${l}</b></div>`; }).join('')}
@@ -198,6 +200,7 @@ export function mountDashboard(root, { navigate, courseId = null, skillId = null
     openMasterSheet({ title: v }, { navigate });
   };
   const onClick = e => {
+    if (onArtistCardClick(e, navigate)) return;
     const mc = e.target.closest('[data-mc]');
     if (mc) { const t = MASTER_BY_ID[mc.dataset.mc]; if (t) openMasterSheet({ title: t.title, topicId: t.id, cat: t.cat, domain: t.domain }, { navigate }); return; }
     const b = e.target.closest('button'); if (!b) return;

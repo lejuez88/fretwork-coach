@@ -24,6 +24,7 @@ import { initTunerFab } from './ui/tunerfab.js';
 import { mountReassessHub, mountReassessRun } from './screens/reassess.js';
 import { mountEvaluate } from './screens/evaluate.js';
 import { mountSongsHub, mountSongDetail } from './screens/songs.js';
+import { mountArtist, mountArtistIndex } from './screens/artist.js';
 import { Recorder } from './eval/recorder.js';
 import { Audio as AudioEngine } from './core/audio.js';
 import { applyAudioPrefs } from './ui/audiosetup.js';
@@ -93,7 +94,7 @@ function applySettings() {
 }
 
 const LIB_FOR_TAB = { 'spider-1234': 'spider', 'penta-box1': 'penta', 'penta-16ths': 'penta', 'gcd-changes': 'open-changes', 'legato-3nps': 'legato', 'blues-shuffle-a': 'shuffle', 'string-skip': 'string-cross', 'sweep-am': 'sweep' };
-const needsProfile = new Set(['home', 'tools', 'profile', 'course', 'results', 'practice', 'reassess', 'evaluate', 'songs', 'song']);
+const needsProfile = new Set(['home', 'tools', 'profile', 'course', 'results', 'practice', 'reassess', 'evaluate', 'songs', 'song', 'artist']);
 
 function route() {
   if (cleanup) { try { cleanup(); } catch { /* ignore */ } cleanup = null; }
@@ -109,7 +110,7 @@ function route() {
   const sub = String(parts[1] || '').replace(/[^a-z0-9-]/gi, '');
   root.className = `view v-${page}${sub ? ` v-${page}-${sub}` : ''}`;
   window.scrollTo(0, 0);
-  const tabFor = { home: 'home', course: 'home', practice: 'practice', reassess: 'profile', evaluate: 'tools', tools: 'tools', profile: 'profile', results: 'profile', songs: 'songs', song: 'songs' };
+  const tabFor = { home: 'home', course: 'home', artist: 'home', practice: 'practice', reassess: 'profile', evaluate: 'tools', tools: 'tools', profile: 'profile', results: 'profile', songs: 'songs', song: 'songs' };
   Shell.tabs(!!ready && !['welcome', 'onboarding', 'assessment'].includes(page) && !(page === 'reassess' && parts[1] === 'run'), tabFor[page]);
 
   switch (page) {
@@ -162,6 +163,7 @@ function route() {
     case 'evaluate': cleanup = mountEvaluate(root, { navigate, sub: parts[1] || null }); break;
     case 'songs': cleanup = mountSongsHub(root, { navigate }); break;
     case 'song': cleanup = mountSongDetail(root, { id: parts[1], navigate }); break;
+    case 'artist': cleanup = parts[1] ? mountArtist(root, { id: parts[1], navigate }) : mountArtistIndex(root, { navigate }); break;
     case 'settings': cleanup = mountSettings(root, { navigate, applySettings }); break;
     case 'keys': if (parts[1]) takeKeysFromUrl(parts.slice(1).join('/')); cleanup = mountKeyImport(root, { navigate }); break;
     default: navigate('#/');

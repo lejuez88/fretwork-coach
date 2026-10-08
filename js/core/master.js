@@ -14,7 +14,9 @@ import { DOMAINS, DOMAIN_BY_KEY } from '../assessment/engine.js';
 import { ROOT_BY_PC, mod12, parseNote } from './theory.js';
 import { runAtom } from './styles.js';
 import { stringNotesDrill } from './drills.js';
-import { normalizeTree, profileBrief, TAB_RULES, UNITS_SCHEMA, LOCAL_TREE_VERSION } from './coursegen.js';
+import { normalizeTree, normalizeExercise, profileBrief, TAB_RULES, EXERCISE_SCHEMA, LOCAL_TREE_VERSION } from './coursegen.js';
+import { ARTIST_TOPICS, matchArtist, matchTechniques, ARTIST_BY_ID, TECHNIQUES } from '../data/artists.js';
+import { getMaster, putMaster } from './lessoncache.js';
 import { parseRequest, buildForRequest } from './topics.js';
 import { tierName } from './courses.js';
 
@@ -334,15 +336,27 @@ export const MASTER_TOPICS = [
     U('Fast changes in songs', 'One beat per chord.', [S('fast', 'Fast changes', 'fretting', 'Changes on every beat.', [['chordChanges', { chords: ['G', 'Em', 'C', 'D'], beats: 1 }], ['strumPattern', { chords: ['C', 'G', 'Am', 'F'], pattern: 'pop' }]])])
   ] }
 ];
-export const MASTER_BY_ID = Object.fromEntries(MASTER_TOPICS.map(t => [t.id, t]));
+export { ARTIST_TOPICS };
+export const MASTER_BY_ID = Object.fromEntries([...MASTER_TOPICS, ...ARTIST_TOPICS].map(t => [t.id, t]));
 
-/** The built-in topic a text is about (or null). */
+/** The built-in topic a text is about (or null). An artist's name wins: "Eric Johnson pentatonic runs" is the Eric Johnson class. */
 export function matchTopic(text) {
   const t = String(text || '').toLowerCase();
   if (!t.trim()) return null;
+  const a = matchArtist(t); if (a) return MASTER_BY_ID['artist-' + a.id];
   const exact = MASTER_TOPICS.find(x => x.title.toLowerCase() === t.trim());
   return exact || MASTER_TOPICS.find(x => x.re.test(t)) || null;
 }
+/** The topic of a request: an artist first; otherwise a built-in topic named outside the technique names
+ * ("speed pentatonics, rolling 5s" is a techniques course, not the pentatonic course). */
+export function topicFor(text) {
+  const a = matchArtist(text); if (a) return MASTER_BY_ID['artist-' + a.id];
+  const techs = matchTechniques(text);
+  let rest = String(text || '').toLowerCase(); techs.forEach(x => { rest = rest.replace(x.re, ' '); });
+  return matchTopic(rest) || (techs.length ? null : matchTopic(text));
+}
+/** Topic title for a text without the artist rule (used per phrase). */
+const matchPlainTopic = text => { const t = String(text || '').toLowerCase().trim(); return t ? MASTER_TOPICS.find(x => x.title.toLowerCase() === t) || MASTER_TOPICS.find(x => x.re.test(t)) || null : null; };
 
 /* ---------------------- Library exercise → topic ---------------------- */
 const ENTRY_TOPIC = {
@@ -378,7 +392,7 @@ const avgLevel = p => { const v = SKILL_DOMAINS.map(k => levelOf(p, k)).filter(B
 /** Main skill area of a topic (from the built-in list or the words). */
 export function topicDomain(topic) {
   if (topic.topicId && MASTER_BY_ID[topic.topicId]) return MASTER_BY_ID[topic.topicId].domain;
-  const cur = matchTopic(topic.text || topic.title); if (cur) return cur.domain;
+  const cur = topicFor(topic.text || topic.title); if (cur) return cur.domain;
   if (topic.domain && DOMAIN_BY_KEY[topic.domain]) return topic.domain;
   const req = parseRequest(topic.text || topic.title);
   const d = req.topics.map(t => TOPIC_DOMAIN[t]).find(Boolean);
@@ -440,85 +454,254 @@ function genericRaw(p, topic, difficulty) {
   if (!units.length) return null;
   return { summary: `A five-step course on ${topic.title.toLowerCase()}: from the foundations to using it in music, in several keys.`, units };
 }
+/* ------------------------ Requests that name techniques ------------------------ */
+/** Phrases of a request: "covering speed pentatonics, rolling 5s and spread triads" → ['speed pentatonics', 'rolling 5s', 'spread triads']. */
+export function requestPhrases(text) {
+  return String(text || '').toLowerCase()
+    .replace(/\b(such as|including|covering|like|e\.g\.|especially|focus(ing)? on|with)\b/g, ',')
+    .split(/[,;:\n/&]|\band\b|\bplus\b/).map(x => x.replace(/[^a-z0-9♯♭# '-]/g, ' ').replace(/\s+/g, ' ').trim()).filter(x => x.length >= 3 && x.length <= 60);
+}
+/** One unit per technique the request names, then a unit for each other built-in topic it names. */
+function requestedUnits(text, { skipTech = new Set(), skipTopics = new Set() } = {}) {
+  const units = [], seen = new Set(skipTopics);
+  matchTechniques(text).filter(x => !skipTech.has(x.id)).forEach(x => units.push(U(x.title, x.summary, x.skills)));
+  for (const ph of requestPhrases(text)) {
+    if (matchTechniques(ph).length || matchArtist(ph)) continue;
+    const t = matchPlainTopic(ph); if (!t || seen.has(t.id)) continue;
+    seen.add(t.id);
+    units.push(U(t.title, t.blurb, t.units.slice(0, 2).map(u => u.skills[0]).filter(Boolean)));
+  }
+  return units;
+}
+/** Technique ids an artist's lessons already cover. */
+const artistTechIds = artistId => { const a = ARTIST_BY_ID[artistId]; return new Set(a ? TECHNIQUES.filter(x => x.skills.some(sk => a.units.some(u => u.skills.includes(sk)))).map(x => x.id) : []); };
+/** Base units with requested ones added before the closing unit, at most 8 in all. */
+function mergeUnits(base, extra) {
+  if (!extra.length) return base;
+  const ex = extra.slice(0, 6), room = Math.max(1, 8 - ex.length - 1);
+  return [...base.slice(0, -1).slice(0, room), ...ex, base[base.length - 1]];
+}
+const TOGETHER = U('Putting it together', 'Every technique inside real phrases, over a loop.', [
+  S('together', 'Mix it into a solo', 'improv', 'Use each technique as one phrase among others.', [['callResponse', { chords: '$minorRock' }], ['targetSolo', { chords: '$minorRock' }]])]);
+
+/** The built-in plan for a course's request: {raw, kind, techniques} or null. kind: artist | topic | techniques | generic. */
+function localMasterRaw(p, course) {
+  const text = course.topic ? course.topic.text || course.topic.title : course.style;
+  const byId = course.topic && course.topic.topicId && MASTER_BY_ID[course.topic.topicId];
+  const techs = matchTechniques(text);
+  const t = byId && !techs.length ? byId : topicFor(text);
+  if (t && t.artist) {
+    const extra = requestedUnits(text, { skipTech: artistTechIds(t.artist) });
+    return { raw: curatedRaw({ ...t, units: mergeUnits(t.units, extra) }, course.difficulty, course.genre), kind: 'artist', techniques: techs };
+  }
+  if (t) {
+    const extra = requestedUnits(text, { skipTopics: new Set([t.id]) }).filter(u => techs.some(x => x.title === u.title));
+    return { raw: curatedRaw({ ...t, units: mergeUnits(t.units, extra) }, course.difficulty, course.genre), kind: 'topic', techniques: techs };
+  }
+  const units = requestedUnits(text);
+  if (units.length) {
+    const req = parseRequest(text);
+    const ctx = { key: req.key ? req.key.pc : 9, minor: req.key ? !!req.key.minor : true, prog: 'minorRock' };
+    const raw = curatedRaw({ title: course.topic ? course.topic.title : course.style, ctx, units: [...units.slice(0, 7), TOGETHER] }, course.difficulty, course.genre);
+    raw.summary = `A course built on what you named: ${units.map(u => u.title.toLowerCase()).join(', ')}, then all of it together in real music.`;
+    return { raw, kind: 'techniques', techniques: techs };
+  }
+  const g = genericRaw(p, course.topic || { title: course.style, text: course.style }, course.difficulty);
+  return g ? { raw: g, kind: 'generic', techniques: [] } : null;
+}
 /** Built-in master class tree, or null when the topic isn't one the app knows. */
 export function generateMasterLocal(p, course) {
-  const t = (course.topic && course.topic.topicId && MASTER_BY_ID[course.topic.topicId]) || matchTopic(course.topic ? course.topic.text || course.topic.title : course.style);
-  const raw = t ? curatedRaw(t, course.difficulty, course.genre) : genericRaw(p, course.topic || { title: course.style, text: course.style }, course.difficulty);
-  if (!raw) return null;
-  const tree = normalizeTree(raw, { generatedBy: 'local', difficulty: course.difficulty, version: LOCAL_TREE_VERSION, style: course.style });
-  return tree.units.length ? tree : null;
+  const r = localMasterRaw(p, course);
+  if (!r) return null;
+  const tree = normalizeTree(r.raw, { generatedBy: 'local', difficulty: course.difficulty, version: LOCAL_TREE_VERSION, style: course.style });
+  if (!tree.units.length) return null;
+  tree.kind = r.kind;
+  return tree;
 }
 
 /* ---------------------------- Claude builder ---------------------------- */
-export async function generateMasterWithClaude(p, course) {
-  const t = course.topic || { title: course.style, text: course.style };
-  const lib = EXERCISES.map(e => ({ libId: e.id, name: e.name, domain: e.domain, level: e.level, goalBpm: e.goalBpm }));
-  const genres = (p.questionnaire.genres || []).map(g => (GENRE_BY_ID[g] ? GENRE_BY_ID[g].name : g)).join(', ') || 'rock';
-  const existing = p.courses.filter(c => c.id !== course.id).map(c => c.name);
-  const d = course.difficulty;
-  const content = `Design a MASTER CLASS: a complete guitar course built entirely around one topic, so the student knows exactly where to start and how to practice it until it is mastered.
-
-TOPIC: "${t.title}"${t.text && t.text !== t.title ? ` (in the student's words: "${t.text}")` : ''}
-${t.from ? `The student started from the exercise "${t.from.name}"${t.from.why ? ` (${t.from.why})` : ''}.\n` : ''}STUDENT: ${JSON.stringify(profileBrief(p))}
-Favorite genres: ${genres}. Level in this topic's main skill area: ${d}/10 (${tierName(d)}).
-
-How to design it:
-- Every unit, skill and exercise serves this topic. Cover what mastering it really takes, in the order a great teacher would teach it: the concept (theory), where it lives on the neck (fretboard), the technique to play it, hearing it (ear), and using it in real music (improvising, riffs, songs, writing).
-- Unit 1 answers "where do I start?": the smallest useful first step, achievable this week. Include foundations the topic depends on only if this student's levels show they lack them.
-- Then build step by step to full mastery, around level ${Math.min(10, d + 3)} by the end. Spiral: bring earlier material back in harder forms (new keys, positions, tempos, rhythms).
-- Calibrate to the student's edge zone (70–85% success). Theory follows the hands: every concept is played on the fretboard right away.
-- Musical applications use the student's genres (${genres}).
-- Topics that aren't naturally about tempo (sight reading, ear training, theory) still get timed drills with the metronome: notes per beat, answers per minute, bars read per minute.
-- The app shows tab and chord diagrams, not standard notation. For notation topics (like sight reading), write drills done from a book or printed page and say exactly what to read.
-- EVERY exercise is measurable: startBpm (a tempo THIS student can already play cleanly) and goalBpm (mastery tempo).
-- Exercises are original; never transcribe copyrighted songs or solos.
-${TAB_RULES}- You may reuse built-in exercises by setting "libId" (then omit tab) when one fits: ${JSON.stringify(lib)}
-
-Size: 5–6 units; 2–3 skills per unit; 2–3 exercises per skill.
-
-Return JSON:
-{"name": string (2–5 words, a vivid, specific course name for this topic; must differ from ${JSON.stringify(existing)}),
- "tagline": string (max 12 words: what the course builds),
- "summary": string (2 sentences: what the student can do at the end),
- ${UNITS_SCHEMA.replace('why this matters in this style', 'why this matters for the topic')}`;
-  const raw = await Claude.json({ feature: 'master-class',
-    system: 'You are a world-class guitar teacher and curriculum designer who uses deliberate practice, the 70–85% success "edge zone", spaced repetition and interleaving. You design focused courses that take one topic from the first step to mastery.',
-    content, maxTokens: 14000
-  });
-  const tree = normalizeTree(raw, { generatedBy: 'claude', difficulty: d, style: course.style });
-  if (!tree.units.length) throw new Error('Claude returned an empty course.');
-  return { tree, name: raw && typeof raw.name === 'string' ? raw.name.trim().slice(0, 60) : null, tagline: raw && typeof raw.tagline === 'string' ? raw.tagline.trim().slice(0, 120) : null };
+// Two steps, so a big course is never cut off: an outline first (what every unit
+// and skill covers, with each technique the student named as its own skill), then
+// the exercises unit by unit, a few requests at a time. A unit Claude can't write
+// is filled from the built-in lessons for its skills.
+const SYSTEM = 'You are a world-class guitar teacher and curriculum designer who uses deliberate practice, the 70–85% success "edge zone", spaced repetition and interleaving. You give the student exactly what they asked for, specifically and in depth, never a generic substitute.';
+const wait = ms => new Promise(r => setTimeout(r, ms));
+async function askJSON(opts, tries = 3) {
+  for (let i = 0; ; i++) {
+    try { return await Claude.json(opts); } catch (e) {
+      if (!['rate_limited', 'overloaded'].includes(e && e.code) || i >= tries - 1) throw e;
+      await wait(12000 * (i + 1));
+    }
+  }
+}
+async function pool(tasks, n) {
+  const out = new Array(tasks.length); let next = 0;
+  await Promise.all(Array.from({ length: Math.min(n, tasks.length) }, async () => { while (next < tasks.length) { const i = next++; try { out[i] = { ok: true, value: await tasks[i]() }; } catch (e) { out[i] = { ok: false, error: e }; } } }));
+  return out;
 }
 
-/** Build (or rebuild) a master class plan: Claude first, then the built-in curriculum. Returns {tree, usedClaude, error}. */
-export async function buildMasterTree(p, course) {
+async function outlineWithClaude(p, course) {
+  const t = course.topic || { title: course.style, text: course.style };
+  const words = t.text && t.text !== t.title ? t.text : t.title;
+  const genres = (p.questionnaire.genres || []).map(g => (GENRE_BY_ID[g] ? GENRE_BY_ID[g].name : g)).join(', ') || 'rock';
+  const existing = p.courses.filter(c => c.id !== course.id).map(c => c.name);
+  const seen = matchTechniques(words).map(x => x.title);
+  const d = course.difficulty;
+  const content = `Design the OUTLINE of a MASTER CLASS: a complete guitar course built entirely around what the student asked for.
+
+REQUEST: "${t.title}"${words !== t.title ? ` (in the student's words: "${words}")` : ''}
+${t.from ? `The student started from the exercise "${t.from.name}"${t.from.why ? ` (${t.from.why})` : ''}.\n` : ''}${seen.length ? `Techniques the app spotted in the request: ${seen.join(', ')}.\n` : ''}STUDENT: ${JSON.stringify(profileBrief(p))}
+Favorite genres: ${genres}. Level in this topic: ${d}/10 (${tierName(d)}).
+
+Step 1: in "required", list every specific technique, pattern, concept or skill the student named, in their words (e.g. "rolling 5s", "spread triads"). If they name an artist or a style, add that player's 3–6 most characteristic techniques.
+Step 2: outline 5–6 units of 2–3 skills each. EVERY item in "required" gets at least one skill whose title names it and whose "covers" repeats it. No generic filler: a skill that would fit any course (a plain scale box, a chromatic spider, open-chord changes) only if the request is about it.
+- Teach in the order a great teacher would: unit 1 is the smallest useful first step, doable this week; build to about level ${Math.min(10, d + 3)}; the last unit uses everything in real music in the student's genres (${genres}).
+- Each skill's "plan" says in one sentence exactly what its 2–3 exercises will be (pattern, key, string set, rhythm, tempo idea).
+
+Return JSON:
+{"name": string (2–5 words, vivid and specific; must differ from ${JSON.stringify(existing)}),
+ "tagline": string (max 12 words), "summary": string (2 sentences: what the student can do at the end),
+ "required": [string],
+ "units": [{"title": string, "summary": string, "skills": [{"id": "kebab-slug", "title": string, "domain": one of ${JSON.stringify(SKILL_DOMAINS)}, "summary": string, "covers": string, "plan": string}]}]}`;
+  const o = await askJSON({ feature: 'master-class', system: SYSTEM, content, maxTokens: 4000 });
+  const units = (o && Array.isArray(o.units) ? o.units : []).slice(0, 7).map(u => ({
+    title: String(u.title || 'Unit').slice(0, 60), summary: String(u.summary || '').slice(0, 240),
+    skills: (Array.isArray(u.skills) ? u.skills : []).slice(0, 4).map((s, i) => ({ id: String(s.id || s.title || 'skill-' + i).slice(0, 40), title: String(s.title || 'Skill').slice(0, 60), domain: SKILL_DOMAINS.includes(s.domain) ? s.domain : 'fretting', summary: String(s.summary || '').slice(0, 240), covers: String(s.covers || '').slice(0, 80), plan: String(s.plan || '').slice(0, 300) }))
+  })).filter(u => u.skills.length);
+  if (!units.length) throw new Error('Claude returned an empty outline.');
+  return { units, name: typeof o.name === 'string' ? o.name.trim().slice(0, 60) : null, tagline: typeof o.tagline === 'string' ? o.tagline.trim().slice(0, 120) : null, summary: String(o.summary || '').slice(0, 300), required: (Array.isArray(o.required) ? o.required : []).map(String).slice(0, 12) };
+}
+
+async function unitWithClaude(p, course, outline, ui, { short = false } = {}) {
+  const t = course.topic || { title: course.style, text: course.style };
+  const words = t.text || t.title, u = outline.units[ui], n = outline.units.length;
+  const lvl = clamp(course.difficulty - 1 + Math.round(ui * 3 / Math.max(1, n - 1)), 1, 10);
+  const doms = new Set(u.skills.map(s => s.domain));
+  const lib = EXERCISES.filter(e => doms.has(e.domain)).map(e => ({ libId: e.id, name: e.name, goalBpm: e.goalBpm }));
+  const brief = profileBrief(p);
+  const content = `Write the exercises for unit ${ui + 1} of ${n} of the master class "${outline.name || t.title}".
+The student asked for: "${words}". Required items: ${JSON.stringify(outline.required)}.
+Whole course, for context only: ${outline.units.map((x, i) => `${i + 1}. ${x.title} (${x.skills.map(s => s.title).join('; ')})`).join(' | ')}
+THIS UNIT: "${u.title}": ${u.summary}
+Skills to write (keep each id): ${JSON.stringify(u.skills)}
+STUDENT levels: ${JSON.stringify(brief.levels)}. Guitar: ${brief.guitar || 'electric'}. This unit's level: ${lvl}/10.
+
+Rules:
+- ${short ? '2 exercises' : '2–3 exercises'} per skill, each exactly about that skill and following its plan. If a skill names a technique (e.g. rolling 5s, spread triads), the exercises drill that technique itself.
+- Measurable: startBpm = a tempo this student can play cleanly today; goalBpm = mastery tempo.
+- Original exercises "in the style of"; never transcribe copyrighted songs or solos.
+- Give a tab for every single-note exercise (max ${short ? 24 : 40} notes); chord exercises give "voicings".
+${TAB_RULES}- Built-in exercises ("libId", then omit tab) only if one is exactly right: ${JSON.stringify(lib)}
+
+Return JSON: {"skills":[{"id": string (as given), "exercises":[${EXERCISE_SCHEMA}]}]}`;
+  const r = await askJSON({ feature: 'master-class', system: SYSTEM, content, maxTokens: short ? 6000 : 7000 });
+  const byId = {};
+  (r && Array.isArray(r.skills) ? r.skills : []).forEach((s, i) => { const id = s && s.id != null ? String(s.id) : u.skills[i] && u.skills[i].id; if (id && Array.isArray(s.exercises)) byId[id] = s.exercises.slice(0, 3); });
+  return byId;
+}
+
+/** Built-in exercises for one outlined skill (when Claude couldn't write it). */
+function localSkillExercises(p, course, skill, lvl) {
+  const text = `${skill.title} ${skill.covers || ''}`;
+  const tech = matchTechniques(text)[0] || matchTechniques(skill.plan || '')[0];
+  const topic = matchTopic(text);
+  let entries = null, ctx = { key: 9, minor: true, prog: 'minorRock' };
+  if (tech) entries = tech.skills.flatMap(k => k.ex).slice(0, 3);
+  else if (topic) { entries = topic.units.slice(0, 2).flatMap(u => u.skills[0] ? u.skills[0].ex : []).slice(0, 3); ctx = topic.ctx; }
+  if (entries) {
+    const c = { key: ctx.key, minor: !!ctx.minor, lvl, genre: course.genre, prog: ctx.prog };
+    return entries.map(e => runEntry(c, e, lvl, skill.domain)).filter(Boolean);
+  }
+  const fake = { domains: Object.fromEntries(SKILL_DOMAINS.map(k => [k, { level: lvl }])) };
+  const built = buildForRequest(fake, parseRequest(text));
+  return built.items.slice(0, 2).map(i => i.raw);
+}
+
+export async function generateMasterWithClaude(p, course, { onProgress = () => {} } = {}) {
+  onProgress({ step: 'outline' });
+  const outline = await outlineWithClaude(p, course);
+  const n = outline.units.length;
+  let done = 0;
+  onProgress({ step: 'units', done, total: n });
+  const results = await pool(outline.units.map((u, ui) => async () => {
+    try { return await unitWithClaude(p, course, outline, ui); }
+    catch (e) { if (e && e.code === 'cut_off') return await unitWithClaude(p, course, outline, ui, { short: true }); throw e; }
+    finally { onProgress({ step: 'units', done: ++done, total: n }); }
+  }), 3);
+  let filled = 0;
+  const units = outline.units.map((u, ui) => {
+    const lvl = clamp(course.difficulty - 1 + Math.round(ui * 3 / Math.max(1, n - 1)), 1, 10);
+    const written = results[ui] && results[ui].ok ? results[ui].value : {};
+    return { title: u.title, summary: u.summary, skills: u.skills.map(s => {
+      let exercises = written[s.id] || [];
+      if (!exercises.length) { exercises = localSkillExercises(p, course, s, lvl); if (exercises.length) filled++; }
+      return { id: s.id, title: s.title, domain: s.domain, summary: s.summary, prereqs: [], exercises };
+    }) };
+  });
+  if (results.every(r => !r.ok)) throw results[0].error || new Error('Claude couldn’t write the exercises.');
+  const tree = normalizeTree({ summary: outline.summary, units }, { generatedBy: 'claude', difficulty: course.difficulty, style: course.style });
+  if (!tree.units.length) throw new Error('Claude returned an empty course.');
+  tree.required = outline.required;
+  return { tree, name: outline.name, tagline: outline.tagline, filled };
+}
+
+/** A course name from the techniques a request named, when the title is a long sentence. */
+function techniqueName(course, techs) {
+  if (!course.autoName || !techs.length || (course.topic && course.topic.title.length <= 40)) return null;
+  return `${techs.slice(0, 3).map(x => x.title).join(', ')} Master Class`;
+}
+
+/**
+ * Build (or rebuild) a master class plan. Returns {tree, usedClaude, source, error?, cached?}.
+ * source: 'artist' (built-in Artist Series lessons), 'cache' (a plan Claude designed before for the
+ * same request: no API cost), 'claude', or 'local'. fresh: skip the saved plan (a rebuild).
+ */
+export async function buildMasterTree(p, course, { fresh = false, onProgress = () => {} } = {}) {
+  const text = course.topic ? course.topic.text || course.topic.title : course.style;
+  const t = (course.topic && course.topic.topicId && MASTER_BY_ID[course.topic.topicId]) || topicFor(text);
+  const taken = new Set(p.courses.filter(c => c.id !== course.id).map(c => c.name.toLowerCase()));
+  const rename = (name, tagline) => { if (!course.autoName) return; if (name && !taken.has(name.toLowerCase())) course.name = name; if (tagline) course.tagline = tagline; };
+  const done = (tree, extra) => { course.tree = tree; course.state = null; return { tree, usedClaude: false, ...extra }; };
+
+  // Artists: the built-in Artist Series lessons, no API call
+  if (t && t.artist) {
+    const tree = generateMasterLocal(p, course);
+    if (tree) { const a = ARTIST_BY_ID[t.artist]; rename(`${a.name} Master Class`, a.blurb); if (course.topic) course.topic.cat = 'artist'; return done(tree, { source: 'artist' }); }
+  }
+  // A plan Claude already designed for this request (same or similar words, same level): no API call
+  if (!fresh) {
+    const hit = getMaster(p, text, course.difficulty);
+    if (hit) { hit.tree.generatedAt = Date.now(); hit.tree.fromCache = true; rename(hit.name, hit.tagline); return done(hit.tree, { source: 'cache', cached: true }); }
+  }
   let tree = null, error = null, usedClaude = false;
   if (Claude.hasKey()) {
     try {
-      const r = await generateMasterWithClaude(p, course);
+      const r = await generateMasterWithClaude(p, course, { onProgress });
       tree = r.tree; usedClaude = true;
-      const taken = new Set(p.courses.filter(c => c.id !== course.id).map(c => c.name.toLowerCase()));
-      if (r.name && !taken.has(r.name.toLowerCase()) && course.autoName) course.name = r.name;
-      if (r.tagline && course.autoName) course.tagline = r.tagline;
+      rename(r.name, r.tagline);
+      putMaster(p, text, course.difficulty, { tree: r.tree, name: r.name, tagline: r.tagline });
     } catch (e) { error = e.message || String(e); }
   }
-  if (!tree) tree = generateMasterLocal(p, course);
+  if (!tree) {
+    tree = generateMasterLocal(p, course);
+    if (tree) { const n = techniqueName(course, matchTechniques(text)); if (n) rename(n, null); }
+  }
   if (!tree) throw new Error(error ? `Claude couldn’t build it (${error}), and the built-in plans don’t cover “${course.topic.title}”.` : `The built-in plans don’t cover “${course.topic.title}” yet. Connect Claude in Settings and any topic works, or pick one of the suggested topics.`);
   course.tree = tree; course.state = null;
-  return { tree, usedClaude, error };
+  return { tree, usedClaude, error, source: usedClaude ? 'claude' : 'local' };
 }
 
 /** Can this topic be built right now (Claude connected, or a built-in plan exists)? */
 export function canBuild(topic) {
   if (Claude.hasKey()) return true;
-  if (topic.topicId || matchTopic(topic.text || topic.title)) return true;
+  if (topic.topicId || matchTopic(topic.text || topic.title) || matchTechniques(topic.text || topic.title).length) return true;
   return parseRequest(topic.text || topic.title).topics.length > 0;
 }
 
 /** Create a master class (the plan is built separately with buildMasterTree). */
 export function createMasterClass(p, { title, text = '', topicId = null, libId = null, domain = null, cat = null, from = null, difficulty = null }) {
   title = String(title || text || '').trim().slice(0, 80);
-  const cur = (topicId && MASTER_BY_ID[topicId]) || matchTopic(text || title);
+  const cur = (topicId && MASTER_BY_ID[topicId]) || topicFor(text || title);
   const topic = { title, text: String(text || title).trim().slice(0, 300), topicId: cur ? cur.id : null, libId, domain: null, cat: cat || (cur ? cur.cat : null), from };
   topic.domain = domain && DOMAIN_BY_KEY[domain] ? domain : topicDomain(topic);
   if (!topic.cat) topic.cat = { fretting: 'fretting', picking: 'picking', rhythm: 'rhythm', fretboard: 'scales', theory: 'theory', ear: 'ear', improv: 'ear' }[topic.domain] || 'theory';
@@ -611,4 +794,25 @@ export function topicForExercise(ex) {
   const from = { name: ex.name, why: ex.why || '' };
   if (cur) return { title: cur.title, text: cur.title, topicId: cur.id, domain: cur.domain, cat: cur.cat, from };
   return { title: ex.name, text: ex.name, domain: ex.domain, from };
+}
+
+/* ----------------------------- Artist Series ----------------------------- */
+/**
+ * An artist's lessons at the player's level, ready to practice:
+ * [{unit, skill, ex}] with exercises normalized like any course exercise.
+ */
+export function artistLessonList(p, artistId) {
+  const a = ARTIST_BY_ID[artistId]; if (!a) return [];
+  const t = MASTER_BY_ID['artist-' + artistId];
+  const lvl = masterDifficulty(p, { title: t.title, text: t.title, topicId: t.id });
+  const used = new Set();
+  return t.units.flatMap((u, ui) => {
+    const ulvl = clamp(lvl - 1 + Math.round(ui * 3 / Math.max(1, t.units.length - 1)), 1, 10);
+    const c = { key: t.ctx.key, minor: !!t.ctx.minor, lvl: ulvl, genre: a.genre, prog: t.ctx.prog };
+    return u.skills.flatMap(s => s.ex.map(e => runEntry(c, e, ulvl, s.domain)).filter(Boolean).map(raw => {
+      const ex = normalizeExercise({ ...raw, id: `${artistId}-${raw.id || raw.name}` }, used);
+      if (ex && ex.level == null) ex.level = ulvl;
+      return ex ? { unit: u, skill: s, ex } : null;
+    }).filter(Boolean));
+  });
 }

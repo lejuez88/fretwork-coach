@@ -12,6 +12,7 @@ import { mountAudioSetup } from '../ui/audiosetup.js';
 import { importBlockHTML, wireImport } from '../ui/importui.js';
 import { saveImported, describeProfile } from '../core/importer.js';
 import { driveReady, getClientId, setClientId, loadGoogle, saveToDrive, loadFromDrive, lastDriveFile } from '../core/gdrive.js';
+import { cacheStats, clearCache } from '../core/lessoncache.js';
 import { periodFor, summarize, billingDay, setBillingDay, clearUsage, priceFor, fmtUSD, fmtTokens, FEATURE_LABEL, PRICES_AS_OF } from '../core/usage.js';
 
 // Keys are pasted, not typed: no auto-capitals, autocorrect or password managers
@@ -153,7 +154,10 @@ export function mountSettings(root, { navigate, applySettings }) {
       <div class="field"><label>Billing period starts on day</label>
         <select data-r="billday" style="max-width:260px">${Array.from({ length: 28 }, (_, i) => i + 1).map(d => `<option value="${d}" ${d === day ? 'selected' : ''}>${d}${d === 1 ? ' (calendar month)' : ''}</option>`).join('')}</select></div>
       <p class="muted small">Counted from the exact token usage Anthropic reports with every reply, priced at Anthropic’s published rates (${PRICES_AS_OF}), before tax. It covers Claude requests Fretwork Coach made in this browser${sinceTxt ? ` since ${sinceTxt}` : ''}; other apps, other devices and any credits or discounts aren’t included. Your official total is on the <a class="link" href="https://platform.claude.com/cost" target="_blank" rel="noopener">Cost page in the Claude Console</a>.</p>
-      ${cur.since ? '<button class="btn ghost sm" data-s="clearspend">Reset spend history</button>' : ''}`;
+      ${cur.since ? '<button class="btn ghost sm" data-s="clearspend">Reset spend history</button>' : ''}
+      ${p ? (() => { const cs = cacheStats(p); return `<div class="spend-sub">Saved lessons</div>
+        <p class="small">${cs.masters} master class plan${cs.masters === 1 ? '' : 's'} and ${cs.requests} exercise answer${cs.requests === 1 ? '' : 's'} Claude designed are saved in your profile (${Math.round(cs.bytes / 1024)} KB)${cs.reused ? `, reused ${cs.reused} time${cs.reused === 1 ? '' : 's'} so far` : ''}. Asking for the same thing again, even in other words, reuses them at no cost; they travel with Export and Google Drive. Rebuilding a course always asks Claude for a new plan.</p>
+        ${cs.masters + cs.requests ? '<button class="btn ghost sm" data-s="clearcache">Clear saved lessons</button>' : ''}`; })() : ''}`;
   }
   renderSpend();
 
@@ -205,6 +209,7 @@ export function mountSettings(root, { navigate, applySettings }) {
         sessionKeys = keys; navigate('#/keys');
         break;
       }
+      case 'clearcache': if (confirm('Clear the saved lessons? Your courses keep their plans; only the reuse store is emptied.')) { clearCache(p); Store.save(); renderSpend(); } break;
       case 'clearspend': if (confirm('Clear the spend history kept in this browser? This doesn’t change anything with Anthropic.')) { clearUsage(); renderSpend(); } break;
       case 'export': exportProfile(p); break;
       case 'drivesave': driveSave(false); break;

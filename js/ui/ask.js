@@ -95,7 +95,8 @@ export function mountAskBox(el, { start, courseId = null }) {
   function resultHTML() {
     const total = result.items.reduce((a, it) => a + (it.ex.minutes || 5), 0);
     return `<div class="askresult">
-      ${result.summary ? `<p class="coach">${result.source === 'claude' ? '🎯 ' : ''}${esc(result.summary)}</p>` : ''}
+      ${result.summary ? `<p class="coach">${result.source === 'claude' || result.source === 'cache' ? '🎯 ' : ''}${esc(result.summary)}</p>` : ''}
+      ${result.source === 'cache' ? '<p class="small muted">♻ Claude designed these for the same request earlier, so they were reused from your saved lessons (no API cost).</p>' : ''}
       ${result.error ? `<p class="small muted">Claude couldn’t answer (${esc(result.error)}), so these come from the drill library.</p>` : ''}
       ${result.items.map((it, i) => exerciseCardHTML(it.ex, { i, role: it.role, target: it.targetBpm })).join('')}
       <div class="row"><button class="btn primary" data-ask="practice">▶ Practice ${result.items.length > 1 ? 'these' : 'this'} now · ${total} min</button><button class="btn ghost" data-ask="clear">Clear</button></div>

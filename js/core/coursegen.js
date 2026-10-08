@@ -154,12 +154,14 @@ export function profileBrief(profile) {
 export const TAB_RULES = `- Standard tuning (or say "tuning" if the style needs another). Tabs: string 1 = high e, string 6 = low E; give a tab for single-note lines (max 48 notes; note = [string, fret, technique or null, beats]).
 - Chord parts: any chord symbol is allowed (Cmaj7, F♯m7♭5, E7♯9, Dsus2, A/C♯…). Give exact grips in "voicings" as [{"name":"Cmaj7","frets":"x32000"}] (frets low E → high e, x = muted, two-digit frets in parentheses like "x(10)(12)(11)(12)x") whenever the voicing matters (inversions, drop-2, shells, triads on string sets). "backing" loops may use any chord symbols.
 `;
-export const UNITS_SCHEMA = `"units":[{"title":string,"summary":string,
-   "skills":[{"id":"kebab-slug","title":string,"domain":one of ${JSON.stringify(DOMAIN_KEYS)},"summary":string (1 sentence),"prereqs":[skill ids],
-     "exercises":[{"id":"kebab-slug","name":string,"domain":string,"why":string (1-2 sentences, why this matters in this style),"instr":string (clear steps),"watch":string (common mistake),"simplify":string (easier variant if stuck),
+/** One exercise in Claude's answers (shared by the course, master-class and per-unit prompts). */
+export const EXERCISE_SCHEMA = `{"id":"kebab-slug","name":string,"domain":string,"why":string (1-2 sentences, why this matters in this style),"instr":string (clear steps),"watch":string (common mistake),"simplify":string (easier variant if stuck),
        "unit":"8ths|16ths|triplets|quarter notes|2 beats per chord|...","level":int 1-10,"startBpm":int,"goalBpm":int,"minutes":int (3-10),
        "picking":"alternate|strict|economy|down|fingers|hybrid","libId":optional,"tab":optional {"step":0.25|0.333|0.5|1,"swing":bool,"notes":[[string,fret,"h|p|/|b|~|pm|t" optional, beats optional],...]},
-       "voicings":optional [{"name":string,"frets":string}],"chords":optional [symbols],"backing":optional [symbols],"beatsPerBar":optional int (odd meters)}]}]}]}`;
+       "voicings":optional [{"name":string,"frets":string}],"chords":optional [symbols],"backing":optional [symbols],"beatsPerBar":optional int (odd meters)}`;
+export const UNITS_SCHEMA = `"units":[{"title":string,"summary":string,
+   "skills":[{"id":"kebab-slug","title":string,"domain":one of ${JSON.stringify(DOMAIN_KEYS)},"summary":string (1 sentence),"prereqs":[skill ids],
+     "exercises":[${EXERCISE_SCHEMA}]}]}]}`;
 
 export async function generateTreeWithClaude(profile, course) {
   const genre = GENRE_BY_ID[course.genre];
@@ -248,10 +250,10 @@ export function planHasProgress(course) {
 /** Generate and attach a tree (Claude first, local fallback). Returns {tree, usedClaude, error}. */
 export async function buildCourseTree(profile, course) {
   if (course && course.kind === 'master') {
-    // master classes have their own builder; a failed rebuild keeps the current plan
+    // master classes have their own builder; a rebuild asks for a new plan (not the saved one), and a failed rebuild keeps the current plan
     const { buildMasterTree } = await import('./master.js');
     const keep = { tree: course.tree, state: course.state };
-    try { return await buildMasterTree(profile, course); } catch (e) { course.tree = keep.tree; course.state = keep.state; return { tree: course.tree, usedClaude: false, error: e.message || String(e), kept: true }; }
+    try { return await buildMasterTree(profile, course, { fresh: true }); } catch (e) { course.tree = keep.tree; course.state = keep.state; return { tree: course.tree, usedClaude: false, error: e.message || String(e), kept: true }; }
   }
   let tree = null, error = null;
   if (Claude.hasKey()) {

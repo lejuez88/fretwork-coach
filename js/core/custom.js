@@ -14,6 +14,9 @@ import { normalizeExercise } from './coursegen.js';
 import { matchDrills, drillLibrary } from './drills.js';
 import { parseRequest, exercisesForRequest } from './topics.js';
 import { calibratedTarget, newExerciseState, applyResult } from './progression.js';
+import { matchTechniques, matchArtist } from '../data/artists.js';
+import { runAtom } from './styles.js';
+import { getRequest, putRequest } from './lessoncache.js';
 
 export const ASK_EXAMPLES = [
   'My bends sound out of tune', 'Faster alternate picking', 'Switching between F and C', 'Funk 16th-note strumming',
@@ -67,8 +70,30 @@ Return JSON: {"summary": "1-2 sentences: what these exercises fix and how they'l
   return { summary: String(raw.summary || '').slice(0, 400), items };
 }
 
+/** Exercises from the technique lessons (rolling 5s, spread triads, tapping…) a request names. */
+function techniqueExercises(p, text) {
+  const techs = matchTechniques(text);
+  if (!techs.length) return null;
+  const a = matchArtist(text);
+  const items = [], used = new Set();
+  techs.slice(0, 3).forEach((x, ti) => {
+    const lvl = levelFor(p, x.domain);
+    const c = { key: a ? a.ctx.key : 9, minor: a ? !!a.ctx.minor : true, lvl, genre: p.questionnaire.genres[0] || 'rock', prog: 'minorRock' };
+    const entries = x.skills.flatMap(s => s.ex).slice(0, techs.length > 1 ? 2 : 3);
+    entries.forEach((e, i) => {
+      const raw = typeof e === 'function' ? e(c) : Array.isArray(e) ? runAtom({ ...c, ...(e[2] || {}) }, e[0], e[1] || {}) : null;
+      const ex = raw && normalizeExercise({ ...raw, id: 'ask-' + (raw.id || raw.name) }, used);
+      if (ex) { ex.level = Math.max(1, Math.min(10, ex.level || lvl)); items.push({ role: i === 0 && ti === 0 ? 'drill' : 'main', ex }); }
+    });
+  });
+  if (!items.length) return null;
+  return { summary: `Exercises for ${techs.map(x => x.title.toLowerCase()).join(', ')}${a ? ` in ${a.name}’s style` : ''}, from the built-in lessons, set to your level.`, items, understood: techs.map(x => x.title) };
+}
+
 /** Local version from keywords. */
 export function localExercises(p, text) {
+  const tech = techniqueExercises(p, text);
+  if (tech) return tech;
   const built = exercisesForRequest(p, text);
   if (built.items.length) {
     const summary = `I read this as: ${built.understood.join(' + ') || 'your request'}${/chord|invers|voicing|triad|arpegg|scale|mode|key|progress|tone/.test(built.understood.join(' ')) ? ` (in ${built.key})` : ''}. ${built.items.length > 1 ? 'Start with the drill, then the main exercise' + (built.items.some(i => i.role === 'apply') ? ', then use it musically.' : '.') : ''}${built.req.key ? '' : ' Add “in G”, “A minor” etc. to choose the key.'}`.trim();
@@ -108,7 +133,12 @@ export async function generateExercises(p, text) {
   if (!text) return { summary: '', items: [], source: 'none' };
   let out = null, error = null, source = 'local';
   if (Claude.hasKey()) {
-    try { out = await withClaude(p, text); source = 'claude'; } catch (e) { error = e.message; }
+    // the same request (in the same or similar words) answered before: reuse it, no API call
+    const hit = getRequest(p, text);
+    if (hit) { out = { summary: hit.summary, items: hit.items }; source = 'cache'; }
+    else {
+      try { out = await withClaude(p, text); source = 'claude'; putRequest(p, text, out); } catch (e) { error = e.message; }
+    }
   }
   if (!out) out = localExercises(p, text);
   out.items.forEach(it => {

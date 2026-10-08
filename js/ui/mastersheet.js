@@ -7,7 +7,7 @@ import { Store } from '../core/store.js';
 import { Claude } from '../core/claude.js';
 import { DOMAIN_BY_KEY } from '../assessment/engine.js';
 import { tierName } from '../core/courses.js';
-import { MASTER_BY_ID, matchTopic, topicDomain, masterDifficulty, createMasterClass, buildMasterTree, canBuild, isMaster } from '../core/master.js';
+import { MASTER_BY_ID, matchTopic, topicFor, topicDomain, masterDifficulty, createMasterClass, buildMasterTree, canBuild, isMaster } from '../core/master.js';
 import { Shell } from './shell.js';
 import { TOPIC_ART, TOPIC_HUE } from './topicart.js';
 
@@ -22,13 +22,13 @@ export const topicArtHTML = (cat, cls = '') => `<span class="topic-img ${cls}" s
 export function openMasterSheet(topic = {}, { navigate = null, onBuilt = null } = {}) {
   const p = Store.profile; if (!p) return null;
   let title = String(topic.title || '').trim(), details = topic.text && topic.text !== topic.title ? String(topic.text) : '';
-  let level = null, busy = false, error = '';
+  let level = null, busy = false, error = '', progress = '';
   const sheet = Shell.sheet('<div data-r="mc"></div>', { onClose: () => { closed = true; } });
   let closed = false;
   sheet.el.classList.add('mcsheet');
 
   const current = () => {
-    const cur = (topic.topicId && MASTER_BY_ID[topic.topicId] && MASTER_BY_ID[topic.topicId].title === title ? MASTER_BY_ID[topic.topicId] : null) || matchTopic(`${title} ${details}`);
+    const cur = (topic.topicId && MASTER_BY_ID[topic.topicId] && MASTER_BY_ID[topic.topicId].title === title ? MASTER_BY_ID[topic.topicId] : null) || topicFor(`${title} ${details}`);
     const t = { title, text: details ? `${title}: ${details}` : title, topicId: cur ? cur.id : null, libId: topic.libId || null, domain: topic.domain || null, cat: topic.cat || (cur ? cur.cat : null), from: topic.from || null };
     return { t, cur };
   };
@@ -45,13 +45,14 @@ export function openMasterSheet(topic = {}, { navigate = null, onBuilt = null } 
       <div class="field"><label>Starting level: <b>${lv}/10 · ${tierName(lv)}</b></label>
         <input type="range" min="1" max="10" value="${lv}" data-r="mclevel" aria-label="Starting level" ${busy ? 'disabled' : ''}>
         <p class="muted small">Suggested from your ${esc(DOMAIN_BY_KEY[dom] ? DOMAIN_BY_KEY[dom].name : dom)} level: ${suggested}. The course climbs about three levels from here.</p></div>
-      ${cur && !Claude.hasKey() ? `<div class="mc-outline"><div class="label">What it covers</div><ol>${cur.units.map(u => `<li><b>${esc(u.title)}</b> <span class="muted small">${esc(u.summary)}</span></li>`).join('')}</ol></div>` : ''}
-      <p class="small ${buildable ? 'muted' : 'bad'}">${Claude.hasKey() ? 'Claude designs the course around your levels, genres and what you wrote (about 30–60 seconds).'
+      ${cur && (cur.artist || !Claude.hasKey()) ? `<div class="mc-outline"><div class="label">What it covers</div><ol>${cur.units.map(u => `<li><b>${esc(u.title)}</b> <span class="muted small">${esc(u.summary)}</span></li>`).join('')}</ol></div>` : ''}
+      <p class="small ${buildable ? 'muted' : 'bad'}">${cur && cur.artist ? `Built from the Artist Series lessons on ${esc(cur.title.replace(/ style$/, ''))}’s signature techniques, at your level. No API cost.${details ? ' Techniques you name that aren’t in the series are added as extra units.' : ''}`
+        : Claude.hasKey() ? 'Claude designs the course around your levels, genres and what you wrote: an outline first, with every technique you name as its own skill, then the exercises unit by unit (about 1–2 minutes). It’s saved, so asking for the same thing again costs nothing.'
         : buildable ? (cur ? 'Built-in plan. With Claude connected in Settings, the course is designed around you.' : 'A five-step plan from the built-in exercises. With Claude connected in Settings, any topic gets a course designed around you.')
         : title.length < 3 ? 'Name a topic to build a course around.' : 'The built-in plans don’t cover this topic. Connect Claude in Settings and any topic works, or try one of the suggestions on the dashboard.'}</p>
       ${have.length ? `<p class="small">You already have <a class="link" href="#/course/${have[0].id}" data-r="mcopen">${esc(have[0].name)}</a>. Building another gives you a fresh plan alongside it.</p>` : ''}
       ${error ? `<p class="small bad">${esc(error)}</p>` : ''}
-      <button class="btn primary block" data-r="mcbuild" ${busy || !buildable ? 'disabled' : ''}>${busy ? `<span class="spinner sm"></span>${Claude.hasKey() ? 'Claude is designing your master class…' : 'Building your master class…'}` : `${MC_ICON} Build master class`}</button>`;
+      <button class="btn primary block" data-r="mcbuild" ${busy || !buildable ? 'disabled' : ''}>${busy ? `<span class="spinner sm"></span>${esc(progress || (Claude.hasKey() && !(cur && cur.artist) ? 'Claude is designing your master class…' : 'Building your master class…'))}` : `${MC_ICON} Build master class`}</button>`;
   }
   async function build() {
     const { t } = current();
@@ -59,18 +60,26 @@ export function openMasterSheet(topic = {}, { navigate = null, onBuilt = null } 
     busy = true; error = ''; draw();
     const course = createMasterClass(p, { ...t, title, text: t.text, difficulty: level || masterDifficulty(p, t) });
     try {
-      const r = await buildMasterTree(p, course);
+      const r = await buildMasterTree(p, course, { onProgress: x => {
+        progress = x.step === 'outline' ? 'Claude is outlining the course…' : `Claude is writing the exercises: ${x.done} of ${x.total} units done…`;
+        const btn = sheet.el.querySelector('[data-r="mcbuild"]'); if (btn && busy) btn.innerHTML = `<span class="spinner sm"></span>${esc(progress)}`;
+      } });
+      progress = '';
       Store.save();
       busy = false;
       const stillOpen = !closed; // closed while building: don't jump away from what you're doing
       if (stillOpen) sheet.close();
       const go = navigate && stillOpen;
-      toast(r.error ? `Claude couldn’t design it (${r.error}), so the built-in plan was used.` : `${MC_ICON} “${course.name}” is ready${go ? '' : ': find it under Your courses on the dashboard'}.`, 4200);
+      const where = go ? '' : ': find it under Your courses on the dashboard';
+      toast(r.error ? `Claude couldn’t design it (${r.error}), so the built-in lessons for what you named were used.`
+        : r.source === 'cache' ? `${MC_ICON} “${course.name}” is ready${where}. Reused the plan Claude designed for this request before (no API cost).`
+        : r.source === 'artist' ? `${MC_ICON} “${course.name}” is ready${where}. Built from the Artist Series lessons (no API cost).`
+        : `${MC_ICON} “${course.name}” is ready${where}.`, 5200);
       if (onBuilt) onBuilt(course);
       if (go) navigate(`#/course/${course.id}`);
     } catch (e) {
       p.courses = p.courses.filter(c => c.id !== course.id);
-      busy = false; error = e.message || 'The course couldn’t be built.';
+      busy = false; progress = ''; error = e.message || 'The course couldn’t be built.';
       if (closed) toast(error, 4200); else draw();
     }
   }

@@ -25,7 +25,15 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: tab player controls, live fretboard, chord highlights, roomier layout
+## Latest: Artist Series, master classes that follow your request, saved lessons
+
+| Area | Included |
+|---|---|
+| Artist Series | A dashboard card and an **Artist series** page (`#/artist`) with Eric Johnson, Eddie Van Halen, Paul Gilbert, Stevie Ray Vaughan, Jimi Hendrix and David Gilmour. Each artist page has lessons on that player's signature techniques at your level (original exercises in their style that play in the tab player, with fretboard and chord boxes): Eric Johnson's pentatonic sixes, speed pentatonics across all five boxes, rolling 5s (in the box and along the neck), the added 9th and spread triads (shapes, the chords of a key, progressions); Van Halen's tapped triplet and 16th arpeggios, tapped pentatonic octaves, open-string pull-offs, riffs and harmonics; Paul Gilbert's six-note picking lick (on string pairs and through the boxes), string-skipped arpeggios, pentatonic in sixes and stretched pentatonic; Hendrix's 7♯9 groove, octaves and chord embellishments; SRV's shuffle, rakes and double-stops; Gilmour's pre-bends and phrasing. Try, practice, save or add any lesson to your routines. **Famous songs** are linked to Songsterr and can be added to My songs (not transcribed). **Start the master class** builds a course from the lessons with no API cost. Favorite players who aren't in the series appear as tiles that Claude builds. |
+| Master classes follow the request | A request that names techniques gets one skill per technique. With Claude, the course is built in two steps: an outline that lists every technique you named (each gets its own skill), then the exercises unit by unit, a few at a time, so a long course is never cut off (the earlier one-shot request could run out of room, which is why the Eric Johnson class failed and fell back to generic pentatonic lessons). A unit Claude can't write is filled from the built-in lessons for its skills. Without Claude, named techniques (rolling 5s, spread triads, tapping, the six-note lick, string skipping, octaves, 7♯9…) still get their own units instead of a generic course; artists always use the Artist Series lessons. The build button shows progress (outline, then units done). |
+| Saved lessons | Master-class plans and "What do you want to work on?" answers that Claude designs are saved in your profile and reused when you ask for the same thing again, even in other words (no API cost). They travel with Export and Google Drive. Rebuilding a course always asks for a new plan. Settings → Claude API spend shows what's saved and can clear it. |
+
+## Earlier: tab player controls, live fretboard, chord highlights, roomier layout
 
 | Area | Included |
 |---|---|

@@ -31,7 +31,7 @@ export const Claude = {
    * Send a request. `content` may be a string or an array of content blocks.
    * images: [{mediaType, data(base64)}] are prepended to the user turn.
    */
-  async message({ system, content, messages, maxTokens = 1500, model, images = [], signal, feature = 'other' } = {}) {
+  async message({ system, content, messages, maxTokens = 1500, model, images = [], signal, feature = 'other', withMeta = false } = {}) {
     const key = this.getKey();
     if (!key) throw new ClaudeError('no_key', 'Add your Anthropic API key in Settings to use Claude features.');
     let msgs = messages;
@@ -73,15 +73,22 @@ export const Claude = {
     const data = await res.json();
     // the reply carries the exact tokens it was billed for; keep the spend ledger
     try { recordUsage(data.model || model || this.model, data.usage, feature); } catch { /* never block a reply */ }
-    return (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+    // withMeta: also say whether the reply hit max_tokens (cut off before it finished)
+    return withMeta ? { text, stop: data.stop_reason || null } : text;
   },
 
   /** Ask for JSON and parse the first JSON object/array in the reply. */
   async json(opts) {
     const system = (opts.system ? opts.system + '\n\n' : '') +
       'Respond with valid JSON only: no prose, no markdown fences.';
-    const text = await this.message(Object.assign({}, opts, { system }));
-    return parseJSON(text);
+    const r = await this.message(Object.assign({}, opts, { system, withMeta: true }));
+    const text = typeof r === 'string' ? r : r && r.text, stop = r && typeof r === 'object' ? r.stop : null;
+    try { return parseJSON(text); }
+    catch (e) {
+      if (stop === 'max_tokens') throw new ClaudeError('cut_off', 'Claude’s answer was too long and got cut off before it finished.');
+      throw e;
+    }
   }
 };
 

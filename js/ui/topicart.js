@@ -48,6 +48,12 @@ export const TOPIC_ART = {
   ear: svg(`<path d="M8 12 h40 a6 6 0 0 1 6 6 v16 a6 6 0 0 1 -6 6 h-26 l-8 8 v-8 h-6 a6 6 0 0 1 -6 -6 v-16 a6 6 0 0 1 6 -6Z" fill="rgba(236,230,218,.14)" stroke="#ece6da" stroke-width="2"/>
     <ellipse cx="22" cy="31" rx="3.6" ry="2.7" fill="#ece6da"/><ellipse cx="36" cy="28" rx="3.6" ry="2.7" fill="#ece6da"/><path d="M25.4 31 V19 L39.4 16 V28" stroke="#ece6da" stroke-width="1.8" fill="none"/>
     <path d="M32 40 h38 a5 5 0 0 1 5 5 v14 a5 5 0 0 1 -5 5 h-4 v8 l-8 -8 h-26 a5 5 0 0 1 -5 -5 v-14 a5 5 0 0 1 5 -5Z" fill="rgba(245,165,36,.2)" stroke="${AM}" stroke-width="2"/>
-    <path d="M36 54 q4 -8 8 0 t8 0 t8 0 t8 0" stroke="${AM}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`)
+    <path d="M36 54 q4 -8 8 0 t8 0 t8 0 t8 0" stroke="${AM}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`),
+  // Artist Series: an electric guitar under a spotlight
+  artist: svg(`<path d="M40 2 L22 70 L58 70 Z" fill="rgba(245,165,36,.13)"/>
+    <path d="M47 8 l6 -3 l3 5 l-6 3 Z" fill="#ece6da"/><rect x="43.5" y="11" width="5" height="30" rx="1.5" transform="rotate(14 46 26)" fill="#ece6da"/>
+    <path d="M30 44 C26 38 33 33 38 37 C41 34 47 34 47 39 C52 40 54 47 49 51 C52 57 46 64 39 61 C34 66 25 63 26 56 C21 54 23 46 30 44Z" fill="${AM}" stroke="#c47f0e" stroke-width="1.6"/>
+    <rect x="31" y="47" width="11" height="3" rx="1" fill="${INK}" opacity=".55" transform="rotate(14 36 48)"/><rect x="29" y="53" width="11" height="3" rx="1" fill="${INK}" opacity=".55" transform="rotate(14 34 54)"/>
+    <circle cx="44" cy="56" r="2" fill="${VI}"/><path d="M14 18 l3 -6 l3 6 l6 1 l-5 4 l2 6 l-6 -3 l-6 3 l2 -6 l-5 -4 Z" fill="${VI}" opacity=".85"/>`)
 };
-export const TOPIC_HUE = { warmup: 20, picking: 35, fretting: 350, chords: 265, rhythm: 190, scales: 145, theory: 225, ear: 305 };
+export const TOPIC_HUE = { warmup: 20, picking: 35, fretting: 350, chords: 265, rhythm: 190, scales: 145, theory: 225, ear: 305, artist: 45 };
