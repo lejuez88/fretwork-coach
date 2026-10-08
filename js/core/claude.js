@@ -2,6 +2,7 @@
 // user's own key. The key lives only in this browser's localStorage and is never
 // written into the exported profile.
 import { recordUsage } from './usage.js';
+import { cleanKey, storeKey, fingerprint, networkAdvice } from './keys.js';
 
 const KEY_STORE = 'fretworkCoach.anthropicKey';
 const ENDPOINT = 'https://api.anthropic.com/v1/messages';
@@ -19,8 +20,11 @@ export class ClaudeError extends Error {
 
 export const Claude = {
   model: 'claude-sonnet-5-5',
-  getKey() { try { return localStorage.getItem(KEY_STORE) || ''; } catch { return ''; } },
-  setKey(k) { try { k ? localStorage.setItem(KEY_STORE, k.trim()) : localStorage.removeItem(KEY_STORE); } catch { /* ignore */ } },
+  // Keys are cleaned on the way in and out, so one saved with a stray space,
+  // line break or hidden character (common when pasting on a phone) still works.
+  getKey() { try { return cleanKey(localStorage.getItem(KEY_STORE) || '', 'anthropic'); } catch { return ''; } },
+  /** Save (or remove, when empty) the key. Returns { ok, reason, key } with the cleaned key. */
+  setKey(k) { const key = cleanKey(k, 'anthropic'); return { ...storeKey(KEY_STORE, key), key }; },
   hasKey() { return !!this.getKey(); },
 
   /**
@@ -51,14 +55,14 @@ export const Claude = {
       });
     } catch (e) {
       if (e.name === 'AbortError') throw new ClaudeError('cancelled', 'Cancelled.');
-      throw new ClaudeError('network', 'Could not reach Claude. Check your connection.');
+      throw new ClaudeError('network', networkAdvice('Claude (api.anthropic.com)'));
     }
     if (!res.ok) {
       let detail = '';
       try { const j = await res.json(); detail = j.error && j.error.message || ''; } catch { /* ignore */ }
       const map = { 400: 'bad_request', 401: 'bad_key', 403: 'forbidden', 404: 'bad_model', 429: 'rate_limited', 529: 'overloaded' };
       const friendly = {
-        401: 'Your API key was rejected. Check it in Settings.',
+        401: `Anthropic rejected this key (${fingerprint(key, 'anthropic')}). Compare it with the key that works on your other device, or paste it again in Settings.`,
         403: 'This API key does not have access to that model.',
         404: 'That model is not available on your key. Pick another in Settings.',
         429: 'Rate limited by the API. Wait a moment and try again.',

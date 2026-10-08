@@ -6,9 +6,13 @@ import { Claude, MODELS } from '../core/claude.js';
 import { Wiki } from '../core/wiki.js';
 import { exportProfile } from './profile.js';
 import { getKey as ytGetKey, setKey as ytSetKey, testKey as ytTestKey } from '../core/youtube.js';
+import { cleanKey, keyProblems, fingerprint, storageAdvice, homeScreenNote } from '../core/keys.js';
 import { mountAudioSetup } from '../ui/audiosetup.js';
 import { importBlockHTML, wireImport } from '../ui/importui.js';
 import { periodFor, summarize, billingDay, setBillingDay, clearUsage, priceFor, fmtUSD, fmtTokens, FEATURE_LABEL, PRICES_AS_OF } from '../core/usage.js';
+
+// Keys are pasted, not typed: no auto-capitals, autocorrect or password managers
+const KEY_ATTRS = 'autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" data-1p-ignore data-lpignore="true" data-form-type="other"';
 
 export function mountSettings(root, { navigate, applySettings }) {
   const p = Store.profile;
@@ -22,19 +26,20 @@ export function mountSettings(root, { navigate, applySettings }) {
       <h3>Claude</h3>
       <p class="muted small">Claude identifies guitarists, writes your course plans and song lessons, creates exercises from your requests, recommends songs, helps with hard parts of a tab, and reviews your playing. Your key is stored only in this browser and is never included in profile exports. Usage is billed to your Anthropic account.</p>
       <div class="field"><label>Anthropic API key</label>
-        <div class="row nowrap"><input type="password" data-r="key" placeholder="sk-ant-…" value="${esc(key)}" autocomplete="off" spellcheck="false"><button class="btn" data-s="show">Show</button></div></div>
+        <div class="row nowrap"><input type="password" data-r="key" placeholder="sk-ant-…" value="${esc(key)}" ${KEY_ATTRS}><button class="btn" data-s="show">Show</button></div></div>
       <div class="field"><label>Model</label><select data-r="model">${MODELS.map(m => `<option value="${m.id}" ${p && p.settings.model === m.id ? 'selected' : ''}>${esc(m.label)}</option>`).join('')}</select></div>
       <div class="row"><button class="btn primary" data-s="save">Save key</button><button class="btn" data-s="test">Test connection</button></div>
-      <p class="small" data-r="status">${key ? 'A key is saved.' : 'No key saved yet. Get one at console.anthropic.com.'}</p>
+      <p class="small" data-r="status">${key ? `Saved in this browser: <span class="keyfp">${esc(fingerprint(key, 'anthropic'))}</span>` : 'No key saved in this browser yet. Get one at console.anthropic.com.'}</p>
+      ${homeScreenNote() ? `<p class="small muted keynote">📱 ${esc(homeScreenNote())}</p>` : ''}
     </section>
     <section class="card" data-r="spend"></section>
     <section class="card">
       <h3>YouTube (optional)</h3>
       <p class="muted small">Track of the Day plays each track from YouTube. Without a key, the app finds videos through Wikidata, which lists official videos for many well-known songs, and skips to another track when it can't find one. Add a free YouTube Data API key and the app can search YouTube for any track, favoring the artist's own uploads. The key is stored only in this browser and is never included in profile exports.</p>
       <div class="field"><label>YouTube Data API key</label>
-        <div class="row nowrap"><input type="password" data-r="ytkey" placeholder="AIza…" value="${esc(ytKey)}" autocomplete="off" spellcheck="false"><button class="btn" data-s="ytshow">Show</button></div></div>
+        <div class="row nowrap"><input type="password" data-r="ytkey" placeholder="AIza…" value="${esc(ytKey)}" ${KEY_ATTRS}><button class="btn" data-s="ytshow">Show</button></div></div>
       <div class="row"><button class="btn primary" data-s="ytsave">Save key</button><button class="btn" data-s="yttest">Test key</button></div>
-      <p class="small" data-r="ytstatus">${ytKey ? 'A YouTube key is saved.' : 'No YouTube key saved. Track of the Day still works through Wikidata.'}</p>
+      <p class="small" data-r="ytstatus">${ytKey ? `Saved in this browser: <span class="keyfp">${esc(fingerprint(ytKey, 'youtube'))}</span>` : 'No YouTube key saved in this browser. Track of the Day still works through Wikidata.'}</p>
       <details class="small ytkey-help"><summary>How to get a free key (about 5 minutes)</summary>
         <ol>
           <li>Open <a class="link" href="https://console.cloud.google.com/" target="_blank" rel="noopener">console.cloud.google.com</a> and create a project (any name).</li>
@@ -64,6 +69,22 @@ export function mountSettings(root, { navigate, applySettings }) {
   const r = n => root.querySelector(`[data-r="${n}"]`);
   const status = (msg, cls = '') => { r('status').textContent = msg; r('status').className = 'small ' + cls; };
   const ytStatus = (msg, cls = '') => { r('ytstatus').textContent = msg; r('ytstatus').className = 'small ' + cls; };
+  /**
+   * Save a key from its box: clean it, store it, read it back, and say exactly what
+   * was saved (or why it wasn't). Returns the saved key, or null when it couldn't be kept.
+   */
+  function saveKey(kind) {
+    const box = r(kind === 'anthropic' ? 'key' : 'ytkey'), say = kind === 'anthropic' ? status : ytStatus;
+    const raw = box.value, cleaned = cleanKey(raw, kind);
+    const res = kind === 'anthropic' ? Claude.setKey(raw) : ytSetKey(raw);
+    if (!res.ok) { say(storageAdvice(res.reason), 'bad'); return null; }
+    box.value = cleaned;
+    if (!cleaned) { say(kind === 'anthropic' ? 'Key removed from this browser.' : 'YouTube key removed from this browser.', 'ok'); return ''; }
+    const fixed = cleaned !== raw.trim() ? ' Removed spaces, line breaks or hidden characters that came with the paste.' : '';
+    const probs = keyProblems(cleaned, kind);
+    say(`Saved in this browser: ${fingerprint(cleaned, kind)}.${fixed}${probs.length ? ' Check it: ' + probs.join(' ') : ''}`, probs.length ? 'bad' : 'ok');
+    return cleaned;
+  }
 
   /** Claude API spend for the current billing period (from the app's own usage ledger). */
   function renderSpend() {
@@ -92,23 +113,26 @@ export function mountSettings(root, { navigate, applySettings }) {
     const b = e.target.closest('[data-s]'); if (!b) return;
     switch (b.dataset.s) {
       case 'show': r('key').type = r('key').type === 'password' ? 'text' : 'password'; b.textContent = r('key').type === 'password' ? 'Show' : 'Hide'; break;
-      case 'save': Claude.setKey(r('key').value); if (p) { p.settings.model = r('model').value; Store.save(); } Claude.model = r('model').value; status(r('key').value ? 'Key saved.' : 'Key removed.', 'ok'); break;
+      case 'save': saveKey('anthropic'); if (p) { p.settings.model = r('model').value; Store.save(); } Claude.model = r('model').value; break;
       case 'test': {
-        Claude.setKey(r('key').value); Claude.model = r('model').value;
+        const k = saveKey('anthropic'); Claude.model = r('model').value;
         if (p) { p.settings.model = Claude.model; Store.save(); }
+        if (k == null) break;
+        if (!k) { status('Paste a key first.', 'bad'); break; }
         status('Testing…');
-        try { const t = await Claude.message({ content: 'Reply with exactly: ready', maxTokens: 10, feature: 'test' }); status(`Connected to ${Claude.model}. Reply: “${t.trim()}”`, 'ok'); renderSpend(); }
+        try { const t = await Claude.message({ content: 'Reply with exactly: ready', maxTokens: 10, feature: 'test' }); status(`Connected to ${Claude.model} with ${fingerprint(k, 'anthropic')}. Reply: “${t.trim()}”`, 'ok'); renderSpend(); }
         catch (err) { status(err.message, 'bad'); }
         break;
       }
       case 'ytshow': r('ytkey').type = r('ytkey').type === 'password' ? 'text' : 'password'; b.textContent = r('ytkey').type === 'password' ? 'Show' : 'Hide'; break;
-      case 'ytsave': ytSetKey(r('ytkey').value); ytStatus(r('ytkey').value.trim() ? 'YouTube key saved.' : 'YouTube key removed.', 'ok'); break;
+      case 'ytsave': saveKey('youtube'); break;
       case 'yttest': {
-        const k = r('ytkey').value.trim();
+        const k = saveKey('youtube');
+        if (k == null) break;
         if (!k) { ytStatus('Paste a key first.', 'bad'); break; }
-        ytSetKey(k); ytStatus('Testing…');
-        try { await ytTestKey(k); ytStatus('YouTube key works. Saved.', 'ok'); }
-        catch (err) { ytStatus(`YouTube said: ${err.message}`, 'bad'); }
+        ytStatus('Testing…');
+        try { await ytTestKey(k); ytStatus(`YouTube key works and is saved in this browser: ${fingerprint(k, 'youtube')}.`, 'ok'); }
+        catch (err) { ytStatus(err.message, 'bad'); }
         break;
       }
       case 'clearspend': if (confirm('Clear the spend history kept in this browser? This doesn’t change anything with Anthropic.')) { clearUsage(); renderSpend(); } break;

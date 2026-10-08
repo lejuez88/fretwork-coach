@@ -955,3 +955,6 @@ body.has-actions .tunepop{bottom:calc(140px + env(safe-area-inset-bottom))}
   /* tools: keep the tuner and metronome a comfortable size */
   .view.v-tools .tuner,.view.v-tools .metro{max-width:880px;margin-left:auto;margin-right:auto}
 }
+/* API keys: what is saved, without showing it */
+.keyfp{font:600 13px var(--mono);color:#ffd48a;word-break:break-all}
+.keynote{margin-top:6px}

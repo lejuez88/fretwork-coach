@@ -1,6 +1,6 @@
 // Offline cache for the app shell. Network-first for app files so updates show
 // up on the next load; images from Wikipedia are cached as they are viewed.
-const CACHE = 'fretwork-v2k-1';
+const CACHE = 'fretwork-v2k-2';
 const SHELL = [
   './', 'index.html', 'css/app.css', 'manifest.json', 'icon.svg',
   'js/app.js', 'js/core/util.js', 'js/core/store.js', 'js/core/claude.js', 'js/core/wiki.js', 'js/core/audio.js',
@@ -15,7 +15,7 @@ const SHELL = [
   'js/core/theory.js', 'js/core/atoms.js', 'js/core/styles.js', 'js/core/topics.js', 'js/ui/fretboard.js', 'js/screens/chords.js',
   'js/core/intervals.js', 'js/core/params.js', 'js/screens/intervals.js', 'js/ui/paramcontrols.js',
   'js/core/master.js', 'js/ui/mastersheet.js', 'js/core/songsterr.js',
-  'js/core/tempo.js', 'js/ui/chordsync.js', 'js/ui/temporow.js'
+  'js/core/tempo.js', 'js/ui/chordsync.js', 'js/ui/temporow.js', 'js/core/keys.js'
 ];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {

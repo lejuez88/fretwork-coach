@@ -10,6 +10,7 @@
 //      audio, and away from covers, lessons and reactions.
 // The key is stored only in this browser (never in the profile or exports).
 import { today } from './util.js';
+import { cleanKey, storeKey, fingerprint, networkAdvice } from './keys.js';
 
 const KEY_STORE = 'fretworkCoach.youtubeKey';
 const CACHE_STORE = 'fretworkCoach.ytCache.v1';
@@ -17,9 +18,12 @@ const DAY = 86400000;
 const VALID_ID = /^[A-Za-z0-9_-]{11}$/;
 
 /* ------------------------------- Key -------------------------------- */
-export function getKey() { try { return localStorage.getItem(KEY_STORE) || ''; } catch { return ''; } }
-export function setKey(k) { try { k = String(k || '').trim(); if (k) localStorage.setItem(KEY_STORE, k); else localStorage.removeItem(KEY_STORE); } catch { /* storage off */ } }
+export function getKey() { try { return cleanKey(localStorage.getItem(KEY_STORE) || '', 'youtube'); } catch { return ''; } }
+/** Save (or remove, when empty) the key. Returns { ok, reason, key } with the cleaned key. */
+export function setKey(k) { const key = cleanKey(k, 'youtube'); return { ...storeKey(KEY_STORE, key), key }; }
 export function hasKey() { return !!getKey(); }
+/** Which key a cached lookup was made with (so a new or fixed key looks again). */
+const keyTag = () => { const k = getKey(); return k ? k.slice(-6) : false; };
 
 /* ------------------------------ Cache ------------------------------- */
 let cache = {};
@@ -31,12 +35,12 @@ export function clearVideo(key) { delete cache[key]; persist(); }
 export function setVideo(key, id) {
   if (!VALID_ID.test(id)) return false;
   const prev = cache[key] || {};
-  cache[key] = { ids: [id], src: 'you', at: Date.now(), keyed: hasKey(), bad: (prev.bad || []).filter(x => x !== id) };
+  cache[key] = { ids: [id], src: 'you', at: Date.now(), keyed: keyTag(), bad: (prev.bad || []).filter(x => x !== id) };
   persist(); return true;
 }
 /** Remember that a video can't play here (removed, private or not embeddable). */
 export function markBad(key, id) {
-  const c = cache[key] || (cache[key] = { ids: [], src: 'none', at: Date.now(), keyed: hasKey(), bad: [] });
+  const c = cache[key] || (cache[key] = { ids: [], src: 'none', at: Date.now(), keyed: keyTag(), bad: [] });
   c.bad = [...new Set([...(c.bad || []), id])].slice(-20);
   c.ids = (c.ids || []).filter(x => x !== id);
   persist();
@@ -227,9 +231,23 @@ export async function youtubeSearch(t, key = getKey(), { max = 10 } = {}) {
 
 /** Check a key with the cheapest useful call. */
 export async function testKey(key) {
-  const j = await getJSON('https://www.googleapis.com/youtube/v3/videos?' + new URLSearchParams({ part: 'id', id: 'jNQXAC9IVRw', key }));
+  let j;
+  try { j = await getJSON('https://www.googleapis.com/youtube/v3/videos?' + new URLSearchParams({ part: 'id', id: 'jNQXAC9IVRw', key })); }
+  catch (e) { throw new Error(explainError(e, key)); }
   if (!j || !Array.isArray(j.items)) throw new Error('Unexpected reply from YouTube.');
   return true;
+}
+/** What a failed YouTube call means, in plain words. */
+export function explainError(e, key = getKey()) {
+  if (!e || !e.api) return e && e.name === 'AbortError' ? 'YouTube took too long to answer. Try again.' : networkAdvice('YouTube (www.googleapis.com)');
+  const m = String(e.message || '');
+  const ref = m.match(/referer\s+(\S*)\s+are blocked/i);
+  if (ref || /referer/i.test(m)) return `This key only works on the websites listed in its settings, and this page (${location.origin || 'this site'}) isn’t one of them. In Google Cloud → APIs & Services → Credentials → your key → Website restrictions, add ${location.origin ? location.origin + '/*' : 'https://lejuez88.github.io/*'} (the same entry works on every device).`;
+  if (/ip address/i.test(m)) return 'This key is limited to certain IP addresses, so it only works on one network. In Google Cloud → Credentials → your key, switch Application restrictions to Websites instead.';
+  if (/api key not valid|invalid/i.test(m)) return `Google says this key isn’t valid (${fingerprint(key, 'youtube')}). Compare it with the key that works on your other device, or paste it again.`;
+  if (/quota/i.test(m)) return 'This key has used up today’s free YouTube quota. It resets at midnight Pacific time.';
+  if (/has not been used|disabled|not enabled/i.test(m)) return 'The YouTube Data API v3 isn’t turned on for this key’s Google Cloud project. Enable it under APIs & Services → Library.';
+  return 'YouTube said: ' + m;
 }
 
 /* ----------------------------- Resolver ------------------------------ */
@@ -245,18 +263,18 @@ export async function resolveVideos(t, { refresh = false } = {}) {
     const ids = (c.ids || []).filter(id => !bad.has(id));
     if (ids.length) return { ids, src: c.src };
     const stale = Date.now() - (c.at || 0) > 21 * DAY;
-    const keyNow = hasKey() && !c.keyed;
+    const keyNow = hasKey() && c.keyed !== keyTag();
     if (c.src === 'none' && !stale && !keyNow) return { ids: [], src: 'none' };
   }
-  let ids = [], src = 'none', error = null, netFail = false;
+  let ids = [], src = 'none', error = null, netFail = false, ytFail = false;
   try { ids = (await wikidataVideos(t)).filter(id => !bad.has(id)); if (ids.length) src = 'wikidata'; }
   catch (e) { error = e.message; netFail = !e.api; }
   if (!ids.length && hasKey()) {
     try { ids = (await youtubeSearch(t)).filter(id => !bad.has(id)); if (ids.length) { src = 'youtube'; error = null; } }
-    catch (e) { error = 'YouTube: ' + e.message; netFail = netFail && !e.api; }
+    catch (e) { error = explainError(e); ytFail = true; netFail = netFail && !e.api; }
   }
-  // Don't remember a miss caused by a network failure; try again next time.
-  if (ids.length || !netFail) { cache[key] = { ids, src, at: Date.now(), keyed: hasKey(), bad: [...bad], day: today() }; persist(); }
+  // Don't remember a miss caused by a network failure or a key problem; try again next time.
+  if (ids.length || (!netFail && !ytFail)) { cache[key] = { ids, src, at: Date.now(), keyed: keyTag(), bad: [...bad], day: today() }; persist(); }
   return { ids, src, error, offline: !ids.length && netFail };
 }
 
