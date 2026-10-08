@@ -16,6 +16,8 @@ import { Metronome, mountMetronome } from '../tools/metronome.js';
 import { variationsFor, findVariation } from '../core/variations.js';
 import { calibratedTarget } from '../core/progression.js';
 import { variationChipsHTML, variationNoteHTML } from './variationpicker.js';
+import { openMasterSheet, MC_ICON } from './mastersheet.js';
+import { matchTopic } from '../core/master.js';
 
 const ROLE = { drill: 'Drill', main: 'Main exercise', apply: 'Apply it' };
 const DRAFT_KEY = 'fretworkCoach.askDraft';
@@ -66,6 +68,7 @@ export function mountAskBox(el, { start, courseId = null }) {
         <textarea data-r="ask" rows="2" maxlength="600" placeholder="Tell me in your own words, e.g. “my bends sound out of tune” or “switching between F and C”">${esc(request)}</textarea>
         <button class="btn primary" data-ask="go" ${busy ? 'disabled' : ''}>${busy ? '<span class="spinner sm"></span>Creating…' : 'Create exercise'}</button>
       </div>
+      <button class="btn ghost sm askmc" data-ask="master">${MC_ICON} Or build a whole master class on it</button>
       ${!result && !busy ? `<div class="chips askchips">${ASK_EXAMPLES.slice(0, 6).map(x => `<button class="chip sm" data-ex="${esc(x)}">${esc(x)}</button>`).join('')}</div>` : ''}
       ${!Claude.hasKey() ? '<p class="small muted">Without a Claude key, exercises come from the built-in drill library. <a class="link small" href="#/settings">Add key</a></p>' : ''}
       <div data-r="out">${result ? resultHTML() : ''}</div>
@@ -139,6 +142,11 @@ export function mountAskBox(el, { start, courseId = null }) {
     const b = e.target.closest('[data-ask]'); if (!b) return;
     const a = b.dataset.ask, i = b.dataset.i;
     if (a === 'go') return go();
+    if (a === 'master') {
+      const t = ((el.querySelector('[data-r="ask"]') || {}).value || request || '').trim();
+      const cur = matchTopic(t);
+      return openMasterSheet({ title: cur ? cur.title : t.slice(0, 60), text: t, topicId: cur ? cur.id : null }, { navigate: h => { location.hash = h; } });
+    }
     if (a === 'clear') { result = null; request = ''; keep(); return render(); }
     if (a === 'toggleSaved') { showSaved = !showSaved; return render(); }
     if (a === 'try') return tryIt(i);

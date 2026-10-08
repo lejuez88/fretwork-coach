@@ -60,13 +60,22 @@ export function buildRoutine(profile, course, { budget = null, focusSkillId = nu
   const focus = (focusSkillId && allSkills(course).find(s => s.id === focusSkillId)) || active[0] || allSkills(course)[0];
   const picked = new Set();
   const take = (block, ex, skill, extra) => { picked.add(ex.id); return item(block, ex, skill, extra); };
+  // A master class keeps every block on its topic: blocks are filled from the class's own
+  // unlocked exercises before falling back to the style pools.
+  const topicOnly = course.kind === 'master';
+  const classPool = topicOnly ? allSkills(course).filter(s => st.skills[s.id].status !== 'locked').flatMap(s => s.exercises.map(e => ({ e, s }))) : [];
+  const fromClass = (pred = () => true) => classPool.find(x => !picked.has(x.e.id) && pred(x)) || null;
+  // still nothing? a preview of the next skills (tracked on its own, so it doesn't unlock anything early)
+  const previewPool = topicOnly ? allSkills(course).filter(s => st.skills[s.id].status === 'locked').slice(0, 3).flatMap(s => s.exercises) : [];
+  const preview = (pred = () => true) => previewPool.find(e => !picked.has(e.id) && pred(e)) || null;
+  const PREVIEW = 'Preview of what’s next: slow, just get to know it';
 
   // Stretch: unmastered exercises of the focus skill (stalled first, simplified), then the next active skill
   const stretch = [];
   const stretchSkills = [focus, ...active.filter(s => s !== focus)].slice(0, 2);
   for (const s of stretchSkills) for (const e of s.exercises) {
     const es = exState(e.id);
-    if (es.mastered || picked.has(e.id) || stretch.length >= 3) continue;
+    if (es.mastered || picked.has(e.id) || stretch.length >= (topicOnly ? 2 : 3)) continue;
     stretch.push(take('stretch', e, s, es.stalled ? { note: `Stalled: ${e.simplify || 'slow down and isolate the hardest move'}` } : {}));
   }
   if (!stretch.length && focus) stretch.push(take('stretch', focus.exercises[0], focus, { variation: 'Mastered: push 5 BPM past the goal or play it in a new position' }));
@@ -88,29 +97,41 @@ export function buildRoutine(profile, course, { budget = null, focusSkillId = nu
     const earlier = allSkills(course).filter(s => s !== focus && ['in_progress', 'mastered'].includes(st.skills[s.id].status));
     for (const s of earlier) { const e = s.exercises.find(x => !picked.has(x.id)); if (e && review.length < 1) review.push(take('review', e, s, { variation: 'Keep it warm: one clean pass at your target, then +3 BPM' })); }
   }
+  if (!review.length && topicOnly) { const x = fromClass(y => y.s !== focus); if (x) review.push(take('review', x.e, x.s, { variation: 'Keep it moving: one clean pass at your target, then +3 BPM' })); }
   if (!review.length) { const r = rotate(pools.review, seed + '|review', picked) || fb.notesClick; review.push(take('review', r, null, { variation: 'Keep it fresh: a little faster than last time' })); }
 
   // Warm-up: a technique primer matching the stretch domain
   const stretchDomain = stretch[0] ? stretch[0].ex.domain : 'fretting';
   const warmPool = pools.warmup.filter(e => e.domain === stretchDomain).length ? pools.warmup.filter(e => e.domain === stretchDomain) : pools.warmup;
   const warmPrefs = stretchDomain === 'picking' ? [fb.crossing, fb.warm] : stretchDomain === 'rhythm' ? [fb.subdiv, fb.warm] : [fb.warm, fb.subdiv];
-  const warmEx = rotate(warmPool, seed + '|warm', picked) || rotate(pools.warmup, seed + '|warm2', picked) || warmPrefs.find(e => !picked.has(e.id)) || fb.crossing;
-  picked.add(warmEx.id);
-  const warmup = [item('warmup', warmEx, null, { targetBpm: Math.round(extraTarget(warmEx) * 0.9), variation: 'Easy tempo, about 90% of your target; focus on relaxation' })];
+  const warmMatch = pools.warmup.some(e => e.domain === stretchDomain);
+  const warmClass = topicOnly && !warmMatch ? fromClass(x => st.exercises[x.e.id] && st.exercises[x.e.id].history.length) : null; // something from the class you've already played
+  let warmup;
+  if (warmClass) warmup = [take('warmup', warmClass.e, warmClass.s, { targetBpm: Math.round(exState(warmClass.e.id).target * 0.85), variation: 'Warm-up: easy tempo, about 85% of your target' })];
+  else {
+    const warmEx = rotate(warmPool, seed + '|warm', picked) || rotate(pools.warmup, seed + '|warm2', picked) || warmPrefs.find(e => !picked.has(e.id)) || fb.crossing;
+    picked.add(warmEx.id);
+    warmup = [item('warmup', warmEx, null, { targetBpm: Math.round(extraTarget(warmEx) * 0.9), variation: 'Easy tempo, about 90% of your target; focus on relaxation' })];
+  }
 
   // Theory: a theory/fretboard exercise from the tree near the focus, else the key-chords drill
   const theoryCand = allSkills(course).filter(s => ['theory', 'fretboard', 'ear'].includes(s.domain) && st.skills[s.id].status !== 'locked')
     .flatMap(s => s.exercises.map(e => ({ e, s }))).find(x => !picked.has(x.e.id) && !exState(x.e.id).mastered);
   const poolTheory = rotate(pools.theory, seed + '|theory', picked);
   // alternate between the course's own theory skill and the style pool so theory doesn't repeat every day
-  const useTree = theoryCand && (!poolTheory || hashDay(seed) % 2 === 0);
-  const theory = [useTree ? take('theory', theoryCand.e, theoryCand.s) : poolTheory ? take('theory', poolTheory, null) : item('theory', fb.triads, null)];
+  // a master class keeps every block on its topic; other courses alternate with the style pool
+  const useTree = theoryCand && (topicOnly || !poolTheory || hashDay(seed) % 2 === 0);
+  const classTheory = topicOnly && !theoryCand ? fromClass(x => ['theory', 'fretboard', 'ear'].includes(x.e.domain)) || fromClass(x => x.s !== focus) : null;
+  const prevTheory = topicOnly && !theoryCand && !classTheory ? preview(e => ['theory', 'fretboard', 'ear'].includes(e.domain)) || preview() : null;
+  const theory = [useTree ? take('theory', theoryCand.e, theoryCand.s) : classTheory ? take('theory', classTheory.e, classTheory.s) : prevTheory ? take('theory', prevTheory, null, { variation: PREVIEW }) : poolTheory ? take('theory', poolTheory, null) : item('theory', fb.triads, null)];
 
   // Music: improv / repertoire exercise from the tree, else a backing-loop solo in the course genre
   const musicCand = allSkills(course).filter(s => ['improv', 'repertoire'].includes(s.domain) && st.skills[s.id].status !== 'locked')
     .flatMap(s => s.exercises.map(e => ({ e, s }))).find(x => !picked.has(x.e.id));
   const poolMusic = rotate(pools.music, seed + '|music', picked);
-  const music = [musicCand && (!poolMusic || hashDay(seed + 'm') % 3 !== 0) ? take('music', musicCand.e, musicCand.s) : poolMusic ? take('music', poolMusic, null) : item('music', fb.improvLoop, null)];
+  const classMusic = topicOnly && !musicCand ? fromClass(x => ['improv', 'repertoire', 'rhythm'].includes(x.e.domain)) || fromClass() : null;
+  const prevMusic = topicOnly && !musicCand && !classMusic ? preview(e => ['improv', 'repertoire', 'rhythm'].includes(e.domain)) || preview() : null;
+  const music = [classMusic ? take('music', classMusic.e, classMusic.s) : prevMusic ? take('music', prevMusic, null, { variation: PREVIEW }) : musicCand && (topicOnly || !poolMusic || hashDay(seed + 'm') % 3 !== 0) ? take('music', musicCand.e, musicCand.s) : poolMusic ? take('music', poolMusic, null) : item('music', fb.improvLoop, null)];
 
   const blocks = { warmup, review, stretch, theory, music };
   const items = allocate(blocks, budget);

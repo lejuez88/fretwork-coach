@@ -9,6 +9,8 @@ import { CATEGORIES, CATEGORY_BY_ID, libraryEntries, libEntry, libVariations, li
 import { paramSummary, describeParams } from '../core/params.js';
 import { paramControlsHTML } from '../ui/paramcontrols.js';
 import { mountIntervalTrainer } from './intervals.js';
+import { topicForEntry } from '../core/master.js';
+import { openMasterSheet, MC_ICON } from '../ui/mastersheet.js';
 import { findVariation } from '../core/variations.js';
 import { makeAdhocRoutine } from '../core/routine.js';
 import { toPlayerExercise } from '../core/coursegen.js';
@@ -148,6 +150,7 @@ export function mountLibraryExercise(root, { navigate, id, vid = null }) {
   const cat = CATEGORY_BY_ID[entry.cat];
   // key / strings / chords: stored per exercise
   let params = getLibParams(entry.id), inst = instanceOf(cur, params);
+  const mtopic = topicForEntry(entry);
 
   function teardown() { if (tool) { tool(); tool = null; } Metronome.stop(); }
   function render() {
@@ -159,6 +162,7 @@ export function mountLibraryExercise(root, { navigate, id, vid = null }) {
       <div class="label">${esc(cat.name)}</div>
       <h1>${esc(entry.title || entry.ex.name)}</h1>
       ${entry.ex.why ? `<p class="why">${esc(entry.ex.why)}</p>` : ''}
+      <button class="mcbtn" data-a="master">${MC_ICON} <span>Master class: <b>${esc(mtopic.title)}</b></span><span class="small muted">a whole course on this topic ›</span></button>
       <section class="card">
         <div class="sec-head"><div class="label">Variations · ${list.length} · ${levelRange(list)}</div><span class="small muted">Your level: ${levelFor(p, entry.cat)}</span></div>
         ${variationChipsHTML(list, { current: v.vid, edge: edge && edge.vid, stateOf: x => libState(p, entry.id, x) })}
@@ -224,6 +228,7 @@ export function mountLibraryExercise(root, { navigate, id, vid = null }) {
   }
   const onChange = e => { const sel = e.target.closest('[data-param]'); if (sel) setParam(sel.dataset.param, sel.value); };
   const onClick = e => {
+    if (e.target.closest('[data-a="master"]')) return openMasterSheet({ ...mtopic, from: { name: entry.title || entry.ex.name, why: entry.ex.why || '' } }, { navigate });
     const chip = e.target.closest('[data-vid]'); if (chip) return choose(chip.dataset.vid);
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.r === 'openlog') { logOpen = true; drawLog(); return; }

@@ -20,6 +20,9 @@ import { mountTabPlayer } from '../tools/tabplayer.js';
 import { Metronome, mountMetronome } from '../tools/metronome.js';
 import { exerciseDiagramsHTML } from '../ui/fretboard.js';
 import { Shell } from '../ui/shell.js';
+import { topicForExercise, topicForEntry } from '../core/master.js';
+import { libEntry } from '../core/library.js';
+import { openMasterSheet, MC_ICON } from '../ui/mastersheet.js';
 
 const ACTIVE_KEY = 'fretworkCoach.activeRoutine';
 const getActive = () => { try { return JSON.parse(localStorage.getItem(ACTIVE_KEY) || 'null'); } catch { return null; } };
@@ -161,6 +164,7 @@ export function mountRoutineRunner(root, { navigate }) {
         ${exerciseDiagramsHTML(ex)}
         <div data-r="tool"></div>
         <button class="btn block evalbtn" data-r="evaluate">🎤 Evaluate this take</button>
+        <button class="btn sm ghost block mcrun" data-r="master">${MC_ICON} Build a master class on ${esc(itemTopic(it).title)}</button>
       </section>
       <div class="row run-ctrl"><button class="btn" data-r="pause">${A.pausedAt ? '▶ Resume' : '❚❚ Pause'}</button><button class="btn" data-r="time">⏱ Change time</button><button class="btn ghost" data-r="end">End session</button></div>`;
     Shell.actions(`<button class="btn" data-r="skip">Skip</button><button class="btn primary" data-r="next">Done → log tempo</button>`);
@@ -169,6 +173,11 @@ export function mountRoutineRunner(root, { navigate }) {
     update();
   }
 
+  /** What a master class for this item would be about. */
+  function itemTopic(it) {
+    const e = it.libId ? libEntry(p, it.libId) : null;
+    return e && !e.special ? { ...topicForEntry(e), from: { name: it.ex.name, why: it.ex.why || '' } } : topicForExercise(it.baseEx || it.ex);
+  }
   /** The exercise before key/strings/chords were applied: the chosen variation, or the original. */
   const preParamsEx = it => {
     if (it.vid && it.vid !== 'base') { const v = findVariation(varsOf(it), it.vid); if (v) return v.ex; }
@@ -351,6 +360,7 @@ export function mountRoutineRunner(root, { navigate }) {
   const onClick = e => {
     const b = e.target.closest('button'); if (!b) return;
     const d = b.dataset;
+    if (d.r === 'master') return openMasterSheet(itemTopic(cur())); // builds alongside; the session keeps going
     if (d.rvid) return chooseVariation(d.rvid);
     if (d.r === 'vartoggle') { varOpen = !varOpen; const box = root.querySelector('[data-r="varbox"]'); if (box) box.innerHTML = varRowHTML(cur()); return; }
     if (d.r === 'pause') return togglePause();

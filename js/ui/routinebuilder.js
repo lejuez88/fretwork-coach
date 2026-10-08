@@ -72,6 +72,7 @@ export function mountRoutineBuilder(el, { navigate, courseId = null, skillId = n
     drawPreview();
     if (!selected.tree) {
       const r = await buildCourseTree(p, selected); Store.save();
+      if (!selected.tree) { building = false; toast(r.error || 'The plan couldn’t be built.', 4200); drawPreview(); return; }
       if (r.error) toast('Claude couldn’t build the plan (' + r.error + '), so a standard plan was used.');
     }
     if (!alive) return;

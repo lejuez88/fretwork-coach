@@ -11,6 +11,8 @@ import { detectPitch, rms, freqToMidi } from '../tools/pitch.js';
 import { fretboardSVG } from '../ui/fretboard.js';
 import { Shell } from '../ui/shell.js';
 import { CATEGORY_BY_ID } from '../core/library.js';
+import { topicForEntry } from '../core/master.js';
+import { openMasterSheet, MC_ICON } from '../ui/mastersheet.js';
 import { addEvidence, recomputeLevels, describeChanges } from '../core/skills.js';
 import { mod12 } from '../core/theory.js';
 import {
@@ -102,6 +104,7 @@ export function mountIntervalTrainer(root, { navigate, entry }) {
     <div class="label">${esc(cat.name)}</div>
     <h1>${esc(entry.title || 'Interval trainer')}</h1>
     ${entry.ex.why ? `<p class="why">${esc(entry.ex.why)}</p>` : ''}
+    <button class="mcbtn" data-it="master">${MC_ICON} <span>Master class: <b>${esc(topicForEntry(entry).title)}</b></span><span class="small muted">a whole course on this topic ›</span></button>
     <section class="card itplay" data-r="play" aria-live="polite"></section>
     <section class="card itset" data-r="settings"></section>
     <section class="card" data-r="stats"></section>`;
@@ -419,6 +422,7 @@ export function mountIntervalTrainer(root, { navigate, entry }) {
     }
     const b = e.target.closest('[data-it]'); if (!b || b.disabled) return;
     const a = b.dataset.it;
+    if (a === 'master') return openMasterSheet({ ...topicForEntry(entry), from: { name: 'Interval trainer', why: entry.ex.why || '' } }, { navigate });
     if (a === 'start') return start();
     if (a === 'stop') return stop();
     if (a === 'skip') return giveUp('skip');

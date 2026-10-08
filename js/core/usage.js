@@ -25,7 +25,7 @@ const PRICES = [
   [/^claude-sonnet-4/, 'Claude Sonnet 4.x', [3, 3.75, 6, 0.30, 15]]
 ];
 export const FEATURE_LABEL = {
-  'course-plan': 'Course plans', 'course-name': 'Course names', briefing: 'Routine briefings', request: '“What do you want to work on?”',
+  'course-plan': 'Course plans', 'master-class': 'Master classes', 'course-name': 'Course names', briefing: 'Routine briefings', request: '“What do you want to work on?”',
   'song-info': 'Song details', 'song-recs': 'Song recommendations', 'song-lesson': 'Song lessons', 'tab-help': 'Tab section help',
   evaluation: 'Playing evaluations', players: 'Guitarist lookup', test: 'Connection tests', other: 'Other'
 };

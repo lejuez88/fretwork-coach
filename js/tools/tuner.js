@@ -20,16 +20,29 @@ export const TUNINGS = {
 
 /**
  * Mount the tuner. settings: {referenceA4, tuning}; onSettings(next) persists changes.
- * opts.mini: compact layout for the quick-tune sheet; opts.autostart: open the mic at once.
+ * opts.mini: compact layout for a sheet; opts.pop: just the curved meter and the note
+ * (the pop-up quick tuner); opts.autostart: open the mic at once.
  * Returns cleanup.
  */
-export function mountTuner(el, settings, onSettings, { mini = false, autostart = false } = {}) {
+export function mountTuner(el, settings, onSettings, { mini = false, pop = false, autostart = false } = {}) {
   let a4 = settings.referenceA4 || 440, tuningKey = settings.tuning in TUNINGS ? settings.tuning : 'standard';
   let target = null; // null = auto (nearest string) | 'chromatic' | string index
   let running = false, analyser = null, hp = null, buf = null, timer = null, raf = null;
   const hist = []; let shown = null, inTuneSince = 0, strobePos = 0, lastFrame = performance.now(), lastCents = null;
 
-  el.innerHTML = mini ? `
+  const POP_TICKS = [-50, -25, 0, 25, 50].map(c => { const a = (c / 50) * 70 * Math.PI / 180; return `<line x1="${150 + Math.sin(a) * 118}" y1="${150 - Math.cos(a) * 118}" x2="${150 + Math.sin(a) * (c ? 104 : 98)}" y2="${150 - Math.cos(a) * (c ? 104 : 98)}" stroke="${c ? 'var(--muted)' : 'var(--green)'}" stroke-width="${c ? 3 : 4}"/>`; }).join('');
+  el.innerHTML = pop ? `
+  <div class="tuner pop" role="group" aria-label="Quick tuner">
+    <svg class="gauge" viewBox="0 0 300 156" aria-hidden="true">
+      <path d="M30 150 A120 120 0 0 1 270 150" fill="none" stroke="var(--line)" stroke-width="12" stroke-linecap="round"/>
+      <path d="M140 31 A120 120 0 0 1 160 31" fill="none" stroke="var(--green)" stroke-width="14"/>
+      ${POP_TICKS}
+      <g data-r="needle" style="transform-origin:150px 150px;transition:transform .08s linear"><line x1="150" y1="150" x2="150" y2="42" stroke="var(--amber)" stroke-width="5" stroke-linecap="round"/></g>
+      <circle cx="150" cy="150" r="9" fill="var(--amber)"/>
+    </svg>
+    <div class="tpop-read"><span class="tuner-note"><span data-r="note">—</span><small data-r="oct"></small></span><span class="tpop-cents" data-r="cents">♪</span></div>
+    <div class="tuner-status" data-r="status">Starting the mic…</div>
+  </div>` : mini ? `
   <div class="tuner mini">
     <div class="tmini-top"><div class="tuner-note"><span data-r="note">—</span><small data-r="oct"></small></div>
       <div class="tmini-read"><span data-r="cents">— ¢</span><span data-r="hz">— Hz</span><span data-r="target">Auto</span></div></div>
@@ -73,6 +86,7 @@ export function mountTuner(el, settings, onSettings, { mini = false, autostart =
   const r = n => el.querySelector(`[data-r="${n}"]`);
 
   function renderStrings() {
+    if (!r('strings')) return;
     const notes = TUNINGS[tuningKey].notes;
     r('strings').innerHTML =
       `<button class="chip ${target === null ? 'on' : ''}" data-t="auto">Auto</button>` +
@@ -107,7 +121,7 @@ export function mountTuner(el, settings, onSettings, { mini = false, autostart =
   function show(freq, level) {
     if (freq == null) {
       if (shown != null && performance.now() - shown.at < 400) return; // brief hold to avoid flicker
-      r('status').textContent = level < 0.006 ? 'Listening… play a string.' : 'Unclear pitch. Mute the other strings.';
+      r('status').textContent = level < 0.006 ? (pop ? 'Play a string' : 'Listening… play a string.') : (pop ? 'Mute the other strings' : 'Unclear pitch. Mute the other strings.');
       r('status').className = 'tuner-status'; lastCents = null;
       return;
     }
@@ -116,22 +130,22 @@ export function mountTuner(el, settings, onSettings, { mini = false, autostart =
     lastCents = cents;
     const nm = midiName(refMidi);
     r('note').textContent = nm.replace(/-?\d+$/, ''); r('oct').textContent = nm.match(/-?\d+$/)[0];
-    r('cents').textContent = (cents > 0 ? '+' : '') + cents.toFixed(1) + ' ¢';
-    r('hz').textContent = freq.toFixed(2) + ' Hz';
+    r('cents').textContent = (cents > 0 ? '+' : '') + (pop ? Math.round(cents) : cents.toFixed(1)) + ' ¢';
+    if (r('hz')) r('hz').textContent = freq.toFixed(2) + ' Hz';
     const ang = Math.max(-50, Math.min(50, cents)) / 50 * 70;
     r('needle').style.transform = `rotate(${ang}deg)`;
     const inTune = Math.abs(cents) < 2;
     if (inTune) { if (!inTuneSince) inTuneSince = performance.now(); } else inTuneSince = 0;
     const locked = inTuneSince && performance.now() - inTuneSince > 500;
     const st = r('status');
-    st.textContent = locked ? '✓ In tune' : Math.abs(cents) < 5 ? 'Almost there' : cents < 0 ? 'Flat: tune up ↑' : 'Sharp: tune down ↓';
+    st.textContent = locked ? '✓ In tune' : Math.abs(cents) < 5 ? 'Almost there' : cents < 0 ? (pop ? 'Flat ↑' : 'Flat: tune up ↑') : (pop ? 'Sharp ↓' : 'Sharp: tune down ↓');
     st.className = 'tuner-status ' + (locked ? 'ok' : Math.abs(cents) < 5 ? 'near' : 'off');
     el.querySelector('.tuner').classList.toggle('intune', !!locked);
   }
 
   function strobeLoop(now) {
     const dt = (now - lastFrame) / 1000; lastFrame = now;
-    if (lastCents != null) { strobePos += lastCents * dt * 6; r('strobe').style.backgroundPositionX = strobePos + 'px'; }
+    if (lastCents != null && r('strobe')) { strobePos += lastCents * dt * 6; r('strobe').style.backgroundPositionX = strobePos + 'px'; }
     raf = requestAnimationFrame(strobeLoop);
   }
 
@@ -146,10 +160,10 @@ export function mountTuner(el, settings, onSettings, { mini = false, autostart =
       src.connect(hp); hp.connect(analyser);
       buf = new Float32Array(analyser.fftSize);
       running = true; timer = setInterval(analyse, 50); raf = requestAnimationFrame(strobeLoop);
-      r('go').textContent = '■ Stop tuner'; r('go').className = mini ? 'btn stop' : 'btn stop block';
-      r('status').textContent = 'Listening… play a string.';
+      if (r('go')) { r('go').textContent = '■ Stop tuner'; r('go').className = mini ? 'btn stop' : 'btn stop block'; }
+      r('status').textContent = pop ? 'Play a string' : 'Listening… play a string.';
     } catch (e) {
-      r('status').textContent = e.name === 'NotAllowedError' ? 'Microphone permission was denied. Allow it in your browser’s site settings.' : (e.message || 'Could not open the microphone.');
+      r('status').textContent = e.name === 'NotAllowedError' ? (pop ? 'Mic blocked: allow it in site settings' : 'Microphone permission was denied. Allow it in your browser’s site settings.') : (e.message || 'Could not open the microphone.');
     }
   }
   function stop() {
@@ -175,7 +189,7 @@ export function mountTuner(el, settings, onSettings, { mini = false, autostart =
       renderStrings();
     }
   });
-  r('tuning').addEventListener('change', e => { tuningKey = e.target.value; target = null; renderStrings(); onSettings({ tuning: tuningKey }); });
+  if (r('tuning')) r('tuning').addEventListener('change', e => { tuningKey = e.target.value; target = null; renderStrings(); onSettings({ tuning: tuningKey }); });
 
   if (autostart) start();
   return () => { dead = true; stop(); };

@@ -25,7 +25,15 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: any key, string or chords; interval trainer
+## Latest: master classes, pop-up tuner
+
+| Area | Included |
+|---|---|
+| Master classes | Turn any topic into a whole course built around it: the modes, playing over chord changes, sight reading, bends, sweep picking, or anything you type. With Claude connected, Claude designs it from the topic, anything specific you add, your levels and your genres. Unit 1 is always where to start, and the course climbs about three levels from there. Without Claude, 24 common topics have built-in curricula, and other topics the app understands get a five-step plan. Start one from the dashboard, from any library exercise (“Master class: …”), from the interval trainer, from the routine runner, or from the “What do you want to work on?” box. Master class routines keep every block on the topic. |
+| Dashboard suggestions | The dashboard's Master classes card has a **For you** pick and four suggested topics. For you is based on the skill areas that trail your average, the struggles you named, stalled exercises and your weakest intervals, and it says why it was picked. The suggestions change every time the app opens, lean toward your genres, and skip topics you already have a class for. There's also a box for any topic. |
+| Pop-up tuner | The tuning fork now pops up a small curved meter right above the button and starts listening. Tap the fork again to fold it away and stop the mic. Nothing else on screen is covered or paused. The fork is hidden on the full tuner in Tools. |
+
+## Earlier: any key, string or chords; interval trainer
 
 | Area | Included |
 |---|---|

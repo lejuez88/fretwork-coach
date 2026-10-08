@@ -140,7 +140,7 @@ export function normalizeTree(raw, meta) {
 }
 
 /* ----------------------------- Claude builder ---------------------------- */
-function profileBrief(profile) {
+export function profileBrief(profile) {
   const q = profile.questionnaire, d = profile.domains;
   return {
     name: q.name, experience: q.experience, goals: q.goals, goalsOther: q.goalsOther, struggles: q.struggles,
@@ -149,6 +149,17 @@ function profileBrief(profile) {
     players: q.players.map(p => ({ name: p.name, style: p.style, techniques: p.techniques }))
   };
 }
+
+/** Shared by the course and master-class prompts: how tabs and chords are written, and the tree's JSON shape. */
+export const TAB_RULES = `- Standard tuning (or say "tuning" if the style needs another). Tabs: string 1 = high e, string 6 = low E; give a tab for single-note lines (max 48 notes; note = [string, fret, technique or null, beats]).
+- Chord parts: any chord symbol is allowed (Cmaj7, F♯m7♭5, E7♯9, Dsus2, A/C♯…). Give exact grips in "voicings" as [{"name":"Cmaj7","frets":"x32000"}] (frets low E → high e, x = muted, two-digit frets in parentheses like "x(10)(12)(11)(12)x") whenever the voicing matters (inversions, drop-2, shells, triads on string sets). "backing" loops may use any chord symbols.
+`;
+export const UNITS_SCHEMA = `"units":[{"title":string,"summary":string,
+   "skills":[{"id":"kebab-slug","title":string,"domain":one of ${JSON.stringify(DOMAIN_KEYS)},"summary":string (1 sentence),"prereqs":[skill ids],
+     "exercises":[{"id":"kebab-slug","name":string,"domain":string,"why":string (1-2 sentences, why this matters in this style),"instr":string (clear steps),"watch":string (common mistake),"simplify":string (easier variant if stuck),
+       "unit":"8ths|16ths|triplets|quarter notes|2 beats per chord|...","level":int 1-10,"startBpm":int,"goalBpm":int,"minutes":int (3-10),
+       "picking":"alternate|strict|economy|down|fingers|hybrid","libId":optional,"tab":optional {"step":0.25|0.333|0.5|1,"swing":bool,"notes":[[string,fret,"h|p|/|b|~|pm|t" optional, beats optional],...]},
+       "voicings":optional [{"name":string,"frets":string}],"chords":optional [symbols],"backing":optional [symbols],"beatsPerBar":optional int (odd meters)}]}]}]}`;
 
 export async function generateTreeWithClaude(profile, course) {
   const genre = GENRE_BY_ID[course.genre];
@@ -168,20 +179,13 @@ Teaching rules (follow all):
 - Cover technique, rhythm, fretboard, theory, ear and improvisation as one connected system, all in the style.
 - EVERY exercise is measurable with a metronome: startBpm (a tempo THIS student can already play cleanly) and goalBpm (mastery tempo). Theory/ear exercises are tempo-based drills too.
 - Exercises are ORIGINAL drills "in the style of" the players; never transcribe copyrighted songs or solos.
-- Standard tuning (or say "tuning" if the style needs another). Tabs: string 1 = high e, string 6 = low E; give a tab for single-note lines (max 48 notes; note = [string, fret, technique or null, beats]).
-- Chord parts: any chord symbol is allowed (Cmaj7, F♯m7♭5, E7♯9, Dsus2, A/C♯…). Give exact grips in "voicings" as [{"name":"Cmaj7","frets":"x32000"}] (frets low E → high e, x = muted, two-digit frets in parentheses like "x(10)(12)(11)(12)x") whenever the voicing matters (inversions, drop-2, shells, triads on string sets). "backing" loops may use any chord symbols.
-- You may reuse built-in exercises by setting "libId" (then omit tab), only if they fit the style: ${JSON.stringify(lib)}
+${TAB_RULES}- You may reuse built-in exercises by setting "libId" (then omit tab), only if they fit the style: ${JSON.stringify(lib)}
 
 Size: 4–6 units; 2–3 skills per unit; 2–3 exercises per skill.
 
 Return JSON:
 {"summary": string (2 sentences: what the student can do at the end, in this style),
- "units":[{"title":string,"summary":string,
-   "skills":[{"id":"kebab-slug","title":string,"domain":one of ${JSON.stringify(DOMAIN_KEYS)},"summary":string (1 sentence),"prereqs":[skill ids],
-     "exercises":[{"id":"kebab-slug","name":string,"domain":string,"why":string (1-2 sentences, why this matters in this style),"instr":string (clear steps),"watch":string (common mistake),"simplify":string (easier variant if stuck),
-       "unit":"8ths|16ths|triplets|quarter notes|2 beats per chord|...","level":int 1-10,"startBpm":int,"goalBpm":int,"minutes":int (3-10),
-       "picking":"alternate|strict|economy|down|fingers|hybrid","libId":optional,"tab":optional {"step":0.25|0.333|0.5|1,"swing":bool,"notes":[[string,fret,"h|p|/|b|~|pm|t" optional, beats optional],...]},
-       "voicings":optional [{"name":string,"frets":string}],"chords":optional [symbols],"backing":optional [symbols],"beatsPerBar":optional int (odd meters)}]}]}]}`;
+ ${UNITS_SCHEMA}`;
   const raw = await Claude.json({ feature: 'course-plan',
     system: 'You are a world-class guitar teacher and curriculum designer who uses deliberate practice, the 70–85% success "edge zone", spaced repetition and interleaving.',
     content, maxTokens: 12000
@@ -243,6 +247,12 @@ export function planHasProgress(course) {
 
 /** Generate and attach a tree (Claude first, local fallback). Returns {tree, usedClaude, error}. */
 export async function buildCourseTree(profile, course) {
+  if (course && course.kind === 'master') {
+    // master classes have their own builder; a failed rebuild keeps the current plan
+    const { buildMasterTree } = await import('./master.js');
+    const keep = { tree: course.tree, state: course.state };
+    try { return await buildMasterTree(profile, course); } catch (e) { course.tree = keep.tree; course.state = keep.state; return { tree: course.tree, usedClaude: false, error: e.message || String(e), kept: true }; }
+  }
   let tree = null, error = null;
   if (Claude.hasKey()) {
     try { tree = await generateTreeWithClaude(profile, course); } catch (e) { error = e.message; }

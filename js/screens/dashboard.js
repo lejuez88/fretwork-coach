@@ -13,6 +13,8 @@ import { progressPct } from '../core/progression.js';
 import { estimatedCount } from './reassess.js';
 import { mountTrackCard } from '../ui/trackcard.js';
 import { mountRoutineBuilder } from '../ui/routinebuilder.js';
+import { forYou, recommendedTopics, isMaster, MASTER_BY_ID } from '../core/master.js';
+import { openMasterSheet, topicArtHTML, MC_ICON } from '../ui/mastersheet.js';
 
 export function mountDashboard(root, { navigate, courseId = null, skillId = null }) {
   const p = Store.profile;
@@ -46,7 +48,8 @@ export function mountDashboard(root, { navigate, courseId = null, skillId = null
       <section class="card">
         <div class="sec-head"><h3>Your courses</h3><button class="btn sm" data-d="newcourse">+ New course</button></div>
         ${open.length ? open.map(courseCard).join('') : '<p class="muted">No courses yet. Create one to get a full learning path.</p>'}
-      </section>`;
+      </section>
+      ${masterCard()}`;
 
     bottom.innerHTML = `
       <section class="card">
@@ -83,8 +86,29 @@ export function mountDashboard(root, { navigate, courseId = null, skillId = null
       <button class="btn ghost sm block" data-d="discard">Discard this session</button>`;
   }
 
+  /** Master classes: a "For you" pick, topics that change every time the app opens, and any topic you type. */
+  function masterCard() {
+    const fy = forYou(p), top1 = fy[0] || null;
+    const recs = recommendedTopics(p, 4, top1 ? [top1.topic.id] : []);
+    return `<section class="card mastercard">
+      <div class="sec-head"><h3>${MC_ICON} Master classes</h3></div>
+      <p class="small muted mc-intro">A whole course on one topic. Know what you want to get better at, but not where to start? Pick a topic and get a course built around it.</p>
+      ${top1 ? `<button class="mc-foryou" data-mc="${top1.topic.id}">${topicArtHTML(top1.topic.cat)}
+        <span class="mc-txt"><span class="label">For you</span><b>${esc(top1.topic.title)}</b><span class="small">${esc(top1.reason || top1.topic.blurb)}</span></span>
+        <span class="mc-go">Build ›</span></button>` : ''}
+      <div class="label mc-sub">Suggested today</div>
+      <div class="mc-recs">${recs.map(t => `<button class="mc-rec" data-mc="${t.id}">${topicArtHTML(t.cat, 'sm')}<span class="mc-txt"><b>${esc(t.title)}</b><span class="small muted">${esc(t.blurb)}</span></span></button>`).join('')}</div>
+      <form class="mc-ask" data-r="mcask"><input type="text" name="topic" maxlength="80" placeholder="Any topic: sight reading, slide guitar, jazz standards…" aria-label="Master class topic"><button class="btn" type="submit">${MC_ICON} Build</button></form>
+    </section>`;
+  }
+
   function courseCard(c) {
     if (c.tree) c.progress = progressPct(c);
+    if (isMaster(c)) {
+      return `<a class="course master" href="#/course/${c.id}">${topicArtHTML(c.topic && c.topic.cat, 'thumb')}
+        <div class="cbody"><b>${esc(c.name)}</b><div class="muted small">${MC_ICON} Master class · ${esc(c.levelLabel)} · level ${c.difficulty}</div>
+          <div class="cprog"><div class="bar"><i style="width:${c.progress || 0}%"></i></div><span>${c.progress || 0}%</span></div></div></a>`;
+    }
     const g = GENRE_BY_ID[c.genre];
     return `<a class="course" href="#/course/${c.id}">
       ${wikiTile(g ? g.wiki : c.genre, g ? g.name : c.genre, 'thumb')}
@@ -161,7 +185,16 @@ export function mountDashboard(root, { navigate, courseId = null, skillId = null
     });
   }
 
+  const onSubmit = e => {
+    const f = e.target.closest('[data-r="mcask"]'); if (!f) return;
+    e.preventDefault();
+    const v = (f.querySelector('input').value || '').trim();
+    if (v.length < 3) return toast('Type a topic, like “sight reading” or “the modes”.');
+    openMasterSheet({ title: v }, { navigate });
+  };
   const onClick = e => {
+    const mc = e.target.closest('[data-mc]');
+    if (mc) { const t = MASTER_BY_ID[mc.dataset.mc]; if (t) openMasterSheet({ title: t.title, topicId: t.id, cat: t.cat, domain: t.domain }, { navigate }); return; }
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.sc != null) { root.querySelectorAll('[data-sc]').forEach(x => x.classList.toggle('on', x === b)); return; }
     switch (b.dataset.d) {
@@ -189,9 +222,9 @@ export function mountDashboard(root, { navigate, courseId = null, skillId = null
       }
     }
   };
-  root.addEventListener('click', onClick);
+  root.addEventListener('click', onClick); root.addEventListener('submit', onSubmit);
   builder = mountRoutineBuilder(root.querySelector('[data-r="routine"]'), { navigate, courseId, skillId });
   render();
   const offTrack = mountTrackCard(root.querySelector('[data-r="track"]'));
-  return () => { clearInterval(tick); offTrack(); builder.destroy(); root.removeEventListener('click', onClick); };
+  return () => { clearInterval(tick); offTrack(); builder.destroy(); root.removeEventListener('click', onClick); root.removeEventListener('submit', onSubmit); };
 }
