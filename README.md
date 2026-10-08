@@ -25,7 +25,14 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: master classes, pop-up tuner
+## Latest: Songsterr tabs, YouTube embed player
+
+| Area | Included |
+|---|---|
+| Songsterr | Songs use Songsterr's public search API (no key). As you type a song in **Add a song**, matching Songsterr tabs appear with the parts each has (guitars, bass, drums, chords); tap one to add the song already linked. A song page finds its Songsterr tab by itself and lists every part with its tuning and difficulty; each opens in Songsterr's interactive player (real rhythm, speed control, looping). **Change** picks another version. Linking fills in the song's tuning when it has none. Track of the Day has a 🎸 Tab link. The tabs themselves stay on Songsterr: the app keeps only which song it is and the part list. Searches are cached for a day. If a browser won't let the app call Songsterr, the app shows links to Songsterr's own search and best match instead. |
+| Track of the Day player | The track plays in YouTube's standard embed player (the same iframe as YouTube's Share → Embed), shown right away with YouTube's own controls, fullscreen and picture-in-picture. The Play button and the player stay in sync, and a copy that can't play outside YouTube is still skipped automatically. “Open” links go to YouTube and to the same video in YouTube Music. |
+
+## Earlier: master classes, pop-up tuner
 
 | Area | Included |
 |---|---|

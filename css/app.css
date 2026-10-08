@@ -825,3 +825,22 @@ body.has-actions .tunepop{bottom:calc(140px + env(safe-area-inset-bottom))}
 .askcard.collapsed .askbox textarea{min-height:0;height:40px;padding:9px 6px;overflow:hidden;white-space:nowrap}
 .askcard.collapsed{padding-bottom:14px}
 @media(max-width:560px){.askcard:not(.collapsed) .askbox textarea{min-height:84px}}
+/* Track of the Day: YouTube's standard embed player */
+.yt-embed{position:relative;width:100%;aspect-ratio:16/9;background:#000}
+.yt-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+/* Songsterr */
+.sst{margin:2px 0 10px}
+.sst-h{margin:4px 0}
+.sst-row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 10px;margin:0 0 6px;border-radius:10px;border:1px solid var(--line);background:var(--inset);color:var(--text);font:inherit;cursor:pointer}
+.sst-row:hover{border-color:#4a4251}
+.sst-row.static{cursor:default}
+.sst-main{flex:1;min-width:0;display:flex;flex-direction:column}
+.sst-main b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sst-add{color:#ffd48a;font-weight:600;white-space:nowrap}
+.sst-parts{display:grid;gap:6px;margin:10px 0}
+.sst-part{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--inset);text-decoration:none;color:var(--text)}
+.sst-part:hover{border-color:var(--amber)}
+.sst-kind{flex:none;width:28px;text-align:center;font-size:18px}
+.sst-kind.k-bass{filter:hue-rotate(160deg)}
+.sstcard .btn.primary{flex-direction:column;gap:0}
+.sstcard .btn.primary .small{font-weight:500;opacity:.8}

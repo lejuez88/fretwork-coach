@@ -21,10 +21,20 @@ import { openEvalSheet } from '../eval/ui.js';
 import { exerciseCardHTML } from '../ui/ask.js';
 import { timeInputHTML, wireTimeInput, readTime, startRoutine, hasActiveRoutine } from './routine.js';
 import { Shell } from '../ui/shell.js';
+import { searchSongsterr, findSong as findOnSongsterr, linkInfo, partsSummary, songUrl, trackUrl, bestMatchUrl, siteSearchUrl, searchBlocked } from '../core/songsterr.js';
 
 const STATUS_LABEL = Object.fromEntries(STATUSES);
 const statusIcon = { want: '☆', learning: '◐', solid: '●', mastered: '★' };
 const diffBadge = d => (d ? `<span class="badge diff d${d <= 3 ? 1 : d <= 6 ? 2 : 3}">Level ${d}</span>` : '<span class="badge">Level ?</span>');
+
+/** Link a song to its Songsterr tab (keeps the part list; fills in the tuning if the song has none). */
+function linkSongsterr(song, item) {
+  song.songsterr = linkInfo(item);
+  const g = song.songsterr.tracks.find(t => t.kind === 'guitar' && t.tuningName);
+  song.info = song.info || {};
+  if (g && !song.info.tuning && !song.tab) song.info.tuning = g.tuningName;
+}
+const DIFF_WORD = ['', 'very easy', 'easy', 'below intermediate', 'intermediate', 'upper intermediate', 'advanced', 'very advanced'];
 
 /* ================================ Hub ================================== */
 export function mountSongsHub(root, { navigate }) {
@@ -42,6 +52,7 @@ export function mountSongsHub(root, { navigate }) {
       <h1>Songs</h1>
       <section class="card"><div class="label">Add a song</div>
         <div class="addsong"><input type="text" data-r="title" placeholder="Song title" maxlength="120"><input type="text" data-r="artist" placeholder="Artist (optional)" maxlength="80"></div>
+        <div class="sst" data-r="sst" aria-live="polite"></div>
         <button class="btn primary block" data-s="add">+ Add song</button>
         <p class="small muted">${Claude.hasKey() ? 'Claude looks up the key, tuning, tempo and what the song asks of your hands.' : 'Songs from the built-in list get their techniques filled in. Add your Claude key to look up any song.'}</p>
       </section>
@@ -89,14 +100,36 @@ export function mountSongsHub(root, { navigate }) {
     Store.save(); render();
   }
 
-  function add(info) {
+  function add(info, sst = null) {
     const s = addSong(p, info);
     if (!s) return toast('Type a song title.');
+    if (sst) linkSongsterr(s, sst);
     Store.save(); navigate('#/song/' + s.id);
+  }
+  // Songsterr matches while you type a title (debounced and cached)
+  let sstTimer = null, sstItems = [], sstSeq = 0;
+  function drawSst(state) {
+    const box = root.querySelector('[data-r="sst"]'); if (!box) return;
+    if (state === 'busy') { box.innerHTML = '<p class="small muted"><span class="spinner sm"></span>Looking on Songsterr…</p>'; return; }
+    if (state && state.blocked) { const q = `${root.querySelector('[data-r="title"]').value} ${root.querySelector('[data-r="artist"]').value}`.trim(); box.innerHTML = q ? `<p class="small muted">Songsterr’s search isn’t available from this browser. <a class="link small" href="${siteSearchUrl(q)}" target="_blank" rel="noopener">Search on Songsterr ↗</a></p>` : ''; return; }
+    box.innerHTML = sstItems.length ? `<div class="label sst-h">On Songsterr</div>${sstItems.slice(0, 5).map((it, i) => `<button class="sst-row" data-sst="${i}">
+        <span class="sst-main"><b>${esc(it.title)}</b><span class="small muted">${esc(it.artist)}${partsSummary(it) ? ' · ' + esc(partsSummary(it)) : ''}${it.hasChords ? ' · chords' : ''}</span></span><span class="small sst-add">+ Add</span></button>`).join('')}` : '';
+  }
+  function queueSst() {
+    clearTimeout(sstTimer);
+    const t = root.querySelector('[data-r="title"]').value.trim(), a = root.querySelector('[data-r="artist"]').value.trim();
+    if (t.length < 3) { sstItems = []; drawSst(); return; }
+    sstTimer = setTimeout(async () => {
+      const seq = ++sstSeq; drawSst('busy');
+      const r = await searchSongsterr(`${a} ${t}`.trim(), { size: 8 });
+      if (!alive || seq !== sstSeq) return;
+      sstItems = r.items; drawSst(r);
+    }, 450);
   }
   const onClick = e => {
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.s === 'add') return add({ title: root.querySelector('[data-r="title"]').value, artist: root.querySelector('[data-r="artist"]').value });
+    if (b.dataset.sst != null) { const it = sstItems[+b.dataset.sst]; if (it) add({ title: it.title, artist: it.artist, source: 'songsterr' }, it); return; }
     if (b.dataset.filter) { filter = b.dataset.filter; return render(); }
     if (b.dataset.rgenre != null) { recGenre = b.dataset.rgenre || null; recError = null; render(); return loadRecs(); }
     if (b.dataset.s === 'refresh') return loadRecs(true);
@@ -104,9 +137,10 @@ export function mountSongsHub(root, { navigate }) {
   };
   const onChange = e => { if (e.target.dataset.r === 'moregenre' && e.target.value) { recGenre = e.target.value; recError = null; render(); loadRecs(); } };
   const onKey = e => { if (e.key === 'Enter' && (e.target.dataset.r === 'title' || e.target.dataset.r === 'artist')) root.querySelector('[data-s="add"]').click(); };
-  root.addEventListener('click', onClick); root.addEventListener('change', onChange); root.addEventListener('keydown', onKey);
+  const onInput = e => { if (e.target.dataset.r === 'title' || e.target.dataset.r === 'artist') queueSst(); };
+  root.addEventListener('click', onClick); root.addEventListener('change', onChange); root.addEventListener('keydown', onKey); root.addEventListener('input', onInput);
   render(); loadRecs();
-  return () => { alive = false; root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); root.removeEventListener('keydown', onKey); };
+  return () => { alive = false; clearTimeout(sstTimer); root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); root.removeEventListener('keydown', onKey); root.removeEventListener('input', onInput); };
 }
 
 /* ============================== Song page =============================== */
@@ -160,6 +194,8 @@ export function mountSongDetail(root, { id, navigate }) {
         ${importOpen ? importHTML() : ''}
       </section>
 
+      <section class="card sstcard" data-r="sstcard">${sstHTML()}</section>
+
       ${I.sections && I.sections.length ? `<section class="card"><div class="label">How the song is built</div>${I.sections.map(s => `<div class="secrow"><b>${esc(s.name)}</b><span class="small muted">${esc(s.desc)}</span></div>`).join('')}</section>` : ''}
       <button class="btn ghost danger block" data-x="remove">Remove song</button>`;
     hydrateImages(root);
@@ -167,6 +203,40 @@ export function mountSongDetail(root, { id, navigate }) {
     Shell.actions(lesson && !lessonBusy ? `<button class="btn primary" data-x="start">▶ Start lesson</button>` : '');
   }
 
+  /* ---- Songsterr: the interactive tab for this song ---- */
+  let sst = { busy: false, items: [], best: null, blocked: false, error: null, tried: false, choosing: false };
+  function sstHTML() {
+    const L = song.songsterr;
+    const head = '<div class="sec-head"><div class="label">Interactive tab · Songsterr</div>' + (L && !sst.choosing ? '<button class="btn sm ghost" data-x="sstchange">Change</button>' : '') + '</div>';
+    if (L && !sst.choosing) {
+      const parts = (L.tracks || []).filter(t => t.kind !== 'vocals');
+      const main = parts.find(t => t.kind === 'guitar') || parts[0];
+      return `${head}<p class="small"><b>${esc(L.title)}</b> <span class="muted">${esc(L.artist)}</span>${L.hasChords ? ' · <span class="muted">chords too</span>' : ''}</p>
+        <a class="btn primary block" href="${main ? trackUrl(L, main.index) : songUrl(L)}" target="_blank" rel="noopener"><span>▶ Play the tab on Songsterr ↗</span>${main && main.name ? `<span class="small">${esc(main.name)} part</span>` : ''}</a>
+        ${parts.length ? `<div class="sst-parts">${parts.map(t => `<a class="sst-part" href="${trackUrl(L, t.index)}" target="_blank" rel="noopener"><span class="sst-kind k-${t.kind}">${{ guitar: '🎸', bass: '🎸', drums: '🥁' }[t.kind] || '🎵'}</span>
+          <span class="sst-main"><b>${esc(t.name || t.instrument || 'Part ' + (t.index + 1))}</b><span class="small muted">${[t.instrument && t.instrument !== t.name ? t.instrument : '', t.tuningName ? t.tuningName + ' tuning' : '', t.difficulty ? DIFF_WORD[t.difficulty] || '' : ''].filter(Boolean).map(esc).join(' · ')}</span></span><span class="small">↗</span></a>`).join('')}</div>` : ''}
+        <p class="small muted">Songsterr plays the tab with the real rhythm, a speed control and looping. Practice the hard parts here: paste a section above, or use “Help me with this part”.</p>`;
+    }
+    if (sst.busy) return `${head}<p class="small muted"><span class="spinner sm"></span>Looking for “${esc(song.title)}” on Songsterr…</p>`;
+    const fallback = `<a class="btn block" href="${bestMatchUrl(song.title, song.artist)}" target="_blank" rel="noopener">Find it on Songsterr ↗</a>`;
+    if (sst.blocked || (!sst.tried && searchBlocked())) return `${head}<p class="small muted">Songsterr’s search isn’t available from this browser, so the app can’t list the parts. The link opens Songsterr’s best match for this song.</p>${fallback}`;
+    if (!sst.tried) return `${head}<p class="small muted">See this song’s tab in Songsterr’s interactive player.</p><button class="btn block" data-x="sstfind">🔎 Find it on Songsterr</button>`;
+    if (!sst.items.length) return `${head}<p class="small muted">${sst.error ? `Songsterr couldn’t search (${esc(sst.error)}).` : 'No match on Songsterr.'}</p>${fallback}`;
+    const list = sst.best && !sst.choosing ? [sst.best] : sst.items.slice(0, 6);
+    return `${head}<p class="small muted">${sst.best && !sst.choosing ? 'Best match:' : 'Pick the right one:'}</p>
+      <div class="sst-list">${list.map(it => `<div class="sst-row static"><span class="sst-main"><b>${esc(it.title)}</b><span class="small muted">${esc(it.artist)}${partsSummary(it) ? ' · ' + esc(partsSummary(it)) : ''}</span></span>
+        <button class="btn sm primary" data-sstuse="${esc(String(it.songId))}">Use this</button></div>`).join('')}</div>
+      ${sst.best && !sst.choosing && sst.items.length > 1 ? '<button class="btn sm ghost" data-x="sstmore">Not it? See other matches</button>' : ''}
+      ${sst.choosing && song.songsterr ? '<button class="btn sm ghost" data-x="sstcancel">Keep the current one</button>' : ''}`;
+  }
+  function drawSst() { const c = root.querySelector('[data-r="sstcard"]'); if (c) c.innerHTML = sstHTML(); }
+  async function sstFind() {
+    sst = { ...sst, busy: true, tried: true }; drawSst();
+    const r = await findOnSongsterr(song.title, song.artist || '');
+    if (!alive) return;
+    sst = { ...sst, busy: false, items: r.items, best: r.best, blocked: !!r.blocked, error: r.error || null };
+    drawSst();
+  }
   function importHTML() {
     const links = tabSearchLinks(song);
     return `<div class="tabimport">
@@ -215,6 +285,18 @@ export function mountSongDetail(root, { id, navigate }) {
     catch (e) { toast(e.message); }
     lessonBusy = false; Store.save(); if (!alive) return; render();
     const el = root.querySelector('[data-r="lesson"]'); if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function sstClick(b) {
+    const x = b.dataset.x;
+    if (x === 'sstfind') { sstFind(); return true; }
+    if (x === 'sstchange') { sst.choosing = true; if (!sst.tried) sstFind(); else drawSst(); return true; }
+    if (x === 'sstmore') { sst.choosing = true; drawSst(); return true; }
+    if (x === 'sstcancel') { sst.choosing = false; drawSst(); return true; }
+    if (b.dataset.sstuse != null) {
+      const it = sst.items.find(i => String(i.songId) === b.dataset.sstuse); if (!it) return true;
+      linkSongsterr(song, it); sst.choosing = false; Store.save(); toast(`Linked to “${it.title}” on Songsterr.`); drawSst(); return true;
+    }
+    return false;
   }
   function startLesson() {
     if (!lesson) return;
@@ -359,6 +441,7 @@ export function mountSongDetail(root, { id, navigate }) {
     if (st) { const ch = setStatus(p, song, st.dataset.status); Store.save(); if (ch) toast(`Repertoire level ${ch.from} → ${ch.to}`); return render(); }
     const b = e.target.closest('button'); if (!b) return;
     const x = b.dataset.x;
+    if (sstClick(b)) return;
     if (b.dataset.tempo) { const inp = root.querySelector('[data-r="tempo"]'); song.tempo = Math.max(30, Math.min(260, (+inp.value || songTempo(song)) + Number(b.dataset.tempo))); inp.value = song.tempo; Store.save(); return; }
     if (b.dataset.bar) {
       const k = +b.dataset.bar;
@@ -389,5 +472,6 @@ export function mountSongDetail(root, { id, navigate }) {
   root.addEventListener('click', onClick); root.addEventListener('change', onChange); Shell.actionBar.addEventListener('click', barClick);
   render();
   if (Claude.hasKey() && !song.enrichTried && (!song.info.enrichedBy || song.info.enrichedBy === 'catalog')) enrich();
+  if (!song.songsterr && !searchBlocked()) sstFind(); // one cached search: find this song's tab on Songsterr
   return () => { alive = false; stopPlayer(); root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); Shell.actionBar.removeEventListener('click', barClick); Shell.actions(''); };
 }

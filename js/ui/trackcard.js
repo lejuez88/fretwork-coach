@@ -1,15 +1,17 @@
-// Track of the Day card: the day's track, a playable YouTube embed, what to
-// listen for, an ear challenge, and quick actions (another track, add to my
-// songs, paste a better video link).
+// Track of the Day card: the day's track in YouTube's standard embed player
+// (shown right away, with YouTube's own controls), what to listen for, an ear
+// challenge, and quick actions (another track, add to my songs, the tab on
+// Songsterr, paste a better video link).
 import { esc, toast, today } from '../core/util.js';
 import { Store } from '../core/store.js';
 import { wikiTile, hydrateImages } from '../core/wiki.js';
 import { GENRE_BY_ID } from '../data/catalog.js';
 import { chooseTrack, settleTrack, earChallenge, trackImageTitles, linkedSong } from '../core/track.js';
 import {
-  resolveVideos, mountPlayer, markBad, setVideo, clearVideo, parseVideoId, playerError,
-  watchUrl, thumbUrl, searchUrl, musicSearchUrl, hasKey
+  resolveVideos, mountEmbed, markBad, setVideo, clearVideo, parseVideoId, playerError,
+  watchUrl, musicUrl, searchUrl, musicSearchUrl, hasKey
 } from '../core/youtube.js';
+import { bestMatchUrl } from '../core/songsterr.js';
 import { addSong } from '../core/songs.js';
 
 const SRC_LABEL = { wikidata: 'Video found through Wikidata.', youtube: 'Video found with your YouTube key.', you: 'Playing the video you linked.' };
@@ -17,7 +19,7 @@ const SRC_LABEL = { wikidata: 'Video found through Wikidata.', youtube: 'Video f
 export function mountTrackCard(el) {
   const p = Store.profile;
   if (!p.dashboard.track || p.dashboard.track.date !== today()) { chooseTrack(p); Store.save(); }
-  let alive = true, player = null, playing = false, fixOpen = false;
+  let alive = true, player = null, playing = false, fixOpen = false, embedFor = '';
   let state = { ids: [], src: null, busy: true, error: null, offline: false, note: '' };
 
   el.innerHTML = '<div class="track-media" data-r="tmedia"></div><div class="track-body" data-r="tbody"></div>';
@@ -25,12 +27,26 @@ export function mountTrackCard(el) {
   const tr = () => p.dashboard.track;
 
   function drawMedia() {
-    if (player) return;
     const t = tr(), id = state.ids[0];
-    media.innerHTML = id
-      ? `<button class="track-poster" data-t="play" aria-label="Play ${esc(t.title)} by ${esc(t.artist)}">
-          <img src="${thumbUrl(id)}" alt="" loading="lazy" referrerpolicy="no-referrer"><span class="playbig" aria-hidden="true">▶</span></button>`
-      : `<div class="track-poster none">${wikiTile(trackImageTitles(t), t.title, 'poster')}
+    if (id) {
+      if (player && embedFor === state.ids.join(',')) return; // already showing this track
+      stop();
+      embedFor = state.ids.join(',');
+      player = mountEmbed(media, state.ids.slice(), {
+        onBad: vid => markBad(t.key, vid),
+        onState: () => { const now = !!(player && player.playing); if (now !== playing) { playing = now; drawBody(); } },
+        onFail: async code => {
+          stop(); state.note = playerError(code) + ' Looking for another copy…'; state.ids = []; state.busy = true; draw();
+          const r = await resolveVideos(t, { refresh: true });
+          if (!alive || tr().key !== t.key) return;
+          state = { ...state, ids: r.ids, src: r.src, busy: false, error: r.error || null, offline: !!r.offline, note: r.ids.length ? '' : playerError(code) };
+          draw();
+        }
+      });
+      return;
+    }
+    stop();
+    media.innerHTML = `<div class="track-poster none">${wikiTile(trackImageTitles(t), t.title, 'poster')}
           <span class="tp-status">${state.busy ? 'Finding the track on YouTube…' : 'No video to play here yet'}</span></div>`;
     hydrateImages(media);
   }
@@ -62,8 +78,9 @@ export function mountTrackCard(el) {
       <p class="small ear"><b>Ear challenge:</b> ${esc(earChallenge(p, t))}</p>
       <p class="small reason">${esc(t.reason || '')}</p>
       <div class="row track-actions">
-        ${id ? `<button class="btn sm primary" data-t="play">${playing ? '■ Stop' : '▶ Play'}</button>`
+        ${id ? `<button class="btn sm primary" data-t="play">${playing ? '❚❚ Pause' : '▶ Play'}</button>`
              : `<a class="btn sm primary" href="${searchUrl(t)}" target="_blank" rel="noopener">▶ Find on YouTube ↗</a>`}
+        <a class="btn sm" href="${bestMatchUrl(t.title, t.artist)}" target="_blank" rel="noopener" title="The tab in Songsterr’s interactive player">🎸 Tab ↗</a>
         <button class="btn sm" data-t="next" ${state.busy ? 'disabled' : ''}>Another track</button>
         ${song ? `<a class="btn sm" href="#/song/${esc(song.id)}">Open in my songs</a>` : '<button class="btn sm" data-t="add">+ My songs</button>'}
       </div>
@@ -72,7 +89,7 @@ export function mountTrackCard(el) {
         <summary>${id ? 'Wrong video?' : 'Found it on YouTube?'} Paste a link</summary>
         <div class="row nowrap"><input type="url" data-r="ytlink" placeholder="https://www.youtube.com/watch?v=…" autocomplete="off" spellcheck="false"><button class="btn sm" data-t="uselink">Use</button></div>
         <p class="small muted">The app remembers your link for this track.${state.src === 'you' ? ' <button class="textbtn" data-t="resetlink">Forget my link</button>' : ''}</p>
-        <p class="small muted">Open: <a class="link" href="${id ? watchUrl(id) : searchUrl(t)}" target="_blank" rel="noopener">YouTube ↗</a> · <a class="link" href="${musicSearchUrl(t)}" target="_blank" rel="noopener">YouTube Music ↗</a></p>
+        <p class="small muted">Open: <a class="link" href="${id ? watchUrl(id) : searchUrl(t)}" target="_blank" rel="noopener">YouTube ↗</a> · <a class="link" href="${id ? musicUrl(id) : musicSearchUrl(t)}" target="_blank" rel="noopener">YouTube Music ↗</a></p>
       </details>`;
   }
 
@@ -80,26 +97,13 @@ export function mountTrackCard(el) {
 
   function stop() {
     if (player) { player.destroy(); player = null; }
-    playing = false;
+    playing = false; embedFor = '';
   }
-
-  function play() {
-    const t = tr();
-    if (!state.ids.length) return;
-    stop(); playing = true; state.note = '';
-    const ids = state.ids.slice();
-    player = mountPlayer(media, ids, {
-      onBad: (vid) => markBad(t.key, vid),
-      onFail: async code => {
-        stop(); state.note = playerError(code) + ' Looking for another copy…'; state.ids = []; state.busy = true; draw();
-        const r = await resolveVideos(t, { refresh: true });
-        if (!alive || tr().key !== t.key) return;
-        state = { ...state, ids: r.ids, src: r.src, busy: false, error: r.error || null, offline: !!r.offline, note: r.ids.length ? '' : playerError(code) };
-        draw();
-        if (r.ids.length) play();
-      }
-    });
-    drawBody();
+  /** Play / pause through the embed (YouTube's own controls work too). */
+  function togglePlay() {
+    if (!player) return;
+    if (player.playing) player.pause(); else player.play();
+    if (!player.ready) toast('The player is still loading; use its ▶ button.');
   }
 
   async function settle() {
@@ -118,7 +122,7 @@ export function mountTrackCard(el) {
     const t = tr();
     switch (b.dataset.t) {
       case 'play':
-        if (playing) { stop(); draw(); } else play();
+        togglePlay();
         break;
       case 'next':
         stop(); fixOpen = false;

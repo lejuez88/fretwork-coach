@@ -283,6 +283,45 @@ const ERRORS = { 2: 'The video link is invalid.', 5: 'The video can’t play in 
 export const playerError = code => ERRORS[code] || 'The video can’t play here.';
 
 /**
+ * The standard YouTube embed player (the same iframe as YouTube's Share → Embed),
+ * shown right away with YouTube's own controls. The IFrame API is attached to it
+ * only to notice a copy that can't play here and move on to the next one.
+ * Calls onBad(id, code) for each failed video, onFail(code) when none play and
+ * onState(state) on play/pause. Returns { destroy(), play(), pause(), playing, ready }.
+ */
+export function mountEmbed(host, ids, { onBad, onFail, onState, autoplay = false } = {}) {
+  let i = 0, player = null, dead = false, state = -1;
+  const origin = typeof location !== 'undefined' && /^https?:/.test(location.origin) ? `&origin=${encodeURIComponent(location.origin)}` : '';
+  const src = id => `https://www.youtube.com/embed/${id}?enablejsapi=1&rel=0&playsinline=1${autoplay ? '&autoplay=1' : ''}${origin}`;
+  host.innerHTML = `<div class="yt-embed"><iframe width="560" height="315" src="${src(ids[0])}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>`;
+  const frame = host.querySelector('iframe');
+  const ctl = {
+    ready: false,
+    get playing() { return state === 1 || state === 3; },
+    get id() { return ids[i]; },
+    play() { try { if (player && player.playVideo) player.playVideo(); } catch { /* not ready */ } },
+    pause() { try { if (player && player.pauseVideo) player.pauseVideo(); } catch { /* not ready */ } },
+    destroy() { dead = true; try { if (player && player.destroy) player.destroy(); } catch { /* gone */ } player = null; host.innerHTML = ''; }
+  };
+  loadYT().then(YT => {
+    if (dead || !frame.isConnected) return;
+    player = new YT.Player(frame, { events: {
+      onReady: () => { ctl.ready = true; if (onState) onState(state); },
+      onStateChange: e => { state = e.data; if (onState) onState(e.data); },
+      onError: e => {
+        if (dead) return;
+        if (onBad) onBad(ids[i], e.data);
+        i++;
+        if (i < ids.length) { try { player.loadVideoById(ids[i]); } catch { if (onFail) onFail(e.data); } }
+        else if (onFail) onFail(e.data);
+      }
+    } });
+  }).catch(() => { /* the embed still plays on its own; only error detection is lost */ });
+  return ctl;
+}
+export const musicUrl = id => `https://music.youtube.com/watch?v=${id}`;
+
+/**
  * Embed a player in `host` and play the first ID; on an error move to the next.
  * Calls onBad(id, code) for each failed video and onFail(code) when none play.
  * Returns { destroy(), pause() }.
