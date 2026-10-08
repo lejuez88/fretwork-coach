@@ -962,3 +962,6 @@ body.has-actions .tunepop{bottom:calc(140px + env(safe-area-inset-bottom))}
 .keyqr svg{width:260px;max-width:100%;height:auto;background:#fff;border-radius:12px;padding:8px;display:block;margin:0 auto 8px}
 .keyline{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--line)}
 .keyline:last-of-type{border:0}
+.drivebox{border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0 12px;background:var(--inset)}
+.drivebox .row .btn{flex:1 1 160px}
+.drivesetup{margin-top:8px}.drivesetup summary{color:var(--muted)}.drivesetup .row{margin-top:6px}

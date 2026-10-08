@@ -10,6 +10,8 @@ import { cleanKey, keyProblems, fingerprint, storageAdvice, homeScreenNote, keys
 import qrcode from '../vendor/qrcode.js';
 import { mountAudioSetup } from '../ui/audiosetup.js';
 import { importBlockHTML, wireImport } from '../ui/importui.js';
+import { saveImported, describeProfile } from '../core/importer.js';
+import { driveReady, getClientId, setClientId, loadGoogle, saveToDrive, loadFromDrive, lastDriveFile } from '../core/gdrive.js';
 import { periodFor, summarize, billingDay, setBillingDay, clearUsage, priceFor, fmtUSD, fmtTokens, FEATURE_LABEL, PRICES_AS_OF } from '../core/usage.js';
 
 // Keys are pasted, not typed: no auto-capitals, autocorrect or password managers
@@ -69,7 +71,18 @@ export function mountSettings(root, { navigate, applySettings }) {
     <section class="card">
       <h3>Your data</h3>
       <p class="muted small">Everything is saved in this browser. Export a backup now and then, and to move to another device.</p>
-      ${p ? '<button class="btn block" data-s="export">Export profile (JSON)</button>' : ''}
+      <div class="drivebox">
+        <div class="label">Google Drive</div>
+        <p class="muted small">Save your profile straight to your own Google Drive, then load it on your phone (or any device) with the same Google account. Each Google account keeps its own profile; the app can only see the file it saves there.</p>
+        <div class="row">${p ? '<button class="btn primary" data-s="drivesave">Save to Google Drive</button>' : ''}<button class="btn" data-s="driveload">Load from Google Drive</button></div>
+        <p class="small" data-r="drivestatus">${driveStatusHTML()}</p>
+        <button class="textbtn small" data-s="driveacct">Use a different Google account</button>
+        <details class="small drivesetup" ${driveReady() ? '' : 'open'}><summary>Google sign-in setup ${driveReady() ? '(done)' : '(needed once)'}</summary>
+          <p class="muted">The app needs a Google OAuth client ID (a public ID, not a secret) from a Google Cloud project, with <code>${esc(location.origin || 'https://lejuez88.github.io')}</code> as an authorized JavaScript origin and the Google Drive API enabled.</p>
+          <div class="row nowrap"><input type="text" data-r="clientid" placeholder="…apps.googleusercontent.com" value="${esc(getClientId())}" ${KEY_ATTRS}><button class="btn" data-s="clientsave">Save</button></div>
+        </details>
+      </div>
+      ${p ? '<button class="btn block" data-s="export">Export profile (JSON file)</button>' : ''}
       ${importBlockHTML({ label: 'Import profile (JSON)', btnClass: 'btn block' })}
       ${p ? '<button class="btn ghost block danger" data-s="reset">Delete profile from this browser</button>' : ''}
     </section>
@@ -80,6 +93,27 @@ export function mountSettings(root, { navigate, applySettings }) {
     </section>`;
   const r = n => root.querySelector(`[data-r="${n}"]`);
   let qrTimer = null;
+  if (driveReady()) loadGoogle().catch(() => {}); // ready before the first tap, so sign-in can open
+  const driveSay = (html, cls = '') => { r('drivestatus').innerHTML = html; r('drivestatus').className = 'small ' + cls; };
+  async function driveSave(chooseAccount) {
+    if (!driveReady()) { driveSay('Google sign-in isn’t set up yet: add the client ID below.', 'bad'); return; }
+    driveSay('Saving to Google Drive…');
+    try { Store.save(); const f = await saveToDrive(Store.profile, { chooseAccount }); driveSay(`Saved to your Drive: <a class="link" href="${esc(f.webViewLink || 'https://drive.google.com')}" target="_blank" rel="noopener">${esc(f.name)}</a> · ${new Date(f.modifiedTime || Date.now()).toLocaleString()}`, 'ok'); }
+    catch (err) { driveSay(esc(err.message), 'bad'); }
+  }
+  async function driveLoad(chooseAccount) {
+    if (!driveReady()) { driveSay('Google sign-in isn’t set up yet: add the client ID below.', 'bad'); return; }
+    driveSay('Loading from Google Drive…');
+    try {
+      const { data, file } = await loadFromDrive({ chooseAccount });
+      const when = new Date(file.modifiedTime).toLocaleString();
+      if (Store.profile && !confirm(`Replace the profile in this browser with the one saved in Google Drive (${when})?\n\n${describeProfile(data.questionnaire ? data : (data.profile || data))}`)) { driveSay('Kept the profile in this browser.'); return; }
+      const res = saveImported(data.questionnaire ? data : (data.profile || data));
+      driveSay(res.saved ? `Loaded your profile from Google Drive (saved ${esc(when)}).` : 'Loaded, but this browser couldn’t store it permanently.', res.saved ? 'ok' : 'bad');
+      if (applySettings) applySettings();
+      setTimeout(() => navigate(Object.keys(res.profile.domains || {}).length ? '#/home' : '#/onboarding'), 900);
+    } catch (err) { driveSay(esc(err.message), 'bad'); }
+  }
   const status = (msg, cls = '') => { r('status').textContent = msg; r('status').className = 'small ' + cls; };
   const ytStatus = (msg, cls = '') => { r('ytstatus').textContent = msg; r('ytstatus').className = 'small ' + cls; };
   /**
@@ -173,6 +207,10 @@ export function mountSettings(root, { navigate, applySettings }) {
       }
       case 'clearspend': if (confirm('Clear the spend history kept in this browser? This doesn’t change anything with Anthropic.')) { clearUsage(); renderSpend(); } break;
       case 'export': exportProfile(p); break;
+      case 'drivesave': driveSave(false); break;
+      case 'driveload': driveLoad(false); break;
+      case 'driveacct': (p ? driveSave : driveLoad)(true); break;
+      case 'clientsave': { setClientId(r('clientid').value); if (driveReady()) { loadGoogle().catch(() => {}); driveSay('Google sign-in is set up. Tap Save or Load.', 'ok'); } else driveSay('Client ID removed.'); break; }
       case 'reset':
         if (confirm('Delete your profile, courses and practice history from this browser? Export a backup first if you want to keep it.')) { Store.reset(); navigate('#/welcome'); }
         break;
@@ -233,4 +271,11 @@ export function mountKeyImport(root, { navigate }) {
   };
   root.addEventListener('click', onClick);
   return () => root.removeEventListener('click', onClick);
+}
+
+function driveStatusHTML() {
+  const f = lastDriveFile();
+  if (!f) return driveReady() ? 'Not saved to Google Drive from this browser yet.' : '';
+  const when = new Date(f.modifiedTime || f.savedAt || f.loadedAt).toLocaleString();
+  return `Last ${f.loadedAt && !f.savedAt ? 'loaded' : 'saved'}: <a class="link" href="${esc(f.webViewLink || 'https://drive.google.com')}" target="_blank" rel="noopener">${esc(f.name || 'Fretwork Coach profile.json')}</a> · ${esc(when)}`;
 }
