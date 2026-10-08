@@ -25,7 +25,15 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: chord glossary, style-specific plans, smarter requests
+## Latest: Track of the Day
+
+| Area | Included |
+|---|---|
+| Track of the Day | Replaces Album of the Day on the dashboard. One track a day from 160 guitar-focused recordings across all 16 genres (plus songs on your own learning and want lists), chosen for what you're practicing: your last session's course and style, the players you follow, and your genres. Each one says what to **listen for** and gives an **ear challenge** matched to your ear-training level. *Another track* picks a different one. *+ My songs* adds it to your songs. |
+| Embedded YouTube player | Tap ▶ and the track plays right on the dashboard (privacy-enhanced youtube-nocookie player). It keeps playing when you start the practice timer or flip the calendar, and stops when you leave the page. If a video is blocked from embedding, the player moves to another copy or tells you why. |
+| Finding the video | **No key needed:** the app looks the song up on Wikidata, which lists official YouTube videos for many well-known songs. It checks that the Wikidata entry is the right song by the right artist, and moves to one of the day's backup picks when it can't find a video. **Optional YouTube key** (Settings → YouTube): the app searches YouTube for any track, ranks the artist's own channel, official uploads and “Topic” audio first, and drops covers, lessons and reactions. **Wrong video?** Paste any YouTube link and the app remembers it for that track. The key is stored only in your browser and never in profile exports. |
+
+## Earlier: chord glossary, style-specific plans, smarter requests
 
 | Area | Included |
 |---|---|
@@ -84,7 +92,7 @@ Claude never writes out a song’s notes or lyrics: it describes the song and wr
 |---|---|
 | Onboarding | Name, experience, image grid of 16 genres, guitarists filtered by your genres (photos from Wikipedia), type-in players identified by Claude, chords, techniques, theory, struggles, goals, practice time, equipment |
 | Assessment | 8 domains, adaptive test ladders, metronome + timer for playing tests, auto-scored theory and ear tests |
-| Dashboard | Practice session timer, open courses with %, total / this week / daily average / today, monthly calendar marking 15+ minute days, current and best streak, album of the day chosen from your last session |
+| Dashboard | Practice session timer, open courses with %, total / this week / daily average / today, monthly calendar marking 15+ minute days, current and best streak, Track of the Day with an embedded YouTube player, chosen from what you're practicing |
 | Courses | Auto-named on creation (starter courses come from your top genres), per-course page with practice history |
 | Tuner | YIN pitch detection with sub-cent interpolation, needle + strobe, 9 tunings, adjustable A4, reference tones |
 | Metronome | Tap tempo, 2–7 beats, subdivision clicks, 2&4 mode, gap mode |
@@ -97,10 +105,10 @@ Claude never writes out a song’s notes or lyrics: it describes the song and wr
 index.html          app shell
 css/app.css         theme and components
 js/app.js           boot + hash router
-js/core/            store (profile schema + stats), Claude client, Wikipedia images, audio engine, courses, album picks,
+js/core/            store (profile schema + stats), Claude client, Wikipedia images, audio engine, courses, Track of the Day + YouTube lookup,
                     course/routine engines, tab parser, songs, drills, custom exercises,
                     theory engine (chords, voicings, scales), exercise generators, style library, request parser
-js/data/            genres, guitarists, albums (catalog.js), song list (songs.js)
+js/data/            genres, guitarists, albums (catalog.js), song list (songs.js), Track of the Day list (tracks.js)
 js/assessment/      assessment engine (tests, leveling, profile builder)
 js/tools/           pitch detection, tuner, metronome, tab player, exercise library
 js/screens/         onboarding, assessment, dashboard, tools, course, routine, songs, evaluate, reassess, profile, settings

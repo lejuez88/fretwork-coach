@@ -3,7 +3,7 @@ import { $, esc } from './core/util.js';
 import { Store, emptyProfile, normalize } from './core/store.js';
 import { Claude } from './core/claude.js';
 import { Wiki } from './core/wiki.js';
-import { chooseAlbum } from './core/recommend.js';
+import { chooseTrack } from './core/track.js';
 import { createStarterCourses } from './core/courses.js';
 import { ProfileBuilder } from './assessment/engine.js';
 import { rebuildProfile, ensureAssessed, recomputeLevels } from './core/skills.js';
@@ -44,7 +44,7 @@ async function finishAssessment(p) {
   rebuildProfile(p);
   await createStarterCourses(p);
   Store.replace(p); Store.draft.clear(); working = null;
-  chooseAlbum(Store.profile); Store.save();
+  chooseTrack(Store.profile); Store.save();
   navigate('#/results');
 }
 
@@ -161,7 +161,7 @@ function boot() {
     // Old one-size-fits-all plans that haven't been practiced yet become style-specific plans
     (Store.profile.courses || []).forEach(c => { try { upgradeGenericPlan(c); } catch { /* keep the old plan */ } });
     Store.save(); // migrates older profiles
-    if (Object.keys(Store.profile.domains).length) { chooseAlbum(Store.profile); Store.save(); }
+    if (Object.keys(Store.profile.domains).length) { chooseTrack(Store.profile); Store.save(); }
   }
   window.addEventListener('hashchange', route);
   route();

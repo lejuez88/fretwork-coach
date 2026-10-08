@@ -1,10 +1,10 @@
 // Offline cache for the app shell. Network-first for app files so updates show
 // up on the next load; images from Wikipedia are cached as they are viewed.
-const CACHE = 'fretwork-v2e-1';
+const CACHE = 'fretwork-v2f-1';
 const SHELL = [
   './', 'index.html', 'css/app.css', 'manifest.json', 'icon.svg',
   'js/app.js', 'js/core/util.js', 'js/core/store.js', 'js/core/claude.js', 'js/core/wiki.js', 'js/core/audio.js',
-  'js/core/courses.js', 'js/core/recommend.js', 'js/data/catalog.js', 'js/assessment/engine.js',
+  'js/core/courses.js', 'js/core/track.js', 'js/core/youtube.js', 'js/data/tracks.js', 'js/ui/trackcard.js', 'js/data/catalog.js', 'js/assessment/engine.js',
   'js/tools/metronome.js', 'js/tools/pitch.js', 'js/tools/tuner.js', 'js/tools/tabplayer.js', 'js/tools/exercises.js',
   'js/ui/shell.js', 'js/ui/audiosetup.js', 'js/screens/onboarding.js', 'js/screens/assessment.js', 'js/screens/dashboard.js',
   'js/screens/tools.js', 'js/screens/profile.js', 'js/screens/settings.js', 'js/screens/course.js',

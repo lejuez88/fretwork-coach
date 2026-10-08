@@ -584,3 +584,43 @@ pre.tab.small{font-size:12px;padding:10px}
 .buildres .row{margin-top:10px}.buildres .row .btn{flex:0 0 auto}
 @media(max-width:560px){.rootpick{grid-template-columns:repeat(6,1fr)}.segtabs.five a{font-size:11px;padding:11px 1px}.chordhead h2{font-size:26px}.labmodes{margin-left:0}}
 .fb-x,.fb-num,.fb-sname,.fb-inlay,.fb-str,.fb-fret,.fb-nut{pointer-events:none}
+/* Track of the Day */
+input[type=url]{width:100%;background:#0f0d11;border:1px solid var(--line);color:var(--text);border-radius:12px;padding:11px 12px;font:15px var(--body)}
+.card.track{padding:0;overflow:hidden}
+.track-media{position:relative;background:#000}
+.track-poster{position:relative;display:block;width:100%;aspect-ratio:16/9;border:0;padding:0;margin:0;background:#0b0a0c;cursor:pointer;overflow:hidden;color:inherit}
+.track-poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.track-poster.none{cursor:default}
+.track-poster .wimg.poster{position:absolute;inset:0;width:100%;height:100%}
+.track-poster .wimg.poster .wimg-fallback{font-size:56px}
+.track-poster::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 50%,rgba(0,0,0,.55));pointer-events:none}
+.playbig{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:76px;height:76px;border-radius:50%;background:linear-gradient(180deg,#ffbd45,var(--amber-d));color:#1b1205;font-size:30px;display:flex;align-items:center;justify-content:center;padding-left:6px;box-shadow:0 8px 26px rgba(0,0,0,.55);z-index:1;transition:transform .15s}
+.track-poster:hover .playbig{transform:translate(-50%,-50%) scale(1.06)}
+.tp-status{position:absolute;left:12px;bottom:10px;z-index:1;font-size:13px;color:#fff;background:rgba(0,0,0,.6);padding:4px 10px;border-radius:999px}
+.yt-frame{position:relative;width:100%;aspect-ratio:16/9;background:#000}
+.yt-frame iframe,.yt-frame .yt-target{position:absolute;inset:0;width:100%;height:100%;border:0}
+.yt-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
+.track-body{padding:16px 18px 18px}
+.track-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.track-top .label{margin:0}
+.pill{font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.track h3{margin:8px 0 2px;font-size:23px}
+.track .listen{margin:12px 0 6px}.track .ear{margin:0 0 6px}
+.track .listen b,.track .ear b{color:#ffd48a;font-weight:600}
+.track .reason{color:var(--muted);font-style:italic;margin-bottom:4px}
+.track-actions{margin-top:12px}.track-actions>.btn{flex:0 1 auto}
+.tstatus{margin:10px 0 4px}
+.track .link{margin:0;font-size:inherit}
+.fixvid{margin-top:4px;font-size:14px}.fixvid summary{color:var(--muted)}
+.fixvid .row{margin:10px 0 8px}
+.textbtn{background:none;border:0;padding:0;font:inherit;color:#ffd48a;cursor:pointer;text-decoration:underline}
+.skel{color:var(--muted)}
+.ytkey-help ol{margin:8px 0 0;padding-left:20px}.ytkey-help li{margin-bottom:4px}
+.ytkey-help .link{margin:0;font-size:inherit}.ytkey-help code{font-size:13px;word-break:break-all}
+@media(min-width:700px){
+  .card.track{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:start}
+  .track-media{align-self:stretch;display:flex;align-items:center;background:#0b0a0c}
+  .track-media>*{width:100%}
+  .track-body{padding:16px 18px 16px 4px}
+  .track-body{padding-left:18px}
+}

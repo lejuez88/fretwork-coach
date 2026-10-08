@@ -1,29 +1,33 @@
 // Central dashboard: practice session timer, open courses with progress,
-// practice stats, 15-minute calendar with streak, and the album of the day.
+// practice stats, Track of the Day (with a YouTube player), and the 15-minute
+// calendar with streak. The track card lives outside the re-rendered parts of
+// the page, so starting the timer or flipping the calendar never stops the music.
 import { esc, fmtMinutes, fmtClock, today, toast } from '../core/util.js';
 import { Store, Practice } from '../core/store.js';
 import { wikiTile, hydrateImages } from '../core/wiki.js';
-import { ALBUMS, GENRES, GENRE_BY_ID } from '../data/catalog.js';
+import { GENRES, GENRE_BY_ID } from '../data/catalog.js';
 import { createCourse, suggestedDifficulty, tierName } from '../core/courses.js';
 import { DOMAINS } from '../assessment/engine.js';
 import { Shell } from '../ui/shell.js';
 import { progressPct } from '../core/progression.js';
 import { hasActiveRoutine } from './routine.js';
 import { estimatedCount } from './reassess.js';
+import { mountTrackCard } from '../ui/trackcard.js';
 
 export function mountDashboard(root, { navigate }) {
   const p = Store.profile;
   let calMonth = today().slice(0, 7); // YYYY-MM
   let tick = null;
+  root.innerHTML = '<div data-r="top"></div><section class="card track" data-r="track"></section><div data-r="bottom"></div>';
+  const top = root.querySelector('[data-r="top"]'), bottom = root.querySelector('[data-r="bottom"]');
 
   function render() {
     const st = Practice.stats(p), act = Practice.active();
     const open = p.courses.filter(c => c.status !== 'archived');
-    const cur = p.dashboard.current, album = cur && ALBUMS.find(a => a.id === cur.albumId);
     const name = p.questionnaire.name || 'there';
     const hour = new Date().getHours(), greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
-    root.innerHTML = `
+    top.innerHTML = `
       <div class="dash-head"><div><div class="label">${new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div><h1>${greet}, ${esc(name)}.</h1></div>
         <div class="streak-badge ${st.streak ? 'hot' : ''}" title="Current streak"><b>${st.streak}</b><span>day${st.streak === 1 ? '' : 's'}<br>streak</span></div></div>
 
@@ -44,15 +48,9 @@ export function mountDashboard(root, { navigate }) {
       <section class="card">
         <div class="sec-head"><h3>Your courses</h3><button class="btn sm" data-d="newcourse">+ New course</button></div>
         ${open.length ? open.map(courseCard).join('') : '<p class="muted">No courses yet. Create one to get a full learning path.</p>'}
-      </section>
+      </section>`;
 
-      ${album ? `<section class="card album">
-        ${wikiTile(album.wikiTitle, album.title, 'cover')}
-        <div class="album-body"><div class="label">Album of the day</div><h3>${esc(album.title)}</h3>
-          <div class="muted">${esc(album.artist)} · ${album.year}</div>
-          <p class="small">${esc(album.why)}</p><p class="small reason">${esc(cur.reason)}</p></div>
-      </section>` : ''}
-
+    bottom.innerHTML = `
       <section class="card">
         <div class="sec-head"><h3>Practice calendar</h3><div class="calnav"><button class="kbtn sm" data-d="calprev" aria-label="Previous month">‹</button><button class="kbtn sm" data-d="calnext" aria-label="Next month">›</button></div></div>
         ${calendar(st)}
@@ -64,9 +62,9 @@ export function mountDashboard(root, { navigate }) {
         <div class="sec-head"><h3>Skill levels</h3><a class="link" href="#/profile">Player Profile →</a></div>
         ${DOMAINS.map(d => { const l = p.domains[d.key] ? p.domains[d.key].level : 1; return `<div class="lv"><span>${d.short}</span><div class="bar"><i style="width:${l * 10}%"></i></div><b>${l}</b></div>`; }).join('')}
       </section>` : ''}`;
-    hydrateImages(root);
+    hydrateImages(top); hydrateImages(bottom);
     clearInterval(tick);
-    if (act) tick = setInterval(() => { const c = root.querySelector('[data-r="clock"]'); if (c) c.textContent = fmtClock(Practice.elapsedSec()); }, 1000);
+    if (act) tick = setInterval(() => { const c = top.querySelector('[data-r="clock"]'); if (c) c.textContent = fmtClock(Practice.elapsedSec()); }, 1000);
   }
 
   const stat = (k, v, cls = '') => `<div class="stat ${cls}"><div class="k">${k}</div><div class="v">${v}</div></div>`;
@@ -194,5 +192,6 @@ export function mountDashboard(root, { navigate }) {
   };
   root.addEventListener('click', onClick);
   render();
-  return () => { clearInterval(tick); root.removeEventListener('click', onClick); };
+  const offTrack = mountTrackCard(root.querySelector('[data-r="track"]'));
+  return () => { clearInterval(tick); offTrack(); root.removeEventListener('click', onClick); };
 }
