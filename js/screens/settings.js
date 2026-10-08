@@ -1,27 +1,15 @@
 // Settings: Claude API key + model, optional YouTube key, audio, images,
 // data import/export, reset. Keys live only in this browser, never in exports.
 import { esc, toast } from '../core/util.js';
-import { Store, normalize } from '../core/store.js';
+import { Store } from '../core/store.js';
 import { Claude, MODELS } from '../core/claude.js';
 import { Wiki } from '../core/wiki.js';
 import { exportProfile } from './profile.js';
 import { getKey as ytGetKey, setKey as ytSetKey, testKey as ytTestKey } from '../core/youtube.js';
 import { mountAudioSetup } from '../ui/audiosetup.js';
+import { importBlockHTML, wireImport } from '../ui/importui.js';
 
-export function importFile(file, onDone) {
-  const r = new FileReader();
-  r.onload = () => {
-    try {
-      const data = JSON.parse(r.result);
-      if (!data || !data.questionnaire) throw new Error('Not a Fretwork Coach profile');
-      Store.replace(normalize(data)); Store.draft.clear();
-      toast('Profile imported.'); onDone && onDone();
-    } catch (e) { toast('Import failed: ' + e.message); }
-  };
-  r.readAsText(file);
-}
-
-export function mountSettings(root, { navigate }) {
+export function mountSettings(root, { navigate, applySettings }) {
   const p = Store.profile;
   const key = Claude.getKey();
   const ytKey = ytGetKey();
@@ -63,7 +51,8 @@ export function mountSettings(root, { navigate }) {
     <section class="card">
       <h3>Your data</h3>
       <p class="muted small">Everything is saved in this browser. Export a backup now and then, and to move to another device.</p>
-      <div class="row">${p ? '<button class="btn" data-s="export">Export profile (JSON)</button>' : ''}<label class="btn filebtn">Import profile<input type="file" accept="application/json,.json" data-r="import"></label></div>
+      ${p ? '<button class="btn block" data-s="export">Export profile (JSON)</button>' : ''}
+      ${importBlockHTML({ label: 'Import profile (JSON)', btnClass: 'btn block' })}
       ${p ? '<button class="btn ghost block danger" data-s="reset">Delete profile from this browser</button>' : ''}
     </section>
     <section class="card">
@@ -105,10 +94,12 @@ export function mountSettings(root, { navigate }) {
   };
   const onChange = e => {
     if (e.target.dataset.r === 'wiki') { p.settings.wikiImages = e.target.checked; Wiki.enabled = e.target.checked; Store.save(); }
-    if (e.target.dataset.r === 'import' && e.target.files[0]) importFile(e.target.files[0], () => navigate('#/home'));
   };
   root.addEventListener('click', onClick); root.addEventListener('change', onChange);
   const audioSlot = root.querySelector('[data-r="audio"]');
   const offAudio = audioSlot ? mountAudioSetup(audioSlot, { profile: p }) : null;
-  return () => { if (offAudio) offAudio(); root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); };
+  const offImport = wireImport(root, {
+    onDone: (prof) => { if (applySettings) applySettings(); setTimeout(() => navigate(Object.keys(prof.domains || {}).length ? '#/home' : '#/onboarding'), 900); }
+  });
+  return () => { if (offAudio) offAudio(); offImport(); root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); };
 }

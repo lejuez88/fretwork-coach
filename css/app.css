@@ -624,3 +624,8 @@ input[type=url]{width:100%;background:#0f0d11;border:1px solid var(--line);color
   .track-body{padding:16px 18px 16px 4px}
   .track-body{padding-left:18px}
 }
+/* Profile import */
+.impblock .filebtn{margin-top:10px}
+.pasteimp{margin-top:10px;font-size:14px}.pasteimp summary{color:var(--muted)}
+.pasteimp textarea{margin:8px 0 0;font:13px var(--mono);min-height:110px}
+.imp-status{margin:8px 0 0;white-space:pre-line}.imp-status:empty{display:none}

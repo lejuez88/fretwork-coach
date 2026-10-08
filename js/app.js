@@ -6,7 +6,7 @@ import { Wiki } from './core/wiki.js';
 import { chooseTrack } from './core/track.js';
 import { createStarterCourses } from './core/courses.js';
 import { ProfileBuilder } from './assessment/engine.js';
-import { rebuildProfile, ensureAssessed, recomputeLevels } from './core/skills.js';
+import { rebuildProfile } from './core/skills.js';
 import { Metronome } from './tools/metronome.js';
 import { Shell } from './ui/shell.js';
 import { mountOnboarding } from './screens/onboarding.js';
@@ -14,14 +14,15 @@ import { mountAssessment } from './screens/assessment.js';
 import { mountDashboard } from './screens/dashboard.js';
 import { mountTools } from './screens/tools.js';
 import { mountProfile } from './screens/profile.js';
-import { mountSettings, importFile } from './screens/settings.js';
+import { mountSettings } from './screens/settings.js';
+import { importBlockHTML, wireImport } from './ui/importui.js';
+import { prepareProfile } from './core/importer.js';
 import { mountCourse } from './screens/course.js';
 import { mountRoutineSetup, mountRoutineRunner, mountRoutineSummary } from './screens/routine.js';
 import { mountReassessHub, mountReassessRun } from './screens/reassess.js';
 import { mountEvaluate } from './screens/evaluate.js';
 import { mountSongsHub, mountSongDetail } from './screens/songs.js';
 import { Recorder } from './eval/recorder.js';
-import { upgradeGenericPlan } from './core/coursegen.js';
 import { Audio as AudioEngine } from './core/audio.js';
 import { applyAudioPrefs } from './ui/audiosetup.js';
 
@@ -62,7 +63,7 @@ function welcome(root) {
       </ul>
       <button class="btn primary block" data-w="start">${d ? 'Start over' : 'Create my player profile'}</button>
       ${d ? `<button class="btn block" data-w="resume">Resume setup${d.profile && d.profile.questionnaire.name ? ' (' + esc(d.profile.questionnaire.name) + ')' : ''}</button>` : ''}
-      <label class="btn block ghost filebtn">Import a saved profile (JSON)<input type="file" accept="application/json,.json" data-w="import"></label>
+      ${importBlockHTML({ label: 'Import a saved profile (JSON)', btnClass: 'btn block ghost' })}
     </section>
     <section class="card">
       <h3>Connect Claude ${Claude.hasKey() ? '<span class="badge ok">Connected</span>' : ''}</h3>
@@ -75,9 +76,11 @@ function welcome(root) {
     if (b.dataset.w === 'start') { Store.draft.clear(); working = emptyProfile(); Store.draft.set({ profile: working, phase: 'onboarding', step: 0 }); navigate('#/onboarding'); }
     if (b.dataset.w === 'resume') { working = null; const dr = Store.draft.get(); navigate(dr.phase === 'assessment' ? '#/assessment' : '#/onboarding'); }
   };
-  const onChange = e => { if (e.target.dataset.w === 'import' && e.target.files[0]) importFile(e.target.files[0], () => { Store.load(); applySettings(); navigate(Object.keys(Store.profile.domains).length ? '#/home' : '#/onboarding'); }); };
-  root.addEventListener('click', onClick); root.addEventListener('change', onChange);
-  return () => { root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); };
+  const offImport = wireImport(root, {
+    onDone: prof => { working = null; applySettings(); navigate(Object.keys(prof.domains || {}).length ? '#/home' : '#/onboarding'); }
+  });
+  root.addEventListener('click', onClick);
+  return () => { offImport(); root.removeEventListener('click', onClick); };
 }
 
 function applySettings() {
@@ -147,7 +150,7 @@ function route() {
     case 'evaluate': cleanup = mountEvaluate(root, { navigate, sub: parts[1] || null }); break;
     case 'songs': cleanup = mountSongsHub(root, { navigate }); break;
     case 'song': cleanup = mountSongDetail(root, { id: parts[1], navigate }); break;
-    case 'settings': cleanup = mountSettings(root, { navigate }); break;
+    case 'settings': cleanup = mountSettings(root, { navigate, applySettings }); break;
     default: navigate('#/');
   }
 }
@@ -157,11 +160,9 @@ function boot() {
   Store.load();
   if (Store.profile) {
     applySettings();
-    if (Object.keys(Store.profile.domains).length) { ensureAssessed(Store.profile); recomputeLevels(Store.profile); }
-    // Old one-size-fits-all plans that haven't been practiced yet become style-specific plans
-    (Store.profile.courses || []).forEach(c => { try { upgradeGenericPlan(c); } catch { /* keep the old plan */ } });
-    Store.save(); // migrates older profiles
-    if (Object.keys(Store.profile.domains).length) { chooseTrack(Store.profile); Store.save(); }
+    // Upgrades older profiles: assessment fields, levels, style-specific plans, today's track
+    prepareProfile(Store.profile);
+    Store.save();
   }
   window.addEventListener('hashchange', route);
   route();

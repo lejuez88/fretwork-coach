@@ -88,8 +88,9 @@ export const Store = {
     this.profile = p ? normalize(p) : null;
     return this.profile;
   },
-  save() { if (!this.profile) return; this.profile.meta.updated = today(); safe.set(PROFILE_KEY, this.profile); },
-  replace(p) { this.profile = normalize(p); this.save(); },
+  /** Save to this browser. Returns false if the browser refused (storage full or blocked). */
+  save() { if (!this.profile) return false; this.profile.meta.updated = today(); return safe.set(PROFILE_KEY, this.profile); },
+  replace(p) { this.profile = normalize(p); return this.save(); },
   hasLegacy() { return !!safe.get(LEGACY_KEY) && !safe.get(PROFILE_KEY); },
   reset() { safe.del(PROFILE_KEY); safe.del(DRAFT_KEY); safe.del(SESSION_KEY); this.profile = null; },
   draft: {
