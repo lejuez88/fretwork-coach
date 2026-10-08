@@ -1,5 +1,6 @@
 // Metronome engine (lookahead scheduler on the audio clock) and a reusable UI.
 import { Audio, CHORD_MIDI } from '../core/audio.js';
+import { chordMidi } from '../core/theory.js';
 import { clamp, esc, toast } from '../core/util.js';
 
 export const Metronome = {
@@ -53,7 +54,8 @@ export const Metronome = {
     if (audible) Audio.click(t, beat === 0 && sub === 0 && this.mode !== 'backbeat', sub ? 0.45 * this.volume : this.volume);
     if (this.backing && beat === 0 && sub === 0) {
       const ch = this.backing[bar % this.backing.length];
-      if (CHORD_MIDI[ch]) Audio.strum(CHORD_MIDI[ch], t, { dur: perBeat * this.beatsPerBar * 0.98, gain: 0.45 });
+      const ms = CHORD_MIDI[ch] || chordMidi(ch);
+      if (ms) Audio.strum(ms, t, { dur: perBeat * this.beatsPerBar * 0.98, gain: 0.45 });
     }
     if (sub === 0) {
       const delay = Math.max(0, (t - Audio.ctx.currentTime) * 1000);

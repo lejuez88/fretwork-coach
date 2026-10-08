@@ -1,4 +1,4 @@
-// Tools hub: tuner, metronome, and the tab player with the exercise library.
+// Tools hub: tuner, metronome, the tab player with the exercise library, and the chord glossary.
 import { esc, toast, today } from '../core/util.js';
 import { Store } from '../core/store.js';
 import { mountTuner } from '../tools/tuner.js';
@@ -6,6 +6,7 @@ import { Metronome, mountMetronome } from '../tools/metronome.js';
 import { mountTabPlayer } from '../tools/tabplayer.js';
 import { EXERCISES, EXERCISE_BY_ID } from '../tools/exercises.js';
 import { addEvidence, recomputeLevels, describeChanges } from '../core/skills.js';
+import { mountChordGlossary } from './chords.js';
 
 export function bestTempo(profile, exId) {
   return profile.exerciseLog.filter(l => l.exerciseId === exId).reduce((m, l) => Math.max(m, l.tempo), 0);
@@ -20,10 +21,11 @@ export function mountTools(root, { tab = 'tuner', exerciseId = null, navigate })
     if (cleanup) { cleanup(); cleanup = null; }
     root.innerHTML = `
       <h1>Tools</h1>
-      <div class="segtabs four">${[['tuner', 'Tuner'], ['metronome', 'Metronome'], ['tabs', 'Tab player'], ['evaluate', 'Evaluate']].map(([k, l]) => `<a href="${k === 'evaluate' ? '#/evaluate' : '#/tools/' + k}" class="${tab === k ? 'on' : ''}">${l}</a>`).join('')}</div>
+      <div class="segtabs five">${[['tuner', 'Tuner'], ['metronome', 'Metronome'], ['tabs', 'Tabs'], ['chords', 'Chords'], ['evaluate', 'Evaluate']].map(([k, l]) => `<a href="${k === 'evaluate' ? '#/evaluate' : '#/tools/' + k}" class="${tab === k ? 'on' : ''}">${l}</a>`).join('')}</div>
       <div data-r="pane"></div>`;
     const pane = root.querySelector('[data-r="pane"]');
     if (tab === 'tuner') cleanup = mountTuner(pane, p.settings, saveSettings);
+    else if (tab === 'chords') cleanup = mountChordGlossary(pane, { initial: exerciseId });
     else if (tab === 'metronome') {
       Metronome.configure({ mode: Metronome.mode, backing: null, beatsPerBar: Metronome.beatsPerBar, subdiv: Metronome.subdiv });
       pane.innerHTML = '<section class="card"><div data-r="m"></div></section><p class="muted small">Tip: “Gap” mode drops the click for 2 bars so you can check your internal time.</p>';

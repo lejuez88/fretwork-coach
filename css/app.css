@@ -525,3 +525,62 @@ pre.tab.small{font-size:12px;padding:10px}
 .pickrow select{margin-top:4px;padding:10px 12px}
 .pickkey{display:flex;gap:12px;flex-wrap:wrap;align-items:center;flex:1 1 220px;padding-bottom:6px}
 .pickkey svg{vertical-align:-2px;margin-right:2px}
+
+/* ------------------------------- Chord glossary ------------------------------- */
+.segtabs.five{grid-template-columns:repeat(5,1fr)}
+.segtabs.five a{font-size:14px;padding:12px 2px}
+.rootpick{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin:4px 0 12px}
+.rootbtn{min-height:42px;border-radius:10px;border:1px solid var(--line);background:var(--inset);color:var(--text);font:600 15px var(--body);cursor:pointer;padding:0}
+.rootbtn.on{background:var(--amber);border-color:var(--amber);color:#1b1205}
+.typepick select{margin-top:4px}
+.chordhead{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:14px 0 12px}
+.chordhead h2{font-size:32px;margin:0}
+.tones{display:flex;gap:6px;flex-wrap:wrap}
+.tone{display:flex;flex-direction:column;align-items:center;min-width:44px;padding:5px 8px;border-radius:10px;background:var(--inset);border:1px solid var(--line);border-top:3px solid var(--fc)}
+.tone b{font-size:16px}.tone i{font-style:normal;font-size:12px;color:var(--muted)}
+.gviews{margin-top:4px}
+.fbwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;background:linear-gradient(180deg,#2a1d14,#1f160f);border:1px solid #3b2a1c;border-radius:12px;padding:6px 4px;margin:6px 0}
+.fboard{display:block}
+.fb-fret{stroke:#9a8f80;stroke-width:1.6}
+.fb-nut{stroke:#efe7d6;stroke-width:5}
+.fb-str{stroke:#d6c9b3;opacity:.85}
+.fb-inlay{fill:#4c3a2a}
+.fb-num{font:10px var(--mono);fill:#8d7d6a}.fb-num.em{fill:#d6c9b3}
+.fb-sname{font:600 11px var(--mono);fill:#a39888}
+.fb-x{font:600 15px var(--body);fill:#ff8a80}
+.fb-mark circle{stroke:#120d09;stroke-width:1.5}
+.fb-mark text{font:700 11px var(--body);fill:#120d09;pointer-events:none}
+.fb-mark text.sm{font-size:9px}
+.fb-mark.ghost{opacity:.55}
+.fb-hit{fill:transparent;cursor:pointer}
+.fb-hit:hover{fill:rgba(245,165,36,.12)}
+.fboard.interactive .fb-mark{pointer-events:none}
+.fam-root{--fc:#f5a524;fill:#f5a524}.fam-third{--fc:#5cc4b4;fill:#5cc4b4}.fam-fifth{--fc:#7aa7d6;fill:#7aa7d6}.fam-seventh{--fc:#b593ec;fill:#b593ec}
+.fam-sixth{--fc:#e0a96d;fill:#e0a96d}.fam-sus{--fc:#c9d36a;fill:#c9d36a}.fam-ext{--fc:#ec7f9b;fill:#ec7f9b}
+.fblegend{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:13px;color:var(--muted);margin:6px 0 10px}
+.fblegend>span{display:inline-flex;align-items:center;gap:5px}
+.fblegend i{width:12px;height:12px;border-radius:50%;background:var(--fc);display:inline-block}
+.labmodes{margin-left:auto;display:flex;gap:6px}
+.vinfo{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0 10px}
+.vinfo>b{font-size:18px}
+.vinfo .btn{flex:0 0 auto}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;margin-top:8px}
+.vcard{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 8px;border-radius:12px;border:1px solid var(--line);background:var(--inset);color:var(--text);cursor:pointer;font:inherit}
+.vcard.on{border-color:var(--amber);box-shadow:0 0 0 3px var(--amber-soft)}
+.cdiag{width:100%;max-width:120px;height:auto}
+.cd-name{font:600 13px var(--head);fill:var(--text)}
+.cd-str{stroke:#8d867c;stroke-width:1}
+.cd-fret{stroke:#8d867c;stroke-width:1}.cd-fret.nut{stroke:#ece6da;stroke-width:4}
+.cd-base{font:10px var(--body);fill:#a39d93}
+.cd-x{font:12px var(--body);fill:#a39d93}
+.cd-open{fill:none!important;stroke:var(--fc);stroke-width:1.8}
+.cd-olab{font:600 8px var(--body);fill:#a39d93}
+.cd-dot{stroke:#120d09;stroke-width:1}
+.cd-lab{font:700 8.5px var(--body);fill:#120d09}.cd-lab.sm{font-size:7px}
+.cd-barre{fill:rgba(245,165,36,.35)}
+.diagrams .cdiag{width:110px}
+.buildres{background:var(--inset);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:8px}
+.bname{font:600 34px var(--head);color:#ffd48a}
+.buildres .row{margin-top:10px}.buildres .row .btn{flex:0 0 auto}
+@media(max-width:560px){.rootpick{grid-template-columns:repeat(6,1fr)}.segtabs.five a{font-size:11px;padding:11px 1px}.chordhead h2{font-size:26px}.labmodes{margin-left:0}}
+.fb-x,.fb-num,.fb-sname,.fb-inlay,.fb-str,.fb-fret,.fb-nut{pointer-events:none}

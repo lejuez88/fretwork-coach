@@ -14,7 +14,8 @@ export const stringNames = (tuning = STD_TUNING) => tuning.map((m, i) => { const
 const ROW = 18, BOTTOM = 12, PAD = 28;
 const TOP_PLAIN = 26, TOP_PICKS = 46; // room above the strings: technique row, plus the picking row when shown
 
-export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, onLog = null, beatsPerBar = 4, startBpm = null, compact = false, onBpm = null, ramp = null, evalMode = false } = {}) {
+export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, onLog = null, beatsPerBar: bpbOpt = 4, startBpm = null, compact = false, onBpm = null, ramp = null, evalMode = false } = {}) {
+  const beatsPerBar = ex.beatsPerBar || bpbOpt;
   const state = {
     ramp: ramp ? Object.assign({ enabled: true, everyLoops: 2 }, ramp) : null, rampedLoops: 0, peakBpm: 0,
     bpm: startBpm || ex.bpm || 80, sound: !evalMode && settings.tabAudio !== false, scroll: settings.tabScroll !== false,
@@ -85,9 +86,9 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
       for (let b = start; b < end; b++) s += `<text x="${PAD + (b - start) * pxBeat - 2}" y="${h - 1}" class="tab-count">${(b % beatsPerBar) + 1}</text>`;
       notes.forEach((n, i) => {
         if (n.t < start || n.t >= end) return;
-        const x = PAD + (n.t - start) * pxBeat + 4, y = TOP + (n.s - 1) * ROW, label = n.x === 'ghost' ? `(${n.f})` : String(n.f), wBox = 7 * label.length + 6;
+        const x = PAD + (n.t - start) * pxBeat + 4, y = TOP + (n.s - 1) * ROW, label = n.x === 'ghost' ? `(${n.f})` : n.x === 'mute' ? 'x' : String(n.f), wBox = 7 * label.length + 6;
         s += `<g class="tab-note" data-i="${i}"><rect x="${x - wBox / 2}" y="${y - 9}" width="${wBox}" height="18" rx="4"/><text x="${x}" y="${y + 5}">${label}</text></g>`;
-        if (n.x && n.x !== 'ghost' && !n.chord) s += `<text x="${x}" y="${TOP - 12}" class="tab-tech">${esc(n.x === 'pm' ? 'PM' : n.x === 't' ? 'T' : n.x === 'b' && n.bendTo != null ? 'b' + n.bendTo : n.x)}</text>`;
+        if (n.x && n.x !== 'ghost' && n.x !== 'mute' && !n.chord) s += `<text x="${x}" y="${TOP - 12}" class="tab-tech">${esc(n.x === 'pm' ? 'PM' : n.x === 't' ? 'T' : n.x === 'b' && n.bendTo != null ? 'b' + n.bendTo : n.x)}</text>`;
         if (picks && picks[i].lead) {
           // Fingers for every note struck together (bass first), the stroke on the group's lowest string
           const fingers = notes.map((m, j) => ({ m, j })).filter(o => Math.abs(o.m.t - n.t) < 1e-3 && picks[o.j].finger).sort((a, b) => b.m.s - a.m.s).map(o => picks[o.j].finger);
@@ -166,7 +167,8 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
       if (t > ahead) break;
       if (state.sound && t >= c.currentTime - 0.01) {
         const spread = n.chord ? 0.012 * (6 - n.s) : 0;
-        Audio.guitar(noteMidi(n, tuning), t + spread, { dur: Math.max(0.25, n.d * spb() * 1.6), gain: n.chord ? 0.32 : 0.55, bright: n.x === 'pm' ? 0.3 : 0.55 });
+        if (n.x === 'mute') Audio.guitar(noteMidi(n, tuning), t + spread, { dur: 0.05, gain: n.chord ? 0.2 : 0.35, bright: 0.2 });
+        else Audio.guitar(noteMidi(n, tuning), t + spread, { dur: Math.max(0.25, n.d * spb() * 1.6), gain: n.chord ? 0.32 : 0.55, bright: n.x === 'pm' ? 0.3 : 0.55 });
       }
       state.nextIdx++;
     }

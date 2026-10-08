@@ -25,6 +25,16 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
+## Latest: chord glossary, style-specific plans, smarter requests
+
+| Area | Included |
+|---|---|
+| Chord glossary | Tools → Chords. Pick a root and any of 29 chord types (triads, 6ths, 7ths, added tones, 9/11/13). See the notes and formula, every playable shape up the neck, inversions on each string set (triads, drop 2, drop 3, shells), or every chord tone on the whole neck. The fretboard lights up the frets with the root and intervals (or note names, or fingers). **Build a chord:** tap frets on the fretboard and the chord is named, with its inversion and alternative names. Tap to hear any voicing. |
+| Style-specific plans | Every course plan is built for its style: its key, progressions, rhythms and signature techniques (a Texas shuffle course is shuffles, bends and double-stops in E; Jazz Comping is shells and drop-2s over ii–V–I; Thrash Precision is gallops and Phrygian riffs). 48 styles across 16 genres, scaled to your level. Older plans that were the same for every style are upgraded automatically if unpracticed, or offered as a rebuild. |
+| Varied routines | Warm-ups, review, theory and musical-application items come from the course's own style pool and rotate day to day. |
+| Smarter requests | “What do you want to work on?” reads chord types, voicing words (inversions, drop 2, shells, triads, CAGED), scales and modes, keys (“in G”, “A minor”), progressions (ii–V–I, 12-bar), named chords and techniques, says how it read your request, and builds a focused drill → main → apply set. “7th chords and inversions” gives the four 7th qualities on one root, 7th-chord inversions on two string sets, and a voice-led ii–V–I. Claude gets the same reading as a guide and can use any chord voicing. |
+| Chord diagrams everywhere | Exercises can show any voicing (not just open chords), with intervals on the dots. Backing loops play any chord symbol. |
+
 ## What's in Phase D
 
 | Area | Included |
@@ -88,13 +98,14 @@ index.html          app shell
 css/app.css         theme and components
 js/app.js           boot + hash router
 js/core/            store (profile schema + stats), Claude client, Wikipedia images, audio engine, courses, album picks,
-                    course/routine engines, tab parser, songs, drills, custom exercises
+                    course/routine engines, tab parser, songs, drills, custom exercises,
+                    theory engine (chords, voicings, scales), exercise generators, style library, request parser
 js/data/            genres, guitarists, albums (catalog.js), song list (songs.js)
 js/assessment/      assessment engine (tests, leveling, profile builder)
 js/tools/           pitch detection, tuner, metronome, tab player, exercise library
 js/screens/         onboarding, assessment, dashboard, tools, course, routine, songs, evaluate, reassess, profile, settings
 js/eval/            recorder, onset/pitch analysis, latency calibration, coaching
-js/ui/              shell, audio setup, ask box
+js/ui/              shell, audio setup, ask box, fretboard and chord diagrams
 sw.js               offline cache
 ```
 

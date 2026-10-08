@@ -47,7 +47,7 @@ export function mountSettings(root, { navigate }) {
     </section>
     <section class="card">
       <h3>About this version</h3>
-      <p class="small">Fretwork Coach · Phase D. Included: onboarding and continuable assessment, dashboard, course plans with progress trees, timed routines with tempo ladders and level-matched tempos, exercises from your own requests, songs with recommendations, one-day song lessons, tab import with section looping and help, audio and video evaluation with Claude coaching, tuner, metronome, tab player.</p>
+      <p class="small">Fretwork Coach · Phase D. Included: onboarding and continuable assessment, dashboard, course plans with progress trees, timed routines with tempo ladders and level-matched tempos, exercises from your own requests, songs with recommendations, one-day song lessons, tab import with section looping and help, audio and video evaluation with Claude coaching, tuner, metronome, tab player with pick directions, chord glossary with chord finder, style-specific course plans.</p>
     </section>`;
   const r = n => root.querySelector(`[data-r="${n}"]`);
   const status = (msg, cls = '') => { r('status').textContent = msg; r('status').className = 'small ' + cls; };

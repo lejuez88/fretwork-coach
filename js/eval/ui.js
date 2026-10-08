@@ -32,7 +32,7 @@ function levelStats(x) {
 
 /** Convert any exercise shape to tab-player format, or null if it has no tab. */
 export function playerFormat(ex, bpm) {
-  if (ex.notes && ex.notes.length) return { id: ex.id, name: ex.name, unit: ex.unit, why: ex.why, goalBpm: ex.goalBpm, bpm, notes: ex.notes, swing: !!ex.swing, ...(ex.beats ? { beats: ex.beats } : {}), ...(ex.tuning ? { tuning: ex.tuning } : {}), instr: ex.instr, ...(ex.picking ? { picking: ex.picking } : {}) };
+  if (ex.notes && ex.notes.length) return { id: ex.id, name: ex.name, unit: ex.unit, why: ex.why, goalBpm: ex.goalBpm, bpm, notes: ex.notes, swing: !!ex.swing, ...(ex.beats ? { beats: ex.beats } : {}), ...(ex.tuning ? { tuning: ex.tuning } : {}), instr: ex.instr, ...(ex.picking ? { picking: ex.picking } : {}), ...(ex.beatsPerBar ? { beatsPerBar: ex.beatsPerBar } : {}) };
   return toPlayerExercise(ex, bpm);
 }
 function gridSpec(ex) {
@@ -156,7 +156,7 @@ export function mountEvalSession(el, { profile = Store.profile, exercise, bpm, m
       t0 = tm.t0; fromTime = t0 - 0.05;
       endTime = t0 + S.loops * tm.totalBeats * 60 / S.bpm + 0.25;
     } else {
-      Metronome.configure({ bpm: S.bpm, mode: 'all', backing: null, beatsPerBar: 4, subdiv: 1 });
+      Metronome.configure({ bpm: S.bpm, mode: 'all', backing: null, beatsPerBar: exercise.beatsPerBar || 4, subdiv: 1 });
       Metronome.start();
       t0 = Metronome.startedAt; fromTime = t0 + 8 * 60 / S.bpm; // 2 bars of count-in
       endTime = fromTime + S.seconds;

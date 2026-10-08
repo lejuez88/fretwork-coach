@@ -5,7 +5,8 @@
 import { esc, toast } from '../core/util.js';
 import { Store } from '../core/store.js';
 import { Claude } from '../core/claude.js';
-import { DOMAIN_BY_KEY, chordSVG } from '../assessment/engine.js';
+import { DOMAIN_BY_KEY } from '../assessment/engine.js';
+import { exerciseDiagramsHTML } from './fretboard.js';
 import { generateExercises, saveCustom, removeCustom, addToRoutines, roleBlock, ASK_EXAMPLES } from '../core/custom.js';
 import { makeAdhocRoutine } from '../core/routine.js';
 import { toPlayerExercise } from '../core/coursegen.js';
@@ -28,7 +29,7 @@ export function exerciseCardHTML(ex, { i, role = null, target = null, saved = nu
     ${ex.watch ? `<div class="watch">⚠ ${esc(ex.watch)}</div>` : ''}
     ${ex.simplify ? `<div class="small muted">Too hard? ${esc(ex.simplify)}</div>` : ''}
     ${tab ? `<pre class="tab small">${esc(tab)}</pre>` : ''}
-    ${ex.chords && ex.chords.length ? `<div class="diagrams">${ex.chords.map(chordSVG).join('')}</div>` : ''}
+    ${exerciseDiagramsHTML(ex)}
     ${saved && saved.state ? `<div class="small">Target <b>${saved.state.target}</b> BPM${saved.state.best ? ` · best ${saved.state.best}` : ''}${saved.state.mastered ? ' · <span class="ok">mastered</span>' : ''}</div>` : ''}
     <div class="row askex-act">
       ${actions.includes('try') ? `<button class="btn sm" data-ask="try" data-i="${i}">▶ Try it</button>` : ''}
@@ -103,7 +104,7 @@ export function mountAskBox(el, { start, courseId = null }) {
     const px = toPlayerExercise(it.ex, it.targetBpm);
     if (px) tryTool = mountTabPlayer(slot, px, { settings: p.settings, onSettings: patch => { Object.assign(p.settings, patch); Store.save(); }, startBpm: it.targetBpm || it.ex.startBpm, compact: true });
     else {
-      Metronome.configure({ bpm: it.targetBpm || it.ex.startBpm, mode: it.ex.metroMode || 'all', backing: it.ex.backing && it.ex.backing.length ? it.ex.backing : null, beatsPerBar: 4, subdiv: 1, ramp: null });
+      Metronome.configure({ bpm: it.targetBpm || it.ex.startBpm, mode: it.ex.metroMode || 'all', backing: it.ex.backing && it.ex.backing.length ? it.ex.backing : null, beatsPerBar: it.ex.beatsPerBar || 4, subdiv: 1, ramp: null });
       tryTool = mountMetronome(slot, { compact: true });
     }
   }

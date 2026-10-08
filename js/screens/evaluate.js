@@ -49,7 +49,7 @@ export function mountEvaluate(root, { navigate, sub = null }) {
     const recent = [...p.evaluations].reverse().slice(0, 6);
     root.innerHTML = `
       <h1>Evaluate my playing</h1>
-      <div class="segtabs four">${[['tuner', 'Tuner'], ['metronome', 'Metronome'], ['tabs', 'Tab player'], ['evaluate', 'Evaluate']].map(([k, l]) => `<a href="${k === 'evaluate' ? '#/evaluate' : '#/tools/' + k}" class="${'evaluate' === k ? 'on' : ''}">${l}</a>`).join('')}</div>
+      <div class="segtabs five">${[['tuner', 'Tuner'], ['metronome', 'Metronome'], ['tabs', 'Tabs'], ['chords', 'Chords'], ['evaluate', 'Evaluate']].map(([k, l]) => `<a href="${k === 'evaluate' ? '#/evaluate' : '#/tools/' + k}" class="${'evaluate' === k ? 'on' : ''}">${l}</a>`).join('')}</div>
       <section class="card">
         <div class="segtabs two">${['audio', 'video'].map(m => `<a href="javascript:void 0" data-m="${m}" class="${mode === m ? 'on' : ''}">${m === 'audio' ? '🎤 Audio check' : '🎥 Video form check'}</a>`).join('')}</div>
         <p class="small">${mode === 'audio'

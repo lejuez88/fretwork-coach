@@ -1,8 +1,9 @@
 // "What do you want to work on?" — turns a request in the student's own words
-// into 1–3 measurable exercises at the edge of their ability. Claude writes
-// them for the exact request; without a key, a keyword matcher picks from the
-// original drill library. Generated exercises can be practiced right away,
-// saved, or added to the daily routines (as prescriptions).
+// into 1–4 measurable exercises at the edge of their ability. The request is
+// parsed first (chord types, voicings, scales, keys, progressions, techniques);
+// Claude writes exercises for it with that reading as a guide, and without a
+// key (or if Claude fails) the theory engine builds them. Generated exercises
+// can be practiced right away, saved, or added to the daily routines.
 import { Claude } from './claude.js';
 import { uid, today } from './util.js';
 import { DOMAINS, CHORD_SHAPES } from '../assessment/engine.js';
@@ -11,6 +12,7 @@ import { GENRE_BY_ID } from '../data/catalog.js';
 import { EXERCISES } from '../tools/exercises.js';
 import { normalizeExercise } from './coursegen.js';
 import { matchDrills, drillLibrary } from './drills.js';
+import { parseRequest, exercisesForRequest } from './topics.js';
 import { calibratedTarget, newExerciseState, applyResult } from './progression.js';
 
 export const ASK_EXAMPLES = [
@@ -36,23 +38,26 @@ function tempoInText(text) { const m = String(text).match(/(\d{2,3})\s*bpm/i); r
 /** Claude version. Returns {summary, items:[{role, ex}]} */
 async function withClaude(p, text) {
   const lib = EXERCISES.map(e => ({ libId: e.id, name: e.name, domain: e.domain, level: e.level, goalBpm: e.goalBpm }));
+  const req = parseRequest(text);
+  const hint = { topics: req.topics, chordTypes: req.chordTypes, chords: req.chords, key: req.key ? `${(req.key.minor ? 'minor ' : '')}pc${req.key.pc}` : null, scale: req.scale, progression: req.progression, genre: req.genre };
   const raw = await Claude.json({
-    system: 'You are a world-class guitar teacher who designs deliberate-practice exercises at the edge of a student\'s ability (70–85% success).',
+    system: 'You are a world-class guitar teacher who designs deliberate-practice exercises at the edge of a student\'s ability (70–85% success). You give exactly what was asked for, never a generic substitute.',
     content: `The student typed what they want to work on: "${String(text).slice(0, 600)}"
 STUDENT: ${JSON.stringify(brief(p))}
-Design 1–3 exercises that address exactly this request, in order: a focused drill that isolates the core motion ("drill"), the main exercise ("main"), and optionally a musical application ("apply").
+The app's reading of the request (a hint; correct it if it's wrong): ${JSON.stringify(hint)}
+Design 2–4 exercises that address EXACTLY this request and nothing generic, in order: a focused drill that isolates the core skill ("drill"), the main exercise(s) ("main"), and a musical application ("apply"). Example: "7th chords and inversions" → the four 7th-chord qualities on one root, the inversions of a 7th chord on one string set up the neck, then a ii–V–I using the nearest inversions. Never answer a chord-type or voicing request with basic open-chord changes.
 Rules:
 - Calibrate to the student's level in the relevant domain. startBpm = a tempo they can play cleanly today; goalBpm = mastery tempo.${tempoInText(text) ? ` They mentioned ${tempoInText(text)} BPM: use it as the goal if realistic.` : ''}
 - Original material only (no copyrighted songs or solos). If they name a song, write original drills for its techniques and suggest using the Songs tab for the song itself.
 - Tabs: string 1 = high e, 6 = low E. notes are [string, fret, technique (h|p|/|\\\\|b|~|pm|t or null), beats (note length; default = step)]. Use [0, 0, null, beats] for a rest. Max 48 notes. Use "tuning" (6 MIDI numbers, high string first) only if not standard.
-- Chord diagrams only from: ${Object.keys(CHORD_SHAPES).join(', ')}. Backing-loop chords only from: ${Object.keys(CHORD_MIDI).join(', ')}.
+- Chords: any chord symbol is allowed (Cmaj7, Dm7♭5, G7♯9, C/E, Fadd9…). For voicing-specific work give exact grips in "voicings": [{"name":"Cmaj7/E","frets":"xx2413"}] (frets from low E to high e, x = muted, two-digit frets in parentheses, e.g. "x(10)(10)9(12)x"), in the order they're played. "backing" may use any chord symbols.
 - You may reuse a built-in exercise with "libId" (then omit tab): ${JSON.stringify(lib)}
 - If the request is vague, pick the most likely meaning and say what you assumed in the summary.
-Return JSON: {"summary": "1-2 sentences: what these exercises fix and how they'll know it's working", "exercises":[{"role":"drill|main|apply","name":string,"domain": one of ${JSON.stringify(DOMAIN_KEYS)},"why":string,"instr":string (clear steps),"watch":string,"simplify":string,"unit":string,"level":int 1-10,"startBpm":int,"goalBpm":int,"minutes":int 3-10,"metroMode":"all|backbeat|gap","picking":"alternate|strict|economy|down|fingers|hybrid" (picking-hand approach),"libId": optional,"tab": optional {"step":0.25|0.333|0.5|1,"swing":bool,"tuning": optional,"notes":[...]},"chords": optional [names],"backing": optional [names]}]}`,
-    maxTokens: 3000
+Return JSON: {"summary": "1-2 sentences: what these exercises fix and how they'll know it's working", "exercises":[{"role":"drill|main|apply","name":string,"domain": one of ${JSON.stringify(DOMAIN_KEYS)},"why":string,"instr":string (clear steps),"watch":string,"simplify":string,"unit":string,"level":int 1-10,"startBpm":int,"goalBpm":int,"minutes":int 3-10,"metroMode":"all|backbeat|gap","picking":"alternate|strict|economy|down|fingers|hybrid" (picking-hand approach),"libId": optional,"tab": optional {"step":0.25|0.333|0.5|1,"swing":bool,"tuning": optional,"notes":[...]},"voicings": optional [{"name":string,"frets":string}],"chords": optional [symbols],"backing": optional [symbols],"beatsPerBar": optional int}]}`,
+    maxTokens: 3500
   });
   const used = new Set();
-  const items = (raw.exercises || []).slice(0, 3).map(r => {
+  const items = (raw.exercises || []).slice(0, 4).map(r => {
     const ex = normalizeExercise({ ...r, id: 'ask-' + (r.name || 'exercise') }, used);
     if (!ex) return null;
     if (['all', 'backbeat', 'gap'].includes(r.metroMode)) ex.metroMode = r.metroMode;
@@ -64,6 +69,12 @@ Return JSON: {"summary": "1-2 sentences: what these exercises fix and how they'l
 
 /** Local version from keywords. */
 export function localExercises(p, text) {
+  const built = exercisesForRequest(p, text);
+  if (built.items.length) {
+    const summary = `I read this as: ${built.understood.join(' + ') || 'your request'}${/chord|invers|voicing|triad|arpegg|scale|mode|key|progress|tone/.test(built.understood.join(' ')) ? ` (in ${built.key})` : ''}. ${built.items.length > 1 ? 'Start with the drill, then the main exercise' + (built.items.some(i => i.role === 'apply') ? ', then use it musically.' : '.') : ''}${built.req.key ? '' : ' Add “in G”, “A minor” etc. to choose the key.'}`.trim();
+    built.items.forEach(it => { it.ex.level = Math.max(1, Math.min(10, it.ex.level || levelFor(p, it.ex.domain))); });
+    return { summary, items: built.items, understood: built.understood };
+  }
   const genre = p.questionnaire.genres[0] || 'rock';
   const avg = Math.round(Object.values(p.domains || {}).reduce((a, d) => a + d.level, 0) / Math.max(1, Object.keys(p.domains || {}).length)) || 4;
   let { label, picks } = matchDrills(text, { level: avg, genre });

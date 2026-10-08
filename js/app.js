@@ -21,6 +21,7 @@ import { mountReassessHub, mountReassessRun } from './screens/reassess.js';
 import { mountEvaluate } from './screens/evaluate.js';
 import { mountSongsHub, mountSongDetail } from './screens/songs.js';
 import { Recorder } from './eval/recorder.js';
+import { upgradeGenericPlan } from './core/coursegen.js';
 import { Audio as AudioEngine } from './core/audio.js';
 import { applyAudioPrefs } from './ui/audiosetup.js';
 
@@ -132,7 +133,7 @@ function route() {
     case 'results': cleanup = mountProfile(root, { navigate, firstRun: true }); break;
     case 'profile': cleanup = mountProfile(root, { navigate }); break;
     case 'home': cleanup = mountDashboard(root, { navigate }); break;
-    case 'tools': cleanup = mountTools(root, { tab: parts[1] || 'tuner', exerciseId: parts[2] || null, navigate }); break;
+    case 'tools': cleanup = mountTools(root, { tab: parts[1] || 'tuner', exerciseId: parts[2] ? decodeURIComponent(parts[2]) : null, navigate }); break;
     case 'course': cleanup = mountCourse(root, { id: parts[1], navigate }); break;
     case 'practice':
       if (parts[1] === 'run') cleanup = mountRoutineRunner(root, { navigate });
@@ -157,6 +158,8 @@ function boot() {
   if (Store.profile) {
     applySettings();
     if (Object.keys(Store.profile.domains).length) { ensureAssessed(Store.profile); recomputeLevels(Store.profile); }
+    // Old one-size-fits-all plans that haven't been practiced yet become style-specific plans
+    (Store.profile.courses || []).forEach(c => { try { upgradeGenericPlan(c); } catch { /* keep the old plan */ } });
     Store.save(); // migrates older profiles
     if (Object.keys(Store.profile.domains).length) { chooseAlbum(Store.profile); Store.save(); }
   }

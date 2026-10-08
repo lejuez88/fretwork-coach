@@ -8,6 +8,7 @@ import { Claude } from './claude.js';
 import { GENRE_BY_ID } from '../data/catalog.js';
 import { ensureState, allSkills, activeSkills, reviewDue, calibratedTarget, tempoLadder, newExerciseState } from './progression.js';
 import { fallbackExercises } from './coursegen.js';
+import { stylePools, rotate } from './styles.js';
 
 export const BLOCKS = {
   warmup: { label: 'Warm-up', share: 0.10, why: 'Primes the exact motions of today’s stretch.' },
@@ -21,6 +22,7 @@ const MIN_ITEM = 2;          // minutes
 const OPEN_DEFAULT = 45;     // planned length when there is no time limit
 
 const cloneEx = e => JSON.parse(JSON.stringify(e));
+const hashDay = s => { let h = 0; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) | 0; return Math.abs(h); };
 
 /**
  * Build a routine for one course.
@@ -29,6 +31,10 @@ const cloneEx = e => JSON.parse(JSON.stringify(e));
 export function buildRoutine(profile, course, { budget = null, focusSkillId = null } = {}) {
   const st = ensureState(course, profile);
   const fb = fallbackExercises(course);
+  // Style pools: warm-ups, review, theory and music items in this course's style, rotating day to day
+  let pools = { warmup: [], review: [], theory: [], music: [] };
+  try { pools = stylePools(course); } catch { /* fall back to the standard drills */ }
+  const seed = `${course.id}|${today()}`;
   st.extras = st.extras || {};
   const exState = id => st.exercises[id] || st.extras[id] || { target: null };
   // Non-tree exercises (warm-ups, fallback drills) also progress, stored in course.state.extras
@@ -81,23 +87,29 @@ export function buildRoutine(profile, course, { budget = null, focusSkillId = nu
     const earlier = allSkills(course).filter(s => s !== focus && ['in_progress', 'mastered'].includes(st.skills[s.id].status));
     for (const s of earlier) { const e = s.exercises.find(x => !picked.has(x.id)); if (e && review.length < 1) review.push(take('review', e, s, { variation: 'Keep it warm: one clean pass at your target, then +3 BPM' })); }
   }
-  if (!review.length) review.push(take('review', fb.notesClick, null, { variation: 'Fretboard recall, a little faster than last time' }));
+  if (!review.length) { const r = rotate(pools.review, seed + '|review', picked) || fb.notesClick; review.push(take('review', r, null, { variation: 'Keep it fresh: a little faster than last time' })); }
 
   // Warm-up: a technique primer matching the stretch domain
   const stretchDomain = stretch[0] ? stretch[0].ex.domain : 'fretting';
+  const warmPool = pools.warmup.filter(e => e.domain === stretchDomain).length ? pools.warmup.filter(e => e.domain === stretchDomain) : pools.warmup;
   const warmPrefs = stretchDomain === 'picking' ? [fb.crossing, fb.warm] : stretchDomain === 'rhythm' ? [fb.subdiv, fb.warm] : [fb.warm, fb.subdiv];
-  const warmEx = warmPrefs.find(e => !picked.has(e.id)) || fb.crossing;
+  const warmEx = rotate(warmPool, seed + '|warm', picked) || rotate(pools.warmup, seed + '|warm2', picked) || warmPrefs.find(e => !picked.has(e.id)) || fb.crossing;
+  picked.add(warmEx.id);
   const warmup = [item('warmup', warmEx, null, { targetBpm: Math.round(extraTarget(warmEx) * 0.9), variation: 'Easy tempo, about 90% of your target; focus on relaxation' })];
 
   // Theory: a theory/fretboard exercise from the tree near the focus, else the key-chords drill
   const theoryCand = allSkills(course).filter(s => ['theory', 'fretboard', 'ear'].includes(s.domain) && st.skills[s.id].status !== 'locked')
     .flatMap(s => s.exercises.map(e => ({ e, s }))).find(x => !picked.has(x.e.id) && !exState(x.e.id).mastered);
-  const theory = [theoryCand ? take('theory', theoryCand.e, theoryCand.s) : item('theory', fb.triads, null)];
+  const poolTheory = rotate(pools.theory, seed + '|theory', picked);
+  // alternate between the course's own theory skill and the style pool so theory doesn't repeat every day
+  const useTree = theoryCand && (!poolTheory || hashDay(seed) % 2 === 0);
+  const theory = [useTree ? take('theory', theoryCand.e, theoryCand.s) : poolTheory ? take('theory', poolTheory, null) : item('theory', fb.triads, null)];
 
   // Music: improv / repertoire exercise from the tree, else a backing-loop solo in the course genre
   const musicCand = allSkills(course).filter(s => ['improv', 'repertoire'].includes(s.domain) && st.skills[s.id].status !== 'locked')
     .flatMap(s => s.exercises.map(e => ({ e, s }))).find(x => !picked.has(x.e.id));
-  const music = [musicCand ? take('music', musicCand.e, musicCand.s) : item('music', fb.improvLoop, null)];
+  const poolMusic = rotate(pools.music, seed + '|music', picked);
+  const music = [musicCand && (!poolMusic || hashDay(seed + 'm') % 3 !== 0) ? take('music', musicCand.e, musicCand.s) : poolMusic ? take('music', poolMusic, null) : item('music', fb.improvLoop, null)];
 
   const blocks = { warmup, review, stretch, theory, music };
   const items = allocate(blocks, budget);

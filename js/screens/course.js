@@ -5,7 +5,7 @@ import { Store } from '../core/store.js';
 import { Claude } from '../core/claude.js';
 import { wikiTile, hydrateImages } from '../core/wiki.js';
 import { GENRE_BY_ID } from '../data/catalog.js';
-import { buildCourseTree } from '../core/coursegen.js';
+import { buildCourseTree, isGenericPlan, generateTreeLocal } from '../core/coursegen.js';
 import { ensureState, progressPct } from '../core/progression.js';
 import { DOMAIN_BY_KEY } from '../assessment/engine.js';
 import { suggestedDifficulty, tierName } from '../core/courses.js';
@@ -32,11 +32,14 @@ export function mountCourse(root, { id, navigate }) {
         <p class="small muted">${sessions.length} session${sessions.length === 1 ? '' : 's'} · ${fmtMinutes(mins)} practiced</p>
         <a class="btn primary block" href="#/practice/course/${c.id}">▶ Practice this course</a>
       </section>
+      ${isGenericPlan(c) ? `<section class="card levelup"><div class="label">New: a plan built for ${esc(c.style)}</div>
+        <p>This course still uses the old standard plan, which was the same for every style. Rebuild it to get exercises in ${esc(c.style)}’s own keys, rhythms and techniques. Progress on the old exercises resets; your practice time and skill levels are kept.</p>
+        <div class="row"><button class="btn primary" data-c="restyle">Rebuild for ${esc(c.style)}</button>${Claude.hasKey() ? '<button class="btn" data-c="rebuild">Have Claude design it</button>' : ''}</div></section>` : ''}
       ${c.tree && suggestedDifficulty(p, c.genre) > c.difficulty + 1 ? `<section class="card levelup"><div class="label">You’ve outgrown this plan</div>
         <p>Your skill levels for this style are now about <b>${suggestedDifficulty(p, c.genre)}</b>, and this plan was built at level ${c.difficulty}. Untouched exercises already start at faster tempos; rebuilding gives you harder material.</p>
         <button class="btn primary block" data-c="levelup">Rebuild at level ${suggestedDifficulty(p, c.genre)}</button></section>` : ''}
       ${c.tree ? treeHTML() : `<section class="card"><h3>Progress tree</h3>
-        <p class="muted">Build the full lesson plan for this course. ${Claude.hasKey() ? 'Claude designs it around your levels, goals and players (30–60 seconds).' : 'Without an API key a standard plan for this style is used; add a key in Settings for a personalized one.'}</p>
+        <p class="muted">Build the full lesson plan for this course. ${Claude.hasKey() ? 'Claude designs it around your levels, goals and players (30–60 seconds).' : `Without an API key the built-in ${esc(c.style)} plan is used; add a key in Settings for one designed around you.`}</p>
         <button class="btn primary block" data-c="build" ${building ? 'disabled' : ''}>${building ? 'Building your course plan…' : 'Build course plan'}</button></section>`}
       <section class="card"><div class="row"><button class="btn" data-c="archive">Archive</button>${c.tree ? '<button class="btn" data-c="rebuild">Rebuild plan</button>' : ''}<button class="btn ghost danger" data-c="delete">Delete</button></div></section>`;
     hydrateImages(root);
@@ -44,7 +47,7 @@ export function mountCourse(root, { id, navigate }) {
 
   function treeHTML() {
     const st = c.state, now = today();
-    return `<section class="card tree"><h3>Progress tree</h3><p class="muted small">${c.tree.generatedBy === 'claude' ? 'Designed by Claude for you.' : 'Standard plan.'} Tap a skill for its exercises.</p>
+    return `<section class="card tree"><h3>Progress tree</h3><p class="muted small">${c.tree.generatedBy === 'claude' ? 'Designed by Claude for you.' : isGenericPlan(c) ? 'Standard plan.' : `Built-in ${esc(c.style)} plan${c.tree.summary ? '' : ''}.`} Tap a skill for its exercises.</p>
       ${c.tree.units.map((u, ui) => `
         <div class="unit"><div class="unit-head"><span class="unum">${ui + 1}</span><div><b>${esc(u.title)}</b><div class="muted small">${esc(u.summary)}</div></div></div>
         <div class="nodes">${u.skills.map(s => {
@@ -89,6 +92,7 @@ export function mountCourse(root, { id, navigate }) {
     const a = b.dataset.c;
     if (a === 'build') build(false);
     if (a === 'rebuild') build(true);
+    if (a === 'restyle') { if (!confirm(`Rebuild “${c.name}” with the ${c.style} plan? Progress on the old exercises resets.`)) return; c.tree = generateTreeLocal(c); c.state = null; Store.save(); toast(`New ${c.style} plan ready.`); render(); }
     if (a === 'levelup') { const lv = suggestedDifficulty(p, c.genre); if (!confirm(`Rebuild “${c.name}” at level ${lv}? Progress on this course’s exercises resets; your practice time and skill levels are kept.`)) return; c.difficulty = lv; c.levelLabel = tierName(lv); build(false); }
     if (a === 'archive') { c.status = 'archived'; Store.save(); toast('Archived.'); navigate('#/home'); }
     if (a === 'delete' && confirm(`Delete “${c.name}”? Practice time stays in your stats.`)) { p.courses = p.courses.filter(x => x.id !== c.id); Store.save(); navigate('#/home'); }

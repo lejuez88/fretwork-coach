@@ -8,6 +8,8 @@ import { GENRE_BY_ID } from '../data/catalog.js';
 import { EXERCISES, EXERCISE_BY_ID } from '../tools/exercises.js';
 import { CHORD_SHAPES, DOMAINS } from '../assessment/engine.js';
 import { CHORD_MIDI } from './audio.js';
+import { parseChord, stringToFrets, describeVoicing } from './theory.js';
+import { styleTreeRaw, styleDef, styleContext, progressionNames } from './styles.js';
 
 const DOMAIN_KEYS = DOMAINS.map(d => d.key);
 const slug = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || uid();
@@ -74,12 +76,26 @@ export function normalizeExercise(raw, used = new Set()) {
     minutes: clampN(raw.minutes, 2, 20, 5),
     libId: lib ? lib.id : null,
     tab, // {notes, swing} | null
-    chords: Array.isArray(raw.chords) ? raw.chords.filter(c => CHORD_SHAPES[c]).slice(0, 4) : [],
-    backing: Array.isArray(raw.backing) ? raw.backing.filter(c => CHORD_MIDI[c]).slice(0, 8) : [],
+    chords: Array.isArray(raw.chords) ? raw.chords.map(String).filter(c => CHORD_SHAPES[c] || parseChord(c)).slice(0, 8) : [],
+    backing: Array.isArray(raw.backing) ? raw.backing.map(String).filter(c => CHORD_MIDI[c] || parseChord(c)).slice(0, 12) : [],
+    ...(normVoicings(raw.voicings).length ? { voicings: normVoicings(raw.voicings) } : {}),
+    ...(clampN(raw.beatsPerBar, 2, 12, 0) && raw.beatsPerBar != 4 ? { beatsPerBar: clampN(raw.beatsPerBar, 2, 12, 4) } : {}),
     ...(['backbeat', 'gap'].includes(raw.metroMode) ? { metroMode: raw.metroMode } : {}),
     ...(PICKING.includes(raw.picking) ? { picking: raw.picking } : {}),
     ...(raw.pickKey ? { pickKey: String(raw.pickKey).slice(0, 60) } : {})
   };
+}
+
+/** Chord voicings for diagrams: [{name, frets (low→high, null = muted)}] from arrays or "x32010" strings. */
+function normVoicings(list) {
+  if (!Array.isArray(list)) return [];
+  return list.slice(0, 12).map(v => {
+    if (!v) return null;
+    const frets = Array.isArray(v.frets) ? v.frets.map(f => (f == null || f === 'x' || f === 'X' ? null : Number(f))) : stringToFrets(v.frets);
+    if (!frets || frets.length !== 6 || frets.some(f => f != null && !(f >= 0 && f <= 22)) || frets.every(f => f == null)) return null;
+    const name = String(v.name || v.chord || '').slice(0, 16), d = name ? describeVoicing(frets, name) : null;
+    return { name, frets, labels: d ? d.labels : (v.labels || null), names: d ? d.names : (v.names || null), fingers: d ? d.fingers : (v.fingers || null), barre: d ? d.barre : (v.barre || null) };
+  }).filter(Boolean);
 }
 
 export function normalizeTree(raw, meta) {
@@ -106,7 +122,7 @@ export function normalizeTree(raw, meta) {
     s.prereqs = s.prereqs.filter(p => all.has(p) && p !== s.id);
     if (!s.prereqs.length && ui > 0) s.prereqs = [units[ui - 1].skills[units[ui - 1].skills.length - 1].id];
   }));
-  return { version: 1, generatedBy: meta.generatedBy, generatedAt: Date.now(), summary: String(raw && raw.summary || '').slice(0, 300), units };
+  return { version: meta.version || 1, generatedBy: meta.generatedBy, generatedAt: Date.now(), summary: String(raw && raw.summary || '').slice(0, 300), units, ...(meta.style ? { style: meta.style } : {}) };
 }
 
 /* ----------------------------- Claude builder ---------------------------- */
@@ -123,36 +139,40 @@ function profileBrief(profile) {
 export async function generateTreeWithClaude(profile, course) {
   const genre = GENRE_BY_ID[course.genre];
   const lib = EXERCISES.map(e => ({ libId: e.id, name: e.name, domain: e.domain, level: e.level, goalBpm: e.goalBpm }));
+  const sd = styleDef(course.genre, course.style), sc = styleContext(course);
+  const outline = (sd.units || []).map(u => `${u.title}: ${u.skills.map(x => x.title).join('; ')}`).join(' | ');
   const content = `Design a complete guitar course as a skill tree.
 
 COURSE: "${course.name}". Genre: ${genre ? genre.name : course.genre}. Style focus: ${course.style}. Difficulty ${course.difficulty}/10. Inspired by: ${course.players.join(', ') || 'none'}.
 STUDENT: ${JSON.stringify(profileBrief(profile))}
+STYLE REFERENCE (a starting point; go deeper and more specific): typical key ${sd.key}${sd.minor ? ' minor' : ''}, typical progression ${progressionNames(sc.key, sd.prog).join(' – ')}. Outline: ${outline}
 
 Teaching rules (follow all):
+- Make it SURGICALLY specific to "${course.style}": its signature techniques, rhythms, keys, chord types, progressions and phrasing, and the players named. Every skill must be something a teacher of this exact style would assign. No generic filler (chromatic spider drills, G–C–D changes, generic pentatonic runs) unless this style truly calls for it.
 - Calibrate to the student's levels; start each domain at their current edge, never below it, and climb to roughly level ${Math.min(10, course.difficulty + 2)} by the end.
-- Theory follows the hands: each theory skill is applied on the fretboard right away.
-- Cover technique, rhythm, fretboard, theory, ear and improvisation as one connected system, biased toward this style.
-- EVERY exercise is measurable with a metronome: give startBpm (a comfortable working tempo) and goalBpm (mastery tempo). For theory/ear exercises, make them tempo-based drills (e.g. name notes on each click, play the interval you hear in time).
+- Theory follows the hands: each theory skill is applied on the fretboard right away, in this style's keys and progressions.
+- Cover technique, rhythm, fretboard, theory, ear and improvisation as one connected system, all in the style.
+- EVERY exercise is measurable with a metronome: startBpm (a tempo THIS student can already play cleanly) and goalBpm (mastery tempo). Theory/ear exercises are tempo-based drills too.
 - Exercises are ORIGINAL drills "in the style of" the players; never transcribe copyrighted songs or solos.
-- Standard tuning. Tabs: string 1 = high e, string 6 = low E. Only give a tab for single-note lines (max 32 notes). Chords go in "chords" (only from: ${Object.keys(CHORD_SHAPES).join(', ')}).
-- You may reuse built-in exercises by setting "libId" (then omit tab): ${JSON.stringify(lib)}
-- Backing loops for improv/rhythm may use chords from: ${Object.keys(CHORD_MIDI).join(', ')}.
+- Standard tuning (or say "tuning" if the style needs another). Tabs: string 1 = high e, string 6 = low E; give a tab for single-note lines (max 48 notes; note = [string, fret, technique or null, beats]).
+- Chord parts: any chord symbol is allowed (Cmaj7, F♯m7♭5, E7♯9, Dsus2, A/C♯…). Give exact grips in "voicings" as [{"name":"Cmaj7","frets":"x32000"}] (frets low E → high e, x = muted, two-digit frets in parentheses like "x(10)(12)(11)(12)x") whenever the voicing matters (inversions, drop-2, shells, triads on string sets). "backing" loops may use any chord symbols.
+- You may reuse built-in exercises by setting "libId" (then omit tab), only if they fit the style: ${JSON.stringify(lib)}
 
-Size: 4–6 units; 2–3 skills per unit; 1–3 exercises per skill.
+Size: 4–6 units; 2–3 skills per unit; 2–3 exercises per skill.
 
 Return JSON:
-{"summary": string (2 sentences: what the student can do at the end),
+{"summary": string (2 sentences: what the student can do at the end, in this style),
  "units":[{"title":string,"summary":string,
    "skills":[{"id":"kebab-slug","title":string,"domain":one of ${JSON.stringify(DOMAIN_KEYS)},"summary":string (1 sentence),"prereqs":[skill ids],
-     "exercises":[{"id":"kebab-slug","name":string,"domain":string,"why":string (1-2 sentences),"instr":string (clear steps),"watch":string (common mistake),"simplify":string (easier variant if stuck),
-       "unit":"8ths|16ths|triplets|quarter notes|2 beats per chord|...","level":int 1-10 (difficulty of this exercise),"startBpm":int (a tempo THIS student can already play cleanly, given their level in this exercise's domain),"goalBpm":int,"minutes":int (3-10),
-       "picking":"alternate|strict|economy|down|fingers|hybrid" (picking-hand approach for this exercise),"libId":optional,"tab":optional {"step":0.25|0.333|0.5|1,"swing":bool,"notes":[[string,fret,"h|p|/|b|~|pm|t" optional],...]},
-       "chords":optional [names],"backing":optional [chord names]}]}]}]}`;
+     "exercises":[{"id":"kebab-slug","name":string,"domain":string,"why":string (1-2 sentences, why this matters in this style),"instr":string (clear steps),"watch":string (common mistake),"simplify":string (easier variant if stuck),
+       "unit":"8ths|16ths|triplets|quarter notes|2 beats per chord|...","level":int 1-10,"startBpm":int,"goalBpm":int,"minutes":int (3-10),
+       "picking":"alternate|strict|economy|down|fingers|hybrid","libId":optional,"tab":optional {"step":0.25|0.333|0.5|1,"swing":bool,"notes":[[string,fret,"h|p|/|b|~|pm|t" optional, beats optional],...]},
+       "voicings":optional [{"name":string,"frets":string}],"chords":optional [symbols],"backing":optional [symbols],"beatsPerBar":optional int (odd meters)}]}]}]}`;
   const raw = await Claude.json({
     system: 'You are a world-class guitar teacher and curriculum designer who uses deliberate practice, the 70–85% success "edge zone", spaced repetition and interleaving.',
     content, maxTokens: 12000
   });
-  const tree = normalizeTree(raw, { generatedBy: 'claude', difficulty: course.difficulty });
+  const tree = normalizeTree(raw, { generatedBy: 'claude', difficulty: course.difficulty, style: course.style });
   if (!tree.units.length) throw new Error('Claude returned an empty course.');
   return tree;
 }
@@ -185,31 +205,26 @@ function localTemplates(genreId, diff) {
   };
 }
 
+export const LOCAL_TREE_VERSION = 2;
+/** Style-specific plan built from the style library (no API key needed). */
 export function generateTreeLocal(course) {
-  const T = localTemplates(course.genre, course.difficulty);
-  const hi = course.difficulty >= 6;
-  const raw = {
-    summary: `A step-by-step path through ${course.style.toLowerCase()}, from clean fundamentals to musical soloing over real changes.`,
-    units: [
-      { title: 'Foundations', summary: 'Clean hands and steady time.', skills: [
-        { id: 'clean-hands', title: 'Clean, relaxed fretting', domain: 'fretting', summary: 'Economy of motion in the fretting hand.', exercises: [T.warm, T.changes] },
-        { id: 'steady-time', title: 'Steady time', domain: 'rhythm', summary: 'Lock to the click at every subdivision.', exercises: [T.subdiv] }] },
-      { title: 'Fretboard & Vocabulary', summary: 'Know where the notes are and the shapes that matter.', skills: [
-        { id: 'penta-box1', title: 'Pentatonic box 1', domain: 'fretboard', summary: 'The core soloing shape.', prereqs: ['clean-hands'], exercises: [T.box1, T.notesClick] },
-        { id: 'style-rhythm', title: `${course.style} rhythm`, domain: 'rhythm', summary: 'The groove at the heart of the style.', prereqs: ['steady-time'], exercises: [T.shuffle] }] },
-      { title: 'Theory in the Hands', summary: 'Harmony you can play.', skills: [
-        { id: 'key-chords', title: 'Chords of the key', domain: 'theory', summary: 'Build and name the diatonic chords.', prereqs: ['penta-box1'], exercises: [T.triads] },
-        { id: 'ear-echo', title: 'Hear it, play it', domain: 'ear', summary: 'Copy phrases by ear in time.', prereqs: ['penta-box1'], exercises: [T.earEcho] }] },
-      { title: 'Speed & Control', summary: 'Picking precision and fluid lines.', skills: [
-        { id: 'picking-control', title: 'Picking control', domain: 'picking', summary: 'Even alternate picking across strings.', prereqs: ['style-rhythm'], exercises: [T.crossing, T.penta16] },
-        { id: 'box2', title: 'Connecting positions', domain: 'fretboard', summary: 'Box 2 and moving between boxes.', prereqs: ['penta-box1'], exercises: [T.box2] },
-        ...(hi ? [{ id: 'advanced-technique', title: 'Legato & sweeps', domain: 'fretting', summary: 'Fluid lines with fewer pick strokes.', prereqs: ['picking-control'], exercises: [T.legato, T.sweep] }] : [])] },
-      { title: 'Making Music', summary: 'Use everything in real musical settings.', skills: [
-        { id: 'chord-tones', title: 'Playing the changes', domain: 'improv', summary: 'Target chord tones over the progression.', prereqs: ['key-chords'], exercises: [T.targets] },
-        { id: 'style-solo', title: `Soloing in the style`, domain: 'improv', summary: 'Phrasing, space and vocabulary over a loop.', prereqs: ['box2'], exercises: [T.improvLoop] }] }
-    ]
-  };
-  return normalizeTree(raw, { generatedBy: 'local', difficulty: course.difficulty });
+  const raw = styleTreeRaw(course);
+  return normalizeTree(raw, { generatedBy: 'local', difficulty: course.difficulty, version: LOCAL_TREE_VERSION, style: course.style });
+}
+
+/** Older local plans were the same template for every style; these should be rebuilt. */
+export function isGenericPlan(course) {
+  return !!(course && course.tree && course.tree.generatedBy === 'local' && (course.tree.version || 1) < LOCAL_TREE_VERSION);
+}
+/** Replace an untouched old generic plan with the style-specific one. Returns true if upgraded. */
+export function upgradeGenericPlan(course) {
+  if (!isGenericPlan(course) || planHasProgress(course)) return false;
+  course.tree = generateTreeLocal(course); course.state = null;
+  return true;
+}
+export function planHasProgress(course) {
+  const st = course && course.state;
+  return !!(st && Object.values(st.exercises || {}).some(e => e.history && e.history.length));
 }
 
 /** Generate and attach a tree (Claude first, local fallback). Returns {tree, usedClaude, error}. */
@@ -236,5 +251,5 @@ export function toPlayerExercise(ex, bpm) {
   if (!ex.tab || !ex.tab.notes || !ex.tab.notes.length) return null;
   return { id: ex.id, name: ex.name, unit: ex.unit, why: ex.why, goalBpm: ex.goalBpm, bpm: bpm || ex.startBpm, notes: ex.tab.notes, swing: ex.tab.swing,
     ...(ex.tab.beats ? { beats: ex.tab.beats } : {}), ...(ex.tab.tuning || ex.tuning ? { tuning: ex.tab.tuning || ex.tuning } : {}),
-    instr: ex.instr, ...(ex.picking ? { picking: ex.picking } : {}), ...(ex.pickKey ? { pickKey: ex.pickKey } : {}) };
+    instr: ex.instr, ...(ex.picking ? { picking: ex.picking } : {}), ...(ex.pickKey ? { pickKey: ex.pickKey } : {}), ...(ex.beatsPerBar ? { beatsPerBar: ex.beatsPerBar } : {}) };
 }

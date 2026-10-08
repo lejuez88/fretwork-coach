@@ -105,14 +105,14 @@ How to read them: hitRate = share of tab notes heard. pitch.accuracy = share of 
 ${mode === 'video' ? `For the frames: judge posture, guitar position, fretting hand (thumb placement, finger curvature, fingertips close behind the frets, wrist angle, finger lift height, visible tension) and picking hand (grip, anchoring, motion source wrist/elbow/fingers, pick angle, and whether the stroke directions follow the exercise's picking approach) — only what is actually visible. Say when something can't be judged from these angles. Refer to frames by number.` : ''}
 
 Write feedback that is specific, honest and encouraging. Every issue must cite evidence (a number above${mode === 'video' ? ' or a frame' : ''}).
-Prescribe up to 3 short, measurable exercises that fix the biggest issues (tempo-based, with startBpm a tempo they can play cleanly now and a goalBpm). Tabs: string 1 = high e, 6 = low E; step = beat length of each note. Chords only from ${Object.keys(CHORD_SHAPES).join(', ')}; backing chords only from ${Object.keys(CHORD_MIDI).join(', ')}. metroMode may be "all", "backbeat" (click on 2&4) or "gap" (2 bars on, 2 off).
+Prescribe up to 3 short, measurable exercises that fix the biggest issues (tempo-based, with startBpm a tempo they can play cleanly now and a goalBpm). Tabs: string 1 = high e, 6 = low E; step = beat length of each note. Any chord symbols are allowed for "chords" and "backing"; give exact grips as "voicings": [{"name":"Cmaj7","frets":"x32000"}] (low E → high e, x = muted) when the voicing matters. metroMode may be "all", "backbeat" (click on 2&4) or "gap" (2 bars on, 2 off).
 
 Return JSON:
 {"summary": "2 sentences", "verdict": "clean|almost|not yet",
  "strengths": ["..."],
  "issues": [{"title": string, "area": one of ${JSON.stringify(AREAS)}, "severity": "high|medium|low", "detail": string, "evidence": string, "fix": string}],
  ${mode === 'video' ? '"frameNotes": [{"frame": int, "note": string}],' : ''}
- "prescriptions": [{"name": string, "reason": string (which issue it fixes), "domain": "fretting|picking|rhythm|fretboard|theory|ear|improv", "unit": string, "level": int 1-10, "startBpm": int, "goalBpm": int, "minutes": int 3-6, "why": string, "instr": string, "watch": string, "simplify": string, "metroMode": optional, "picking": "alternate|strict|economy|down|fingers|hybrid", "tab": optional {"step": number, "notes": [[string, fret, "h|p|b|/|pm" optional]]}, "chords": optional [names], "backing": optional [names]}],
+ "prescriptions": [{"name": string, "reason": string (which issue it fixes), "domain": "fretting|picking|rhythm|fretboard|theory|ear|improv", "unit": string, "level": int 1-10, "startBpm": int, "goalBpm": int, "minutes": int 3-6, "why": string, "instr": string, "watch": string, "simplify": string, "metroMode": optional, "picking": "alternate|strict|economy|down|fingers|hybrid", "tab": optional {"step": number, "notes": [[string, fret, "h|p|b|/|pm" optional]]}, "voicings": optional [{"name": string, "frets": string}], "chords": optional [names], "backing": optional [names]}],
  "nextStep": "one sentence"}`;
   blocks.push({ type: 'text', text });
   const raw = await Claude.json({

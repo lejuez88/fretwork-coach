@@ -8,13 +8,13 @@ import { buildRoutine, rebudget, coachBriefing, BLOCKS } from '../core/routine.j
 import { findSong, recordSongResult } from '../core/songs.js';
 import { recordCustom } from '../core/custom.js';
 import { mountAskBox } from '../ui/ask.js';
-import { buildCourseTree, toPlayerExercise } from '../core/coursegen.js';
+import { buildCourseTree, toPlayerExercise, isGenericPlan } from '../core/coursegen.js';
 import { recordResult, recordPrescription, applyResult, newExerciseState, markReviewed, progressPct, ensureState } from '../core/progression.js';
 import { addEvidence, recomputeLevels } from '../core/skills.js';
 import { openEvalSheet } from '../eval/ui.js';
 import { mountTabPlayer } from '../tools/tabplayer.js';
 import { Metronome, mountMetronome } from '../tools/metronome.js';
-import { chordSVG } from '../assessment/engine.js';
+import { exerciseDiagramsHTML } from '../ui/fretboard.js';
 import { GENRE_BY_ID } from '../data/catalog.js';
 import { Shell } from '../ui/shell.js';
 
@@ -108,6 +108,7 @@ export function mountRoutineSetup(root, { navigate, courseId = null, skillId = n
       <section class="card"><div class="label">1 · Course</div>
         <div class="chips">${open.map(c => `<button class="chip ${c === selected ? 'on' : ''}" data-course="${c.id}">${esc(c.name)} · ${progressPct(c)}%</button>`).join('')}</div>
         ${selected.tree ? '' : `<p class="small muted" style="margin-top:10px">This course doesn’t have a lesson plan yet. It will be built when you continue${Claude.hasKey() ? ' (Claude takes about 30–60 seconds)' : ''}.</p>`}
+        ${isGenericPlan(selected) ? `<p class="note warn">This course still uses the old standard plan. <a class="link" href="#/course/${selected.id}">Rebuild it for ${esc(selected.style)}</a> to practice the style’s own material.</p>` : ''}
       </section>
       <section class="card"><div class="label">2 · How much time do you have?</div><div data-r="time">${timeInputHTML('duration', p.questionnaire.practice[[0, 6].includes(new Date().getDay()) ? 'weekend' : 'weekday'] || 30)}</div>
         <button class="btn primary block" data-r="build">Build my routine</button></section>
@@ -220,7 +221,7 @@ export function mountRoutineRunner(root, { navigate }) {
         ${ex.instr ? `<div class="instr">${esc(ex.instr)}</div>` : ''}
         ${tip ? `<p class="coach small">💡 ${esc(tip)}</p>` : ''}
         ${ex.watch ? `<div class="watch">⚠ Watch for: ${esc(ex.watch)}</div>` : ''}
-        ${ex.chords && ex.chords.length ? `<div class="diagrams">${ex.chords.map(chordSVG).join('')}</div>` : ''}
+        ${exerciseDiagramsHTML(ex)}
         <div data-r="tool"></div>
         <button class="btn block evalbtn" data-r="evaluate">🎤 Evaluate this take</button>
       </section>
@@ -241,7 +242,7 @@ export function mountRoutineRunner(root, { navigate }) {
       tool = mountTabPlayer(slot, px, { settings: p.settings, onSettings: patch => { Object.assign(p.settings, patch); Store.save(); }, startBpm: start, compact: true,
         ramp: R ? { enabled: R.enabled, step: R.step, everyLoops: 2, max: R.max } : null, onBpm: v => { peak = Math.max(peak, v); markRung(v); } });
     } else {
-      Metronome.configure({ bpm: start, mode: it.ex.metroMode || 'all', backing: it.ex.backing && it.ex.backing.length ? it.ex.backing : null, beatsPerBar: 4, subdiv: 1,
+      Metronome.configure({ bpm: start, mode: it.ex.metroMode || 'all', backing: it.ex.backing && it.ex.backing.length ? it.ex.backing : null, beatsPerBar: it.ex.beatsPerBar || 4, subdiv: 1,
         ramp: R ? { enabled: R.enabled, step: R.step, everyBars: 4, max: R.max } : null });
       offMetro = mountMetronome(slot, { compact: false });
       const offBpm = Metronome.on(e => { if (e.type === 'bpm') { peak = Math.max(peak, e.bpm); markRung(e.bpm); } });
