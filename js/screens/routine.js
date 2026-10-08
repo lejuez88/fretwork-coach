@@ -1,21 +1,22 @@
-// Practice routines: setup (course + time), plan preview, the timed runner
-// (per-exercise countdown, on-pace indicator, tempo logging) and a summary.
+// Practice routines: the time input, the timed runner (per-exercise countdown,
+// on-pace indicator, variation picker, tempo logging) and a summary. Course
+// routines are built on the dashboard (ui/routinebuilder.js); library and
+// request sessions start from the Practice tab.
 import { esc, toast, fmtClock, fmtMinutes, today } from '../core/util.js';
 import { Store, Practice } from '../core/store.js';
 import { Audio } from '../core/audio.js';
-import { Claude } from '../core/claude.js';
-import { buildRoutine, rebudget, coachBriefing, BLOCKS } from '../core/routine.js';
+import { rebudget, BLOCKS } from '../core/routine.js';
 import { findSong, recordSongResult } from '../core/songs.js';
 import { recordCustom } from '../core/custom.js';
-import { mountAskBox } from '../ui/ask.js';
-import { buildCourseTree, toPlayerExercise, isGenericPlan } from '../core/coursegen.js';
-import { recordResult, recordPrescription, applyResult, newExerciseState, markReviewed, progressPct, ensureState } from '../core/progression.js';
+import { toPlayerExercise } from '../core/coursegen.js';
+import { recordResult, recordPrescription, applyResult, newExerciseState, markReviewed, progressPct, ensureState, calibratedTarget, tempoLadder } from '../core/progression.js';
+import { variationsFor, findVariation } from '../core/variations.js';
+import { variationChipsHTML } from '../ui/variationpicker.js';
 import { addEvidence, recomputeLevels } from '../core/skills.js';
 import { openEvalSheet } from '../eval/ui.js';
 import { mountTabPlayer } from '../tools/tabplayer.js';
 import { Metronome, mountMetronome } from '../tools/metronome.js';
 import { exerciseDiagramsHTML } from '../ui/fretboard.js';
-import { GENRE_BY_ID } from '../data/catalog.js';
 import { Shell } from '../ui/shell.js';
 
 const ACTIVE_KEY = 'fretworkCoach.activeRoutine';
@@ -86,83 +87,6 @@ export function startRoutine(plan, t = { mode: 'open', minutes: null, deadline: 
   Store.save(); navigate('#/practice/run');
 }
 
-/* -------------------------------- Setup --------------------------------- */
-export function mountRoutineSetup(root, { navigate, courseId = null, skillId = null }) {
-  const p = Store.profile;
-  if (getActive()) { navigate('#/practice/run'); return () => {}; }
-  const open = p.courses.filter(c => c.status !== 'archived');
-  if (!open.length) {
-    root.innerHTML = '<h1>Practice</h1><section class="card askcard" data-r="askslot"></section><section class="card"><p>Create a course to get full daily routines built from a course plan.</p><a class="btn primary block" href="#/home">Go to dashboard</a></section>';
-    const offAsk = mountAskBox(root.querySelector('[data-r="askslot"]'), { start: plan => startRoutine(plan, undefined, navigate) });
-    return () => offAsk();
-  }
-  let selected = (courseId && open.find(c => c.id === courseId)) || [...open].sort((a, b) => String(b.lastPracticed || '').localeCompare(String(a.lastPracticed || '')))[0];
-  let plan = null, building = false, briefing = null, timeSel = null, offAsk = null;
-
-  function render() {
-    if (offAsk) { offAsk(); offAsk = null; }
-    root.innerHTML = `
-      <h1>Practice</h1>
-      <section class="card askcard" data-r="askslot"></section>
-      <h2 class="sechead">Today’s routine</h2>
-      <section class="card"><div class="label">1 · Course</div>
-        <div class="chips">${open.map(c => `<button class="chip ${c === selected ? 'on' : ''}" data-course="${c.id}">${esc(c.name)} · ${progressPct(c)}%</button>`).join('')}</div>
-        ${selected.tree ? '' : `<p class="small muted" style="margin-top:10px">This course doesn’t have a lesson plan yet. It will be built when you continue${Claude.hasKey() ? ' (Claude takes about 30–60 seconds)' : ''}.</p>`}
-        ${isGenericPlan(selected) ? `<p class="note warn">This course still uses the old standard plan. <a class="link" href="#/course/${selected.id}">Rebuild it for ${esc(selected.style)}</a> to practice the style’s own material.</p>` : ''}
-      </section>
-      <section class="card"><div class="label">2 · How much time do you have?</div><div data-r="time">${timeInputHTML('duration', p.questionnaire.practice[[0, 6].includes(new Date().getDay()) ? 'weekend' : 'weekday'] || 30)}</div>
-        <button class="btn primary block" data-r="build">Build my routine</button></section>
-      <div data-r="preview"></div>`;
-    wireTimeInput(root.querySelector('[data-r="time"]'));
-    offAsk = mountAskBox(root.querySelector('[data-r="askslot"]'), { start: plan => startRoutine(plan, undefined, navigate), courseId: selected ? selected.id : null });
-    drawPreview();
-  }
-  function drawPreview() {
-    const b = root.querySelector('[data-r="build"]');
-    b.disabled = building; b.textContent = building ? (b.dataset.msg || 'Building…') : plan ? 'Rebuild plan' : 'Build my routine';
-    root.querySelector('[data-r="preview"]').innerHTML = plan ? previewHTML() : '';
-    Shell.actions(plan && !building ? '<button class="btn primary" data-r="start">▶ Start routine</button>' : '');
-  }
-  function previewHTML() {
-    const total = plan.items.reduce((a, i) => a + i.minutes, 0);
-    return `<section class="card"><div class="label">3 · Your plan · ${fmtMinutes(total)}${plan.budget == null ? ' suggested' : ''}</div>
-      ${briefing && briefing.focus ? `<p class="coach">🎯 ${esc(briefing.focus)}</p>` : `<p class="small muted">Focus: <b>${esc(plan.focusTitle)}</b></p>`}
-      ${plan.items.map((it, i) => `<div class="planrow b-${it.block}"><span class="pblock">${BLOCKS[it.block].label}</span><div class="pname"><b>${esc(it.ex.name)}</b><span class="muted small">${it.targetBpm} → ${it.goalBpm} BPM${it.note ? ' · ' + esc(it.note) : it.variation ? ' · ' + esc(it.variation) : ''}</span></div><span class="pmin">${it.minutes}m</span></div>`).join('')}
-    </section>`;
-  }
-
-  async function build() {
-    const t = readTime(root.querySelector('[data-r="time"]')); if (t.error) return toast(t.error);
-    timeSel = t; building = true;
-    root.querySelector('[data-r="build"]').dataset.msg = !selected.tree ? (Claude.hasKey() ? 'Claude is writing your course plan (30–60 s)…' : 'Building your course plan…') : 'Building…';
-    drawPreview();
-    if (!selected.tree) {
-      const r = await buildCourseTree(p, selected); Store.save();
-      if (r.error) toast('Claude couldn’t build the plan (' + r.error + '), so a standard plan was used.');
-    }
-    plan = buildRoutine(p, selected, { budget: t.minutes, focusSkillId: skillId });
-    building = false; briefing = null; drawPreview();
-    const mine = plan;
-    coachBriefing(p, plan).then(b => { if (b && plan === mine) { briefing = b; plan.coach = b; drawPreview(); } });
-  }
-  function start() {
-    if (!plan) return;
-    const fresh = readTime(root.querySelector('[data-r="time"]'));
-    const t = fresh.error ? timeSel : fresh;
-    startRoutine(plan, t, navigate);
-  }
-
-  const onClick = e => {
-    const b = e.target.closest('button'); if (!b) return;
-    if (b.dataset.course) { selected = open.find(c => c.id === b.dataset.course); plan = null; render(); }
-    else if (b.dataset.r === 'build') build();
-  };
-  const barClick = e => { if (e.target.closest('[data-r="start"]')) start(); };
-  root.addEventListener('click', onClick); Shell.actionBar.addEventListener('click', barClick);
-  render();
-  return () => { if (offAsk) offAsk(); root.removeEventListener('click', onClick); Shell.actionBar.removeEventListener('click', barClick); Shell.actions(''); };
-}
-
 /* -------------------------------- Runner -------------------------------- */
 export function mountRoutineRunner(root, { navigate }) {
   const p = Store.profile;
@@ -171,7 +95,17 @@ export function mountRoutineRunner(root, { navigate }) {
   const course = A.routine.courseId ? p.courses.find(c => c.id === A.routine.courseId) : null;
   if (course) ensureState(course);
   /** Progress state behind an item (course, prescription, song section or saved exercise). */
+  // Every variation (and every library exercise) keeps its own progress in
+  // profile.varState under "<scope>~<vid>"; the original exercise of a course,
+  // song, request or prescription keeps using its usual place.
+  const scopeOf = it => it.libId ? `lib:${it.libId}` : course && it.fromTree ? `${A.routine.courseId}:${it.exId}` : it.prescriptionId ? `rx:${it.prescriptionId}`
+    : it.songId ? `song:${it.songId}:${it.ex.sectionKey || it.exId}` : it.customId ? `custom:${it.customId}` : course ? `${A.routine.courseId}:x:${it.exId}` : `ex:${it.exId}`;
+  const usesVarState = it => !!it.libId || (!!it.vid && it.vid !== 'base');
+  const varKeyOf = it => `${scopeOf(it)}~${it.vid || 'base'}`;
+  const varsOf = it => { try { return variationsFor(it.baseEx || it.ex, { course, level: (it.baseEx || it.ex).level || (course && course.difficulty) || 4 }); } catch { return []; } };
+  let varOpen = false;
   const stateOf = it => {
+    if (usesVarState(it)) return (p.varState || {})[varKeyOf(it)] || null;
     if (course && it.fromTree) return course.state && course.state.exercises[it.exId];
     if (it.prescriptionId) { const r = p.prescriptions.find(x => x.id === it.prescriptionId); return r && r.state; }
     if (it.songId) { const s = findSong(p, it.songId); return s && s.state && s.state.sections[it.ex.sectionKey || it.exId]; }
@@ -215,7 +149,8 @@ export function mountRoutineRunner(root, { navigate }) {
         <div class="tempo-row"><span>Today’s target <b>${it.targetBpm}</b></span><span>Goal <b class="goal">${it.goalBpm}</b> BPM</span>${es && es.best ? `<span>Best <b>${es.best}</b></span>` : ''}</div>
         <div class="bar thin"><i style="width:${Math.min(100, Math.round(((es ? es.target : it.targetBpm) - ex.startBpm) / Math.max(1, it.goalBpm - ex.startBpm) * 100))}%"></i></div>
         ${it.ramp && it.ramp.rungs && it.ramp.rungs.length > 1 ? `<div class="ladder"><span class="muted small">Tempo ladder</span>${it.ramp.rungs.map(v => `<span class="rung ${v === it.targetBpm ? 'start' : ''}" data-rung="${v}">${v}</span>`).join('<i>›</i>')}</div>` : ''}
-        ${it.note ? `<div class="note warn">⚠ ${esc(it.note)}</div>` : ''}${it.variation ? `<div class="note">↻ ${esc(it.variation)}</div>` : ''}
+        ${it.note ? `<div class="note warn">⚠ ${esc(it.note)}</div>` : ''}
+        <div data-r="varbox">${varRowHTML(it)}</div>
         ${ex.why ? `<p class="why">${esc(ex.why)} <span class="muted">${esc(B.why)}</span></p>` : `<p class="why">${esc(B.why)}</p>`}
         ${coachText ? `<p class="coach">${esc(coachText)}</p>` : ''}
         ${ex.instr ? `<div class="instr">${esc(ex.instr)}</div>` : ''}
@@ -230,6 +165,32 @@ export function mountRoutineRunner(root, { navigate }) {
     if (phase === 'result') return renderResult();
     mountTool();
     update();
+  }
+
+  function varRowHTML(it) {
+    const list = varsOf(it);
+    if (list.length < 2) return it.variation ? `<div class="note">↻ ${esc(it.variation)}</div>` : '';
+    const v = findVariation(list, it.vid);
+    return `<div class="varrow"><span class="vtxt">↻ <b>${esc(v.label)}</b> · L${v.level}${v.base ? '' : ` · ${esc(v.change)}`}</span>
+        <button class="btn sm ghost" data-r="vartoggle">${varOpen ? 'Close' : `Variations (${list.length})`}</button></div>
+      ${varOpen ? variationChipsHTML(list, { current: v.vid, attr: 'data-rvid', stateOf: vid => { const k = `${scopeOf(it)}~${vid}`; return vid === 'base' && !it.libId ? stateOfBase(it) : (p.varState || {})[k] || null; } }) : ''}`;
+  }
+  const stateOfBase = it => { const saved = { vid: it.vid }; it.vid = null; const st = stateOf(it); it.vid = saved.vid; return st; };
+  /** Switch the current exercise to another variation. */
+  function chooseVariation(vid) {
+    const it = cur(), list = varsOf(it), v = findVariation(list, vid);
+    if (!v || (v.vid === (it.vid || 'base'))) { varOpen = false; return render(); }
+    teardownTool();
+    if (!it.baseEx) { it.baseEx = it.ex; it.baseTarget = it.targetBpm; it.baseVariation = it.variation || null; }
+    it.vid = v.vid; it.ex = JSON.parse(JSON.stringify(v.ex)); it.goalBpm = v.ex.goalBpm;
+    const st = usesVarState(it) ? (p.varState || {})[varKeyOf(it)] : null;
+    it.targetBpm = v.base && !it.libId ? (it.baseTarget || it.targetBpm) : st ? st.target : calibratedTarget(v.ex, v.level, p);
+    const lad = tempoLadder(it.targetBpm, Math.max(it.goalBpm, it.targetBpm));
+    it.ramp = { ...(it.ramp || {}), step: lad.step, max: lad.max, rungs: lad.rungs };
+    it.variation = v.base ? it.baseVariation : `${v.label}: ${v.change}`;
+    A.lastToolBpm = null; A.peakBpm = 0; peak = 0; varOpen = false;
+    saveActive(A); render();
+    toast(v.base ? 'Back to the standard version.' : `Variation: ${v.label} (level ${v.level}).`);
   }
 
   function mountTool() {
@@ -295,7 +256,13 @@ export function mountRoutineRunner(root, { navigate }) {
     let decision = null;
     if (result) {
       const res = { tempo: result.tempo, clean: result.clean, date: today() };
-      if (course && it.fromTree) {
+      if (usesVarState(it)) {
+        p.varState = p.varState || {};
+        const k = varKeyOf(it);
+        const es = p.varState[k] || (p.varState[k] = newExerciseState(it.targetBpm));
+        decision = applyResult(es, it.ex, res);
+        if (it.isReview && result.clean && course) markReviewed(course, it.skillId);
+      } else if (course && it.fromTree) {
         decision = recordResult(course, it.exId, res);
         if (it.isReview && result.clean) markReviewed(course, it.skillId);
       } else if (it.prescriptionId) {
@@ -310,15 +277,15 @@ export function mountRoutineRunner(root, { navigate }) {
         decision = applyResult(es, it.ex, res);
       }
       if (!decision) decision = { decision: result.clean ? 'hold' : 'retry', message: result.clean ? `Clean at ${result.tempo} BPM.` : `Logged ${result.tempo} BPM.` };
-      addEvidence(p, { key: it.songId ? `song:${it.songId}:${it.ex.sectionKey || it.exId}` : it.customId ? 'custom:' + it.customId : (it.fromTree ? A.routine.courseId + ':' : '') + it.exId, domain: it.ex.domain, label: it.ex.name, level: decision.level || it.ex.level || (course && course.difficulty) || 4, tempo: result.tempo, goal: it.goalBpm, clean: result.clean, source: 'routine' });
+      addEvidence(p, { key: usesVarState(it) ? varKeyOf(it) : it.songId ? `song:${it.songId}:${it.ex.sectionKey || it.exId}` : it.customId ? 'custom:' + it.customId : (it.fromTree ? A.routine.courseId + ':' : '') + it.exId, domain: it.ex.domain, label: it.ex.name + (it.vid && it.vid !== 'base' && it.ex.varLabel ? ` (${it.ex.varLabel})` : ''), level: usesVarState(it) ? (it.ex.level || 4) : (decision.level || it.ex.level || (course && course.difficulty) || 4), tempo: result.tempo, goal: it.goalBpm, clean: result.clean, source: A.routine.kind === 'library' ? 'library' : 'routine' });
       A.prefill = null; A.peakBpm = 0;
-      p.exerciseLog.push({ date: today(), at: Date.now(), exerciseId: it.exId, name: it.ex.name, courseId: A.routine.courseId, ...(it.songId ? { songId: it.songId } : {}), tempo: result.tempo, goalBpm: it.goalBpm, clean: result.clean, mastered: decision && decision.decision === 'mastered', source: A.routine.kind || 'routine' });
+      p.exerciseLog.push({ date: today(), at: Date.now(), exerciseId: usesVarState(it) ? it.ex.id : it.exId, name: it.ex.name + (it.vid && it.vid !== 'base' && it.ex.varLabel ? ` (${it.ex.varLabel})` : ''), ...(it.vid ? { vid: it.vid } : {}), courseId: A.routine.courseId, ...(it.songId ? { songId: it.songId } : {}), tempo: result.tempo, goalBpm: it.goalBpm, clean: result.clean, mastered: decision && decision.decision === 'mastered', source: A.routine.kind || 'routine' });
       toast(decision.message, 3800);
     }
-    A.results.push({ key: it.key, name: it.ex.name, block: it.block, minutes: it.actualMin, tempo: result ? result.tempo : null, clean: result ? result.clean : null, skipped: !result, decision: decision ? decision.decision : 'skipped', message: decision ? decision.message : 'Skipped' });
+    A.results.push({ key: it.key, name: it.ex.name + (it.vid && it.vid !== 'base' && it.ex.varLabel ? ` · ${it.ex.varLabel}` : ''), block: it.block, minutes: it.actualMin, tempo: result ? result.tempo : null, clean: result ? result.clean : null, skipped: !result, decision: decision ? decision.decision : 'skipped', message: decision ? decision.message : 'Skipped' });
     Store.save();
     if (A.idx >= A.routine.items.length - 1) return finish();
-    A.idx++; A.itemStart = Date.now(); A.itemPaused = 0; A.alerted = false; A.lastToolBpm = null; A.prefill = null; A.peakBpm = 0; peak = 0; phase = 'play';
+    A.idx++; A.itemStart = Date.now(); A.itemPaused = 0; A.alerted = false; A.lastToolBpm = null; A.prefill = null; A.peakBpm = 0; peak = 0; phase = 'play'; varOpen = false;
     saveActive(A); render(); window.scrollTo(0, 0);
   }
 
@@ -366,6 +333,8 @@ export function mountRoutineRunner(root, { navigate }) {
   const onClick = e => {
     const b = e.target.closest('button'); if (!b) return;
     const d = b.dataset;
+    if (d.rvid) return chooseVariation(d.rvid);
+    if (d.r === 'vartoggle') { varOpen = !varOpen; const box = root.querySelector('[data-r="varbox"]'); if (box) box.innerHTML = varRowHTML(cur()); return; }
     if (d.r === 'pause') return togglePause();
     if (d.r === 'time') return changeTime();
     if (d.r === 'end') { if (confirm('End the session now? Time so far is logged.')) finish(); return; }
@@ -411,6 +380,6 @@ export function mountRoutineSummary(root, { navigate }) {
     <section class="card"><h3>${esc(S.routine.courseName)}</h3>
       ${S.results.map(r => `<div class="resrow"><span class="ri">${icon[r.decision] || '•'}</span><div><b>${esc(r.name)}</b><div class="small muted">${esc(r.message)}</div></div><span class="rt">${r.tempo ? r.tempo + ' BPM' : ''}</span></div>`).join('')}
     </section>
-    <div class="row"><a class="btn primary" href="#/home">Dashboard</a>${S.routine.songId ? `<a class="btn" href="#/song/${S.routine.songId}">Back to the song</a>` : S.routine.courseId ? `<a class="btn" href="#/course/${S.routine.courseId}">View course tree</a>` : '<a class="btn" href="#/practice">Practice</a>'}</div>`;
+    <div class="row"><a class="btn primary" href="#/home">Dashboard</a>${S.routine.songId ? `<a class="btn" href="#/song/${S.routine.songId}">Back to the song</a>` : S.routine.courseId ? `<a class="btn" href="#/course/${S.routine.courseId}">View course tree</a>` : '<a class="btn" href="#/practice">Exercise library</a>'}</div>`;
   return () => {};
 }

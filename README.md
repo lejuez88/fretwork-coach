@@ -25,7 +25,17 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: Track of the Day
+## Latest: exercise library, variations everywhere, quick tuner
+
+| Area | Included |
+|---|---|
+| Practice = exercise library | The Practice tab is now the “What do you want to work on?” box plus a library of 54 exercises in 8 areas (warm-ups, picking, fretting technique, chords, rhythm, scales and fretboard, theory, ear and improvisation), built for your level in each area. Search or filter, open any exercise, play it with the tab player or metronome, log a tempo, or queue several and run them as a timed session. |
+| Variations on every exercise | Every exercise and lesson comes in 7–16 versions from easier to harder. The spider has 15: finger orders (4-3-2-1, 1-3-2-4, 1-2-4-3, 2-1-4-3, 1-4-2-3, 1-3-4-2, 2-4-1-3), position 5, diagonal, string skipping, wide stretch, 16ths, triplets and the spider walk. Scales get patterns (3s, 4s, 3rds), rhythms and positions; chord work gets chord sets, beats per chord, keys and progressions; bends get half, whole and 1½-step, pre-bends and unison bends; plus general versions for anything (half-time, looped first half, reversed, new position, start on the “&”, gap click, simplified, pushed tempo). Each variation has its own level, target tempo and progress, and harder variations count more toward your skill levels. |
+| Variations in routines | Pick any variation from the routine runner. Routines use them automatically: warm-ups rotate through technique variations day to day, reviews of mastered skills come back as a harder variation, and a stalled exercise starts from an easier one. The course page lists every exercise’s variations. |
+| Routines on the dashboard | Course selection and the time budget moved to the dashboard’s Today’s routine card (build, preview, start). Links from the course page open it with the course and skill preselected. |
+| Quick tuner | A tuning-fork button on every screen opens a compact tuner that starts listening right away and stops the mic when closed. |
+
+## Earlier: Track of the Day
 
 | Area | Included |
 |---|---|

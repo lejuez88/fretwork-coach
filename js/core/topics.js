@@ -151,7 +151,12 @@ export function buildForRequest(profile, req) {
   const triadTypes = types.filter(x => TRIAD_TYPES.has(x));
   const kn = ROOT_BY_PC[key.pc] ? ROOT_BY_PC[key.pc].name : chordName(key.pc, 'maj');
   const iiVI = key.minor ? prog('iiVIminor') : prog('iiVI');
-  const A = ATOMS;
+  // atoms called directly here remember how they were made, so their variations can re-run them
+  const A = Object.fromEntries(Object.entries(ATOMS).map(([name, fn]) => [name, (cx, opts = {}) => {
+    const ex = fn(cx, opts);
+    if (ex) ex.gen = { atom: name, opts: JSON.parse(JSON.stringify(opts || {})), c: { key: cx.key, minor: !!cx.minor, lvl: cx.lvl, genre: cx.genre || null, prog: cx.prog || null } };
+    return ex;
+  }]));
   let what = [];
 
   // ---- Chord voicings and inversions ----

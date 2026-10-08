@@ -10,16 +10,18 @@ import { createCourse, suggestedDifficulty, tierName } from '../core/courses.js'
 import { DOMAINS } from '../assessment/engine.js';
 import { Shell } from '../ui/shell.js';
 import { progressPct } from '../core/progression.js';
-import { hasActiveRoutine } from './routine.js';
 import { estimatedCount } from './reassess.js';
 import { mountTrackCard } from '../ui/trackcard.js';
+import { mountRoutineBuilder } from '../ui/routinebuilder.js';
 
-export function mountDashboard(root, { navigate }) {
+export function mountDashboard(root, { navigate, courseId = null, skillId = null }) {
   const p = Store.profile;
   let calMonth = today().slice(0, 7); // YYYY-MM
   let tick = null;
-  root.innerHTML = '<div data-r="top"></div><section class="card track" data-r="track"></section><div data-r="bottom"></div>';
-  const top = root.querySelector('[data-r="top"]'), bottom = root.querySelector('[data-r="bottom"]');
+  // Stable regions (routine builder, track player) are mounted once; the rest re-renders.
+  root.innerHTML = '<div data-r="head"></div><section class="card routine-cta" data-r="routine"></section><div data-r="top"></div><section class="card track" data-r="track"></section><div data-r="bottom"></div>';
+  const head = root.querySelector('[data-r="head"]'), top = root.querySelector('[data-r="top"]'), bottom = root.querySelector('[data-r="bottom"]');
+  let builder = null;
 
   function render() {
     const st = Practice.stats(p), act = Practice.active();
@@ -27,14 +29,10 @@ export function mountDashboard(root, { navigate }) {
     const name = p.questionnaire.name || 'there';
     const hour = new Date().getHours(), greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
-    top.innerHTML = `
+    head.innerHTML = `
       <div class="dash-head"><div><div class="label">${new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div><h1>${greet}, ${esc(name)}.</h1></div>
-        <div class="streak-badge ${st.streak ? 'hot' : ''}" title="Current streak"><b>${st.streak}</b><span>day${st.streak === 1 ? '' : 's'}<br>streak</span></div></div>
-
-      ${hasActiveRoutine() ? `<section class="card routine-cta live"><div class="label">Routine in progress</div><h3>Pick up where you left off</h3><a class="btn primary block" href="#/practice/run">▶ Resume routine</a></section>`
-        : `<section class="card routine-cta"><div class="label">Today’s routine</div><h3>Build a session for the time you have</h3>
-        <p class="muted small">Warm-up, review, stretch, theory and music, timed exercise by exercise from your course plan.</p>
-        <a class="btn primary block" href="#/practice">▶ Start today’s routine</a></section>`}
+        <div class="streak-badge ${st.streak ? 'hot' : ''}" title="Current streak"><b>${st.streak}</b><span>day${st.streak === 1 ? '' : 's'}<br>streak</span></div></div>`;
+    top.innerHTML = `
       ${estimatedCount(p) ? `<section class="card nudge"><div><b>Finish your assessment</b><div class="small muted">${estimatedCount(p)} skill area${estimatedCount(p) > 1 ? 's are' : ' is'} estimated or untested at the harder levels, so lessons may start too easy.</div></div><a class="btn sm primary" href="#/reassess">Continue</a></section>` : ''}
       <section class="card session ${act ? 'live' : ''}">${act ? liveSession(act) : idleSession(open)}</section>
 
@@ -63,6 +61,7 @@ export function mountDashboard(root, { navigate }) {
         ${DOMAINS.map(d => { const l = p.domains[d.key] ? p.domains[d.key].level : 1; return `<div class="lv"><span>${d.short}</span><div class="bar"><i style="width:${l * 10}%"></i></div><b>${l}</b></div>`; }).join('')}
       </section>` : ''}`;
     hydrateImages(top); hydrateImages(bottom);
+    if (builder) builder.refresh();
     clearInterval(tick);
     if (act) tick = setInterval(() => { const c = top.querySelector('[data-r="clock"]'); if (c) c.textContent = fmtClock(Practice.elapsedSec()); }, 1000);
   }
@@ -191,7 +190,8 @@ export function mountDashboard(root, { navigate }) {
     }
   };
   root.addEventListener('click', onClick);
+  builder = mountRoutineBuilder(root.querySelector('[data-r="routine"]'), { navigate, courseId, skillId });
   render();
   const offTrack = mountTrackCard(root.querySelector('[data-r="track"]'));
-  return () => { clearInterval(tick); offTrack(); root.removeEventListener('click', onClick); };
+  return () => { clearInterval(tick); offTrack(); builder.destroy(); root.removeEventListener('click', onClick); };
 }

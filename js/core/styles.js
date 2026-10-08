@@ -461,7 +461,12 @@ function resolve(opts, c) {
 
 export function runAtom(c, name, opts = {}) {
   const fn = ATOMS[name]; if (!fn) return null;
-  try { return fn(c, resolve(opts, c)) || null; } catch (e) { if (typeof console !== 'undefined') console.warn('atom failed', name, e && e.message); return null; }
+  try {
+    const ex = fn(c, resolve(opts, c)) || null;
+    // remember how it was made, so variations can re-run it with other settings
+    if (ex) ex.gen = { atom: name, opts: JSON.parse(JSON.stringify(opts || {})), c: { key: c.key, minor: !!c.minor, lvl: c.lvl, genre: c.genre || null, prog: c.prog || null } };
+    return ex;
+  } catch (e) { if (typeof console !== 'undefined') console.warn('atom failed', name, e && e.message); return null; }
 }
 
 /** The raw tree (before normalizing) for a course: units → skills → exercises, all in the style. */

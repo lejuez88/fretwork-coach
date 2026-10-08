@@ -52,7 +52,8 @@ export function mountTools(root, { tab = 'tuner', exerciseId = null, navigate })
       };
       drawHist();
     } else {
-      pane.innerHTML = `<p class="muted">Every exercise has a goal tempo. Log the highest tempo you play cleanly; reaching the goal marks it mastered and counts toward your skill levels.</p>
+      pane.innerHTML = `<section class="card nudge"><div><b>More in the Practice library</b><div class="small muted">54 exercises, each with variations from easier to harder (the spider alone has 15 finger orders, positions and rhythms). These open there too.</div></div><a class="btn sm primary" href="#/practice">Open</a></section>
+        <p class="muted">Every exercise has a goal tempo. Log the highest tempo you play cleanly; reaching the goal marks it mastered and counts toward your skill levels.</p>
         ${EXERCISES.map(ex => { const best = bestTempo(p, ex.id), pct = Math.min(100, Math.round(best / ex.goalBpm * 100)); return `
         <a class="exrow card" href="#/tools/tabs/${ex.id}">
           <div><b>${esc(ex.name)}</b><div class="muted small">${esc(ex.tags.join(' · '))} · level ${ex.level}</div>

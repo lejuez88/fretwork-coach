@@ -13,6 +13,9 @@ import { toPlayerExercise } from '../core/coursegen.js';
 import { notesToText } from '../core/tabparse.js';
 import { mountTabPlayer } from '../tools/tabplayer.js';
 import { Metronome, mountMetronome } from '../tools/metronome.js';
+import { variationsFor, findVariation } from '../core/variations.js';
+import { calibratedTarget } from '../core/progression.js';
+import { variationChipsHTML, variationNoteHTML } from './variationpicker.js';
 
 const ROLE = { drill: 'Drill', main: 'Main exercise', apply: 'Apply it' };
 const DRAFT_KEY = 'fretworkCoach.askDraft';
@@ -95,17 +98,24 @@ export function mountAskBox(el, { start, courseId = null }) {
     const out = el.querySelector('.askresult'); if (out && out.scrollIntoView) out.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  function tryIt(i) {
+  /** Inline preview with the exercise's variations; vid switches variation in place. */
+  function tryIt(i, vid = null) {
     const it = itemAt(i); if (!it) return;
     const same = tryIdx === String(i); stopTry();
     el.querySelectorAll('[data-tryslot]').forEach(s => { s.innerHTML = ''; });
-    if (same) return;
+    if (same && vid == null) return;
     const slot = el.querySelector(`[data-tryslot="${i}"]`); tryIdx = String(i);
-    const px = toPlayerExercise(it.ex, it.targetBpm);
-    if (px) tryTool = mountTabPlayer(slot, px, { settings: p.settings, onSettings: patch => { Object.assign(p.settings, patch); Store.save(); }, startBpm: it.targetBpm || it.ex.startBpm, compact: true });
+    let list = []; try { list = variationsFor(it.ex, { level: it.ex.level || 4 }); } catch { list = []; }
+    const v = list.length ? findVariation(list, vid) : null;
+    const ex = v ? v.ex : it.ex;
+    const target = !v || v.base ? (it.targetBpm || it.ex.startBpm) : calibratedTarget(v.ex, v.level, p);
+    slot.innerHTML = `${list.length > 1 ? `<div class="label" style="margin-top:10px">Variations · ${list.length}</div>${variationChipsHTML(list, { current: v.vid, attr: 'data-tvid' })}${variationNoteHTML(v)}` : ''}<div data-r="trytool"></div>`;
+    const host = slot.querySelector('[data-r="trytool"]');
+    const px = toPlayerExercise(ex, target);
+    if (px) tryTool = mountTabPlayer(host, px, { settings: p.settings, onSettings: patch => { Object.assign(p.settings, patch); Store.save(); }, startBpm: target, compact: true });
     else {
-      Metronome.configure({ bpm: it.targetBpm || it.ex.startBpm, mode: it.ex.metroMode || 'all', backing: it.ex.backing && it.ex.backing.length ? it.ex.backing : null, beatsPerBar: it.ex.beatsPerBar || 4, subdiv: 1, ramp: null });
-      tryTool = mountMetronome(slot, { compact: true });
+      Metronome.configure({ bpm: target, mode: ex.metroMode || 'all', backing: ex.backing && ex.backing.length ? ex.backing : null, beatsPerBar: ex.beatsPerBar || 4, subdiv: 1, ramp: null });
+      tryTool = mountMetronome(host, { compact: true });
     }
   }
 
@@ -124,6 +134,8 @@ export function mountAskBox(el, { start, courseId = null }) {
   const onClick = e => {
     const chip = e.target.closest('[data-ex]');
     if (chip) { const ta = el.querySelector('[data-r="ask"]'); ta.value = chip.dataset.ex; ta.focus(); return; }
+    const tv = e.target.closest('[data-tvid]');
+    if (tv && tryIdx != null) return tryIt(tryIdx, tv.dataset.tvid);
     const b = e.target.closest('[data-ask]'); if (!b) return;
     const a = b.dataset.ask, i = b.dataset.i;
     if (a === 'go') return go();

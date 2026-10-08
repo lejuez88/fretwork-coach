@@ -20,15 +20,32 @@ export const TUNINGS = {
 
 /**
  * Mount the tuner. settings: {referenceA4, tuning}; onSettings(next) persists changes.
+ * opts.mini: compact layout for the quick-tune sheet; opts.autostart: open the mic at once.
  * Returns cleanup.
  */
-export function mountTuner(el, settings, onSettings) {
+export function mountTuner(el, settings, onSettings, { mini = false, autostart = false } = {}) {
   let a4 = settings.referenceA4 || 440, tuningKey = settings.tuning in TUNINGS ? settings.tuning : 'standard';
   let target = null; // null = auto (nearest string) | 'chromatic' | string index
   let running = false, analyser = null, hp = null, buf = null, timer = null, raf = null;
   const hist = []; let shown = null, inTuneSince = 0, strobePos = 0, lastFrame = performance.now(), lastCents = null;
 
-  el.innerHTML = `
+  el.innerHTML = mini ? `
+  <div class="tuner mini">
+    <div class="tmini-top"><div class="tuner-note"><span data-r="note">—</span><small data-r="oct"></small></div>
+      <div class="tmini-read"><span data-r="cents">— ¢</span><span data-r="hz">— Hz</span><span data-r="target">Auto</span></div></div>
+    <svg class="gauge" viewBox="0 0 300 160" aria-hidden="true">
+      <path d="M30 150 A120 120 0 0 1 270 150" fill="none" stroke="var(--line)" stroke-width="10" stroke-linecap="round"/>
+      <path d="M142 32 A120 120 0 0 1 158 32" fill="none" stroke="var(--green)" stroke-width="12"/>
+      <g data-r="needle" style="transform-origin:150px 150px;transition:transform .08s linear"><line x1="150" y1="150" x2="150" y2="40" stroke="var(--amber)" stroke-width="4" stroke-linecap="round"/></g>
+      <circle cx="150" cy="150" r="8" fill="var(--amber)"/>
+    </svg>
+    <div class="strobe" data-r="strobe"></div>
+    <div class="tuner-status" data-r="status">Tap Start and play one string at a time.</div>
+    <div class="strings" data-r="strings"></div>
+    <div class="row tmini-ctrl"><button class="btn primary" data-r="go">🎤 Start tuner</button>
+      <select data-r="tuning" aria-label="Tuning">${Object.entries(TUNINGS).map(([k, t]) => `<option value="${k}" ${k === tuningKey ? 'selected' : ''}>${esc(t.label)}</option>`).join('')}</select></div>
+    <div class="small muted tmini-foot">A4 = <b data-r="a4">${a4}</b> Hz · more options in <a class="link" href="#/tools/tuner" data-r="full">Tools → Tuner</a></div>
+  </div>` : `
   <div class="tuner card">
     <div class="tuner-note"><span data-r="note">—</span><small data-r="oct"></small></div>
     <svg class="gauge" viewBox="0 0 300 160" aria-hidden="true">
@@ -118,16 +135,18 @@ export function mountTuner(el, settings, onSettings) {
     raf = requestAnimationFrame(strobeLoop);
   }
 
+  let dead = false;
   async function start() {
     try {
       const src = await Audio.openMic();
+      if (dead) { Audio.closeMic(); return; } // closed while the permission prompt was up
       const c = Audio.ctx;
       hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 30;
       analyser = c.createAnalyser(); analyser.fftSize = 4096; analyser.smoothingTimeConstant = 0;
       src.connect(hp); hp.connect(analyser);
       buf = new Float32Array(analyser.fftSize);
       running = true; timer = setInterval(analyse, 50); raf = requestAnimationFrame(strobeLoop);
-      r('go').textContent = '■ Stop tuner'; r('go').className = 'btn stop block';
+      r('go').textContent = '■ Stop tuner'; r('go').className = mini ? 'btn stop' : 'btn stop block';
       r('status').textContent = 'Listening… play a string.';
     } catch (e) {
       r('status').textContent = e.name === 'NotAllowedError' ? 'Microphone permission was denied. Allow it in your browser’s site settings.' : (e.message || 'Could not open the microphone.');
@@ -138,7 +157,7 @@ export function mountTuner(el, settings, onSettings) {
     try { hp && hp.disconnect(); analyser && analyser.disconnect(); } catch { /* ignore */ }
     if (analyser) Audio.closeMic();
     analyser = null; hp = null;
-    const go = r('go'); if (go) { go.textContent = '🎤 Start tuner'; go.className = 'btn primary block'; }
+    const go = r('go'); if (go) { go.textContent = '🎤 Start tuner'; go.className = mini ? 'btn primary' : 'btn primary block'; }
   }
 
   el.addEventListener('click', e => {
@@ -158,6 +177,7 @@ export function mountTuner(el, settings, onSettings) {
   });
   r('tuning').addEventListener('change', e => { tuningKey = e.target.value; target = null; renderStrings(); onSettings({ tuning: tuningKey }); });
 
-  return () => stop();
+  if (autostart) start();
+  return () => { dead = true; stop(); };
 }
 export { NOTE_NAMES };

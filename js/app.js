@@ -18,7 +18,9 @@ import { mountSettings } from './screens/settings.js';
 import { importBlockHTML, wireImport } from './ui/importui.js';
 import { prepareProfile } from './core/importer.js';
 import { mountCourse } from './screens/course.js';
-import { mountRoutineSetup, mountRoutineRunner, mountRoutineSummary } from './screens/routine.js';
+import { mountRoutineRunner, mountRoutineSummary } from './screens/routine.js';
+import { mountLibrary, mountLibraryExercise } from './screens/library.js';
+import { initTunerFab } from './ui/tunerfab.js';
 import { mountReassessHub, mountReassessRun } from './screens/reassess.js';
 import { mountEvaluate } from './screens/evaluate.js';
 import { mountSongsHub, mountSongDetail } from './screens/songs.js';
@@ -90,6 +92,7 @@ function applySettings() {
   applyAudioPrefs(p);
 }
 
+const LIB_FOR_TAB = { 'spider-1234': 'spider', 'penta-box1': 'penta', 'penta-16ths': 'penta', 'gcd-changes': 'open-changes', 'legato-3nps': 'legato', 'blues-shuffle-a': 'shuffle', 'string-skip': 'string-cross', 'sweep-am': 'sweep' };
 const needsProfile = new Set(['home', 'tools', 'profile', 'course', 'results', 'practice', 'reassess', 'evaluate', 'songs', 'song']);
 
 function route() {
@@ -135,13 +138,19 @@ function route() {
     }
     case 'results': cleanup = mountProfile(root, { navigate, firstRun: true }); break;
     case 'profile': cleanup = mountProfile(root, { navigate }); break;
-    case 'home': cleanup = mountDashboard(root, { navigate }); break;
-    case 'tools': cleanup = mountTools(root, { tab: parts[1] || 'tuner', exerciseId: parts[2] ? decodeURIComponent(parts[2]) : null, navigate }); break;
+    case 'home': cleanup = mountDashboard(root, { navigate, courseId: parts[1] === 'routine' ? parts[2] || null : null, skillId: parts[1] === 'routine' ? parts[3] || null : null }); break;
+    case 'tools':
+      // the tab-player exercises now live in the Practice library (with variations)
+      if (parts[1] === 'tabs' && parts[2] && LIB_FOR_TAB[parts[2]]) { navigate('#/practice/ex/' + LIB_FOR_TAB[parts[2]]); return; }
+      cleanup = mountTools(root, { tab: parts[1] || 'tuner', exerciseId: parts[2] ? decodeURIComponent(parts[2]) : null, navigate }); break;
     case 'course': cleanup = mountCourse(root, { id: parts[1], navigate }); break;
     case 'practice':
       if (parts[1] === 'run') cleanup = mountRoutineRunner(root, { navigate });
       else if (parts[1] === 'summary') cleanup = mountRoutineSummary(root, { navigate });
-      else cleanup = mountRoutineSetup(root, { navigate, courseId: parts[1] === 'course' ? parts[2] : null, skillId: parts[1] === 'course' ? parts[3] || null : null });
+      else if (parts[1] === 'ex' && parts[2]) cleanup = mountLibraryExercise(root, { navigate, id: decodeURIComponent(parts[2]), vid: parts[3] ? decodeURIComponent(parts[3]) : null });
+      // course routines are built on the dashboard now; keep old links working
+      else if (parts[1] === 'course') { navigate(`#/home/routine/${parts[2] || ''}${parts[3] ? '/' + parts[3] : ''}`); return; }
+      else cleanup = mountLibrary(root, { navigate });
       break;
     case 'reassess':
       if (parts[1] === 'run') cleanup = mountReassessRun(root, { navigate });
@@ -165,6 +174,7 @@ function boot() {
     Store.save();
   }
   window.addEventListener('hashchange', route);
+  initTunerFab();
   route();
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 }

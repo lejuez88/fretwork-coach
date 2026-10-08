@@ -9,6 +9,7 @@ import { GENRE_BY_ID } from '../data/catalog.js';
 import { ensureState, allSkills, activeSkills, reviewDue, calibratedTarget, tempoLadder, newExerciseState } from './progression.js';
 import { fallbackExercises } from './coursegen.js';
 import { stylePools, rotate } from './styles.js';
+import { variationsFor, pickVariation } from './variations.js';
 
 export const BLOCKS = {
   warmup: { label: 'Warm-up', share: 0.10, why: 'Primes the exact motions of today’s stretch.' },
@@ -113,11 +114,43 @@ export function buildRoutine(profile, course, { budget = null, focusSkillId = nu
 
   const blocks = { warmup, review, stretch, theory, music };
   const items = allocate(blocks, budget);
+  applyVariations(profile, course, items, seed);
   return {
     id: uid(), courseId: course.id, courseName: course.name, genre: course.genre, createdAt: Date.now(), date: today(),
     budget, focusSkillId: focus ? focus.id : null, focusTitle: focus ? focus.title : '',
     items, coach: null
   };
+}
+
+/**
+ * The spiral, applied: warm-ups rotate through easy variations day to day
+ * (spider finger orders, positions, rhythms), reviews of mastered skills come
+ * back as a harder variation, and a stalled stretch exercise starts from an
+ * easier one. Variation progress lives in profile.varState.
+ */
+function applyVariations(profile, course, items, seed) {
+  const vs = profile.varState || {};
+  for (const it of items) {
+    if (it.prescriptionId || it.vid) continue;
+    const want = it.block === 'warmup' ? 'rotate' : it.block === 'review' && it.isReview ? 'harder' : it.block === 'stretch' && it.note && /^Stalled/.test(it.note) ? 'easier' : null;
+    if (!want) continue;
+    let list;
+    try { list = variationsFor(it.ex, { course, level: it.ex.level || course.difficulty || 4 }); } catch { continue; }
+    if (list.length < 2) continue;
+    const scope = it.fromTree ? `${course.id}:${it.exId}` : `${course.id}:x:${it.exId}`;
+    const v = pickVariation(list, { want, level: course.difficulty || 4, isMastered: vid => !!(vs[`${scope}~${vid}`] || {}).mastered, seed: hashDay(seed + it.exId) });
+    if (!v || v.base) continue;
+    const st = vs[`${scope}~${v.vid}`];
+    it.baseEx = it.ex; it.baseTarget = it.targetBpm; it.baseVariation = it.variation || null;
+    it.vid = v.vid; it.ex = cloneEx(v.ex); it.goalBpm = v.ex.goalBpm;
+    const cal = calibratedTarget(v.ex, v.level, profile);
+    it.targetBpm = st ? st.target : want === 'rotate' ? Math.max(30, Math.round(cal * 0.9)) : cal;
+    const lad = tempoLadder(it.targetBpm, Math.max(it.goalBpm, it.targetBpm));
+    it.ramp = { ...it.ramp, step: lad.step, max: lad.max, rungs: lad.rungs };
+    it.variation = want === 'harder' ? `Review with a harder variation: ${v.label}. ${v.change}`
+      : want === 'easier' ? `Start with an easier variation: ${v.label}. ${v.change}`
+      : `Today’s variation: ${v.label}. ${v.change} Easy tempo; stay relaxed.`;
+  }
 }
 
 /**

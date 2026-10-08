@@ -10,6 +10,8 @@ import { ensureState, progressPct } from '../core/progression.js';
 import { DOMAIN_BY_KEY } from '../assessment/engine.js';
 import { suggestedDifficulty, tierName } from '../core/courses.js';
 import { Shell } from '../ui/shell.js';
+import { variationsFor } from '../core/variations.js';
+import { levelRange } from '../ui/variationpicker.js';
 
 const STATUS = { locked: ['🔒', 'Locked'], available: ['●', 'Ready'], in_progress: ['◐', 'In progress'], mastered: ['✓', 'Mastered'] };
 
@@ -30,7 +32,7 @@ export function mountCourse(root, { id, navigate }) {
         ${c.players.length ? `<p class="muted small">Inspired by ${c.players.map(esc).join(', ')}</p>` : ''}
         <div class="cprog big"><div class="bar"><i style="width:${c.progress || 0}%"></i></div><span>${c.progress || 0}%</span></div>
         <p class="small muted">${sessions.length} session${sessions.length === 1 ? '' : 's'} · ${fmtMinutes(mins)} practiced</p>
-        <a class="btn primary block" href="#/practice/course/${c.id}">▶ Practice this course</a>
+        <a class="btn primary block" href="#/home/routine/${c.id}">▶ Practice this course</a>
       </section>
       ${isGenericPlan(c) ? `<section class="card levelup"><div class="label">New: a plan built for ${esc(c.style)}</div>
         <p>This course still uses the old standard plan, which was the same for every style. Rebuild it to get exercises in ${esc(c.style)}’s own keys, rhythms and techniques. Progress on the old exercises resets; your practice time and skill levels are kept.</p>
@@ -60,6 +62,14 @@ export function mountCourse(root, { id, navigate }) {
     </section>`;
   }
 
+  /** The exercise's variations, with marks for the ones practiced or mastered. */
+  function varsLine(e) {
+    let list = []; try { list = variationsFor(e, { course: c, level: e.level || c.difficulty }); } catch { /* none */ }
+    const others = list.filter(v => !v.base); if (!others.length) return '';
+    const vs = p.varState || {};
+    return `<div class="varmini">↻ ${others.length} variations · ${levelRange(list)}: ${others.map(v => { const st = vs[`${c.id}:${e.id}~${v.vid}`]; return `<span class="${st && st.mastered ? 'ok' : ''}">${esc(v.label)}${st && st.mastered ? ' ✓' : ''}</span>`; }).join(' · ')}<div class="small muted">Pick any of them in the routine runner.</div></div>`;
+  }
+
   function skillSheet(skillId) {
     const s = c.tree.units.flatMap(u => u.skills).find(x => x.id === skillId), ss = c.state.skills[s.id];
     const sheet = Shell.sheet(`
@@ -70,9 +80,10 @@ export function mountCourse(root, { id, navigate }) {
         <div class="small muted">${esc(e.unit)} · target ${es.target} BPM → goal ${e.goalBpm} BPM${es.best ? ` · best ${es.best}` : ''} · ${es.passes.length}/2 passes</div>
         <div class="bar thin"><i style="width:${es.mastered ? 100 : Math.max(0, pct)}%"></i></div>
         ${e.why ? `<p class="small">${esc(e.why)}</p>` : ''}
+        ${varsLine(e)}
         ${es.history.length ? `<div class="spark">${es.history.slice(-12).map(h => `<i class="${h.clean ? 'c' : ''}" style="height:${Math.max(8, Math.round(h.tempo / e.goalBpm * 100))}%" title="${h.date}: ${h.tempo} BPM"></i>`).join('')}</div>` : ''}</div>`; }).join('')}
       ${ss.status === 'locked' ? `<p class="muted small">Unlocks after: ${esc(s.prereqs.map(pid => (c.tree.units.flatMap(u => u.skills).find(x => x.id === pid) || {}).title).filter(Boolean).join(', '))}</p>` : ''}
-      <a class="btn primary block" href="#/practice/course/${c.id}/${s.id}">▶ Practice this skill now</a>`);
+      <a class="btn primary block" href="#/home/routine/${c.id}/${s.id}">▶ Practice this skill now</a>`);
     sheet.el.addEventListener('click', e => { if (e.target.closest('a')) sheet.close(); });
   }
 

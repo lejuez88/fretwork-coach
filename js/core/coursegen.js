@@ -82,8 +82,21 @@ export function normalizeExercise(raw, used = new Set()) {
     ...(clampN(raw.beatsPerBar, 2, 12, 0) && raw.beatsPerBar != 4 ? { beatsPerBar: clampN(raw.beatsPerBar, 2, 12, 4) } : {}),
     ...(['backbeat', 'gap'].includes(raw.metroMode) ? { metroMode: raw.metroMode } : {}),
     ...(PICKING.includes(raw.picking) ? { picking: raw.picking } : {}),
-    ...(raw.pickKey ? { pickKey: String(raw.pickKey).slice(0, 60) } : {})
+    ...(raw.pickKey ? { pickKey: String(raw.pickKey).slice(0, 60) } : {}),
+    ...(normGen(raw.gen) ? { gen: normGen(raw.gen) } : {}),
+    ...(typeof raw.family === 'string' && /^[a-z]{2,20}$/.test(raw.family) ? { family: raw.family } : {})
   };
+}
+
+/** How a generated exercise was made ({atom, opts, c}); lets variations re-run it. */
+function normGen(g) {
+  if (!g || typeof g !== 'object' || typeof g.atom !== 'string' || !/^[a-zA-Z]{2,30}$/.test(g.atom) || !g.c || typeof g.c !== 'object') return null;
+  try {
+    const opts = JSON.parse(JSON.stringify(g.opts || {}));
+    if (JSON.stringify(opts).length > 600) return null;
+    const c = { key: ((Number(g.c.key) % 12) + 12) % 12 || 0, minor: !!g.c.minor, lvl: clampN(g.c.lvl, 1, 10, 4), genre: typeof g.c.genre === 'string' ? g.c.genre.slice(0, 20) : null, prog: typeof g.c.prog === 'string' ? g.c.prog.slice(0, 20) : null };
+    return { atom: g.atom, opts, c };
+  } catch { return null; }
 }
 
 /** Chord voicings for diagrams: [{name, frets (low→high, null = muted)}] from arrays or "x32010" strings. */
