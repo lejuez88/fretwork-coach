@@ -113,6 +113,16 @@ export const spreadName = (pc, type) => nameOf(pc) + (type === 'min' ? 'm' : typ
 export const W = (id, name, domain, unit, start, goal, why, instr, watch, simplify, minutes = 5) => ({ spec: { id, name, domain, unit, startBpm: start, goalBpm: goal, why, instr, watch, simplify, minutes } });
 /** A skill: a few lessons on one idea. ex entries: (c) => exercise, ['atom', opts, ctxPatch] or W(...). */
 export const S = (id, title, domain, summary, ex) => ({ id, title, domain, summary, ex });
+/**
+ * Tag a lesson entry with the learning method it applies (see js/core/methods.js): works for a
+ * generator (c) => exercise, an atom ['atom', opts, ctx] or a written drill W(...).
+ */
+export function M(method, e) {
+  if (typeof e === 'function') { const f = c => { const x = e(c); return x ? { ...x, method: x.method || method } : x; }; f.method = method; return f; }
+  if (Array.isArray(e)) { const a = e.slice(); a.method = method; return a; }
+  if (e && e.spec) return { spec: { ...e.spec, method } };
+  return e;
+}
 /** A unit of an artist's curriculum. */
 export const U = (title, summary, skills) => ({ title, summary, skills });
 

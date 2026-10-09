@@ -14,6 +14,7 @@ import { tierName } from '../core/courses.js';
 import { MC_ICON } from '../ui/mastersheet.js';
 import { lessonCardHTML, lessonActions, lessonState, lessonTarget } from '../ui/lessoncards.js';
 import { pathStage, nextLesson } from '../core/coach.js';
+import { methodOf } from '../core/methods.js';
 import { requestBoxHTML, wireRequestBox } from '../ui/kbrequest.js';
 
 const UI_KEY = 'fretworkCoach.techUI';
@@ -128,6 +129,13 @@ export function mountTechnique(root, { navigate, id }) {
       <p class="small">${esc(TIER_BY_ID[tier].name)} stage${startReason ? ` (${esc(startReason.charAt(0).toLowerCase() + startReason.slice(1).replace(/\.$/, ''))})` : ''}. ${esc(nx.reason)}</p>
       <div class="row"><button class="btn primary" data-al="practice" data-i="${nx.index}">▶ Start this lesson</button><button class="btn" data-jump="${nx.index}">Show it below</button></div></section>`;
   }
+  /** How this stage teaches: the learning methods its lessons use, with the evidence behind each. */
+  function methodsHTML() {
+    const ids = [...new Set(lessons.map(l => l.ex.method).filter(m => methodOf(m)))];
+    if (!ids.length) return '';
+    return `<section class="card methods"><h3>How this stage teaches</h3><p class="small muted">Each lesson uses a practice method with research behind it. Tap one for the evidence.</p>
+      ${ids.map(id => { const m = methodOf(id); return `<details class="method"><summary><b>${esc(m.name)}</b> <span class="small muted">${esc(m.short)}</span></summary><p class="small">${esc(m.detail)}</p><p class="small muted">${esc(m.source)} <i>${esc(m.strength)}</i></p></details>`; }).join('')}</section>`;
+  }
   function render() {
     acts.stop();
     const st = t.stages.find(s => s.tier === tier), arts = artistsUsing(id), mc = masterFor();
@@ -162,6 +170,7 @@ export function mountTechnique(root, { navigate, id }) {
             <p class="small muted">Every stage from ${esc(TIER_BY_ID[startStage.tier].name.toLowerCase())} up, in order, as a master class with progress and reviews. Built from these lessons (no API cost).</p>
             ${mc ? `<a class="btn primary block" href="#/course/${mc.id}">${MC_ICON} Open your ${esc(t.title)} course</a>` : `<button class="btn primary block" data-tm="master" ${building ? 'disabled' : ''}>${building ? '<span class="spinner sm"></span>Building…' : `${MC_ICON} Start the ${esc(t.title)} path`}</button>`}</section>
           ${missing.length ? `<section class="card"><h3>Still to come</h3><p class="small muted">${missing.map(x => esc(x.name)).join(', ')} ${missing.length === 1 ? 'stage is' : 'stages are'} being researched and added to this path. The research runs (twice a week) fill incomplete paths first.</p></section>` : ''}
+          ${methodsHTML()}
           ${arts.length ? `<section class="card"><h3>Players who use it</h3><div class="riffs">${arts.map(a => `<div class="riff"><a class="link" href="#/artist/${a.id}"><b>${esc(a.name)}</b></a><div class="small muted">${esc(a.blurb)}</div></div>`).join('')}</div></section>` : ''}
         </aside>
       </div>`;

@@ -90,6 +90,43 @@ export default artist({ id: 'eric-johnson', name: 'Eric Johnson', wiki: ['Eric J
 
 An artist's signature techniques belong in the knowledge base, each as its own path, and the artist file reuses them. That way a player can learn "rolling 5s" with or without Eric Johnson.
 
+## Concept-first lessons (how every topic is built)
+
+Don't write a list of fixed tabs. **Understand the topic well enough to generate its exercises**, then let the code produce them at any key, level and variation. `js/data/kb/pentatonic.js` is the reference implementation: read it before building or deepening any path.
+
+1. **Research the concept, not just the exercises.** Before writing code, work out:
+   - the facts: the notes, intervals, shapes and fingerings;
+   - how good teachers sequence it, from first contact to mastery;
+   - the common mistakes and the prerequisites;
+   - where it is used in real music.
+   Use several reputable sources and record them in the log.
+2. **Write the concept model as code.** Encode the facts once as data and functions: degrees and labels, shapes or positions (as functions of the key), the techniques it involves, and which notes are chord tones, tensions or bend points. Exercises are derived from the model, never typed in by hand, so they are correct in every key.
+3. **Write a composer with independent dimensions.** For a scale these are shape × sequence × rhythm × key plan × technique × musical context; a chord topic might use voicing × string set × inversion × progression × rhythm. One exercise is one choice along each dimension (`compose(c, spec)` in pentatonic.js). New lessons are new specs, not new code, and every lesson scales with `c.lvl`.
+4. **Choose each lesson for a learning method and tag it.** Set `method` on the exercise (generators), or wrap atoms and reused generators with `M('method', entry)` from `js/data/lib.js`. The app shows the method on the lesson card and explains it, with its evidence, on the path page.
+
+| `method` | Use it for | Evidence (honest strength) |
+|---|---|---|
+| `edge` | Climbing toward a goal at 70–85% clean | Deliberate practice (Ericsson et al. 1993); the % is a rule of thumb |
+| `accurate-reps` | Clean repetitions counted, not minutes | Duke, Simmons & Cash 2009 (music, correlational) |
+| `chunking` | Small pieces joined; isolating the hard spot | Duke et al. 2009 |
+| `retrieval` | Recalling from memory: roots, degrees, shapes, keys named on the spot | Roediger & Karpicke 2006 (strong, mostly outside music) |
+| `interleaving` | Mixing keys, positions or patterns instead of repeating one | Carter & Grahn 2016 (music, small); contextual interference (motor learning, strong) |
+| `variable` | The same idea in many sequences, rhythms and positions | Schema theory and motor-learning research |
+| `spacing` | Spaced review (the app schedules it; tag review-style lessons) | Cepeda et al. 2006 (very strong) |
+| `external-focus` | Instructions about the sound (pitch, evenness, tone), not the fingers | Duke, Cash & Allen 2011 (music); Wulf 2013 review |
+| `audiation` | Sing or hear it before playing; echo by ear | Gordon's Music Learning Theory (teaching approach, less experimental evidence) |
+| `transfer` | The skill inside real music: grooves, progressions, call and response, original études | Practice-specificity principle |
+
+5. **Build every stage from a mix of methods.**
+   - Foundations: chunking, accurate repetitions, retrieval and hearing it first, plus first music.
+   - Intermediate: variable practice and interleaving, with focus on the sound for expressive technique.
+   - Advanced: interleaving across the neck and all keys, retrieval under time, phrasing.
+   - Mastery: unpredictable interleaving (random access), performance tempo (edge), and a capstone: an original study that uses the whole skill, which the player then rewrites as their own.
+   - Every stage's last skill is musical use (`transfer`).
+6. **Verify the model.** Build every generator in all 12 keys (or every relevant key) at every level of its stage, and check every note's pitch against the concept model. The pentatonic check built 924 exercises with 0 out-of-key notes; aim for the same. The validator warns about untagged lessons.
+
+When deepening an older path, rebuild it this way rather than adding more one-off tabs.
+
 ## Writing a generator
 
 A generator receives `c = { key, minor, lvl, genre, prog }` and returns `make(c, {...})`. It is pure: no randomness, no network, the same output for the same input. It must **scale with `c.lvl`** (tempo goal, length, subdivision or a harder variant).

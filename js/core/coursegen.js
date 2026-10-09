@@ -85,7 +85,8 @@ export function normalizeExercise(raw, used = new Set()) {
     ...(raw.pickKey ? { pickKey: String(raw.pickKey).slice(0, 60) } : {}),
     ...(normGen(raw.gen) ? { gen: normGen(raw.gen) } : {}),
     ...(typeof raw.family === 'string' && /^[a-z]{2,20}$/.test(raw.family) ? { family: raw.family } : {}),
-    ...(typeof raw.xform === 'string' && /^[a-z0-9-]{1,20}$/.test(raw.xform) ? { xform: raw.xform } : {})
+    ...(typeof raw.xform === 'string' && /^[a-z0-9-]{1,20}$/.test(raw.xform) ? { xform: raw.xform } : {}),
+    ...(typeof raw.method === 'string' && /^[a-z-]{3,24}$/.test(raw.method) ? { method: raw.method } : {})
   };
 }
 

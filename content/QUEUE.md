@@ -12,7 +12,7 @@ Synced from the player's Google Drive file `Fretwork Coach research requests.jso
 
 ## Depth backlog
 
-Incomplete paths, from the validator's coverage table (`node tools/validate-content.mjs`). As of 2026-10-08, all 17 paths have one stage of 1–4 lessons and need the other three stages and the depth standard (3+ skills, 6+ lessons per stage).
+Incomplete paths, from the validator's coverage table (`node tools/validate-content.mjs`). As of 2026-10-09: **pentatonic** is complete (built concept-first by the development thread as the reference; see CONTENT.md, "Concept-first lessons"). The other 17 paths have one stage of 1–4 lessons and need rebuilding concept-first, with all four stages at the depth standard.
 
 Priority order:
 1. Paths used by artists: rolling5s, speedPent, spreadTriads, hexatonic, tapping, openPulls, pgSix, skipArps, pent6s, stretchPent, sharp9, octaves.

@@ -10,6 +10,7 @@ export function savedInput(profile) { return profile.settings.audioInput || { de
 
 /** Apply saved prefs to the audio engine (call at boot and after changes). */
 export function applyAudioPrefs(profile) {
+  if (profile.settings.clickSound) Audio.sound = profile.settings.clickSound;
   Audio.setInputPrefs(savedInput(profile));
   const out = profile.settings.audioOutput;
   if (out && out.deviceId) Audio.setOutput(out.deviceId);

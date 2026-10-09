@@ -27,20 +27,32 @@ export const Audio = {
   freq(m) { return 440 * Math.pow(2, (m - 69) / 12); },
 
   clickStyle: 'normal', // 'eval' = high sine blip the playing analyzer filters out
+  sound: 'click',       // the metronome voice (see CLICK_SOUNDS); set from Settings
   click(t, accent, vol = 1) {
     const c = this.get(); if (!c) return;
-    const o = c.createOscillator(), g = c.createGain();
     if (this.clickStyle === 'eval') {
+      const o = c.createOscillator(), g = c.createGain();
       o.type = 'sine'; o.frequency.value = accent ? 4400 : 3800;
       g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5 * vol, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
       o.connect(g); g.connect(this.master); o.start(t); o.stop(t + 0.04);
       return;
     }
-    o.type = 'square'; o.frequency.value = accent ? 1600 : 1050;
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime((accent ? 0.45 : 0.3) * vol, t + 0.002);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
-    o.connect(g); g.connect(this.master); o.start(t); o.stop(t + 0.06);
+    const voice = VOICES[this.sound] || VOICES.click;
+    voice(this, c, t, !!accent, vol);
+  },
+  /** Play one bar of a click sound now (for choosing a sound). */
+  previewClick(id) {
+    const c = this.get(); if (!c) return;
+    const prev = this.sound; this.sound = id;
+    const t = c.currentTime + 0.05; [0, 1, 2, 3].forEach(i => this.click(t + i * 0.42, i === 0, 1));
+    this.sound = prev;
+  },
+  /** White noise, rendered once (hi-hats, shakers, snares). */
+  noiseBuffer() {
+    if (this._noise) return this._noise;
+    const c = this.get(), len = Math.floor(c.sampleRate * 0.5), b = c.createBuffer(1, len, c.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    return (this._noise = b);
   },
 
   beep(t, f = 880, dur = 0.5, vol = 0.5) {
@@ -216,4 +228,46 @@ export const CHORD_MIDI = {
   Am7: [45, 52, 55, 60, 64], D7: [50, 57, 60, 66], Gmaj7: [43, 47, 50, 54, 59], E7: [40, 47, 50, 56, 59, 64], A7: [45, 52, 55, 61, 64],
   Dm: [50, 57, 62, 65], Dm7: [50, 57, 60, 65], Bb: [46, 53, 58, 62, 65], Cmaj7: [48, 52, 55, 59, 64], B7: [47, 51, 57, 59, 66],
   G7: [43, 47, 50, 55, 59, 65], Bm: [47, 54, 59, 62, 66], Em7: [40, 47, 50, 55, 59, 64], Fmaj7: [41, 48, 53, 57, 60, 64]
+};
+
+/* ------------------------------ Click sounds ------------------------------ */
+// Metronome voices, all synthesized (no files to load). Each plays one click at time t;
+// accent marks the first beat of the bar.
+export const CLICK_SOUNDS = [
+  ['click', 'Classic click'], ['woodblock', 'Woodblock'], ['clave', 'Clave'], ['cowbell', 'Cowbell'],
+  ['rimshot', 'Rimshot'], ['hihat', 'Hi-hat'], ['shaker', 'Shaker'], ['beep', 'Digital beep'], ['drums', 'Drum kit (kick on 1)']
+];
+function env(c, g, t, peak, attack, decay) {
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay);
+}
+function tone(A, c, t, { type = 'sine', f, f2 = null, peak, attack = 0.002, decay = 0.05, filter = null }) {
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t);
+  if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + attack + decay);
+  env(c, g, t, peak, attack, decay);
+  let node = o;
+  if (filter) { const fl = c.createBiquadFilter(); Object.assign(fl, { type: filter.type }); fl.frequency.value = filter.f; fl.Q.value = filter.q || 1; o.connect(fl); node = fl; }
+  node.connect(g); g.connect(A.master); o.start(t); o.stop(t + attack + decay + 0.02);
+}
+function noise(A, c, t, { peak, decay, type = 'highpass', f = 7000, q = 0.7 }) {
+  const s = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain();
+  s.buffer = A.noiseBuffer(); fl.type = type; fl.frequency.value = f; fl.Q.value = q;
+  env(c, g, t, peak, 0.001, decay);
+  s.connect(fl); fl.connect(g); g.connect(A.master); s.start(t); s.stop(t + decay + 0.03);
+}
+const VOICES = {
+  click: (A, c, t, acc, v) => tone(A, c, t, { type: 'square', f: acc ? 1600 : 1050, peak: (acc ? 0.45 : 0.3) * v, decay: 0.043 }),
+  woodblock: (A, c, t, acc, v) => tone(A, c, t, { type: 'triangle', f: acc ? 1250 : 880, f2: acc ? 1100 : 780, peak: (acc ? 0.9 : 0.65) * v, attack: 0.001, decay: 0.07, filter: { type: 'bandpass', f: acc ? 1250 : 880, q: 3 } }),
+  clave: (A, c, t, acc, v) => tone(A, c, t, { type: 'sine', f: acc ? 2800 : 2400, peak: (acc ? 0.7 : 0.5) * v, attack: 0.001, decay: 0.06 }),
+  cowbell: (A, c, t, acc, v) => { [540, 800].forEach(f => tone(A, c, t, { type: 'square', f: acc ? f * 1.12 : f, peak: (acc ? 0.22 : 0.16) * v, attack: 0.002, decay: acc ? 0.28 : 0.2, filter: { type: 'bandpass', f: 900, q: 1.5 } })); },
+  rimshot: (A, c, t, acc, v) => { noise(A, c, t, { peak: (acc ? 0.55 : 0.4) * v, decay: 0.04, type: 'bandpass', f: 1900, q: 1.2 }); tone(A, c, t, { type: 'triangle', f: acc ? 520 : 420, peak: (acc ? 0.35 : 0.25) * v, decay: 0.035 }); },
+  hihat: (A, c, t, acc, v) => noise(A, c, t, { peak: (acc ? 0.5 : 0.32) * v, decay: acc ? 0.12 : 0.045, f: 8000 }),
+  shaker: (A, c, t, acc, v) => noise(A, c, t, { peak: (acc ? 0.4 : 0.28) * v, decay: 0.07, type: 'bandpass', f: 5500, q: 1.4 }),
+  beep: (A, c, t, acc, v) => tone(A, c, t, { type: 'sine', f: acc ? 1500 : 1000, peak: (acc ? 0.5 : 0.38) * v, attack: 0.003, decay: 0.07 }),
+  drums: (A, c, t, acc, v) => {
+    if (acc) { tone(A, c, t, { type: 'sine', f: 150, f2: 45, peak: 0.95 * v, attack: 0.002, decay: 0.22 }); noise(A, c, t, { peak: 0.18 * v, decay: 0.03, f: 9000 }); }
+    else noise(A, c, t, { peak: 0.32 * v, decay: 0.05, f: 8000 });
+  }
 };

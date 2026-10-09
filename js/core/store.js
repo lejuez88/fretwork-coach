@@ -53,7 +53,7 @@ export function emptyProfile() {
     songRecs: null,
     varState: {},            // progress per exercise variation and library exercise: {"<scope>~<vid>": exerciseState}          // Phase D: cached recommendations {key, date, items, source}
     dashboard: { trackHistory: [] }, // Track of the Day: today's pick in .track, recent keys in .trackHistory
-    settings: { referenceA4: 440, tuning: 'standard', tabAudio: true, tabScroll: true, wikiImages: true, model: 'claude-sonnet-5-5', latency: null, headphones: false, tabPicks: true, pickModes: {} }
+    settings: { referenceA4: 440, tuning: 'standard', tabAudio: true, tabScroll: true, wikiImages: true, model: 'claude-sonnet-5-5', latency: null, headphones: false, tabPicks: true, pickModes: {}, clickSound: 'click' }
   };
 }
 

@@ -10,6 +10,7 @@
 import { Audio } from '../core/audio.js';
 import { esc, clamp, toast } from '../core/util.js';
 import { noteMidi, exerciseBeats, STD_TUNING } from './exercises.js';
+import { clickSoundSelectHTML } from '../ui/clicksound.js';
 import { computePicks, suggestPicking, strokeSVG, PICK_MODES } from './picking.js';
 import { fretboardSVG } from '../ui/fretboard.js';
 import { chordTimeline, chordAt, findDiagrams, highlightChord } from '../ui/chordsync.js';
@@ -108,6 +109,7 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
     <div class="toggles" ${evalMode ? 'hidden' : ''}>
       ${toggle('sound', 'Guitar sound', S.sound)}${toggle('click', 'Click', S.click)}${toggle('loop', 'Loop', S.loop)}${toggle('countIn', 'Count-in', S.countIn)}
       ${toggle('scroll', 'Scrolling tab', S.scroll)}${toggle('picks', 'Pick direction', S.picks)}${toggle('neck', 'Fretboard', S.neck)}
+      ${clickSoundSelectHTML('tp-sound')}
     </div>
     <div class="pickrow" data-r="pickrow" ${evalMode || !S.picks ? 'hidden' : ''}>
       <label class="mini">Picking<select data-r="pickmode">${PICK_MODES.map(([k, l]) => `<option value="${k}" ${S.pickMode === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>

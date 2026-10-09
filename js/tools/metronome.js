@@ -3,6 +3,7 @@ import { Audio, CHORD_MIDI } from '../core/audio.js';
 import { chordMidi } from '../core/theory.js';
 import { clamp, esc, toast } from '../core/util.js';
 import { findDiagrams, highlightChord } from '../ui/chordsync.js';
+import { clickSoundSelectHTML } from '../ui/clicksound.js';
 
 export const Metronome = {
   bpm: 80, beatsPerBar: 4, subdiv: 1, mode: 'all', backing: null, volume: 1,
@@ -102,7 +103,9 @@ export function mountMetronome(el, opts = {}) {
       <label class="mini">Mode<select data-r="mode">${Object.entries(MODES).map(([k, v]) => `<option value="${k}" ${Metronome.mode === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
       <label class="mini">Beats<select data-r="bpb">${[2, 3, 4, 5, 6, 7].map(n => `<option ${Metronome.beatsPerBar === n ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
       <label class="mini">Clicks<select data-r="sub">${[[1, 'Quarters'], [2, '8ths'], [3, 'Triplets'], [4, '16ths']].map(([v, l]) => `<option value="${v}" ${Metronome.subdiv === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      ${clickSoundSelectHTML()}
     </div>`}
+    ${opts.compact ? `<div class="row metro-opts">${clickSoundSelectHTML()}</div>` : ''}
     ${Metronome.backing ? `<div class="backing">♫ Backing: ${esc(Metronome.backing.join(' – '))} <b class="backnow" data-r="backnow"></b></div>` : ''}
     ${Metronome.ramp ? `<div class="ramp-row"><button class="tgl ${Metronome.ramp.enabled ? 'on' : ''}" data-r="ramp">Tempo ladder</button><span class="small muted" data-r="ramptxt"></span></div>` : ''}
   </div>`;

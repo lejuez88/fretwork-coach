@@ -9,6 +9,7 @@ import { getKey as ytGetKey, setKey as ytSetKey, testKey as ytTestKey } from '..
 import { cleanKey, keyProblems, fingerprint, storageAdvice, homeScreenNote, keysLink, parseKeysLink } from '../core/keys.js';
 import qrcode from '../vendor/qrcode.js';
 import { mountAudioSetup } from '../ui/audiosetup.js';
+import { clickSoundSelectHTML } from '../ui/clicksound.js';
 import { importBlockHTML, wireImport } from '../ui/importui.js';
 import { saveImported, describeProfile } from '../core/importer.js';
 import { driveReady, getClientId, setClientId, loadGoogle, saveToDrive, loadFromDrive, lastDriveFile } from '../core/gdrive.js';
@@ -64,6 +65,7 @@ export function mountSettings(root, { navigate, applySettings }) {
         <div class="row nowrap"><input type="text" data-r="keylink" placeholder="https://…#/keys/…" ${KEY_ATTRS}><button class="btn" data-s="uselink">Add keys</button></div></div>
       <p class="small" data-r="linkstatus"></p>
     </section>
+    ${p ? `<section class="card"><h3>Metronome sound</h3><p class="muted small">The click used by the metronome, the tab player and every lesson. Choosing one plays a bar of it.</p>${clickSoundSelectHTML()}</section>` : ''}
     ${p ? `<section class="card"><h3>Audio input & output</h3><p class="muted small">Used by the tuner and playing evaluations. Pick your audio interface (e.g. a Focusrite Scarlett), amp/pedal USB, or microphone.</p><div data-r="audio"></div></section>` : ''}
     ${p ? `<section class="card">
       <h3>Display</h3>

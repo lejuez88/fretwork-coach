@@ -26,6 +26,7 @@ const { runAtom } = await import('../js/core/styles.js');
 const { KB_INDEX, ARTIST_INDEX, matchArtist, matchTechniques } = await import('../js/data/kb.js');
 const { artistLessonList, stageLessonList, createMasterClass, buildMasterTree } = await import('../js/core/master.js');
 const { emptyProfile, normalize } = await import('../js/core/store.js');
+const { METHOD_IDS } = await import('../js/core/methods.js');
 
 function checkExercise(where, ex) {
   if (!ex) return err(where, 'generator returned nothing');
@@ -93,7 +94,16 @@ for (const f of kbFiles) {
       });
     }
   }
-  try { const list = await stageLessonList(p, e.id, { tier: e.stages[0].tier, lvl: e.stages[0].levels[0] }); if (!list.length) err(w, 'the app builds no lessons for the first stage'); } catch (x) { err(w, 'the app failed to build its lessons: ' + x.message); }
+  try {
+    let untagged = 0, total = 0;
+    for (const st of e.stages) {
+      const list = await stageLessonList(p, e.id, { tier: st.tier, lvl: st.levels[0] });
+      if (!list.length) err(`${w} › ${st.tier}`, 'the app builds no lessons for this stage');
+      total += list.length; untagged += list.filter(l => !l.ex.method).length;
+      list.filter(l => l.ex.method && !METHOD_IDS.includes(l.ex.method)).forEach(l => err(`${w} › ${st.tier}`, `"${l.ex.name}": unknown method "${l.ex.method}" (use ${METHOD_IDS.join(', ')})`));
+    }
+    if (untagged) warn(w, `${untagged} of ${total} lessons have no learning-method tag (see CONTENT.md, "Concept-first lessons")`);
+  } catch (x) { err(w, 'the app failed to build its lessons: ' + x.message); }
   coverage.push({ id: e.id, title: e.title, kind: e.kind || 'technique', cells: TIERS.map(t => { const st = e.stages.find(s => s.tier === t.id); return st ? { skills: st.skills.length, lessons: st.skills.reduce((a, s) => a + s.ex.length, 0), full: isFull(st) } : null; }) });
 }
 // every entry is findable by its own words, and names don't steal each other's requests

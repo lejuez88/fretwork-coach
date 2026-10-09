@@ -409,6 +409,7 @@ function runEntry(c, e, lvl, skillDomain) {
   else if (Array.isArray(e)) ex = runAtom({ ...c, ...(e[2] || {}) }, e[0], e[1] || {});
   else if (e && e.spec) { const k = 0.8 + lvl * 0.06; ex = { ...e.spec, level: lvl, ...(e.spec.libId ? {} : { goalBpm: Math.round(e.spec.goalBpm * k), startBpm: Math.round(Math.min(e.spec.startBpm, e.spec.goalBpm * k * 0.7)) }) }; }
   if (ex && ['theory', 'ear', 'improv'].includes(skillDomain) && ex.domain !== skillDomain) ex.domain = skillDomain;
+  if (ex && e && e.method && !ex.method) ex.method = e.method;
   return ex;
 }
 function curatedRaw(t, difficulty, genre) { return unitsRaw(t.units, { ctx: t.ctx, difficulty, genre, title: t.title }); }

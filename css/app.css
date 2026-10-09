@@ -1070,3 +1070,10 @@ details.customize[open] > summary::before{content:'▾ ';}
 .artist-lesson.flash{outline:2px solid var(--amber);outline-offset:3px;transition:outline-color .3s}
 .routine-cta .also{margin:10px 0 0;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
 .routine-cta .also .linkbtn{margin:0}
+.clicksound select{min-width:150px}
+.toggles .clicksound{display:inline-flex;align-items:center;gap:6px;margin:4px 0 0}
+.method-chip{font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(185,166,239,.14);color:#cfc3f5;border:1px solid rgba(185,166,239,.35);font-weight:600}
+.methods details.method{border-top:1px solid var(--line);padding:8px 0}
+.methods details.method summary{cursor:pointer;list-style:none}
+.methods details.method summary::-webkit-details-marker{display:none}
+.methods details.method p{margin:6px 0 0}

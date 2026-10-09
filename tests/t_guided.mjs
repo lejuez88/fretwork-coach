@@ -111,5 +111,31 @@ console.error = (...a) => { errors.push(a.join(' ')); };
   ok(/Your choice/.test(exv2.textContent) && exv2.querySelector('details.customize').open, 'picking another shows “Your choice” and keeps Customize open');
   exv2.querySelector('.linkbtn[data-vid]').click(); await sleep(20);
   ok(/Recommended for you/.test(view().querySelector('.exvar').textContent), 'back to the recommended one');
+  // --- pentatonic mastery path
+  await go('#/techniques/pentatonic'); await sleep(200);
+  ok(view().querySelectorAll('.path-stage.missing').length === 0, 'pentatonic path has all four stages');
+  ok(view().querySelectorAll('.artist-lesson .method-chip').length >= 3, 'lesson cards show their learning method');
+  ok(/How this stage teaches/.test(view().textContent) && view().querySelector('.methods details.method'), 'path page explains the methods with evidence');
+  {
+    const { createMasterClass, buildMasterTree, MASTER_BY_ID } = await import('../js/core/master.js');
+    const { Claude } = await import('../js/core/claude.js');
+    const ks = Claude.hasKey, js = Claude.json; let calls = 0; Claude.hasKey = () => true; Claude.json = async () => { calls++; throw new Error('no'); };
+    const t = MASTER_BY_ID.pentatonic;
+    const course = createMasterClass(p, { title: t.title, topicId: t.id, cat: t.cat, domain: t.domain });
+    const r = await buildMasterTree(p, course);
+    Claude.hasKey = ks; Claude.json = js;
+    ok(calls === 0 && r.source === 'path' && r.tree.units.length >= 2, `the Pentatonic master class is built from the path, no API (${r.source}, ${r.tree.units.map(u => u.title).join(' | ')})`);
+    ok(r.tree.units.flatMap(u => u.skills.flatMap(s => s.exercises)).every(e => e.method), 'every lesson in the class keeps its method');
+    p.courses = p.courses.filter(c => c !== course);
+  }
+  // --- metronome sound chooser
+  await go('#/tools/metronome');
+  const sel = view().querySelector('[data-clicksound]');
+  ok(sel, 'metronome has a click-sound chooser');
+  sel.value = 'woodblock'; sel.dispatchEvent(new Event('change', { bubbles: true })); await sleep(10);
+  const { Audio: A2 } = await import('../js/core/audio.js');
+  ok(A2.sound === 'woodblock' && p.settings.clickSound === 'woodblock', 'choice applies and is saved');
+  await go('#/settings');
+  ok(view().querySelector('[data-clicksound]').value === 'woodblock', 'settings shows the same choice');
   window.__finish();
 })().catch(e => { console.log('THROW', e.stack); window.__finish(); });

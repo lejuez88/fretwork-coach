@@ -4,6 +4,7 @@
 import { esc, toast } from '../core/util.js';
 import { Store } from '../core/store.js';
 import { DOMAIN_BY_KEY } from '../assessment/engine.js';
+import { methodOf } from '../core/methods.js';
 import { toPlayerExercise } from '../core/coursegen.js';
 import { saveCustom, addToRoutines } from '../core/custom.js';
 import { makeAdhocRoutine } from '../core/routine.js';
@@ -23,7 +24,7 @@ export function lessonCardHTML(p, l, i, target) {
   const ex = l.ex, dom = DOMAIN_BY_KEY[ex.domain], st = lessonState(p, l);
   const saved = p.customExercises.some(c => c.ex.id === ex.id), inRoutine = p.prescriptions.some(r => r.status === 'active' && r.ex.id === ex.id);
   return `<div class="askex artist-lesson">
-    <div class="askex-h"><b>${esc(ex.name)}</b>${st && st.mastered ? '<span class="lesson-badge ok">✓ Mastered</span>' : st && st.history && st.history.length ? `<span class="lesson-badge">Best ${st.best || st.lastTempo} BPM</span>` : ''}</div>
+    <div class="askex-h"><b>${esc(ex.name)}</b>${st && st.mastered ? '<span class="lesson-badge ok">✓ Mastered</span>' : st && st.history && st.history.length ? `<span class="lesson-badge">Best ${st.best || st.lastTempo} BPM</span>` : ''}${methodOf(ex.method) ? `<span class="method-chip" title="${esc(methodOf(ex.method).short)}">${esc(methodOf(ex.method).name)}</span>` : ''}</div>
     <div class="small muted">${dom ? esc(dom.short || dom.name) : esc(ex.domain)}${ex.level ? ` · level ${ex.level}` : ''} · ${esc(tempoShort(ex, target, ex.goalBpm))} · ${ex.minutes || 5} min</div>
     ${ex.why ? `<p class="why">${esc(ex.why)}</p>` : ''}
     ${ex.instr ? `<div class="instr small">${esc(ex.instr)}</div>` : ''}
