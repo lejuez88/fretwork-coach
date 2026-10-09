@@ -7,6 +7,8 @@
 //   lights up and loops when you play.
 // It also counts in, loops, steps the tempo up (tempo ladder), lights the chord
 // box that is sounding, and logs the tempo a run finished at.
+// With {dock: true} the transport, tempo and playback switches move to the
+// playback bar at the bottom of the screen (ui/transport.js).
 import { Audio } from '../core/audio.js';
 import { esc, clamp, toast } from '../core/util.js';
 import { noteMidi, exerciseBeats, STD_TUNING } from './exercises.js';
@@ -15,6 +17,7 @@ import { computePicks, suggestPicking, strokeSVG, PICK_MODES } from './picking.j
 import { fretboardSVG } from '../ui/fretboard.js';
 import { chordTimeline, chordAt, findDiagrams, highlightChord } from '../ui/chordsync.js';
 import { beatLabel, clickNote } from '../core/tempo.js';
+import { Transport } from '../ui/transport.js';
 
 const PC = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 /** String labels for a tuning (string 1 first): standard gives e B G D A E. */
@@ -45,7 +48,7 @@ export function soundMidi(n, tuning = STD_TUNING) {
   if (n.x === 'pb' && n.bendTo != null) return m + (n.bendTo - n.f);
   return m;
 }
-export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, onLog = null, beatsPerBar: bpbOpt = 4, startBpm = null, compact = false, onBpm = null, ramp = null, evalMode = false } = {}) {
+export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, onLog = null, beatsPerBar: bpbOpt = 4, startBpm = null, compact = false, onBpm = null, ramp = null, evalMode = false, dock = false } = {}) {
   const beatsPerBar = ex.beatsPerBar || bpbOpt;
   const total = exerciseBeats(ex, beatsPerBar);
   const notes = [...ex.notes].sort((a, b) => a.t - b.t);
@@ -72,6 +75,7 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
     sel: null,              // selection {a, b} in written beats
     seeked: false, raf: null, sched: null, followUntil: 0
   };
+  let docked = null;
   const pickKey = ex.pickKey || ex.id;
   S.pickMode = (settings.pickModes && settings.pickModes[pickKey]) || suggestPicking(ex);
 
@@ -118,7 +122,7 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
   </div>`;
   const r = n => el.querySelector(`[data-r="${n}"]`);
   function toggle(k, lbl, on) { return `<button class="tgl ${on ? 'on' : ''}" data-tg="${k}" aria-pressed="${on}">${lbl}</button>`; }
-  function setToggle(k, on) { const b = el.querySelector(`[data-tg="${k}"]`); if (b) { b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); } }
+  function setToggle(k, on) { const b = el.querySelector(`[data-tg="${k}"]`); if (b) { b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); } if (docked) docked.sync(); }
 
   /* ------------------------------ Rendering ------------------------------ */
   let systems = [];   // {el, svg, start, end, head, selrect, w}
@@ -230,12 +234,15 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
 
   function rampText() {
     const R = S.ramp, t = r('ramptxt'); if (!R || !t) return;
-    t.textContent = R.enabled ? `+${R.step} BPM every ${R.everyLoops} loop${R.everyLoops > 1 ? 's' : ''}, up to ${R.max}` : 'Holding this tempo';
+    t.textContent = rampLine();
+    if (docked) docked.sync();
   }
+  function rampLine() { const R = S.ramp; return !R ? '' : R.enabled ? `Tempo ladder: +${R.step} BPM every ${R.everyLoops} loop${R.everyLoops > 1 ? 's' : ''}, up to ${R.max}` : 'Tempo ladder off: holding this tempo'; }
   function playBtn() {
     const p = r('play'); if (!p) return;
     if (S.playing) { p.textContent = '❚❚ Pause'; p.className = 'btn tp-play pause'; }
     else { p.textContent = S.pos > regionStart() + EPS ? '▶ Resume' : '▶ Play'; p.className = 'btn primary tp-play'; }
+    if (docked) docked.sync();
   }
   /** Start the clock at a position (real-time beats), with or without a count-in. */
   function startRun(realPos, withCountIn) {
@@ -385,11 +392,12 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
     const ci = timelineReal && ((S.playing && !count) || (!S.playing && S.seeked)) ? chordAt(timelineReal, real) : -1;
     if (ci !== lastChord) { highlightChord(findDiagrams(el), ci); lastChord = ci; }
     const m = r('meter');
-    if (m) {
-      if (S.playing && count) m.textContent = `Count-in: ${count}`;
-      else if (S.playing) m.textContent = `${S.loop ? `Loop ${pass + 1} · ` : ''}${fmtPos(nb)}${S.sel ? ' · looping your selection' : ''}`;
-      else m.textContent = S.seeked ? `Playhead at ${fmtPos(nb)}` : '';
-    }
+    if (m) m.textContent = meterText(count, pass, nb);
+  }
+  function meterText(count, pass, nb) {
+    if (S.playing && count) return `Count-in: ${count}`;
+    if (S.playing) return `${S.loop ? `Loop ${pass + 1} · ` : ''}${fmtPos(nb)}${S.sel ? ' · looping your selection' : ''}`;
+    return S.seeked ? `Playhead at ${fmtPos(nb)}` : (S.sel ? 'Loop selected' : '');
   }
   /** Scroll the long tab so the playhead sits about a third of the way in. */
   function follow(force) {
@@ -412,6 +420,7 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
   function showBpm(v) {
     r('bpm').textContent = v; r('range').value = v;
     r('bpm').classList.toggle('goal-hit', !!ex.goalBpm && v >= ex.goalBpm);
+    if (docked) docked.sync();
   }
   function setBpm(v) {
     const was = S.playing ? elapsed() : null;
@@ -565,19 +574,18 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
     else if (b.dataset.r === 'restart') restart();
     else if (b.dataset.r === 'clearsel') clearSelection();
     else if (b.dataset.r === 'log') { onLog({ exerciseId: ex.id, name: ex.name, tempo: S.bpm, goalBpm: ex.goalBpm || null }); }
-    else if (b.dataset.tg === 'rampOn' && S.ramp) {
-      S.ramp.enabled = !S.ramp.enabled; setToggle('rampOn', S.ramp.enabled); rampText();
-    }
-    else if (b.dataset.tg) {
-      const k = b.dataset.tg; S[k] = !S[k];
-      setToggle(k, S[k]);
-      if (k === 'sound') onSettings({ tabAudio: S.sound });
-      if (k === 'scroll') { onSettings({ tabScroll: S.scroll }); render(); }
-      if (k === 'picks') { onSettings({ tabPicks: S.picks }); r('pickrow').hidden = !S.picks; render(); }
-      if (k === 'neck') { onSettings({ tabNeck: S.neck }); renderNeck(); }
-      if (k === 'loop') rebase(); // switching the loop off finishes the current pass
-    }
+    else if (b.dataset.tg) flip(b.dataset.tg);
   });
+  function flip(k) {
+    if (k === 'rampOn') { if (S.ramp) { S.ramp.enabled = !S.ramp.enabled; setToggle('rampOn', S.ramp.enabled); rampText(); } return; }
+    S[k] = !S[k];
+    setToggle(k, S[k]);
+    if (k === 'sound') onSettings({ tabAudio: S.sound });
+    if (k === 'scroll') { onSettings({ tabScroll: S.scroll }); render(); }
+    if (k === 'picks') { onSettings({ tabPicks: S.picks }); r('pickrow').hidden = !S.picks; render(); }
+    if (k === 'neck') { onSettings({ tabNeck: S.neck }); renderNeck(); }
+    if (k === 'loop') rebase(); // switching the loop off finishes the current pass
+  }
   r('range').addEventListener('input', e => setBpm(+e.target.value));
   r('pickmode').addEventListener('change', e => {
     S.pickMode = e.target.value;
@@ -589,13 +597,23 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
   let lastW = 0;
   const ro = window.ResizeObserver ? new ResizeObserver(() => { const w = r('view').clientWidth; if (!S.scroll && Math.abs(w - lastW) > 8) { lastW = w; render(); } }) : null;
   if (ro) ro.observe(r('view'));
+  // The playback bar (declared before the first render so the hooks above can call it)
+  docked = dock && !evalMode ? Transport.attach({
+    el: el.querySelector('.tabplayer'), name: ex.name, unit: label, goal: ex.goalBpm || null,
+    min: 30, max: Math.max(240, (ex.goalBpm || 0) + 40),
+    isPlaying: () => S.playing, toggle: () => (S.playing ? pause() : play()), restart: () => restart(),
+    getBpm: () => S.bpm, setBpm: v => setBpm(v), flip: k => flip(k),
+    toggles: () => [{ k: 'click', label: 'Click', on: S.click }, { k: 'loop', label: 'Loop', on: S.loop }, { k: 'countIn', label: 'Count-in', on: S.countIn }, { k: 'sound', label: 'Guitar sound', on: S.sound }, ...(S.ramp ? [{ k: 'rampOn', label: 'Tempo ladder', on: S.ramp.enabled }] : [])],
+    rampText: S.ramp ? rampLine : null,
+    status: () => { const { real, count, pass } = now(); return { pct: clamp(real / total * 100, 0, 100), text: meterText(count, pass, unsw(real)) }; }
+  }) : null;
   render();
   renderNeck();
   setBpm(S.bpm);
   rampText();
   playBtn();
 
-  const cleanup = () => { pause(); if (ro) ro.disconnect(); highlightChord(findDiagrams(el), null); };
+  const cleanup = () => { pause(); if (ro) ro.disconnect(); highlightChord(findDiagrams(el), null); if (docked) { docked.detach(); docked = null; } };
   cleanup.getBpm = () => S.bpm;
   cleanup.getPeakBpm = () => Math.max(S.peakBpm, S.bpm);
   cleanup.stop = stop;

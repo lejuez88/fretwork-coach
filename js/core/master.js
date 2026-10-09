@@ -19,6 +19,7 @@ import { KB_BY_ID, ARTIST_INDEX, ARTIST_META_BY_ID, matchArtist, matchTechniques
 import { getMaster, putMaster } from './lessoncache.js';
 import { parseRequest, buildForRequest } from './topics.js';
 import { tierName } from './courses.js';
+import { pathStage } from './coach.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const SKILL_DOMAINS = DOMAINS.map(d => d.key).filter(k => k !== 'repertoire');
@@ -522,7 +523,8 @@ async function localMasterRaw(p, course) {
   if (t && t.artist) {
     const a = await loadArtist(t.artist);
     const extra = await requestedUnits(p, text, { skipTech: artistTechIds(t.artist) });
-    return { raw: unitsRaw(mergeUnits(a.units, extra), { ctx: a.ctx, difficulty: course.difficulty, genre: course.genre, title: `${a.name} style` }), kind: 'artist', techniques: techs };
+    const base = await expandArtistUnits(a.units, course.difficulty);
+    return { raw: unitsRaw(mergeUnits(base, extra), { ctx: a.ctx, difficulty: course.difficulty, genre: course.genre, title: `${a.name} style` }), kind: 'artist', techniques: techs };
   }
   // One knowledge-base entry with a full path (or no built-in topic to lean on): the path itself
   if (techs.length === 1 && (techs[0].complete || !t)) {
@@ -850,17 +852,68 @@ function buildLessons(skills, c, lvl, idPrefix, keyPrefix, used = new Set()) {
 /**
  * An artist's lessons at the player's level, ready to practice: [{unit, skill, ex, key}].
  * key identifies the lesson across levels (its progress lives in profile.varState).
+ * Units drawn from a learning path (PU in lib.js) teach the stage of that path the player is at,
+ * with the path's own lessons and keys, so progress is shared with the Technique Library and with
+ * every other artist that uses the same path.
  */
 export async function artistLessonList(p, artistId) {
   const meta = ARTIST_META_BY_ID[artistId]; if (!meta) return [];
   const a = await loadArtist(artistId), t = MASTER_BY_ID['artist-' + artistId];
   const lvl = masterDifficulty(p, { title: t.title, text: t.title, topicId: t.id });
-  const used = new Set();
-  return a.units.flatMap((u, ui) => {
+  const used = new Set(), out = [];
+  for (let ui = 0; ui < a.units.length; ui++) {
+    const u = a.units[ui];
+    if (u.path && KB_BY_ID[u.path]) {
+      const r = await pathUnitLessons(p, u);
+      out.push(...r.lessons.map(l => ({ ...l, unit: r.unit })));
+      continue;
+    }
     const ulvl = clamp(lvl - 1 + Math.round(ui * 3 / Math.max(1, a.units.length - 1)), 1, 10);
     const c = { key: a.ctx.key, minor: !!a.ctx.minor, lvl: ulvl, genre: a.genre, prog: a.ctx.prog };
-    return buildLessons(u.skills, c, ulvl, artistId, `artist:${artistId}`, used).map(l => ({ ...l, unit: u }));
-  });
+    out.push(...buildLessons(u.skills, c, ulvl, artistId, `artist:${artistId}`, used).map(l => ({ ...l, unit: u })));
+  }
+  return out;
+}
+/**
+ * The stage of a path the player should work on, limited to the stages a unit uses: the same
+ * choice the path page makes (a stage you're partway through, else the first unfinished one at
+ * your level). Returns {stage, reason, keysByTier}.
+ */
+export async function pathStageFor(p, pathId, tiers = null) {
+  const e = await loadEntry(pathId), m = KB_BY_ID[pathId];
+  const stages = e.stages.filter(st => !tiers || tiers.includes(st.tier));
+  const keysByTier = {};
+  for (const st of stages) keysByTier[st.tier] = (await stageLessonList(p, pathId, { tier: st.tier, lvl: st.levels[0] })).map(l => l.key);
+  const progressOf = tid => {
+    const keys = keysByTier[tid] || [], sts = keys.map(k => (p.varState || {})[`${k}~base`]).filter(Boolean);
+    return { total: keys.length, mastered: sts.filter(x => x.mastered).length, practiced: sts.filter(x => x.history && x.history.length).length };
+  };
+  const ps = pathStage(p, { ...m, stages }, progressOf) || { stage: stages[0], reason: '' };
+  return { ...ps, keysByTier, progressOf };
+}
+/** One path unit's lessons for the player: {unit (with tier, stage title and reason), lessons}. */
+export async function pathUnitLessons(p, u) {
+  const ps = await pathStageFor(p, u.path, u.tiers);
+  const st = ps.stage;
+  const lvl = clamp(techniqueLevelFor(p, u.path), st.levels[0], st.levels[1]);
+  const lessons = await stageLessonList(p, u.path, { tier: st.tier, lvl });
+  const pr = ps.progressOf(st.tier);
+  return { unit: { ...u, tier: st.tier, stageTitle: st.title, reason: ps.reason, mastered: pr.mastered, total: pr.total }, lessons };
+}
+/**
+ * An artist's units for a master class: a path unit becomes the stage at the course's level and
+ * the next one (each built at its own level), so the course climbs the path; other units as written.
+ */
+export async function expandArtistUnits(units, difficulty) {
+  const out = [];
+  for (const u of units) {
+    if (!u.path || !KB_BY_ID[u.path]) { out.push(u); continue; }
+    const e = await loadEntry(u.path);
+    const stages = e.stages.filter(st => !u.tiers || u.tiers.includes(st.tier));
+    let i = stages.findIndex(st => difficulty <= st.levels[1]); if (i < 0) i = stages.length - 1;
+    stages.slice(i, i + 2).forEach((st, j) => out.push({ ...U(`${u.title}: ${TIER_BY_ID[st.tier].name}`, st.goal, st.skills), lvl: j ? st.levels[0] : clamp(difficulty, st.levels[0], st.levels[1]), ctx: e.ctx }));
+  }
+  return out;
 }
 
 /* ---------------------------- Technique Library ---------------------------- */

@@ -126,6 +126,16 @@ for (const f of artistFiles) {
   if (!Array.isArray(a.techniques) || a.techniques.length < 3) err(w, 'list at least 3 signature techniques');
   if (!Array.isArray(a.units) || a.units.length < 4) err(w, 'at least 4 units (the last one should put everything together in music)');
   if (!Array.isArray(a.riffs) || a.riffs.length < 3) warn(w, 'fewer than 3 famous songs');
+  // Units that copy a whole multi-stage path should draw from it instead (PU), so the artist
+  // teaches the stage the player is at and shares progress with the path.
+  const kbLoaded = await Promise.all(kbFiles.map(x => import(pathToFileURL(join(dataDir, 'kb', x)).href).then(m => m.default).catch(() => null)));
+  for (const u of a.units || []) {
+    if (u.path) { if (!kbIds.has(u.path)) err(w, `unit "${u.title}" draws from unknown path "${u.path}"`); continue; }
+    for (const e of kbLoaded.filter(Boolean)) {
+      const tiers = e.stages.filter(st => st.skills.some(sk => (u.skills || []).includes(sk))).length;
+      if (tiers >= 2) warn(w, `unit "${u.title}" copies ${tiers} stages of the ${e.id} path: use PU(${e.id}) so it teaches the player's stage and shares progress`);
+    }
+  }
   for (const r of a.riffs || []) {
     if (!r.title || !r.note) err(w, 'each riff needs "title" and "note"');
     if (r.tab || r.notes) err(w, `riff "${r.title}" carries notes: famous songs are linked, never transcribed`);

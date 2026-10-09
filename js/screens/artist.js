@@ -5,7 +5,7 @@
 import { esc, toast } from '../core/util.js';
 import { Store } from '../core/store.js';
 import { wikiTile, hydrateImages } from '../core/wiki.js';
-import { ARTIST_INDEX as ARTISTS, ARTIST_META_BY_ID, ARTIST_NOTE, KB_INDEX, loadArtist } from '../data/kb.js';
+import { ARTIST_INDEX as ARTISTS, ARTIST_META_BY_ID, ARTIST_NOTE, KB_INDEX, KB_BY_ID, TIER_BY_ID, loadArtist } from '../data/kb.js';
 import { artistLessonList, createMasterClass, buildMasterTree, isMaster } from '../core/master.js';
 import { calibratedTarget } from '../core/progression.js';
 import { addSong } from '../core/songs.js';
@@ -94,7 +94,7 @@ export function mountArtist(root, { navigate, id }) {
           <p class="small muted">${lessons.length} lessons at your level, original exercises in this style that play in the tab player. The master class turns them into a course with progress and reviews.</p></div></div>
       ${nextArtistHTML()}
       <div class="artist-cols">
-        <div class="artist-lessons">${groups.map(g => `<section class="card"><div class="sec-head"><h3>${esc(g.unit.title)}</h3></div><p class="small muted">${esc(g.unit.summary)}</p>${g.items.map(i => lessonCardHTML(p, lessons[i], i, targets[i])).join('')}</section>`).join('')}</div>
+        <div class="artist-lessons">${groups.map(g => `<section class="card"><div class="sec-head"><h3>${esc(g.unit.title)}</h3>${g.unit.path ? `<a class="link small" href="#/techniques/${esc(g.unit.path)}">Full path →</a>` : ''}</div>${unitNoteHTML(g.unit)}${g.items.map(i => lessonCardHTML(p, lessons[i], i, targets[i])).join('')}</section>`).join('')}</div>
         <aside class="artist-side"><section class="card"><h3>Famous songs</h3>
           <p class="small muted">Linked, not copied: open the tab on Songsterr, or add the song to My songs, where you can paste a tab and get section-by-section lessons.</p>
           <div class="riffs">${a.riffs.map((r, i) => `<div class="riff"><div><b>${esc(r.title)}</b>${r.artist ? ` <span class="small muted">(${esc(r.artist)})</span>` : ''}<div class="small muted">${esc(r.note)}</div></div>
@@ -103,6 +103,12 @@ export function mountArtist(root, { navigate, id }) {
           <p class="small muted">${esc(ARTIST_NOTE)}</p></section></aside>
       </div>`;
     hydrateImages(root);
+  }
+  /** A unit's summary; for a unit drawn from a learning path, the stage you're on and that progress is shared. */
+  function unitNoteHTML(u) {
+    if (!u.path) return `<p class="small muted">${esc(u.summary)}</p>`;
+    return `<p class="small muted">${esc(u.summary)}</p>
+      <p class="small pathnote"><span class="chip sm">${esc(TIER_BY_ID[u.tier] ? TIER_BY_ID[u.tier].name : u.tier)} stage</span> ${esc(u.reason || '')} ${u.total ? `${u.mastered}/${u.total} mastered. ` : ''}<span class="muted">Shared with the ${esc((KB_BY_ID[u.path] || {}).title || 'technique')} path and every artist who uses it.</span></p>`;
   }
   /** The artist lesson the app picks next (easiest unmastered, stalled first), with the reason. */
   function nextArtistHTML() {

@@ -333,7 +333,7 @@ export function mountSongDetail(root, { id, navigate }) {
     player = mountTabPlayer(slot, toPlayerExercise(ex, es.target), {
       settings: p.settings, onSettings: patch => { Object.assign(p.settings, patch); Store.save(); }, startBpm: es.target, compact: false, beatsPerBar: tabParsed(song).beatsPerBar || 4,
       ramp: { enabled: true, step: lad.step, everyLoops: 2, max: lad.max },
-      onLog: ({ tempo }) => logResult(ex, tempo)
+      onLog: ({ tempo }) => logResult(ex, tempo), dock: true
     });
     if (slot.scrollIntoView) slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }

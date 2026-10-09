@@ -4,6 +4,7 @@ import { chordMidi } from '../core/theory.js';
 import { clamp, esc, toast } from '../core/util.js';
 import { findDiagrams, highlightChord } from '../ui/chordsync.js';
 import { clickSoundSelectHTML } from '../ui/clicksound.js';
+import { Transport } from '../ui/transport.js';
 
 export const Metronome = {
   bpm: 80, beatsPerBar: 4, subdiv: 1, mode: 'all', backing: null, volume: 1,
@@ -80,7 +81,8 @@ const MODES = { all: 'Every beat', backbeat: '2 & 4 only', gap: 'Gap: 2 on / 2 o
 
 /**
  * Mount a metronome control panel. Returns a cleanup function.
- * opts: {compact, showMeter}
+ * opts: {compact, showMeter, dock}: with dock, start/stop, tempo and the tempo
+ * ladder move to the playback bar at the bottom of the screen.
  */
 export function mountMetronome(el, opts = {}) {
   const taps = [];
@@ -117,7 +119,20 @@ export function mountMetronome(el, opts = {}) {
     const b = r('toggle'); b.className = 'btn ' + (Metronome.running ? 'stop' : 'primary'); b.textContent = Metronome.running ? '■ Stop' : '▶ Start';
     const beats = r('beats'); if (beats.children.length !== Metronome.beatsPerBar) beats.innerHTML = '<i></i>'.repeat(Metronome.beatsPerBar);
   };
+  let lastBeat = null;
+  const docked = opts.dock ? Transport.attach({
+    el: el.querySelector('.metro'), name: Metronome.backing ? `Metronome · ${Metronome.backing.join(' – ')}` : 'Metronome', unit: '', goal: null, min: 20, max: 300,
+    isPlaying: () => Metronome.running, toggle: () => Metronome.toggle(),
+    getBpm: () => Metronome.bpm, setBpm: v => Metronome.setBpm(v),
+    toggles: () => (Metronome.ramp ? [{ k: 'ramp', label: 'Tempo ladder', on: Metronome.ramp.enabled }] : []),
+    flip: k => { if (k === 'ramp' && Metronome.ramp) { Metronome.ramp.enabled = !Metronome.ramp.enabled; const b = r('ramp'); if (b) b.classList.toggle('on', Metronome.ramp.enabled); sync(); } },
+    rampText: Metronome.ramp ? () => { const R = Metronome.ramp; return R.enabled ? `Tempo ladder: +${R.step} BPM every ${R.everyBars} bars, up to ${R.max}` : 'Tempo ladder off: holding this tempo'; } : null,
+    status: () => ({ pct: null, text: Metronome.running && lastBeat ? `bar ${lastBeat.bar + 1}, beat ${lastBeat.beat + 1}${lastBeat.chord ? ' · ' + lastBeat.chord : ''}` : '' })
+  }) : null;
   const off = Metronome.on(e => {
+    if (e.type === 'beat') lastBeat = e;
+    if (docked && e.type !== 'beat') docked.sync();
+    if (e.type === 'state' && !e.running) lastBeat = null;
     if (e.type === 'beat') {
       [...r('beats').children].forEach((d, i) => { d.className = i === e.beat ? 'on' + (i === 0 && Metronome.mode !== 'backbeat' ? ' acc' : '') + (e.silent ? ' silent' : '') : ''; });
       // light up the chord box of the backing chord that is playing
@@ -145,5 +160,5 @@ export function mountMetronome(el, opts = {}) {
     r('sub').addEventListener('change', e => { Metronome.subdiv = +e.target.value; });
   }
   rampText();
-  return () => { off(); highlightChord(findDiagrams(el), null); };
+  return () => { off(); if (docked) docked.detach(); highlightChord(findDiagrams(el), null); };
 }

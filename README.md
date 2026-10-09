@@ -25,7 +25,14 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: Pentatonic mastery built concept-first, evidence-based lessons, a calmer layout, metronome sounds
+## Latest: the playback bar, and artists built on shared learning paths
+
+| Area | Included |
+|---|---|
+| Playback bar | On every practice screen (an exercise, the lesson runner, technique and artist lessons, song sections, "What do you want to work on?" tries) a bar stays at the bottom of the screen: play/pause, back to the start, tempo (−5, −1, +1, +5, a slider, tap tempo), and under ⋯ the playback switches (click, loop, count-in, guitar sound, tempo ladder) and the click sound. A thin line along its top shows where the playhead is, and the status line says what is playing (loop, bar and beat, count-in). It controls the player you touched last; the players hide their own copies of these controls. The space bar plays and pauses. The Tools metronome and tab player keep their own controls. (`js/ui/transport.js`) |
+| Artists draw from learning paths | An artist unit can now be a learning path (`PU(entry)` in `js/data/lib.js`) instead of a copy of its lessons. The artist page teaches the stage of the path you're at, with a "Full path →" link and your progress, and the progress is shared: a lesson mastered for Paul Gilbert counts on the path and for every other artist who uses it, and the unit moves on when its stage is done. A master class built from an artist climbs each path unit two stages from your level. The validator warns when an artist copies a multi-stage path instead of drawing from it, and CONTENT.md tells the content runs to build artists this way. |
+
+## Earlier: Pentatonic mastery built concept-first, evidence-based lessons, a calmer layout, metronome sounds
 
 | Area | Included |
 |---|---|

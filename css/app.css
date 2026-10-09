@@ -1133,3 +1133,54 @@ details.customize[open] > summary::before{content:'▾ ';}
 @media(max-width:560px){.history .stats{grid-template-columns:repeat(2,1fr)}.slimnote{font-size:13px}}
 .history .cal-head{margin:6px 0 8px}.history .cal-title{margin:0}
 .history .cal .cd{aspect-ratio:auto;height:34px}
+
+/* ---------------- Playback bar (ui/transport.js) ---------------- */
+#transport{position:fixed;left:0;right:0;bottom:0;z-index:21;display:none;background:rgba(24,21,27,.97);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);box-shadow:0 -10px 28px rgba(0,0,0,.35);padding:6px 12px 8px}
+#transport.show{display:block}
+body:not(.has-actions):not(.has-tabs) #transport{padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+#transport .inner{max-width:760px;margin:0 auto}
+.tr-prog{position:absolute;left:0;right:0;top:-1px;height:3px;background:transparent}
+.tr-prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--amber-d),var(--amber));box-shadow:0 0 10px var(--amber)}
+.tr-status{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0 0 5px;min-height:15px}
+.tr-status b{color:var(--text);font-weight:600}
+.tr-main{display:flex;align-items:center;gap:8px}
+.tr-main .kbtn{min-height:44px;min-width:44px;padding:0 10px}
+.tr-play{min-height:46px;padding:8px 16px;flex:0 0 auto;min-width:92px}
+.tr-tempo{display:flex;align-items:center;gap:6px;flex:1;justify-content:center;min-width:0}
+.tr-bpm{text-align:center;line-height:1;min-width:64px}
+.tr-bpm b{font:600 26px var(--head);display:block;font-variant-numeric:tabular-nums}
+.tr-bpm span{font-size:10px;letter-spacing:.08em;color:var(--muted);white-space:nowrap}
+.tr-bpm.goal-hit b{color:var(--green)}
+.tr-more.on{border-color:var(--amber);color:var(--amber)}
+.tr-range{width:100%;margin:0}
+.tr-main .tr-range{flex:1;min-width:120px}
+.tr-opts{padding-top:8px}
+.tr-opts[hidden]{display:none}
+.tr-tgls{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+.tr-tgls .tgl{padding:6px 12px;font-size:13px}
+.tr-tgls .clicksound select{padding:6px 8px;font-size:13px}
+.tr-ramptxt{margin-top:6px}
+.wide-only{display:none}
+@media(min-width:700px){
+  #transport .inner{max-width:1240px}
+  .wide-only{display:inline-flex}
+  input.wide-only{display:block}
+  .narrow-only{display:none!important}
+  .tr-tempo{flex:0 0 auto}
+}
+@media(max-width:400px){.tr-play{min-width:0;padding:8px 14px}.tr-pl{display:none}}
+body.has-transport .wrap{padding-bottom:calc(var(--dock-top,0px) + 28px)}
+body.has-transport .tunefab{bottom:calc(var(--dock-top,0px) + 12px)}
+/* players hand their transport, tempo and playback switches to the bar */
+.tabplayer.docked .tp-restart,.tabplayer.docked .tp-play,.tabplayer.docked .tp-tempo-wrap,.tabplayer.docked .ramp-row,
+.tabplayer.docked .toggles [data-tg="sound"],.tabplayer.docked .toggles [data-tg="click"],.tabplayer.docked .toggles [data-tg="loop"],.tabplayer.docked .toggles [data-tg="countIn"],.tabplayer.docked .toggles .clicksound{display:none}
+.tabplayer.docked .tp-controls{display:block}
+.tabplayer.docked .tp-transport:not(:has(.btn:not(.tp-play))){display:none}
+.metro.docked>.bpmrow,.metro.docked>input[type=range],.metro.docked>.row:not(.metro-opts),.metro.docked .ramp-row,.metro.docked .clicksound{display:none}
+.metro.compact.docked>.metro-opts{display:none}
+@media(min-width:700px){button.wide-only{display:inline-flex;align-items:center;justify-content:center}}
+.tr-tgls .clicksound{display:inline-flex;align-items:center;gap:6px;margin:0}
+.tr-tgls .clicksound select{width:auto}
+.tr-tgls label.mini.clicksound{flex-direction:row;flex:0 0 auto;font-size:13px}
+.tr-tgls label.mini.clicksound select{min-height:34px}
+.pathnote{margin:-2px 0 8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}

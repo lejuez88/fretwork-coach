@@ -125,6 +125,18 @@ export function M(method, e) {
 }
 /** A unit of an artist's curriculum. */
 export const U = (title, summary, skills) => ({ title, summary, skills });
+/**
+ * A unit of an artist's curriculum drawn from a learning path (a researched knowledge-base entry).
+ * The artist page teaches the stage of the path the player is at, with the same lessons and the
+ * same progress as the Technique Library, so a lesson mastered for one artist counts for every
+ * artist (and the path) that uses it. tiers: the stages that matter for this artist (default: all).
+ *   PU(pentatonic, { title: 'Pentatonic foundations', tiers: ['foundations', 'intermediate'] })
+ */
+export function PU(e, { title = null, summary = null, tiers = null } = {}) {
+  const stages = e.stages.filter(st => !tiers || tiers.includes(st.tier));
+  if (!stages.length) throw new Error(`PU(${e.id}): no stages in ${tiers}`);
+  return { title: title || e.title, summary: summary || e.summary, path: e.id, tiers: stages.map(st => st.tier), skills: stages.flatMap(st => st.skills) };
+}
 
 /** The four stages of every learning path, from scratch to mastery. */
 export const TIERS = [

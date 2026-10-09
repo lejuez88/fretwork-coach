@@ -135,10 +135,10 @@ export function mountAskBox(el, { start, courseId = null }) {
     slot.innerHTML = `${list.length > 1 ? `<div class="label" style="margin-top:10px">Variations · ${list.length}</div>${variationChipsHTML(list, { current: v.vid, attr: 'data-tvid' })}${variationNoteHTML(v)}` : ''}${v && !v.base ? exerciseDiagramsHTML(ex) : ''}<div data-r="trytool"></div>`;
     const host = slot.querySelector('[data-r="trytool"]');
     const px = toPlayerExercise(ex, target);
-    if (px) tryTool = mountTabPlayer(host, px, { settings: p.settings, onSettings: patch => { Object.assign(p.settings, patch); Store.save(); }, startBpm: target, compact: true });
+    if (px) tryTool = mountTabPlayer(host, px, { settings: p.settings, onSettings: patch => { Object.assign(p.settings, patch); Store.save(); }, startBpm: target, compact: true, dock: true });
     else {
       Metronome.configure({ bpm: target, mode: ex.metroMode || 'all', backing: ex.backing && ex.backing.length ? ex.backing : null, beatsPerBar: ex.beatsPerBar || 4, subdiv: 1, ramp: null });
-      tryTool = mountMetronome(host, { compact: true });
+      tryTool = mountMetronome(host, { compact: true, dock: true });
     }
   }
 

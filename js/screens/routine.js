@@ -246,11 +246,11 @@ export function mountRoutineRunner(root, { navigate }) {
     peak = Math.max(peak, start);
     if (px) {
       tool = mountTabPlayer(slot, px, { settings: p.settings, onSettings: patch => { Object.assign(p.settings, patch); Store.save(); }, startBpm: start, compact: true,
-        ramp: R ? { enabled: R.enabled, step: R.step, everyLoops: 2, max: R.max } : null, onBpm: v => { peak = Math.max(peak, v); markRung(v); } });
+        dock: true, ramp: R ? { enabled: R.enabled, step: R.step, everyLoops: 2, max: R.max } : null, onBpm: v => { peak = Math.max(peak, v); markRung(v); } });
     } else {
       Metronome.configure({ bpm: start, mode: it.ex.metroMode || 'all', backing: it.ex.backing && it.ex.backing.length ? it.ex.backing : null, beatsPerBar: it.ex.beatsPerBar || 4, subdiv: 1,
         ramp: R ? { enabled: R.enabled, step: R.step, everyBars: 4, max: R.max } : null });
-      offMetro = mountMetronome(slot, { compact: false });
+      offMetro = mountMetronome(slot, { compact: false, dock: true });
       const offBpm = Metronome.on(e => { if (e.type === 'bpm') { peak = Math.max(peak, e.bpm); markRung(e.bpm); } });
       const o = offMetro; offMetro = () => { o(); offBpm(); };
     }

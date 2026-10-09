@@ -33,7 +33,7 @@ export async function buildIndex() {
     artists.push({ a, f });
   }
   // which knowledge-base entries each artist's lessons use
-  const uses = a => kb.filter(({ e }) => e.stages.some(st => st.skills.some(sk => a.units.some(u => u.skills.includes(sk))))).map(({ e }) => e.id);
+  const uses = a => kb.filter(({ e }) => a.units.some(u => u.path === e.id) || e.stages.some(st => st.skills.some(sk => a.units.some(u => u.skills.includes(sk))))).map(({ e }) => e.id);
   const kbLines = kb.map(({ e }) => {
     const stages = TIERS.map(t => { const st = e.stages.find(s => s.tier === t.id); return st ? { tier: t.id, title: st.title, goal: st.goal, levels: st.levels, skills: st.skills.length, lessons: lessonsIn(st.skills), full: isFull(st) } : null; }).filter(Boolean);
     const complete = TIERS.every(t => { const st = stages.find(s => s.tier === t.id); return st && st.full; });

@@ -256,10 +256,10 @@ export function mountLibraryExercise(root, { navigate, id, vid = null }) {
   function mountTool(target) {
     const slot = root.querySelector('[data-r="tool"]'), ex = inst.ex;
     const px = toPlayerExercise(ex, target);
-    if (px) tool = mountTabPlayer(slot, px, { settings: p.settings, onSettings: patch => { Object.assign(p.settings, patch); Store.save(); }, startBpm: target, compact: true });
+    if (px) tool = mountTabPlayer(slot, px, { settings: p.settings, onSettings: patch => { Object.assign(p.settings, patch); Store.save(); }, startBpm: target, compact: true, dock: true });
     else {
       Metronome.configure({ bpm: target, mode: ex.metroMode || 'all', backing: ex.backing && ex.backing.length ? ex.backing : null, beatsPerBar: ex.beatsPerBar || 4, subdiv: 1, ramp: null });
-      tool = mountMetronome(slot, { compact: false });
+      tool = mountMetronome(slot, { compact: false, dock: true });
     }
   }
   function choose(vid) {

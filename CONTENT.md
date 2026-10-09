@@ -74,21 +74,29 @@ export default entry({
 - an atom from `js/core/atoms.js`, written `['atomName', {opts}, {ctxPatch}]`;
 - a written drill `W(...)`, used sparingly for things a tab can't show.
 
-**Reusing work.** Another entry's generators can be imported (`import tapping, { evhTapTriplets } from './tapping.js'`). Artists reuse skills with `skillsOf(entry, 'skill-id')`.
+**Reusing work.** Another entry's generators can be imported (`import tapping, { evhTapTriplets } from './tapping.js'`). Artists draw whole paths with `PU(entry)` (below), or single skills with `skillsOf(entry, 'skill-id')`.
 
 ## Artists (`js/data/artists/<id>.js`)
 
 ```js
-import { S, U, artist, skillsOf } from '../lib.js';
+import { S, U, PU, artist, skillsOf } from '../lib.js';
 import rolling5s from '../kb/rolling5s.js';
+import pentatonic from '../kb/pentatonic.js';
 export default artist({ id: 'eric-johnson', name: 'Eric Johnson', wiki: ['Eric Johnson (guitarist)'], genre: 'rock',
   re: /eric johnson|\bej\b/, blurb: 'One sentence on the sound.', techniques: ['Rolling 5s', …],   // 3–6, shown as chips
   ctx: { key: 9, minor: true, prog: 'minorRock' },
-  units: [U('Rolling 5s', 'One sentence.', skillsOf(rolling5s)), …],   // 4–6 units, easiest first; the last puts it together in music
+  units: [PU(pentatonic, { title: 'The pentatonic boxes', tiers: ['foundations', 'intermediate'] }),
+          PU(rolling5s, { title: 'Rolling 5s' }),
+          U('Putting it together', 'One sentence.', [S(…)]), …],   // 4–6 units, easiest first; the last puts it together in music
   riffs: [{ title: 'Cliffs of Dover', note: 'What it showcases.' }, { title: '…', artist: 'Band name', note: '…' }] });
 ```
 
 An artist's signature techniques belong in the knowledge base, each as its own path, and the artist file reuses them. That way a player can learn "rolling 5s" with or without Eric Johnson.
+
+**Draw from paths with `PU(entry, {title, summary, tiers})`.** A path unit doesn't copy lessons: the artist page teaches the stage of that path the player is at (the stage they're partway through, else the first unfinished one at their level), with the path's own lessons and progress. A lesson mastered on the Paul Gilbert page is mastered on the path page and for every other artist who uses that path, and the unit moves on to the next stage when the current one is done. A master class built from the artist climbs each path unit two stages from the player's level. Use `tiers` to keep to the stages that matter for the player's style (for example only `['intermediate', 'advanced', 'mastery']` of the pentatonic path for a shred player). Rules:
+- When an artist uses a technique that has a path, use `PU`. Never copy a multi-stage path with `skillsOf(entry)`; the validator warns when a unit does.
+- Before writing a new artist-specific exercise, check whether an existing path already teaches it; if it does, draw from the path, and put anything genuinely new into that path (where every player gets it) rather than into the artist file.
+- Keep `U(...)` with `S(...)` skills for what is truly the artist's own (a signature lick, a riff-style study) and for the closing "put it together" unit.
 
 ## Concept-first lessons (how every topic is built)
 
@@ -199,7 +207,8 @@ The queue has three sections. Every run keeps them up to date.
 1. Run `git pull --rebase`, read this file, then sync the player requests from Drive into `content/QUEUE.md`.
 2. **Player requests first.** For each new request:
    - **Technique, subject or style:** create its knowledge-base entry with at least the foundations and intermediate stages full, and the rest started.
-   - **Guitarist:** add them to `content/ROSTER.md` as high priority and build their artist page. Their signature techniques become knowledge-base entries, or reuse existing ones.
+   - **Guitarist:** add them to `content/ROSTER.md` as high priority and build their artist page. Their signature techniques become knowledge-base entries, or reuse existing ones with `PU`.
+   - **Artist rebuild** (a request to build an artist's course on researched paths): build or complete each of the artist's technique paths concept-first, then rewrite the artist file so its units draw from those paths with `PU`. Then check every other artist for the same techniques and switch them to `PU` as well.
 3. **Depth.** Bring incomplete paths up to the depth standard. Each run must leave **at least two more paths complete** than before. Priority order:
    - paths players requested;
    - paths used by artists;

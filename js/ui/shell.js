@@ -8,6 +8,7 @@ export const Shell = {
     bar.innerHTML = html ? `<div class="inner">${html}</div>` : '';
     bar.classList.toggle('show', !!html);
     document.body.classList.toggle('has-actions', !!html);
+    window.dispatchEvent(new Event('fc:bars'));
   },
   /** Bottom sheet. Returns {el, close}. Clicking the backdrop closes it. */
   sheet(html, { onClose } = {}) {
@@ -25,5 +26,6 @@ export const Shell = {
     t.classList.toggle('show', visible);
     document.body.classList.toggle('has-tabs', visible);
     t.querySelectorAll('a').forEach(a => a.classList.toggle('on', a.dataset.tab === active));
+    window.dispatchEvent(new Event('fc:bars'));
   }
 };

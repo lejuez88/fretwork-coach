@@ -60,10 +60,10 @@ export function lessonActions(root, { get, reason, title, genre = null, navigate
     tryIdx = String(i);
     const btn = root.querySelector(`[data-al="try"][data-i="${i}"]`); if (btn) btn.textContent = '■ Close';
     const px = toPlayerExercise(l.ex, targets[i]);
-    if (px) tool = mountTabPlayer(slot, px, { settings: p.settings, onSettings: patch => { Object.assign(p.settings, patch); Store.save(); }, startBpm: targets[i], compact: true });
+    if (px) tool = mountTabPlayer(slot, px, { settings: p.settings, onSettings: patch => { Object.assign(p.settings, patch); Store.save(); }, startBpm: targets[i], compact: true, dock: true });
     else {
       Metronome.configure({ bpm: targets[i], mode: l.ex.metroMode || 'all', backing: l.ex.backing && l.ex.backing.length ? l.ex.backing : null, beatsPerBar: l.ex.beatsPerBar || 4, subdiv: 1, ramp: null });
-      tool = mountMetronome(slot, { compact: true });
+      tool = mountMetronome(slot, { compact: true, dock: true });
     }
   }
   function onClick(e) {
