@@ -197,6 +197,10 @@ The validator checks:
 
 It ends with the coverage table. Fix errors before committing and fix warnings when you can.
 
+## Automatic check
+
+Every push to `main` triggers a GitHub check (`.github/workflows/check.yml`) that runs the validator and the app's test suites (`npm --prefix tests ci && npm --prefix tests test`). A failure puts a red ✗ on the commit and emails the account that pushed it. To run the same suites before pushing, use those two commands; the first installs the test tools once.
+
 ## Committing
 
 1. Run `git pull --rebase` before you start and again before pushing.

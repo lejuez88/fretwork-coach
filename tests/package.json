@@ -1,0 +1,12 @@
+{
+  "name": "fretwork-coach-tests",
+  "private": true,
+  "description": "Test suites for Fretwork Coach (jsdom). The app itself has no build step or dependencies.",
+  "scripts": {
+    "test": "node run-all.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "jsdom": "29.1.1"
+  }
+}

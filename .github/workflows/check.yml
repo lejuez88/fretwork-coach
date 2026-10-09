@@ -1,0 +1,35 @@
+# Checks every push to main (app changes and the scheduled content runs alike):
+# the content validator (lesson format, notes, index, coverage) and the app's test suites.
+# A failed run shows a red ✗ on the commit, and GitHub emails whoever pushed it.
+name: Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tests/package-lock.json
+      - name: Content validator (lessons, notes, index, coverage)
+        run: node tools/validate-content.mjs
+      - name: Install test tools
+        run: npm --prefix tests ci
+      - name: App test suites
+        run: npm --prefix tests test

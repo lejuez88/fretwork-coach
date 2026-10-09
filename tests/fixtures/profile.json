@@ -1,0 +1,8014 @@
+{
+ "schema": "fretwork-coach-profile",
+ "version": 2,
+ "meta": {
+  "created": "2026-10-01",
+  "updated": "2026-10-01"
+ },
+ "questionnaire": {
+  "name": "Test Player",
+  "experience": "10y",
+  "learning": "self",
+  "chords": [
+   "open_maj",
+   "open_min",
+   "power",
+   "barre_e",
+   "barre_a",
+   "dom7",
+   "maj7"
+  ],
+  "techniques": [
+   "strum",
+   "alt",
+   "hammer",
+   "bends",
+   "vibrato",
+   "slides",
+   "palm",
+   "finger",
+   "hybrid",
+   "tapping"
+  ],
+  "theory": {
+   "notes": 2,
+   "intervals": 2,
+   "major": 3,
+   "penta": 3,
+   "chords": 2,
+   "keys": 2,
+   "modes": 3
+  },
+  "struggles": [
+   "speed",
+   "timing",
+   "fretboard",
+   "improv",
+   "theory",
+   "tension"
+  ],
+  "strugglesOther": "",
+  "goals": [
+   "improv",
+   "theory",
+   "speed",
+   "fretboard"
+  ],
+  "goalsOther": "",
+  "genres": [
+   "blues",
+   "neosoul",
+   "country",
+   "prog",
+   "rock",
+   "classic-rock",
+   "funk",
+   "metal",
+   "jazz"
+  ],
+  "genresText": "",
+  "players": [
+   {
+    "id": "evh",
+    "name": "Eddie Van Halen",
+    "wikiTitle": "Eddie Van Halen",
+    "genres": [
+     "rock",
+     "metal"
+    ],
+    "style": "Explosive tapping and rhythmic, swinging riffs",
+    "techniques": [
+     "two-hand tapping",
+     "legato",
+     "dive bombs"
+    ],
+    "source": "catalog"
+   },
+   {
+    "id": "srv",
+    "name": "Stevie Ray Vaughan",
+    "wikiTitle": "Stevie Ray Vaughan",
+    "genres": [
+     "blues",
+     "rock"
+    ],
+    "style": "Aggressive Texas blues with heavy attack",
+    "techniques": [
+     "Texas shuffle",
+     "big bends",
+     "raking"
+    ],
+    "source": "catalog"
+   },
+   {
+    "id": "c-guthrie-govan",
+    "name": "Guthrie Govan",
+    "wikiTitle": "Guthrie Govan",
+    "genres": [
+     "prog",
+     "jazz",
+     "rock"
+    ],
+    "style": "A virtuosic British guitarist who fuses rock, jazz, fusion, and country influences with fluid legato, hybrid picking, and sophisticated harmonic ideas, all delivered with a strong sense of melody and humor.",
+    "qualities": [
+     "Extremely fluid and articulate legato",
+     "Harmonically sophisticated and jazz-informed",
+     "Genre-fluid, from shred to country to fusion",
+     "Melodic phrasing with a playful, witty edge",
+     "Precise yet relaxed technique"
+    ],
+    "techniques": [
+     "Hybrid picking and chicken-pickin' country licks",
+     "Legato runs with wide stretches",
+     "Sweep and economy picking",
+     "Chord-melody and altered-chord voicings",
+     "Whammy bar and volume-knob/pickup-switch effects",
+     "Outside-note and modal improvisation over changing harmony"
+    ],
+    "band": "The Aristocrats",
+    "source": "claude"
+   },
+   {
+    "id": "c-greg-howe",
+    "name": "Greg Howe",
+    "wikiTitle": "Greg Howe",
+    "genres": [
+     "rock",
+     "jazz",
+     "funk"
+    ],
+    "style": "Greg Howe is a fusion and shred guitarist known for blisteringly fast, fluid legato and sweep-picked lines blended with funk-inflected rhythm, R&B phrasing and jazz-influenced harmony.",
+    "qualities": [
+     "Fluid, vocal-like legato",
+     "Fast and precise yet highly melodic",
+     "Funky, rhythmically syncopated phrasing",
+     "Jazz-fusion harmonic sophistication",
+     "Expressive bends and R&B-flavored vibrato"
+    ],
+    "techniques": [
+     "Legato hammer-ons and pull-offs across string sets",
+     "Sweep picking arpeggios",
+     "Alternate picking at high speed",
+     "Two-handed tapping licks",
+     "Funk 16th-note rhythm playing with ghost notes",
+     "Wide-interval string-skipping lines"
+    ],
+    "band": "Solo artist (also Howe II, Tribal Tech collaborations, Michael Jackson and Enrique Iglesias touring/session work)",
+    "source": "claude"
+   },
+   {
+    "id": "c-eric-johnson",
+    "name": "Eric Johnson",
+    "wikiTitle": "Eric Johnson (guitarist)",
+    "genres": [
+     "rock",
+     "prog",
+     "blues"
+    ],
+    "style": "Austin, Texas virtuoso (most notable guitarist of this name) known for a singing, violin-like lead tone, pristine clarity, and a blend of rock, blues, jazz, country and fusion with meticulous precision and dynamics.",
+    "qualities": [
+     "Lyrical, vocal-like sustain",
+     "Immaculate clean and articulate tone",
+     "Precise, fluid legato and picking",
+     "Sophisticated harmony with a jazz and country influence",
+     "Dynamic and tonally layered, tone-obsessed"
+    ],
+    "techniques": [
+     "Hybrid picking (pick plus fingers) for country-style double-stops and chicken-pickin' licks",
+     "Pentatonic and Mixolydian lines with wide interval skips and fast alternate picking",
+     "Legato runs with smooth hammer-ons and pull-offs",
+     "Controlled volume and tone shaping with singing sustain and wide vibrato",
+     "Clean arpeggio voicings with fingerstyle chordal textures and delay or chorus",
+     "Pick-and-finger pedal tone and open-string licks in the style of Cliffs of Dover"
+    ],
+    "band": "Eric Johnson (solo); The Eric Johnson Group; Alien Love Child; G3",
+    "source": "claude"
+   }
+  ],
+  "practice": {
+   "weekday": 90,
+   "weekend": 60
+  },
+  "equipment": {
+   "guitar": "",
+   "gear": [],
+   "metronome": "",
+   "looper": "",
+   "daw": ""
+  }
+ },
+ "assessment": {
+  "date": "2026-10-06",
+  "priors": {
+   "fretting": 7.3,
+   "picking": 5,
+   "rhythm": 3.4,
+   "fretboard": 5.85,
+   "theory": 7.2,
+   "ear": 4.4,
+   "improv": 5.6,
+   "repertoire": 4.7
+  },
+  "domains": {
+   "fretting": {
+    "tests": [
+     {
+      "id": "fh_legato",
+      "level": 8,
+      "name": "3-note-per-string legato",
+      "type": "play",
+      "score": 1.25,
+      "display": "130 BPM",
+      "targetText": "100 BPM",
+      "raw": 130,
+      "date": "2026-10-06"
+     }
+    ],
+    "current": "fh_legato",
+    "phase": "done",
+    "skipped": false
+   },
+   "picking": {
+    "tests": [
+     {
+      "id": "pk_alt8",
+      "level": 4,
+      "name": "Alternate picking, single string",
+      "type": "play",
+      "score": 1.25,
+      "display": "240 BPM",
+      "targetText": "120 BPM",
+      "raw": 240,
+      "date": "2026-10-06"
+     },
+     {
+      "id": "pk_penta16",
+      "level": 6,
+      "name": "Pentatonic 16ths, strict alternate",
+      "type": "play",
+      "score": 0.7,
+      "display": "70 BPM",
+      "targetText": "100 BPM",
+      "raw": 70,
+      "date": "2026-10-06"
+     }
+    ],
+    "current": "pk_penta16",
+    "phase": "done",
+    "skipped": false
+   },
+   "rhythm": {
+    "tests": [],
+    "current": "rh_subdiv",
+    "phase": "done",
+    "skipped": true
+   },
+   "fretboard": {
+    "tests": [
+     {
+      "id": "fb_int",
+      "level": 6,
+      "name": "Interval shapes",
+      "type": "quiz",
+      "score": 1,
+      "display": "8/8 correct",
+      "targetText": "90%+",
+      "raw": 8,
+      "date": "2026-10-06"
+     },
+     {
+      "id": "fb_caged",
+      "level": 8,
+      "name": "CAGED root locations",
+      "type": "quiz",
+      "score": 0.875,
+      "display": "7/8 correct",
+      "targetText": "90%+",
+      "raw": 7,
+      "date": "2026-10-06"
+     }
+    ],
+    "current": "fb_caged",
+    "phase": "done",
+    "skipped": false
+   },
+   "theory": {
+    "tests": [
+     {
+      "id": "th_chords",
+      "level": 6,
+      "name": "Chord construction & harmony",
+      "type": "quiz",
+      "score": 1,
+      "display": "5/5 correct",
+      "targetText": "90%+",
+      "raw": 5,
+      "date": "2026-10-06"
+     }
+    ],
+    "current": "th_chords",
+    "phase": "done",
+    "skipped": false
+   },
+   "ear": {
+    "tests": [
+     {
+      "id": "ear_int1",
+      "level": 4,
+      "name": "Core intervals",
+      "type": "quiz",
+      "score": 1,
+      "display": "8/8 correct",
+      "targetText": "90%+",
+      "raw": 8,
+      "date": "2026-10-06"
+     }
+    ],
+    "current": "ear_int1",
+    "phase": "done",
+    "skipped": false
+   },
+   "improv": {
+    "tests": [],
+    "current": "im_targets",
+    "phase": "done",
+    "skipped": true
+   }
+  }
+ },
+ "domains": {
+  "fretting": {
+   "level": 9,
+   "edge": "3-note-per-string legato cleared (130 BPM). Next: Legato runs across positions with slides; aim for 120 BPM 16ths.",
+   "basis": "tested",
+   "prior": 7.3,
+   "kind": "above",
+   "edgeTestId": "fh_legato",
+   "assessedLevel": 9,
+   "lessonLevel": null,
+   "lessonCount": 0
+  },
+  "picking": {
+   "level": 5,
+   "edge": "Pentatonic 16ths, strict alternate: 70 BPM (target 100 BPM). Right in the edge zone; train here. Then: Sequences in groups of 4 and outside-picking string changes at 100+ BPM.",
+   "basis": "tested",
+   "prior": 5,
+   "kind": "edge",
+   "edgeTestId": "pk_penta16",
+   "assessedLevel": 5,
+   "lessonLevel": null,
+   "lessonCount": 0
+  },
+  "rhythm": {
+   "level": 3,
+   "edge": "Not tested yet; estimated from your answers. Verify in your first session.",
+   "basis": "estimated",
+   "prior": 3.4,
+   "kind": null,
+   "edgeTestId": null,
+   "assessedLevel": 3,
+   "lessonLevel": null,
+   "lessonCount": 0
+  },
+  "fretboard": {
+   "level": 8,
+   "edge": "CAGED root locations: 7/8 correct (target 90%+). Right in the edge zone; train here. Then: Link CAGED shapes to scale positions; arpeggios through all five.",
+   "basis": "tested",
+   "prior": 5.85,
+   "kind": "edge",
+   "edgeTestId": "fb_caged",
+   "assessedLevel": 8,
+   "lessonLevel": null,
+   "lessonCount": 0
+  },
+  "theory": {
+   "level": 7,
+   "edge": "Chord construction & harmony cleared (5/5 correct). Next stretch: Modes & advanced harmony.",
+   "basis": "tested",
+   "prior": 7.2,
+   "kind": "above",
+   "edgeTestId": "th_chords",
+   "assessedLevel": 7,
+   "lessonLevel": null,
+   "lessonCount": 0
+  },
+  "ear": {
+   "level": 5,
+   "edge": "Core intervals cleared (8/8 correct). Next stretch: Triad qualities.",
+   "basis": "tested",
+   "prior": 4.4,
+   "kind": "above",
+   "edgeTestId": "ear_int1",
+   "assessedLevel": 5,
+   "lessonLevel": null,
+   "lessonCount": 0
+  },
+  "improv": {
+   "level": 6,
+   "edge": "Not tested yet; estimated from your answers. Verify in your first session.",
+   "basis": "estimated",
+   "prior": 5.6,
+   "kind": null,
+   "edgeTestId": null,
+   "assessedLevel": 6,
+   "lessonLevel": null,
+   "lessonCount": 0
+  },
+  "repertoire": {
+   "level": 1,
+   "edge": "No full songs yet. Learn your first song start to finish.",
+   "basis": "song list",
+   "prior": 4.7,
+   "kind": null,
+   "assessedLevel": 1
+  }
+ },
+ "repertoire": [],
+ "activeExercises": [
+  {
+   "id": "n0qoiw42",
+   "domain": "fretting",
+   "testId": "fh_legato",
+   "name": "3-note-per-string legato",
+   "current": "130 BPM",
+   "target": "100 BPM",
+   "lastResult": "130 BPM",
+   "nextStep": "Hit the target in 2 separate sessions, then raise it 3\u20135 BPM."
+  },
+  {
+   "id": "fyil131z",
+   "domain": "picking",
+   "testId": "pk_penta16",
+   "name": "Pentatonic 16ths, strict alternate",
+   "current": "70 BPM",
+   "target": "100 BPM",
+   "lastResult": "70 BPM",
+   "nextStep": "Hit the target in 2 separate sessions, then raise it 3\u20135 BPM."
+  },
+  {
+   "id": "w2027ced",
+   "domain": "rhythm",
+   "testId": "rh_subdiv",
+   "name": "Subdivision ladder",
+   "current": "\u2014",
+   "target": "5/5 self-rating",
+   "lastResult": "not yet tested",
+   "nextStep": "Get a baseline in your first session."
+  },
+  {
+   "id": "60y2mtj5",
+   "domain": "fretboard",
+   "testId": "fb_caged",
+   "name": "CAGED root locations",
+   "current": "\u2014",
+   "target": "\u2265 90% correct",
+   "lastResult": "7/8 correct",
+   "nextStep": "Score \u2265 90% in 2 separate sessions, then: Link CAGED shapes to scale positions; arpeggios through all five."
+  },
+  {
+   "id": "1wpi5hu1",
+   "domain": "theory",
+   "testId": "th_modes",
+   "name": "Modes & advanced harmony",
+   "current": "\u2014",
+   "target": "\u2265 90% correct",
+   "lastResult": "not yet tested",
+   "nextStep": "Score \u2265 90% in 2 separate sessions, then: Modal interchange and secondary dominants in real progressions."
+  },
+  {
+   "id": "e2xkbjrw",
+   "domain": "ear",
+   "testId": "ear_triads",
+   "name": "Triad qualities",
+   "current": "\u2014",
+   "target": "\u2265 90% correct",
+   "lastResult": "not yet tested",
+   "nextStep": "Score \u2265 90% in 2 separate sessions, then: All 12 intervals, including 2nds, 6ths, 7ths and the tritone."
+  },
+  {
+   "id": "xehv49r7",
+   "domain": "improv",
+   "testId": "im_targets",
+   "name": "Targeting chord roots",
+   "current": "\u2014",
+   "target": "5/5 self-rating",
+   "lastResult": "not yet tested",
+   "nextStep": "Get a baseline in your first session."
+  }
+ ],
+ "reviewQueue": [
+  {
+   "id": "25t5sh8r",
+   "skill": "3-note-per-string legato",
+   "domain": "fretting",
+   "variation": "+5 BPM or a new chord pair",
+   "lastReviewed": "2026-10-06",
+   "nextReview": "2026-10-07",
+   "intervalDays": 2
+  },
+  {
+   "id": "9x3psmn8",
+   "skill": "Alternate picking, single string",
+   "domain": "picking",
+   "variation": "+5 BPM",
+   "lastReviewed": "2026-10-06",
+   "nextReview": "2026-10-08",
+   "intervalDays": 2
+  },
+  {
+   "id": "ik13zsow",
+   "skill": "Interval shapes",
+   "domain": "fretboard",
+   "variation": "new string set, timed",
+   "lastReviewed": "2026-10-06",
+   "nextReview": "2026-10-09",
+   "intervalDays": 2
+  },
+  {
+   "id": "7bd75535",
+   "skill": "Chord construction & harmony",
+   "domain": "theory",
+   "variation": "apply it in a new key",
+   "lastReviewed": "2026-10-06",
+   "nextReview": "2026-10-10",
+   "intervalDays": 2
+  },
+  {
+   "id": "8jykbuki",
+   "skill": "Core intervals",
+   "domain": "ear",
+   "variation": "no replays, faster answers",
+   "lastReviewed": "2026-10-06",
+   "nextReview": "2026-10-11",
+   "intervalDays": 2
+  }
+ ],
+ "theory": {
+  "learned": [
+   "Note names on the fretboard",
+   "Intervals",
+   "Major scale",
+   "Pentatonic scales",
+   "Chord construction",
+   "Keys & key signatures",
+   "Modes",
+   "7th-chord construction, diatonic harmony, pentatonic formula"
+  ],
+  "next": "Modes as colors of the major scale, starting with Dorian and Mixolydian."
+ },
+ "weaknesses": [
+  "Speed",
+  "Timing / rhythm",
+  "Knowing the fretboard",
+  "Improvising",
+  "Theory",
+  "Tension / finger pain",
+  "Picking hand lags 4 levels behind your strongest area",
+  "Rhythm & timing lags 6 levels behind your strongest area",
+  "Ear training lags 4 levels behind your strongest area",
+  "Improvisation lags 3 levels behind your strongest area",
+  "Repertoire lags 8 levels behind your strongest area"
+ ],
+ "focus": {
+  "domain": "repertoire",
+  "reason": "Repertoire is 8 levels behind your strongest area, so the balance rule puts it first."
+ },
+ "sessionLog": [],
+ "courses": [
+  {
+   "id": "bc9lgylc",
+   "name": "Slow Blues Phrasing Workshop",
+   "tagline": "Shape vocal-like bends, vibrato, and space into expressive slow blues solos.",
+   "genre": "blues",
+   "style": "Slow Blues Phrasing",
+   "players": [
+    "Stevie Ray Vaughan",
+    "Eric Johnson"
+   ],
+   "difficulty": 5,
+   "levelLabel": "Workshop",
+   "createdAt": "2026-10-06",
+   "status": "archived",
+   "progress": 0,
+   "tree": null,
+   "lessons": [],
+   "lastPracticed": null
+  },
+  {
+   "id": "f8utywuj",
+   "name": "Velvet Voicings: Chord Melody Mastery",
+   "tagline": "Weave lush extended chords and singing melodies into seamless solo neo-soul arrangements.",
+   "genre": "neosoul",
+   "style": "Neo-Soul Chord Melody",
+   "players": [],
+   "difficulty": 7,
+   "levelLabel": "Mastery",
+   "createdAt": "2026-10-06",
+   "status": "open",
+   "progress": 0,
+   "tree": {
+    "version": 2,
+    "generatedBy": "local",
+    "generatedAt": 1791429435297,
+    "summary": "Neo-Soul Chord Melody in D: voicings, embellishments, chord melody, harmony, making music, built around the neo-soul & r&b vocabulary at your level.",
+    "units": [
+     {
+      "id": "u0",
+      "title": "Voicings",
+      "summary": "Maj7 and m7 grips.",
+      "skills": [
+       {
+        "id": "drop2",
+        "title": "Drop-2 voicings through the changes",
+        "domain": "fretting",
+        "summary": "Smooth voice leading.",
+        "prereqs": [],
+        "exercises": [
+         {
+          "id": "g-gmaj7-f-m7-em7-dmaj7-in-drop-2-voicing",
+          "name": "Gmaj7 \u2013 F\u266fm7 \u2013 Em7 \u2013 Dmaj7 in drop-2 voicings",
+          "domain": "theory",
+          "why": "Drop-2 voicings voice-led through a progression are how jazz and neo-soul players comp with smooth inner voices.",
+          "instr": "Hit each chord on beat 1 and the \u201c&\u201d of 2 (the Charleston rhythm). Each new chord is the closest inversion: watch which voices move and which stay.",
+          "watch": "Big jumps between chords: pick the nearest inversion instead.",
+          "simplify": "Whole notes, one chord per bar.",
+          "unit": "Charleston rhythm (1, &2)",
+          "goalBpm": 136,
+          "startBpm": 60,
+          "level": 8,
+          "minutes": 6,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 1.5,
+             "s": 5,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 0,
+             "d": 1.5,
+             "s": 4,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 0,
+             "d": 1.5,
+             "s": 3,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 0,
+             "d": 1.5,
+             "s": 2,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 1.5,
+             "d": 0.5,
+             "s": 5,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 1.5,
+             "d": 0.5,
+             "s": 4,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 1.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 1.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 1.5,
+             "s": 5,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 1.5,
+             "s": 4,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 1.5,
+             "s": 3,
+             "f": 2,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 1.5,
+             "s": 2,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 5.5,
+             "d": 0.5,
+             "s": 5,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 5.5,
+             "d": 0.5,
+             "s": 4,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 5.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 2,
+             "chord": true
+            },
+            {
+             "t": 5.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 1.5,
+             "s": 5,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 1.5,
+             "s": 4,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 1.5,
+             "s": 3,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 1.5,
+             "s": 2,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 9.5,
+             "d": 0.5,
+             "s": 5,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 9.5,
+             "d": 0.5,
+             "s": 4,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 9.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 9.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 1.5,
+             "s": 5,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 1.5,
+             "s": 4,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 1.5,
+             "s": 3,
+             "f": 2,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 1.5,
+             "s": 2,
+             "f": 3,
+             "chord": true
+            },
+            {
+             "t": 13.5,
+             "d": 0.5,
+             "s": 5,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 13.5,
+             "d": 0.5,
+             "s": 4,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 13.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 2,
+             "chord": true
+            },
+            {
+             "t": 13.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 3,
+             "chord": true
+            }
+           ],
+           "swing": false,
+           "beats": 16
+          },
+          "chords": [
+           "Gmaj7",
+           "F\u266fm7",
+           "Em7",
+           "Dmaj7"
+          ],
+          "backing": [
+           "Gmaj7",
+           "F\u266fm7",
+           "Em7",
+           "Dmaj7"
+          ],
+          "voicings": [
+           {
+            "name": "Gmaj7",
+            "frets": [
+             null,
+             5,
+             5,
+             4,
+             7,
+             null
+            ],
+            "labels": [
+             null,
+             "5",
+             "R",
+             "3",
+             "7",
+             null
+            ],
+            "names": [
+             null,
+             "D",
+             "G",
+             "B",
+             "F\u266f",
+             null
+            ],
+            "fingers": [
+             null,
+             2,
+             3,
+             1,
+             4,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "F\u266fm7",
+            "frets": [
+             null,
+             4,
+             4,
+             2,
+             5,
+             null
+            ],
+            "labels": [
+             null,
+             "5",
+             "R",
+             "\u266d3",
+             "\u266d7",
+             null
+            ],
+            "names": [
+             null,
+             "C\u266f",
+             "F\u266f",
+             "A",
+             "E",
+             null
+            ],
+            "fingers": [
+             null,
+             3,
+             4,
+             1,
+             4,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "Em7",
+            "frets": [
+             null,
+             5,
+             5,
+             4,
+             5,
+             null
+            ],
+            "labels": [
+             null,
+             "\u266d7",
+             "\u266d3",
+             "5",
+             "R",
+             null
+            ],
+            "names": [
+             null,
+             "D",
+             "G",
+             "B",
+             "E",
+             null
+            ],
+            "fingers": [
+             null,
+             2,
+             3,
+             1,
+             4,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "Dmaj7",
+            "frets": [
+             null,
+             4,
+             4,
+             2,
+             3,
+             null
+            ],
+            "labels": [
+             null,
+             "7",
+             "3",
+             "5",
+             "R",
+             null
+            ],
+            "names": [
+             null,
+             "C\u266f",
+             "F\u266f",
+             "A",
+             "D",
+             null
+            ],
+            "fingers": [
+             null,
+             3,
+             4,
+             1,
+             2,
+             null
+            ],
+            "barre": null
+           }
+          ]
+         },
+         {
+          "id": "g-gmaj7-f-m7-em7-dmaj7-in-drop-2-voicing-98x",
+          "name": "Gmaj7 \u2013 F\u266fm7 \u2013 Em7 \u2013 Dmaj7 in drop-2 voicings",
+          "domain": "theory",
+          "why": "Drop-2 voicings voice-led through a progression are how jazz and neo-soul players comp with smooth inner voices.",
+          "instr": "Hit each chord on beat 1 and the \u201c&\u201d of 2 (the Charleston rhythm). Each new chord is the closest inversion: watch which voices move and which stay.",
+          "watch": "Big jumps between chords: pick the nearest inversion instead.",
+          "simplify": "Whole notes, one chord per bar.",
+          "unit": "Charleston rhythm (1, &2)",
+          "goalBpm": 136,
+          "startBpm": 60,
+          "level": 8,
+          "minutes": 6,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 1.5,
+             "s": 4,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 0,
+             "d": 1.5,
+             "s": 3,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 0,
+             "d": 1.5,
+             "s": 2,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 0,
+             "d": 1.5,
+             "s": 1,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 1.5,
+             "d": 0.5,
+             "s": 4,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 1.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 1.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 1.5,
+             "d": 0.5,
+             "s": 1,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 1.5,
+             "s": 4,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 1.5,
+             "s": 3,
+             "f": 6,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 1.5,
+             "s": 2,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 1.5,
+             "s": 1,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 5.5,
+             "d": 0.5,
+             "s": 4,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 5.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 6,
+             "chord": true
+            },
+            {
+             "t": 5.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 5.5,
+             "d": 0.5,
+             "s": 1,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 1.5,
+             "s": 4,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 1.5,
+             "s": 3,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 1.5,
+             "s": 2,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 1.5,
+             "s": 1,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 9.5,
+             "d": 0.5,
+             "s": 4,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 9.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 9.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 9.5,
+             "d": 0.5,
+             "s": 1,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 1.5,
+             "s": 4,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 1.5,
+             "s": 3,
+             "f": 6,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 1.5,
+             "s": 2,
+             "f": 3,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 1.5,
+             "s": 1,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 13.5,
+             "d": 0.5,
+             "s": 4,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 13.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 6,
+             "chord": true
+            },
+            {
+             "t": 13.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 3,
+             "chord": true
+            },
+            {
+             "t": 13.5,
+             "d": 0.5,
+             "s": 1,
+             "f": 5,
+             "chord": true
+            }
+           ],
+           "swing": false,
+           "beats": 16
+          },
+          "chords": [
+           "Gmaj7",
+           "F\u266fm7",
+           "Em7",
+           "Dmaj7"
+          ],
+          "backing": [
+           "Gmaj7",
+           "F\u266fm7",
+           "Em7",
+           "Dmaj7"
+          ],
+          "voicings": [
+           {
+            "name": "Gmaj7",
+            "frets": [
+             null,
+             null,
+             5,
+             7,
+             7,
+             7
+            ],
+            "labels": [
+             null,
+             null,
+             "R",
+             "5",
+             "7",
+             "3"
+            ],
+            "names": [
+             null,
+             null,
+             "G",
+             "D",
+             "F\u266f",
+             "B"
+            ],
+            "fingers": [
+             null,
+             null,
+             1,
+             3,
+             4,
+             4
+            ],
+            "barre": null
+           },
+           {
+            "name": "F\u266fm7",
+            "frets": [
+             null,
+             null,
+             4,
+             6,
+             5,
+             5
+            ],
+            "labels": [
+             null,
+             null,
+             "R",
+             "5",
+             "\u266d7",
+             "\u266d3"
+            ],
+            "names": [
+             null,
+             null,
+             "F\u266f",
+             "C\u266f",
+             "E",
+             "A"
+            ],
+            "fingers": [
+             null,
+             null,
+             1,
+             4,
+             2,
+             3
+            ],
+            "barre": null
+           },
+           {
+            "name": "Em7",
+            "frets": [
+             null,
+             null,
+             5,
+             7,
+             5,
+             7
+            ],
+            "labels": [
+             null,
+             null,
+             "\u266d3",
+             "\u266d7",
+             "R",
+             "5"
+            ],
+            "names": [
+             null,
+             null,
+             "G",
+             "D",
+             "E",
+             "B"
+            ],
+            "fingers": [
+             null,
+             null,
+             1,
+             3,
+             1,
+             4
+            ],
+            "barre": {
+             "fret": 5,
+             "from": 2,
+             "to": 4
+            }
+           },
+           {
+            "name": "Dmaj7",
+            "frets": [
+             null,
+             null,
+             4,
+             6,
+             3,
+             5
+            ],
+            "labels": [
+             null,
+             null,
+             "3",
+             "7",
+             "R",
+             "5"
+            ],
+            "names": [
+             null,
+             null,
+             "F\u266f",
+             "C\u266f",
+             "D",
+             "A"
+            ],
+            "fingers": [
+             null,
+             null,
+             2,
+             4,
+             1,
+             3
+            ],
+            "barre": null
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "u1",
+      "title": "Embellishments",
+      "summary": "Hammer-ons inside chords.",
+      "skills": [
+       {
+        "id": "emb",
+        "title": "Hammer-on embellishments",
+        "domain": "fretting",
+        "summary": "Chords that sing.",
+        "prereqs": [
+         "drop2"
+        ],
+        "exercises": [
+         {
+          "id": "g-hammer-on-embellishments-gmaj7-f-m7-em",
+          "name": "Hammer-on embellishments: Gmaj7 \u2013 F\u266fm7 \u2013 Em7 \u2013 Dmaj7",
+          "domain": "fretting",
+          "why": "Neo-soul and R&B players decorate chords with hammer-ons from a step below: the chord sings like a melody.",
+          "instr": "Strike the chord with the top note a whole step low, hammer up to the chord tone, then pick a short melody across the top of the shape.",
+          "watch": "The hammered note dying out; hammer firmly from close to the fret.",
+          "simplify": "Chord and hammer only, no melody.",
+          "unit": "8ths",
+          "goalBpm": 102,
+          "startBpm": 50,
+          "level": 7,
+          "minutes": 5,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 2,
+             "s": 5,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 0,
+             "d": 2,
+             "s": 4,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 0,
+             "d": 2,
+             "s": 3,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 0,
+             "d": 2,
+             "s": 2,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 0,
+             "d": 2,
+             "s": 1,
+             "f": 0,
+             "chord": true
+            },
+            {
+             "t": 2,
+             "d": 0.5,
+             "s": 2,
+             "f": 7
+            },
+            {
+             "t": 2.5,
+             "d": 0.5,
+             "s": 1,
+             "f": 0
+            },
+            {
+             "t": 3,
+             "d": 0.5,
+             "s": 2,
+             "f": 7
+            },
+            {
+             "t": 3.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 4
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 5,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 4,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 3,
+             "f": 2,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 2,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 1,
+             "f": 0,
+             "chord": true
+            },
+            {
+             "t": 6,
+             "d": 0.5,
+             "s": 2,
+             "f": 5
+            },
+            {
+             "t": 6.5,
+             "d": 0.5,
+             "s": 1,
+             "f": 0
+            },
+            {
+             "t": 7,
+             "d": 0.5,
+             "s": 2,
+             "f": 5
+            },
+            {
+             "t": 7.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 2
+            },
+            {
+             "t": 8,
+             "d": 2,
+             "s": 5,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 2,
+             "s": 4,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 2,
+             "s": 3,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 2,
+             "s": 2,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 2,
+             "s": 1,
+             "f": 0,
+             "chord": true
+            },
+            {
+             "t": 10,
+             "d": 0.5,
+             "s": 2,
+             "f": 5
+            },
+            {
+             "t": 10.5,
+             "d": 0.5,
+             "s": 1,
+             "f": 0
+            },
+            {
+             "t": 11,
+             "d": 0.5,
+             "s": 2,
+             "f": 5
+            },
+            {
+             "t": 11.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 4
+            },
+            {
+             "t": 12,
+             "d": 2,
+             "s": 5,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 2,
+             "s": 4,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 2,
+             "s": 3,
+             "f": 2,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 2,
+             "s": 2,
+             "f": 3,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 2,
+             "s": 1,
+             "f": 0,
+             "chord": true
+            },
+            {
+             "t": 14,
+             "d": 0.5,
+             "s": 2,
+             "f": 3
+            },
+            {
+             "t": 14.5,
+             "d": 0.5,
+             "s": 1,
+             "f": 0
+            },
+            {
+             "t": 15,
+             "d": 0.5,
+             "s": 2,
+             "f": 3
+            },
+            {
+             "t": 15.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 2
+            }
+           ],
+           "swing": false,
+           "beats": 16
+          },
+          "chords": [
+           "Gmaj7",
+           "F\u266fm7",
+           "Em7",
+           "Dmaj7"
+          ],
+          "backing": [
+           "Gmaj7",
+           "F\u266fm7",
+           "Em7",
+           "Dmaj7"
+          ],
+          "voicings": [
+           {
+            "name": "Gmaj7",
+            "frets": [
+             null,
+             5,
+             5,
+             4,
+             7,
+             null
+            ],
+            "labels": [
+             null,
+             "5",
+             "R",
+             "3",
+             "7",
+             null
+            ],
+            "names": [
+             null,
+             "D",
+             "G",
+             "B",
+             "F\u266f",
+             null
+            ],
+            "fingers": [
+             null,
+             2,
+             3,
+             1,
+             4,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "F\u266fm7",
+            "frets": [
+             null,
+             4,
+             4,
+             2,
+             5,
+             null
+            ],
+            "labels": [
+             null,
+             "5",
+             "R",
+             "\u266d3",
+             "\u266d7",
+             null
+            ],
+            "names": [
+             null,
+             "C\u266f",
+             "F\u266f",
+             "A",
+             "E",
+             null
+            ],
+            "fingers": [
+             null,
+             3,
+             4,
+             1,
+             4,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "Em7",
+            "frets": [
+             null,
+             5,
+             5,
+             4,
+             5,
+             null
+            ],
+            "labels": [
+             null,
+             "\u266d7",
+             "\u266d3",
+             "5",
+             "R",
+             null
+            ],
+            "names": [
+             null,
+             "D",
+             "G",
+             "B",
+             "E",
+             null
+            ],
+            "fingers": [
+             null,
+             2,
+             3,
+             1,
+             4,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "Dmaj7",
+            "frets": [
+             null,
+             4,
+             4,
+             2,
+             3,
+             null
+            ],
+            "labels": [
+             null,
+             "7",
+             "3",
+             "5",
+             "R",
+             null
+            ],
+            "names": [
+             null,
+             "C\u266f",
+             "F\u266f",
+             "A",
+             "D",
+             null
+            ],
+            "fingers": [
+             null,
+             3,
+             4,
+             1,
+             2,
+             null
+            ],
+            "barre": null
+           }
+          ]
+         },
+         {
+          "id": "g-vibrato-on-target-notes",
+          "name": "Vibrato on target notes",
+          "domain": "fretting",
+          "why": "Even, in-time vibrato makes long notes sing.",
+          "instr": "Hold each note for two beats with vibrato in time: two pulses per beat. Wrist rotation, thumb hooked or light.",
+          "watch": "Vibrato that drifts flat or speeds up.",
+          "simplify": "One pulse per beat.",
+          "unit": "2 beats per note",
+          "goalBpm": 90,
+          "startBpm": 60,
+          "level": 6,
+          "minutes": 3,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 2,
+             "s": 3,
+             "f": 9,
+             "x": "~"
+            },
+            {
+             "t": 2,
+             "d": 2,
+             "s": 2,
+             "f": 10,
+             "x": "~"
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 2,
+             "f": 12,
+             "x": "~"
+            },
+            {
+             "t": 6,
+             "d": 2,
+             "s": 1,
+             "f": 7,
+             "x": "~"
+            }
+           ],
+           "swing": false,
+           "beats": 8
+          },
+          "chords": [],
+          "backing": []
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "u2",
+      "title": "Chord melody",
+      "summary": "Melody on top.",
+      "skills": [
+       {
+        "id": "cm",
+        "title": "Harmonized scale",
+        "domain": "theory",
+        "summary": "Melody on the top string.",
+        "prereqs": [
+         "emb"
+        ],
+        "exercises": [
+         {
+          "id": "g-chord-melody-harmonize-the-d-major-sca",
+          "name": "Chord-melody: harmonize the D major scale",
+          "domain": "theory",
+          "why": "Chord-melody puts the melody on top of the chord; this harmonized scale is the first step to arranging tunes.",
+          "instr": "The top note of each voicing is the scale; the chord under it changes (I, V, I, IV\u2026). Let the top note ring loudest.",
+          "watch": "Melody note buried under the chord.",
+          "simplify": "Play only the top two strings.",
+          "unit": "half notes",
+          "goalBpm": 102,
+          "startBpm": 50,
+          "level": 8,
+          "minutes": 6,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 2,
+             "s": 3,
+             "f": 11,
+             "chord": true
+            },
+            {
+             "t": 0,
+             "d": 2,
+             "s": 2,
+             "f": 10,
+             "chord": true
+            },
+            {
+             "t": 0,
+             "d": 2,
+             "s": 1,
+             "f": 10,
+             "chord": true
+            },
+            {
+             "t": 2,
+             "d": 2,
+             "s": 3,
+             "f": 14,
+             "chord": true
+            },
+            {
+             "t": 2,
+             "d": 2,
+             "s": 2,
+             "f": 14,
+             "chord": true
+            },
+            {
+             "t": 2,
+             "d": 2,
+             "s": 1,
+             "f": 12,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 3,
+             "f": 14,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 2,
+             "f": 15,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 1,
+             "f": 14,
+             "chord": true
+            },
+            {
+             "t": 6,
+             "d": 2,
+             "s": 3,
+             "f": 16,
+             "chord": true
+            },
+            {
+             "t": 6,
+             "d": 2,
+             "s": 2,
+             "f": 15,
+             "chord": true
+            },
+            {
+             "t": 6,
+             "d": 2,
+             "s": 1,
+             "f": 15,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 2,
+             "s": 3,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 2,
+             "s": 2,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 2,
+             "s": 1,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 10,
+             "d": 2,
+             "s": 3,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 10,
+             "d": 2,
+             "s": 2,
+             "f": 8,
+             "chord": true
+            },
+            {
+             "t": 10,
+             "d": 2,
+             "s": 1,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 2,
+             "s": 3,
+             "f": 9,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 2,
+             "s": 2,
+             "f": 10,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 2,
+             "s": 1,
+             "f": 9,
+             "chord": true
+            },
+            {
+             "t": 14,
+             "d": 2,
+             "s": 3,
+             "f": 11,
+             "chord": true
+            },
+            {
+             "t": 14,
+             "d": 2,
+             "s": 2,
+             "f": 10,
+             "chord": true
+            },
+            {
+             "t": 14,
+             "d": 2,
+             "s": 1,
+             "f": 10,
+             "chord": true
+            }
+           ],
+           "swing": false,
+           "beats": 16
+          },
+          "chords": [],
+          "backing": [],
+          "voicings": [
+           {
+            "name": "D",
+            "frets": [
+             null,
+             null,
+             null,
+             11,
+             10,
+             10
+            ],
+            "labels": [
+             null,
+             null,
+             null,
+             "3",
+             "5",
+             "R"
+            ],
+            "names": [
+             null,
+             null,
+             null,
+             "F\u266f",
+             "A",
+             "D"
+            ],
+            "fingers": [
+             null,
+             null,
+             null,
+             2,
+             1,
+             1
+            ],
+            "barre": {
+             "fret": 10,
+             "from": 4,
+             "to": 5
+            }
+           },
+           {
+            "name": "A",
+            "frets": [
+             null,
+             null,
+             null,
+             14,
+             14,
+             12
+            ],
+            "labels": [
+             null,
+             null,
+             null,
+             "R",
+             "3",
+             "5"
+            ],
+            "names": [
+             null,
+             null,
+             null,
+             "A",
+             "C\u266f",
+             "E"
+            ],
+            "fingers": [
+             null,
+             null,
+             null,
+             3,
+             4,
+             1
+            ],
+            "barre": null
+           },
+           {
+            "name": "D",
+            "frets": [
+             null,
+             null,
+             null,
+             14,
+             15,
+             14
+            ],
+            "labels": [
+             null,
+             null,
+             null,
+             "5",
+             "R",
+             "3"
+            ],
+            "names": [
+             null,
+             null,
+             null,
+             "A",
+             "D",
+             "F\u266f"
+            ],
+            "fingers": [
+             null,
+             null,
+             null,
+             1,
+             2,
+             1
+            ],
+            "barre": {
+             "fret": 14,
+             "from": 3,
+             "to": 5
+            }
+           },
+           {
+            "name": "G",
+            "frets": [
+             null,
+             null,
+             null,
+             16,
+             15,
+             15
+            ],
+            "labels": [
+             null,
+             null,
+             null,
+             "3",
+             "5",
+             "R"
+            ],
+            "names": [
+             null,
+             null,
+             null,
+             "B",
+             "D",
+             "G"
+            ],
+            "fingers": [
+             null,
+             null,
+             null,
+             2,
+             1,
+             1
+            ],
+            "barre": {
+             "fret": 15,
+             "from": 4,
+             "to": 5
+            }
+           },
+           {
+            "name": "D",
+            "frets": [
+             null,
+             null,
+             null,
+             7,
+             7,
+             5
+            ],
+            "labels": [
+             null,
+             null,
+             null,
+             "R",
+             "3",
+             "5"
+            ],
+            "names": [
+             null,
+             null,
+             null,
+             "D",
+             "F\u266f",
+             "A"
+            ],
+            "fingers": [
+             null,
+             null,
+             null,
+             3,
+             4,
+             1
+            ],
+            "barre": null
+           },
+           {
+            "name": "G",
+            "frets": [
+             null,
+             null,
+             null,
+             7,
+             8,
+             7
+            ],
+            "labels": [
+             null,
+             null,
+             null,
+             "5",
+             "R",
+             "3"
+            ],
+            "names": [
+             null,
+             null,
+             null,
+             "D",
+             "G",
+             "B"
+            ],
+            "fingers": [
+             null,
+             null,
+             null,
+             1,
+             2,
+             1
+            ],
+            "barre": {
+             "fret": 7,
+             "from": 3,
+             "to": 5
+            }
+           },
+           {
+            "name": "A",
+            "frets": [
+             null,
+             null,
+             null,
+             9,
+             10,
+             9
+            ],
+            "labels": [
+             null,
+             null,
+             null,
+             "5",
+             "R",
+             "3"
+            ],
+            "names": [
+             null,
+             null,
+             null,
+             "E",
+             "A",
+             "C\u266f"
+            ],
+            "fingers": [
+             null,
+             null,
+             null,
+             1,
+             2,
+             1
+            ],
+            "barre": {
+             "fret": 9,
+             "from": 3,
+             "to": 5
+            }
+           }
+          ]
+         },
+         {
+          "id": "g-interval-shapes-from-d",
+          "name": "Interval shapes from D",
+          "domain": "ear",
+          "why": "Every interval has a fixed shape on the neck; knowing shape + sound is how you play what you hear.",
+          "instr": "Root, then the interval: minor 3rd, major 3rd, 4th, 5th, 6th, minor 7th, major 7th, octave. Sing each interval before you play it.",
+          "watch": "Playing the shapes without listening; name each one as it sounds.",
+          "simplify": "Only the 3rds and the 5th.",
+          "unit": "8ths, root then interval",
+          "goalBpm": 113,
+          "startBpm": 50,
+          "level": 6,
+          "minutes": 4,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 0.5,
+             "s": 5,
+             "f": 5
+            },
+            {
+             "t": 0.5,
+             "d": 0.5,
+             "s": 5,
+             "f": 8
+            },
+            {
+             "t": 1,
+             "d": 0.5,
+             "s": 5,
+             "f": 5
+            },
+            {
+             "t": 1.5,
+             "d": 0.5,
+             "s": 5,
+             "f": 9
+            },
+            {
+             "t": 2,
+             "d": 0.5,
+             "s": 5,
+             "f": 5
+            },
+            {
+             "t": 2.5,
+             "d": 0.5,
+             "s": 4,
+             "f": 5
+            },
+            {
+             "t": 3,
+             "d": 0.5,
+             "s": 5,
+             "f": 5
+            },
+            {
+             "t": 3.5,
+             "d": 0.5,
+             "s": 4,
+             "f": 7
+            },
+            {
+             "t": 4,
+             "d": 0.5,
+             "s": 5,
+             "f": 5
+            },
+            {
+             "t": 4.5,
+             "d": 0.5,
+             "s": 4,
+             "f": 9
+            },
+            {
+             "t": 5,
+             "d": 0.5,
+             "s": 5,
+             "f": 5
+            },
+            {
+             "t": 5.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 5
+            },
+            {
+             "t": 6,
+             "d": 0.5,
+             "s": 5,
+             "f": 5
+            },
+            {
+             "t": 6.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 6
+            },
+            {
+             "t": 7,
+             "d": 0.5,
+             "s": 5,
+             "f": 5
+            },
+            {
+             "t": 7.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 7
+            }
+           ],
+           "swing": false,
+           "beats": 8
+          },
+          "chords": [],
+          "backing": []
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "u3",
+      "title": "Harmony",
+      "summary": "7th chords of the key.",
+      "skills": [
+       {
+        "id": "sev",
+        "title": "Diatonic 7ths",
+        "domain": "theory",
+        "summary": "Imaj7 to vii\u00f87.",
+        "prereqs": [
+         "cm"
+        ],
+        "exercises": [
+         {
+          "id": "g-chords-of-d-major-7th-chords",
+          "name": "Chords of D major (7th chords)",
+          "domain": "theory",
+          "why": "Every key has seven chords built from its scale; knowing them by number (I, ii, V\u2026) is how players talk and think about songs.",
+          "instr": "Play up the key: Imaj7 \u2013 ii7 \u2013 iii7 \u2013 IVmaj7 \u2013 V7 \u2013 vi7 \u2013 vii\u00f87, saying each numeral and its quality out loud. The voicings stay in one area of the neck.",
+          "watch": "Mixing up which chords are minor.",
+          "simplify": "Only I, IV and V.",
+          "unit": "one chord per 2 beats",
+          "goalBpm": 118,
+          "startBpm": 50,
+          "level": 8,
+          "minutes": 5,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 2,
+             "s": 5,
+             "f": 9,
+             "chord": true
+            },
+            {
+             "t": 0,
+             "d": 2,
+             "s": 4,
+             "f": 11,
+             "chord": true
+            },
+            {
+             "t": 0,
+             "d": 2,
+             "s": 3,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 0,
+             "d": 2,
+             "s": 2,
+             "f": 10,
+             "chord": true
+            },
+            {
+             "t": 2,
+             "d": 2,
+             "s": 5,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 2,
+             "d": 2,
+             "s": 4,
+             "f": 9,
+             "chord": true
+            },
+            {
+             "t": 2,
+             "d": 2,
+             "s": 3,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 2,
+             "d": 2,
+             "s": 2,
+             "f": 8,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 5,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 4,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 3,
+             "f": 6,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 2,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 6,
+             "d": 2,
+             "s": 5,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 6,
+             "d": 2,
+             "s": 4,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 6,
+             "d": 2,
+             "s": 3,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 6,
+             "d": 2,
+             "s": 2,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 2,
+             "s": 5,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 2,
+             "s": 4,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 2,
+             "s": 3,
+             "f": 2,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 2,
+             "s": 2,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 10,
+             "d": 2,
+             "s": 5,
+             "f": 2,
+             "chord": true
+            },
+            {
+             "t": 10,
+             "d": 2,
+             "s": 4,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 10,
+             "d": 2,
+             "s": 3,
+             "f": 2,
+             "chord": true
+            },
+            {
+             "t": 10,
+             "d": 2,
+             "s": 2,
+             "f": 3,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 2,
+             "s": 5,
+             "f": 2,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 2,
+             "s": 4,
+             "f": 2,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 2,
+             "s": 3,
+             "f": 0,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 2,
+             "s": 2,
+             "f": 2,
+             "chord": true
+            },
+            {
+             "t": 14,
+             "d": 2,
+             "s": 5,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 14,
+             "d": 2,
+             "s": 4,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 14,
+             "d": 2,
+             "s": 3,
+             "f": 2,
+             "chord": true
+            },
+            {
+             "t": 14,
+             "d": 2,
+             "s": 2,
+             "f": 3,
+             "chord": true
+            }
+           ],
+           "swing": false,
+           "beats": 16
+          },
+          "chords": [
+           "Dmaj7",
+           "Em7",
+           "F\u266fm7",
+           "Gmaj7",
+           "A7",
+           "Bm7",
+           "C\u266fm7\u266d5",
+           "Dmaj7"
+          ],
+          "backing": [],
+          "voicings": [
+           {
+            "name": "Dmaj7",
+            "frets": [
+             null,
+             9,
+             11,
+             7,
+             10,
+             null
+            ],
+            "labels": [
+             null,
+             "3",
+             "7",
+             "R",
+             "5",
+             null
+            ],
+            "names": [
+             null,
+             "F\u266f",
+             "C\u266f",
+             "D",
+             "A",
+             null
+            ],
+            "fingers": [
+             null,
+             3,
+             4,
+             1,
+             4,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "Em7",
+            "frets": [
+             null,
+             7,
+             9,
+             7,
+             8,
+             null
+            ],
+            "labels": [
+             null,
+             "R",
+             "5",
+             "\u266d7",
+             "\u266d3",
+             null
+            ],
+            "names": [
+             null,
+             "E",
+             "B",
+             "D",
+             "G",
+             null
+            ],
+            "fingers": [
+             null,
+             1,
+             3,
+             1,
+             2,
+             null
+            ],
+            "barre": {
+             "fret": 7,
+             "from": 1,
+             "to": 3
+            }
+           },
+           {
+            "name": "F\u266fm7",
+            "frets": [
+             null,
+             7,
+             7,
+             6,
+             7,
+             null
+            ],
+            "labels": [
+             null,
+             "\u266d7",
+             "\u266d3",
+             "5",
+             "R",
+             null
+            ],
+            "names": [
+             null,
+             "E",
+             "A",
+             "C\u266f",
+             "F\u266f",
+             null
+            ],
+            "fingers": [
+             null,
+             2,
+             3,
+             1,
+             4,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "Gmaj7",
+            "frets": [
+             null,
+             5,
+             5,
+             4,
+             7,
+             null
+            ],
+            "labels": [
+             null,
+             "5",
+             "R",
+             "3",
+             "7",
+             null
+            ],
+            "names": [
+             null,
+             "D",
+             "G",
+             "B",
+             "F\u266f",
+             null
+            ],
+            "fingers": [
+             null,
+             2,
+             3,
+             1,
+             4,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "A7",
+            "frets": [
+             null,
+             4,
+             5,
+             2,
+             5,
+             null
+            ],
+            "labels": [
+             null,
+             "3",
+             "\u266d7",
+             "R",
+             "5",
+             null
+            ],
+            "names": [
+             null,
+             "C\u266f",
+             "G",
+             "A",
+             "E",
+             null
+            ],
+            "fingers": [
+             null,
+             3,
+             4,
+             1,
+             4,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "Bm7",
+            "frets": [
+             null,
+             2,
+             4,
+             2,
+             3,
+             null
+            ],
+            "labels": [
+             null,
+             "R",
+             "5",
+             "\u266d7",
+             "\u266d3",
+             null
+            ],
+            "names": [
+             null,
+             "B",
+             "F\u266f",
+             "A",
+             "D",
+             null
+            ],
+            "fingers": [
+             null,
+             1,
+             3,
+             1,
+             2,
+             null
+            ],
+            "barre": {
+             "fret": 2,
+             "from": 1,
+             "to": 3
+            }
+           },
+           {
+            "name": "C\u266fm7\u266d5",
+            "frets": [
+             null,
+             2,
+             2,
+             0,
+             2,
+             null
+            ],
+            "labels": [
+             null,
+             "\u266d7",
+             "\u266d3",
+             "\u266d5",
+             "R",
+             null
+            ],
+            "names": [
+             null,
+             "B",
+             "E",
+             "G",
+             "C\u266f",
+             null
+            ],
+            "fingers": [
+             null,
+             1,
+             2,
+             null,
+             3,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "Dmaj7",
+            "frets": [
+             null,
+             4,
+             4,
+             2,
+             3,
+             null
+            ],
+            "labels": [
+             null,
+             "7",
+             "3",
+             "5",
+             "R",
+             null
+            ],
+            "names": [
+             null,
+             "C\u266f",
+             "F\u266f",
+             "A",
+             "D",
+             null
+            ],
+            "fingers": [
+             null,
+             3,
+             4,
+             1,
+             2,
+             null
+            ],
+            "barre": null
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "id": "ear",
+        "title": "Hear maj7 vs m7",
+        "domain": "ear",
+        "summary": "Chord quality by ear.",
+        "prereqs": [
+         "cm"
+        ],
+        "exercises": [
+         {
+          "id": "g-find-the-key-by-ear",
+          "name": "Find the key by ear",
+          "domain": "ear",
+          "why": "Hearing the home note of a progression is the first step to playing along with anything.",
+          "instr": "Don\u2019t look at the chord names. Over the loop, hum the note that feels like \u201chome\u201d, find it on the low E string, then check it against the first chord.",
+          "watch": "Guessing from the first chord instead of listening for the resolution.",
+          "simplify": "Play single notes on one string until one sounds like home.",
+          "unit": "over the loop",
+          "goalBpm": 118,
+          "startBpm": 70,
+          "level": 8,
+          "minutes": 4,
+          "libId": null,
+          "tab": null,
+          "chords": [],
+          "backing": [
+           "Gmaj7",
+           "F\u266fm7",
+           "Em7",
+           "Dmaj7"
+          ]
+         },
+         {
+          "id": "g-echo-phrases-by-ear",
+          "name": "Echo phrases by ear",
+          "domain": "ear",
+          "why": "Copying short phrases in time is the fastest way to play what you hear.",
+          "instr": "Hum a 2-bar phrase over the loop, then find it on the neck in the next 2 bars, inside the D major pentatonic. Start with 3-note phrases.",
+          "watch": "Stopping the loop to search; keep it going.",
+          "simplify": "2-note phrases: the root plus one note.",
+          "unit": "2-bar phrases",
+          "goalBpm": 113,
+          "startBpm": 60,
+          "level": 7,
+          "minutes": 4,
+          "libId": null,
+          "tab": null,
+          "chords": [],
+          "backing": [
+           "Gmaj7",
+           "F\u266fm7",
+           "Em7",
+           "Dmaj7"
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "u4",
+      "title": "Making music",
+      "summary": "Comp and fill.",
+      "skills": [
+       {
+        "id": "comp",
+        "title": "Comp with fills",
+        "domain": "improv",
+        "summary": "Leave space for the melody.",
+        "prereqs": [
+         "ear"
+        ],
+        "exercises": [
+         {
+          "id": "g-guide-tone-line-gmaj7-f-m7-em7-dmaj7",
+          "name": "Guide-tone line: Gmaj7 \u2013 F\u266fm7 \u2013 Em7 \u2013 Dmaj7",
+          "domain": "improv",
+          "why": "The 3rds and 7ths are what define each chord; connecting them smoothly is the skeleton of every good solo over changes.",
+          "instr": "Play the 3rd then the 7th of each chord (or 7th then 3rd), always moving to the nearest one. Then improvise around this line over the backing.",
+          "watch": "Big leaps between guide tones.",
+          "simplify": "Only the 3rd of each chord, on beat 1.",
+          "unit": "half notes",
+          "goalBpm": 142,
+          "startBpm": 60,
+          "level": 9,
+          "minutes": 5,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 2,
+             "s": 3,
+             "f": 4
+            },
+            {
+             "t": 2,
+             "d": 2,
+             "s": 4,
+             "f": 4
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 4,
+             "f": 7
+            },
+            {
+             "t": 6,
+             "d": 2,
+             "s": 2,
+             "f": 5
+            },
+            {
+             "t": 8,
+             "d": 2,
+             "s": 2,
+             "f": 8
+            },
+            {
+             "t": 10,
+             "d": 2,
+             "s": 2,
+             "f": 3
+            },
+            {
+             "t": 12,
+             "d": 2,
+             "s": 2,
+             "f": 7
+            },
+            {
+             "t": 14,
+             "d": 2,
+             "s": 3,
+             "f": 6
+            }
+           ],
+           "swing": false,
+           "beats": 16
+          },
+          "chords": [
+           "Gmaj7",
+           "F\u266fm7",
+           "Em7",
+           "Dmaj7"
+          ],
+          "backing": [
+           "Gmaj7",
+           "F\u266fm7",
+           "Em7",
+           "Dmaj7"
+          ]
+         },
+         {
+          "id": "g-solo-over-gmaj7-f-m7-em7-dmaj7-land-on",
+          "name": "Solo over Gmaj7 \u2013 F\u266fm7 \u2013 Em7 \u2013 Dmaj7: land on chord tones",
+          "domain": "improv",
+          "why": "Landing on a chord tone at each change makes a solo follow the harmony.",
+          "instr": "Improvise with the D major pentatonic. On beat 1 of each new chord, land on its root or 3rd; use space between phrases and repeat ideas before changing them.",
+          "watch": "Running the scale up and down without phrasing.",
+          "simplify": "Whole notes: only the target notes, in time.",
+          "unit": "phrases",
+          "goalBpm": 124,
+          "startBpm": 70,
+          "level": 7,
+          "minutes": 6,
+          "libId": null,
+          "tab": null,
+          "chords": [
+           "Gmaj7",
+           "F\u266fm7",
+           "Em7",
+           "Dmaj7"
+          ],
+          "backing": [
+           "Gmaj7",
+           "F\u266fm7",
+           "Em7",
+           "Dmaj7"
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "style": "Neo-Soul Chord Melody"
+   },
+   "lessons": [],
+   "lastPracticed": "2026-10-07",
+   "state": {
+    "skills": {
+     "drop2": {
+      "status": "available",
+      "masteredAt": null,
+      "nextReview": null,
+      "reviewStep": 0,
+      "lastPracticed": null
+     },
+     "emb": {
+      "status": "locked",
+      "masteredAt": null,
+      "nextReview": null,
+      "reviewStep": 0,
+      "lastPracticed": null
+     },
+     "cm": {
+      "status": "locked",
+      "masteredAt": null,
+      "nextReview": null,
+      "reviewStep": 0,
+      "lastPracticed": null
+     },
+     "sev": {
+      "status": "locked",
+      "masteredAt": null,
+      "nextReview": null,
+      "reviewStep": 0,
+      "lastPracticed": null
+     },
+     "ear": {
+      "status": "locked",
+      "masteredAt": null,
+      "nextReview": null,
+      "reviewStep": 0,
+      "lastPracticed": null
+     },
+     "comp": {
+      "status": "locked",
+      "masteredAt": null,
+      "nextReview": null,
+      "reviewStep": 0,
+      "lastPracticed": null
+     }
+    },
+    "exercises": {
+     "g-gmaj7-f-m7-em7-dmaj7-in-drop-2-voicing": {
+      "target": 72,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-gmaj7-f-m7-em7-dmaj7-in-drop-2-voicing-98x": {
+      "target": 72,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-hammer-on-embellishments-gmaj7-f-m7-em": {
+      "target": 82,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-vibrato-on-target-notes": {
+      "target": 80,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-chord-melody-harmonize-the-d-major-sca": {
+      "target": 54,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-interval-shapes-from-d": {
+      "target": 60,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-chords-of-d-major-7th-chords": {
+      "target": 63,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-find-the-key-by-ear": {
+      "target": 59,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-echo-phrases-by-ear": {
+      "target": 55,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-guide-tone-line-gmaj7-f-m7-em7-dmaj7": {
+      "target": 59,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-solo-over-gmaj7-f-m7-em7-dmaj7-land-on": {
+      "target": 68,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     }
+    }
+   }
+  },
+  {
+   "id": "2nnhmp49",
+   "name": "Shred Foundations: Brown Sound Workshop",
+   "tagline": "Build tapping, tremolo picking, and dive-bomb control with fiery, rhythmic precision.",
+   "genre": "metal",
+   "style": "Shred Foundations",
+   "players": [
+    "Eddie Van Halen"
+   ],
+   "difficulty": 6,
+   "levelLabel": "Workshop",
+   "createdAt": "2026-10-07",
+   "status": "open",
+   "progress": 0,
+   "tree": {
+    "version": 2,
+    "generatedBy": "local",
+    "generatedAt": 1791429481606,
+    "summary": "Shred Foundations in A minor: alternate picking, legato, arpeggios, harmony, making music, built around the metal vocabulary at your level.",
+    "units": [
+     {
+      "id": "u0",
+      "title": "Alternate picking",
+      "summary": "Clean, fast, relaxed.",
+      "skills": [
+       {
+        "id": "alt",
+        "title": "Bursts and 3nps runs",
+        "domain": "picking",
+        "summary": "Synchronized hands.",
+        "prereqs": [],
+        "exercises": [
+         {
+          "id": "g-16th-note-bursts-on-two-strings-a",
+          "name": "16th-note bursts on two strings (A)",
+          "domain": "picking",
+          "why": "Short, fast cells across a string change build the synchronized hands that shred lines need.",
+          "instr": "Strict alternate picking, tiny motions. Play the cell 4 times, rest a beat, repeat. Speed comes from relaxation, not force.",
+          "watch": "Tension creeping into the forearm as the tempo rises.",
+          "simplify": "The same cell in 8ths.",
+          "unit": "16ths",
+          "goalBpm": 130,
+          "startBpm": 78,
+          "level": 6,
+          "minutes": 4,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 0.25,
+             "s": 3,
+             "f": 5
+            },
+            {
+             "t": 0.25,
+             "d": 0.25,
+             "s": 3,
+             "f": 7
+            },
+            {
+             "t": 0.5,
+             "d": 0.25,
+             "s": 2,
+             "f": 5
+            },
+            {
+             "t": 0.75,
+             "d": 0.25,
+             "s": 2,
+             "f": 8
+            },
+            {
+             "t": 1,
+             "d": 0.25,
+             "s": 2,
+             "f": 8
+            },
+            {
+             "t": 1.25,
+             "d": 0.25,
+             "s": 2,
+             "f": 5
+            },
+            {
+             "t": 1.5,
+             "d": 0.25,
+             "s": 3,
+             "f": 7
+            },
+            {
+             "t": 1.75,
+             "d": 0.25,
+             "s": 3,
+             "f": 5
+            },
+            {
+             "t": 2,
+             "d": 0.25,
+             "s": 3,
+             "f": 5
+            },
+            {
+             "t": 2.25,
+             "d": 0.25,
+             "s": 3,
+             "f": 7
+            },
+            {
+             "t": 2.5,
+             "d": 0.25,
+             "s": 2,
+             "f": 5
+            },
+            {
+             "t": 2.75,
+             "d": 0.25,
+             "s": 2,
+             "f": 8
+            },
+            {
+             "t": 3,
+             "d": 0.25,
+             "s": 2,
+             "f": 8
+            },
+            {
+             "t": 3.25,
+             "d": 0.25,
+             "s": 2,
+             "f": 5
+            },
+            {
+             "t": 3.5,
+             "d": 0.25,
+             "s": 3,
+             "f": 7
+            },
+            {
+             "t": 3.75,
+             "d": 0.25,
+             "s": 3,
+             "f": 5
+            },
+            {
+             "t": 4,
+             "d": 0.25,
+             "s": 3,
+             "f": 5
+            },
+            {
+             "t": 4.25,
+             "d": 0.25,
+             "s": 3,
+             "f": 7
+            },
+            {
+             "t": 4.5,
+             "d": 0.25,
+             "s": 2,
+             "f": 5
+            },
+            {
+             "t": 4.75,
+             "d": 0.25,
+             "s": 2,
+             "f": 8
+            },
+            {
+             "t": 5,
+             "d": 0.25,
+             "s": 2,
+             "f": 8
+            },
+            {
+             "t": 5.25,
+             "d": 0.25,
+             "s": 2,
+             "f": 5
+            },
+            {
+             "t": 5.5,
+             "d": 0.25,
+             "s": 3,
+             "f": 7
+            },
+            {
+             "t": 5.75,
+             "d": 0.25,
+             "s": 3,
+             "f": 5
+            },
+            {
+             "t": 6,
+             "d": 0.25,
+             "s": 3,
+             "f": 5
+            },
+            {
+             "t": 6.25,
+             "d": 0.25,
+             "s": 3,
+             "f": 7
+            },
+            {
+             "t": 6.5,
+             "d": 0.25,
+             "s": 2,
+             "f": 5
+            },
+            {
+             "t": 6.75,
+             "d": 0.25,
+             "s": 2,
+             "f": 8
+            },
+            {
+             "t": 7,
+             "d": 0.25,
+             "s": 2,
+             "f": 8
+            },
+            {
+             "t": 7.25,
+             "d": 0.25,
+             "s": 2,
+             "f": 5
+            },
+            {
+             "t": 7.5,
+             "d": 0.25,
+             "s": 3,
+             "f": 7
+            },
+            {
+             "t": 7.75,
+             "d": 0.25,
+             "s": 3,
+             "f": 5
+            }
+           ],
+           "swing": false,
+           "beats": 8
+          },
+          "chords": [],
+          "backing": [],
+          "picking": "strict"
+         },
+         {
+          "id": "g-a-natural-minor-aeolian-position-1-in",
+          "name": "A natural minor (aeolian), position 1 in groups of 3",
+          "domain": "fretboard",
+          "why": "Natural minor (Aeolian) is core vocabulary for this style; position 1 links to the shapes around it.",
+          "instr": "Play in groups of 3 in 16ths, strict alternate picking. Say the root (A) each time you pass it; the root dots are what tie this shape to the chords.",
+          "watch": "Speeding up on the easy strings and slowing on string changes.",
+          "simplify": "Play it in 8ths at the same tempo.",
+          "unit": "16ths",
+          "goalBpm": 108,
+          "startBpm": 65,
+          "level": 6,
+          "minutes": 5,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 0.25,
+             "s": 6,
+             "f": 5
+            },
+            {
+             "t": 0.25,
+             "d": 0.25,
+             "s": 6,
+             "f": 7
+            },
+            {
+             "t": 0.5,
+             "d": 0.25,
+             "s": 6,
+             "f": 8
+            },
+            {
+             "t": 0.75,
+             "d": 0.25,
+             "s": 6,
+             "f": 7
+            },
+            {
+             "t": 1,
+             "d": 0.25,
+             "s": 6,
+             "f": 8
+            },
+            {
+             "t": 1.25,
+             "d": 0.25,
+             "s": 5,
+             "f": 5
+            },
+            {
+             "t": 1.5,
+             "d": 0.25,
+             "s": 6,
+             "f": 8
+            },
+            {
+             "t": 1.75,
+             "d": 0.25,
+             "s": 5,
+             "f": 5
+            },
+            {
+             "t": 2,
+             "d": 0.25,
+             "s": 5,
+             "f": 7
+            },
+            {
+             "t": 2.25,
+             "d": 0.25,
+             "s": 5,
+             "f": 5
+            },
+            {
+             "t": 2.5,
+             "d": 0.25,
+             "s": 5,
+             "f": 7
+            },
+            {
+             "t": 2.75,
+             "d": 0.25,
+             "s": 5,
+             "f": 8
+            },
+            {
+             "t": 3,
+             "d": 0.25,
+             "s": 5,
+             "f": 7
+            },
+            {
+             "t": 3.25,
+             "d": 0.25,
+             "s": 5,
+             "f": 8
+            },
+            {
+             "t": 3.5,
+             "d": 0.25,
+             "s": 4,
+             "f": 5
+            },
+            {
+             "t": 3.75,
+             "d": 0.25,
+             "s": 5,
+             "f": 8
+            },
+            {
+             "t": 4,
+             "d": 0.25,
+             "s": 4,
+             "f": 5
+            },
+            {
+             "t": 4.25,
+             "d": 0.25,
+             "s": 4,
+             "f": 7
+            },
+            {
+             "t": 4.5,
+             "d": 0.25,
+             "s": 4,
+             "f": 5
+            },
+            {
+             "t": 4.75,
+             "d": 0.25,
+             "s": 4,
+             "f": 7
+            },
+            {
+             "t": 5,
+             "d": 0.25,
+             "s": 4,
+             "f": 9
+            },
+            {
+             "t": 5.25,
+             "d": 0.25,
+             "s": 4,
+             "f": 7
+            },
+            {
+             "t": 5.5,
+             "d": 0.25,
+             "s": 4,
+             "f": 9
+            },
+            {
+             "t": 5.75,
+             "d": 0.25,
+             "s": 3,
+             "f": 5
+            },
+            {
+             "t": 6,
+             "d": 0.25,
+             "s": 4,
+             "f": 9
+            },
+            {
+             "t": 6.25,
+             "d": 0.25,
+             "s": 3,
+             "f": 5
+            },
+            {
+             "t": 6.5,
+             "d": 0.25,
+             "s": 3,
+             "f": 7
+            },
+            {
+             "t": 6.75,
+             "d": 0.25,
+             "s": 3,
+             "f": 5
+            },
+            {
+             "t": 7,
+             "d": 0.25,
+             "s": 3,
+             "f": 7
+            },
+            {
+             "t": 7.25,
+             "d": 0.25,
+             "s": 3,
+             "f": 9
+            },
+            {
+             "t": 7.5,
+             "d": 0.25,
+             "s": 3,
+             "f": 7
+            },
+            {
+             "t": 7.75,
+             "d": 0.25,
+             "s": 3,
+             "f": 9
+            },
+            {
+             "t": 8,
+             "d": 0.25,
+             "s": 2,
+             "f": 6
+            },
+            {
+             "t": 8.25,
+             "d": 0.25,
+             "s": 3,
+             "f": 9
+            },
+            {
+             "t": 8.5,
+             "d": 0.25,
+             "s": 2,
+             "f": 6
+            },
+            {
+             "t": 8.75,
+             "d": 0.25,
+             "s": 2,
+             "f": 8
+            },
+            {
+             "t": 9,
+             "d": 0.25,
+             "s": 2,
+             "f": 6
+            },
+            {
+             "t": 9.25,
+             "d": 0.25,
+             "s": 2,
+             "f": 8
+            },
+            {
+             "t": 9.5,
+             "d": 0.25,
+             "s": 2,
+             "f": 10
+            },
+            {
+             "t": 9.75,
+             "d": 0.25,
+             "s": 2,
+             "f": 8
+            },
+            {
+             "t": 10,
+             "d": 0.25,
+             "s": 2,
+             "f": 10
+            },
+            {
+             "t": 10.25,
+             "d": 0.25,
+             "s": 1,
+             "f": 7
+            },
+            {
+             "t": 10.5,
+             "d": 0.25,
+             "s": 2,
+             "f": 10
+            },
+            {
+             "t": 10.75,
+             "d": 0.25,
+             "s": 1,
+             "f": 7
+            },
+            {
+             "t": 11,
+             "d": 0.25,
+             "s": 1,
+             "f": 8
+            },
+            {
+             "t": 11.25,
+             "d": 0.25,
+             "s": 1,
+             "f": 7
+            },
+            {
+             "t": 11.5,
+             "d": 0.25,
+             "s": 1,
+             "f": 8
+            },
+            {
+             "t": 11.75,
+             "d": 0.25,
+             "s": 1,
+             "f": 10
+            },
+            {
+             "t": 12,
+             "d": 0.25,
+             "s": 1,
+             "f": 10
+            },
+            {
+             "t": 12.25,
+             "d": 0.25,
+             "s": 1,
+             "f": 8
+            },
+            {
+             "t": 12.5,
+             "d": 0.25,
+             "s": 1,
+             "f": 7
+            },
+            {
+             "t": 12.75,
+             "d": 0.25,
+             "s": 1,
+             "f": 8
+            },
+            {
+             "t": 13,
+             "d": 0.25,
+             "s": 1,
+             "f": 7
+            },
+            {
+             "t": 13.25,
+             "d": 0.25,
+             "s": 2,
+             "f": 10
+            },
+            {
+             "t": 13.5,
+             "d": 0.25,
+             "s": 1,
+             "f": 7
+            },
+            {
+             "t": 13.75,
+             "d": 0.25,
+             "s": 2,
+             "f": 10
+            },
+            {
+             "t": 14,
+             "d": 0.25,
+             "s": 2,
+             "f": 8
+            },
+            {
+             "t": 14.25,
+             "d": 0.25,
+             "s": 2,
+             "f": 10
+            },
+            {
+             "t": 14.5,
+             "d": 0.25,
+             "s": 2,
+             "f": 8
+            },
+            {
+             "t": 14.75,
+             "d": 0.25,
+             "s": 2,
+             "f": 6
+            },
+            {
+             "t": 15,
+             "d": 0.25,
+             "s": 2,
+             "f": 8
+            },
+            {
+             "t": 15.25,
+             "d": 0.25,
+             "s": 2,
+             "f": 6
+            },
+            {
+             "t": 15.5,
+             "d": 0.25,
+             "s": 3,
+             "f": 9
+            },
+            {
+             "t": 15.75,
+             "d": 0.25,
+             "s": 2,
+             "f": 6
+            }
+           ],
+           "swing": false,
+           "beats": 16
+          },
+          "chords": [],
+          "backing": [],
+          "picking": "alternate"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "u1",
+      "title": "Legato",
+      "summary": "Fluid lines.",
+      "skills": [
+       {
+        "id": "legato",
+        "title": "3nps legato",
+        "domain": "fretting",
+        "summary": "Hammer-ons and pull-offs.",
+        "prereqs": [
+         "alt"
+        ],
+        "exercises": [
+         {
+          "id": "g-legato-3-notes-per-string-a-harmonic-m",
+          "name": "Legato 3-notes-per-string: A harmonic minor",
+          "domain": "fretting",
+          "why": "Pick once per string and let the fretting hand do the rest: the fluid sound of rock and fusion lead.",
+          "instr": "Pick only the first note on each string. Hammer-ons going up, pull-offs coming down, every note the same volume.",
+          "watch": "Weak hammer-ons and notes that fade.",
+          "simplify": "One string at a time, then two.",
+          "unit": "triplets",
+          "goalBpm": 108,
+          "startBpm": 65,
+          "level": 6,
+          "minutes": 5,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 0.3333333333333333,
+             "s": 6,
+             "f": 5
+            },
+            {
+             "t": 0.3333,
+             "d": 0.3333333333333333,
+             "s": 6,
+             "f": 7,
+             "x": "h"
+            },
+            {
+             "t": 0.6667,
+             "d": 0.3333333333333333,
+             "s": 6,
+             "f": 8,
+             "x": "h"
+            },
+            {
+             "t": 1,
+             "d": 0.3333333333333333,
+             "s": 5,
+             "f": 5
+            },
+            {
+             "t": 1.3333,
+             "d": 0.3333333333333333,
+             "s": 5,
+             "f": 7,
+             "x": "h"
+            },
+            {
+             "t": 1.6667,
+             "d": 0.3333333333333333,
+             "s": 5,
+             "f": 8,
+             "x": "h"
+            },
+            {
+             "t": 2,
+             "d": 0.3333333333333333,
+             "s": 4,
+             "f": 6
+            },
+            {
+             "t": 2.3333,
+             "d": 0.3333333333333333,
+             "s": 4,
+             "f": 7,
+             "x": "h"
+            },
+            {
+             "t": 2.6667,
+             "d": 0.3333333333333333,
+             "s": 4,
+             "f": 9,
+             "x": "h"
+            },
+            {
+             "t": 3,
+             "d": 0.3333333333333333,
+             "s": 3,
+             "f": 5
+            },
+            {
+             "t": 3.3333,
+             "d": 0.3333333333333333,
+             "s": 3,
+             "f": 7,
+             "x": "h"
+            },
+            {
+             "t": 3.6667,
+             "d": 0.3333333333333333,
+             "s": 3,
+             "f": 9,
+             "x": "h"
+            },
+            {
+             "t": 4,
+             "d": 0.3333333333333333,
+             "s": 2,
+             "f": 6
+            },
+            {
+             "t": 4.3333,
+             "d": 0.3333333333333333,
+             "s": 2,
+             "f": 9,
+             "x": "h"
+            },
+            {
+             "t": 4.6667,
+             "d": 0.3333333333333333,
+             "s": 2,
+             "f": 10,
+             "x": "h"
+            },
+            {
+             "t": 5,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 7
+            },
+            {
+             "t": 5.3333,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 8,
+             "x": "h"
+            },
+            {
+             "t": 5.6667,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 10,
+             "x": "h"
+            },
+            {
+             "t": 6,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 10
+            },
+            {
+             "t": 6.3333,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 8,
+             "x": "p"
+            },
+            {
+             "t": 6.6667,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 7,
+             "x": "p"
+            },
+            {
+             "t": 7,
+             "d": 0.3333333333333333,
+             "s": 2,
+             "f": 10
+            },
+            {
+             "t": 7.3333,
+             "d": 0.3333333333333333,
+             "s": 2,
+             "f": 9,
+             "x": "p"
+            },
+            {
+             "t": 7.6667,
+             "d": 0.3333333333333333,
+             "s": 2,
+             "f": 6,
+             "x": "p"
+            },
+            {
+             "t": 8,
+             "d": 0.3333333333333333,
+             "s": 3,
+             "f": 9
+            },
+            {
+             "t": 8.3333,
+             "d": 0.3333333333333333,
+             "s": 3,
+             "f": 7,
+             "x": "p"
+            },
+            {
+             "t": 8.6667,
+             "d": 0.3333333333333333,
+             "s": 3,
+             "f": 5,
+             "x": "p"
+            },
+            {
+             "t": 9,
+             "d": 0.3333333333333333,
+             "s": 4,
+             "f": 9
+            },
+            {
+             "t": 9.3333,
+             "d": 0.3333333333333333,
+             "s": 4,
+             "f": 7,
+             "x": "p"
+            },
+            {
+             "t": 9.6667,
+             "d": 0.3333333333333333,
+             "s": 4,
+             "f": 6,
+             "x": "p"
+            },
+            {
+             "t": 10,
+             "d": 0.3333333333333333,
+             "s": 5,
+             "f": 8
+            },
+            {
+             "t": 10.3333,
+             "d": 0.3333333333333333,
+             "s": 5,
+             "f": 7,
+             "x": "p"
+            },
+            {
+             "t": 10.6667,
+             "d": 0.3333333333333333,
+             "s": 5,
+             "f": 5,
+             "x": "p"
+            },
+            {
+             "t": 11,
+             "d": 0.3333333333333333,
+             "s": 6,
+             "f": 8
+            },
+            {
+             "t": 11.3333,
+             "d": 0.3333333333333333,
+             "s": 6,
+             "f": 7,
+             "x": "p"
+            },
+            {
+             "t": 11.6667,
+             "d": 0.3333333333333333,
+             "s": 6,
+             "f": 5,
+             "x": "p"
+            }
+           ],
+           "swing": false,
+           "beats": 16
+          },
+          "chords": [],
+          "backing": []
+         },
+         {
+          "id": "g-vibrato-on-target-notes",
+          "name": "Vibrato on target notes",
+          "domain": "fretting",
+          "why": "Even, in-time vibrato makes long notes sing.",
+          "instr": "Hold each note for two beats with vibrato in time: two pulses per beat. Wrist rotation, thumb hooked or light.",
+          "watch": "Vibrato that drifts flat or speeds up.",
+          "simplify": "One pulse per beat.",
+          "unit": "2 beats per note",
+          "goalBpm": 86,
+          "startBpm": 60,
+          "level": 5,
+          "minutes": 3,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 2,
+             "s": 3,
+             "f": 7,
+             "x": "~"
+            },
+            {
+             "t": 2,
+             "d": 2,
+             "s": 2,
+             "f": 8,
+             "x": "~"
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 2,
+             "f": 10,
+             "x": "~"
+            },
+            {
+             "t": 6,
+             "d": 2,
+             "s": 1,
+             "f": 5,
+             "x": "~"
+            }
+           ],
+           "swing": false,
+           "beats": 8
+          },
+          "chords": [],
+          "backing": []
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "u2",
+      "title": "Arpeggios",
+      "summary": "Sweeps and tapping.",
+      "skills": [
+       {
+        "id": "sweep",
+        "title": "Sweep arpeggios",
+        "domain": "picking",
+        "summary": "One motion through the strings.",
+        "prereqs": [
+         "legato"
+        ],
+        "exercises": [
+         {
+          "id": "g-3-string-am-sweep-arpeggio",
+          "name": "3-string Am sweep arpeggio",
+          "domain": "picking",
+          "why": "Sweeps play a chord one note at a time with one continuous pick motion: shred and neoclassical vocabulary.",
+          "instr": "One push through the strings going up, one pull coming down; lift each finger as soon as its note has sounded so notes don\u2019t ring together.",
+          "watch": "Notes bleeding into a strum.",
+          "simplify": "Pick each note separately, slowly.",
+          "unit": "triplets",
+          "goalBpm": 119,
+          "startBpm": 50,
+          "level": 7,
+          "minutes": 5,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 0.3333333333333333,
+             "s": 3,
+             "f": 14
+            },
+            {
+             "t": 0.3333,
+             "d": 0.3333333333333333,
+             "s": 2,
+             "f": 13
+            },
+            {
+             "t": 0.6667,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 12
+            },
+            {
+             "t": 1,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 17,
+             "x": "h"
+            },
+            {
+             "t": 1.3333,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 12,
+             "x": "p"
+            },
+            {
+             "t": 1.6667,
+             "d": 0.3333333333333333,
+             "s": 2,
+             "f": 13
+            },
+            {
+             "t": 2,
+             "d": 0.3333333333333333,
+             "s": 3,
+             "f": 14
+            },
+            {
+             "t": 2.3333,
+             "d": 0.3333333333333333,
+             "s": 2,
+             "f": 13
+            },
+            {
+             "t": 2.6667,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 12
+            },
+            {
+             "t": 3,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 17,
+             "x": "h"
+            },
+            {
+             "t": 3.3333,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 12,
+             "x": "p"
+            },
+            {
+             "t": 3.6667,
+             "d": 0.3333333333333333,
+             "s": 2,
+             "f": 13
+            }
+           ],
+           "swing": false,
+           "beats": 8
+          },
+          "chords": [],
+          "backing": [],
+          "picking": "economy"
+         }
+        ]
+       },
+       {
+        "id": "tap",
+        "title": "Tapping",
+        "domain": "fretting",
+        "summary": "Three-finger lines.",
+        "prereqs": [
+         "legato"
+        ],
+        "exercises": [
+         {
+          "id": "g-tapping-triplets-in-a",
+          "name": "Tapping triplets in A",
+          "domain": "fretting",
+          "why": "Tapping adds a third finger to the fretboard: wide, fast lines that picking can\u2019t reach.",
+          "instr": "Tap fret 17 with the picking hand (T), pull off to 10, hammer 15. Mute the other strings with both hands.",
+          "watch": "The pull-off from the tap being quieter than the hammered note.",
+          "simplify": "Tap and pull-off only, quarter notes.",
+          "unit": "triplets",
+          "goalBpm": 119,
+          "startBpm": 50,
+          "level": 7,
+          "minutes": 4,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 17,
+             "x": "t"
+            },
+            {
+             "t": 0.3333,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 10,
+             "x": "p"
+            },
+            {
+             "t": 0.6667,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 15,
+             "x": "h"
+            },
+            {
+             "t": 1,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 17,
+             "x": "t"
+            },
+            {
+             "t": 1.3333,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 10,
+             "x": "p"
+            },
+            {
+             "t": 1.6667,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 15,
+             "x": "h"
+            },
+            {
+             "t": 2,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 17,
+             "x": "t"
+            },
+            {
+             "t": 2.3333,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 10,
+             "x": "p"
+            },
+            {
+             "t": 2.6667,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 15,
+             "x": "h"
+            },
+            {
+             "t": 3,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 17,
+             "x": "t"
+            },
+            {
+             "t": 3.3333,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 10,
+             "x": "p"
+            },
+            {
+             "t": 3.6667,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 15,
+             "x": "h"
+            }
+           ],
+           "swing": false,
+           "beats": 8
+          },
+          "chords": [],
+          "backing": []
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "u3",
+      "title": "Harmony",
+      "summary": "Neoclassical color.",
+      "skills": [
+       {
+        "id": "harm",
+        "title": "Harmonic minor",
+        "domain": "theory",
+        "summary": "The raised 7th.",
+        "prereqs": [
+         "tap"
+        ],
+        "exercises": [
+         {
+          "id": "g-a-harmonic-minor-position-1",
+          "name": "A harmonic minor, position 1",
+          "domain": "theory",
+          "why": "Harmonic minor is core vocabulary for this style; position 1 links to the shapes around it.",
+          "instr": "Play up and down in 16ths, strict alternate picking. Say the root (A) each time you pass it; the root dots are what tie this shape to the chords.",
+          "watch": "Speeding up on the easy strings and slowing on string changes.",
+          "simplify": "Play it in 8ths at the same tempo.",
+          "unit": "16ths",
+          "goalBpm": 113,
+          "startBpm": 68,
+          "level": 7,
+          "minutes": 5,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 0.25,
+             "s": 6,
+             "f": 5
+            },
+            {
+             "t": 0.25,
+             "d": 0.25,
+             "s": 6,
+             "f": 7
+            },
+            {
+             "t": 0.5,
+             "d": 0.25,
+             "s": 6,
+             "f": 8
+            },
+            {
+             "t": 0.75,
+             "d": 0.25,
+             "s": 5,
+             "f": 5
+            },
+            {
+             "t": 1,
+             "d": 0.25,
+             "s": 5,
+             "f": 7
+            },
+            {
+             "t": 1.25,
+             "d": 0.25,
+             "s": 5,
+             "f": 8
+            },
+            {
+             "t": 1.5,
+             "d": 0.25,
+             "s": 4,
+             "f": 6
+            },
+            {
+             "t": 1.75,
+             "d": 0.25,
+             "s": 4,
+             "f": 7
+            },
+            {
+             "t": 2,
+             "d": 0.25,
+             "s": 4,
+             "f": 9
+            },
+            {
+             "t": 2.25,
+             "d": 0.25,
+             "s": 3,
+             "f": 5
+            },
+            {
+             "t": 2.5,
+             "d": 0.25,
+             "s": 3,
+             "f": 7
+            },
+            {
+             "t": 2.75,
+             "d": 0.25,
+             "s": 3,
+             "f": 9
+            },
+            {
+             "t": 3,
+             "d": 0.25,
+             "s": 2,
+             "f": 6
+            },
+            {
+             "t": 3.25,
+             "d": 0.25,
+             "s": 2,
+             "f": 9
+            },
+            {
+             "t": 3.5,
+             "d": 0.25,
+             "s": 2,
+             "f": 10
+            },
+            {
+             "t": 3.75,
+             "d": 0.25,
+             "s": 1,
+             "f": 7
+            },
+            {
+             "t": 4,
+             "d": 0.25,
+             "s": 1,
+             "f": 8
+            },
+            {
+             "t": 4.25,
+             "d": 0.25,
+             "s": 1,
+             "f": 10
+            },
+            {
+             "t": 4.5,
+             "d": 0.25,
+             "s": 1,
+             "f": 8
+            },
+            {
+             "t": 4.75,
+             "d": 0.25,
+             "s": 1,
+             "f": 7
+            },
+            {
+             "t": 5,
+             "d": 0.25,
+             "s": 2,
+             "f": 10
+            },
+            {
+             "t": 5.25,
+             "d": 0.25,
+             "s": 2,
+             "f": 9
+            },
+            {
+             "t": 5.5,
+             "d": 0.25,
+             "s": 2,
+             "f": 6
+            },
+            {
+             "t": 5.75,
+             "d": 0.25,
+             "s": 3,
+             "f": 9
+            },
+            {
+             "t": 6,
+             "d": 0.25,
+             "s": 3,
+             "f": 7
+            },
+            {
+             "t": 6.25,
+             "d": 0.25,
+             "s": 3,
+             "f": 5
+            },
+            {
+             "t": 6.5,
+             "d": 0.25,
+             "s": 4,
+             "f": 9
+            },
+            {
+             "t": 6.75,
+             "d": 0.25,
+             "s": 4,
+             "f": 7
+            },
+            {
+             "t": 7,
+             "d": 0.25,
+             "s": 4,
+             "f": 6
+            },
+            {
+             "t": 7.25,
+             "d": 0.25,
+             "s": 5,
+             "f": 8
+            },
+            {
+             "t": 7.5,
+             "d": 0.25,
+             "s": 5,
+             "f": 7
+            },
+            {
+             "t": 7.75,
+             "d": 0.25,
+             "s": 5,
+             "f": 5
+            },
+            {
+             "t": 8,
+             "d": 0.25,
+             "s": 6,
+             "f": 8
+            },
+            {
+             "t": 8.25,
+             "d": 0.25,
+             "s": 6,
+             "f": 7
+            }
+           ],
+           "swing": false,
+           "beats": 12
+          },
+          "chords": [],
+          "backing": [],
+          "picking": "alternate"
+         },
+         {
+          "id": "g-a-natural-minor-vs-harmonic-minor",
+          "name": "A Natural minor vs Harmonic minor",
+          "domain": "theory",
+          "why": "Natural minor and Harmonic minor share a root but differ by one or two notes; hearing that difference is what modes are about.",
+          "instr": "Play Natural minor, then Harmonic minor, from the same root. Find the note(s) that change and lean on them: that's the color of each mode.",
+          "watch": "Treating them as the same shape: they are not.",
+          "simplify": "Play only strings 4\u20131 of each.",
+          "unit": "8ths",
+          "goalBpm": 147,
+          "startBpm": 88,
+          "level": 7,
+          "minutes": 5,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 0.5,
+             "s": 6,
+             "f": 5
+            },
+            {
+             "t": 0.5,
+             "d": 0.5,
+             "s": 6,
+             "f": 7
+            },
+            {
+             "t": 1,
+             "d": 0.5,
+             "s": 6,
+             "f": 8
+            },
+            {
+             "t": 1.5,
+             "d": 0.5,
+             "s": 5,
+             "f": 5
+            },
+            {
+             "t": 2,
+             "d": 0.5,
+             "s": 5,
+             "f": 7
+            },
+            {
+             "t": 2.5,
+             "d": 0.5,
+             "s": 5,
+             "f": 8
+            },
+            {
+             "t": 3,
+             "d": 0.5,
+             "s": 4,
+             "f": 5
+            },
+            {
+             "t": 3.5,
+             "d": 0.5,
+             "s": 4,
+             "f": 7
+            },
+            {
+             "t": 4,
+             "d": 0.5,
+             "s": 4,
+             "f": 9
+            },
+            {
+             "t": 4.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 5
+            },
+            {
+             "t": 5,
+             "d": 0.5,
+             "s": 3,
+             "f": 7
+            },
+            {
+             "t": 5.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 9
+            },
+            {
+             "t": 6,
+             "d": 0.5,
+             "s": 2,
+             "f": 6
+            },
+            {
+             "t": 6.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 8
+            },
+            {
+             "t": 7,
+             "d": 0.5,
+             "s": 2,
+             "f": 10
+            },
+            {
+             "t": 7.5,
+             "d": 0.5,
+             "s": 1,
+             "f": 7
+            },
+            {
+             "t": 8,
+             "d": 0.5,
+             "s": 1,
+             "f": 8
+            },
+            {
+             "t": 8.5,
+             "d": 0.5,
+             "s": 1,
+             "f": 10
+            },
+            {
+             "t": 12,
+             "d": 0.5,
+             "s": 6,
+             "f": 5
+            },
+            {
+             "t": 12.5,
+             "d": 0.5,
+             "s": 6,
+             "f": 7
+            },
+            {
+             "t": 13,
+             "d": 0.5,
+             "s": 6,
+             "f": 8
+            },
+            {
+             "t": 13.5,
+             "d": 0.5,
+             "s": 5,
+             "f": 5
+            },
+            {
+             "t": 14,
+             "d": 0.5,
+             "s": 5,
+             "f": 7
+            },
+            {
+             "t": 14.5,
+             "d": 0.5,
+             "s": 5,
+             "f": 8
+            },
+            {
+             "t": 15,
+             "d": 0.5,
+             "s": 4,
+             "f": 6
+            },
+            {
+             "t": 15.5,
+             "d": 0.5,
+             "s": 4,
+             "f": 7
+            },
+            {
+             "t": 16,
+             "d": 0.5,
+             "s": 4,
+             "f": 9
+            },
+            {
+             "t": 16.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 5
+            },
+            {
+             "t": 17,
+             "d": 0.5,
+             "s": 3,
+             "f": 7
+            },
+            {
+             "t": 17.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 9
+            },
+            {
+             "t": 18,
+             "d": 0.5,
+             "s": 2,
+             "f": 6
+            },
+            {
+             "t": 18.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 9
+            },
+            {
+             "t": 19,
+             "d": 0.5,
+             "s": 2,
+             "f": 10
+            },
+            {
+             "t": 19.5,
+             "d": 0.5,
+             "s": 1,
+             "f": 7
+            },
+            {
+             "t": 20,
+             "d": 0.5,
+             "s": 1,
+             "f": 8
+            },
+            {
+             "t": 20.5,
+             "d": 0.5,
+             "s": 1,
+             "f": 10
+            }
+           ],
+           "swing": false,
+           "beats": 24
+          },
+          "chords": [],
+          "backing": []
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "u4",
+      "title": "Making music",
+      "summary": "Shred solo.",
+      "skills": [
+       {
+        "id": "solo",
+        "title": "Solo with speed and melody",
+        "domain": "improv",
+        "summary": "Fast runs that land on chord tones.",
+        "prereqs": [
+         "harm"
+        ],
+        "exercises": [
+         {
+          "id": "g-solo-over-am-f-g-am-land-on-chord-tone",
+          "name": "Solo over Am \u2013 F \u2013 G \u2013 Am: land on chord tones",
+          "domain": "improv",
+          "why": "Landing on a chord tone at each change makes a solo follow the harmony.",
+          "instr": "Improvise with the A natural minor (aeolian). On beat 1 of each new chord, land on its root or 3rd; use space between phrases and repeat ideas before changing them.",
+          "watch": "Running the scale up and down without phrasing.",
+          "simplify": "Whole notes: only the target notes, in time.",
+          "unit": "phrases",
+          "goalBpm": 124,
+          "startBpm": 70,
+          "level": 7,
+          "minutes": 6,
+          "libId": null,
+          "tab": null,
+          "chords": [
+           "Am",
+           "F",
+           "G",
+           "Am"
+          ],
+          "backing": [
+           "Am",
+           "F",
+           "G",
+           "Am"
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "style": "Shred Foundations"
+   },
+   "lessons": [],
+   "lastPracticed": "2026-10-07",
+   "state": {
+    "skills": {
+     "alt": {
+      "status": "available",
+      "masteredAt": null,
+      "nextReview": null,
+      "reviewStep": 0,
+      "lastPracticed": null
+     },
+     "legato": {
+      "status": "locked",
+      "masteredAt": null,
+      "nextReview": null,
+      "reviewStep": 0,
+      "lastPracticed": null
+     },
+     "sweep": {
+      "status": "locked",
+      "masteredAt": null,
+      "nextReview": null,
+      "reviewStep": 0,
+      "lastPracticed": null
+     },
+     "tap": {
+      "status": "locked",
+      "masteredAt": null,
+      "nextReview": null,
+      "reviewStep": 0,
+      "lastPracticed": null
+     },
+     "harm": {
+      "status": "locked",
+      "masteredAt": null,
+      "nextReview": null,
+      "reviewStep": 0,
+      "lastPracticed": null
+     },
+     "solo": {
+      "status": "locked",
+      "masteredAt": null,
+      "nextReview": null,
+      "reviewStep": 0,
+      "lastPracticed": null
+     }
+    },
+    "exercises": {
+     "g-16th-note-bursts-on-two-strings-a": {
+      "target": 74,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-a-natural-minor-aeolian-position-1-in": {
+      "target": 86,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-legato-3-notes-per-string-a-harmonic-m": {
+      "target": 96,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-vibrato-on-target-notes": {
+      "target": 79,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-3-string-am-sweep-arpeggio": {
+      "target": 52,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-tapping-triplets-in-a": {
+      "target": 95,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-a-harmonic-minor-position-1": {
+      "target": 70,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-a-natural-minor-vs-harmonic-minor": {
+      "target": 91,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-solo-over-am-f-g-am-land-on-chord-tone": {
+      "target": 68,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     }
+    },
+    "extras": {
+     "g-every-a-on-the-neck": {
+      "target": 86,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-3-string-am-sweep-arpeggio": {
+      "target": 52,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-chords-of-a-minor": {
+      "target": 77,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-call-and-response-in-a": {
+      "target": 69,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     }
+    }
+   }
+  },
+  {
+   "id": "zbcsolwx",
+   "name": "Thumb Independence Mastery",
+   "tagline": "Command steady bass lines while melodies and inner voices move freely above.",
+   "genre": "fingerstyle",
+   "style": "Independent Thumb",
+   "players": [],
+   "difficulty": 7,
+   "levelLabel": "Mastery",
+   "createdAt": "2026-10-07",
+   "status": "open",
+   "progress": 0,
+   "tree": {
+    "version": 2,
+    "generatedBy": "local",
+    "generatedAt": 1791429435309,
+    "summary": "Independent Thumb in E minor: thumb, thumb + melody, arpeggios, harmony, making music, built around the fingerstyle & classical vocabulary at your level.",
+    "units": [
+     {
+      "id": "u0",
+      "title": "Thumb",
+      "summary": "Steady bass.",
+      "skills": [
+       {
+        "id": "thumb",
+        "title": "Travis pattern",
+        "domain": "picking",
+        "summary": "Thumb never stops.",
+        "prereqs": [],
+        "exercises": [
+         {
+          "id": "g-travis-picking-e-c-m-a-b",
+          "name": "Travis picking: E \u2013 C\u266fm \u2013 A \u2013 B",
+          "domain": "picking",
+          "why": "An alternating thumb bass under finger-picked melody notes: the core of folk and fingerstyle accompaniment.",
+          "instr": "Thumb plays the bass on every beat, alternating between the root string and the next one up. Fingers fill the off-beats. Keep the thumb steady even when a finger misses.",
+          "watch": "The thumb copying the fingers\u2019 rhythm.",
+          "simplify": "Thumb only for one bar, then add one finger.",
+          "unit": "8ths",
+          "goalBpm": 124,
+          "startBpm": 50,
+          "level": 7,
+          "minutes": 6,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 0.5,
+             "s": 6,
+             "f": 0
+            },
+            {
+             "t": 0.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 0
+            },
+            {
+             "t": 1,
+             "d": 0.5,
+             "s": 5,
+             "f": 2
+            },
+            {
+             "t": 1.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 1
+            },
+            {
+             "t": 2,
+             "d": 0.5,
+             "s": 6,
+             "f": 0
+            },
+            {
+             "t": 2.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 0
+            },
+            {
+             "t": 3,
+             "d": 0.5,
+             "s": 5,
+             "f": 2
+            },
+            {
+             "t": 3.5,
+             "d": 0.5,
+             "s": 1,
+             "f": 0
+            },
+            {
+             "t": 4,
+             "d": 0.5,
+             "s": 5,
+             "f": 4
+            },
+            {
+             "t": 4.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 2
+            },
+            {
+             "t": 5,
+             "d": 0.5,
+             "s": 4,
+             "f": 2
+            },
+            {
+             "t": 5.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 1
+            },
+            {
+             "t": 6,
+             "d": 0.5,
+             "s": 5,
+             "f": 4
+            },
+            {
+             "t": 6.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 2
+            },
+            {
+             "t": 7,
+             "d": 0.5,
+             "s": 4,
+             "f": 2
+            },
+            {
+             "t": 7.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 2
+            },
+            {
+             "t": 8,
+             "d": 0.5,
+             "s": 5,
+             "f": 0
+            },
+            {
+             "t": 8.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 2
+            },
+            {
+             "t": 9,
+             "d": 0.5,
+             "s": 4,
+             "f": 2
+            },
+            {
+             "t": 9.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 2
+            },
+            {
+             "t": 10,
+             "d": 0.5,
+             "s": 5,
+             "f": 0
+            },
+            {
+             "t": 10.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 2
+            },
+            {
+             "t": 11,
+             "d": 0.5,
+             "s": 4,
+             "f": 2
+            },
+            {
+             "t": 11.5,
+             "d": 0.5,
+             "s": 1,
+             "f": 0
+            },
+            {
+             "t": 12,
+             "d": 0.5,
+             "s": 5,
+             "f": 2
+            },
+            {
+             "t": 12.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 4
+            },
+            {
+             "t": 13,
+             "d": 0.5,
+             "s": 4,
+             "f": 4
+            },
+            {
+             "t": 13.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 4
+            },
+            {
+             "t": 14,
+             "d": 0.5,
+             "s": 5,
+             "f": 2
+            },
+            {
+             "t": 14.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 4
+            },
+            {
+             "t": 15,
+             "d": 0.5,
+             "s": 4,
+             "f": 4
+            },
+            {
+             "t": 15.5,
+             "d": 0.5,
+             "s": 1,
+             "f": 2
+            }
+           ],
+           "swing": false,
+           "beats": 16
+          },
+          "chords": [
+           "E",
+           "C\u266fm",
+           "A",
+           "B"
+          ],
+          "backing": [],
+          "voicings": [
+           {
+            "name": "E",
+            "frets": [
+             0,
+             2,
+             2,
+             1,
+             0,
+             0
+            ],
+            "labels": [
+             "R",
+             "5",
+             "R",
+             "3",
+             "5",
+             "R"
+            ],
+            "names": [
+             "E",
+             "B",
+             "E",
+             "G\u266f",
+             "B",
+             "E"
+            ],
+            "fingers": [
+             null,
+             2,
+             3,
+             1,
+             null,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "C\u266fm",
+            "frets": [
+             null,
+             4,
+             2,
+             1,
+             2,
+             null
+            ],
+            "labels": [
+             null,
+             "R",
+             "\u266d3",
+             "5",
+             "R",
+             null
+            ],
+            "names": [
+             null,
+             "C\u266f",
+             "E",
+             "G\u266f",
+             "C\u266f",
+             null
+            ],
+            "fingers": [
+             null,
+             4,
+             2,
+             1,
+             3,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "A",
+            "frets": [
+             null,
+             0,
+             2,
+             2,
+             2,
+             0
+            ],
+            "labels": [
+             null,
+             "R",
+             "5",
+             "R",
+             "3",
+             "5"
+            ],
+            "names": [
+             null,
+             "A",
+             "E",
+             "A",
+             "C\u266f",
+             "E"
+            ],
+            "fingers": [
+             null,
+             null,
+             1,
+             1,
+             1,
+             null
+            ],
+            "barre": {
+             "fret": 2,
+             "from": 2,
+             "to": 4
+            }
+           },
+           {
+            "name": "B",
+            "frets": [
+             null,
+             2,
+             4,
+             4,
+             4,
+             2
+            ],
+            "labels": [
+             null,
+             "R",
+             "5",
+             "R",
+             "3",
+             "5"
+            ],
+            "names": [
+             null,
+             "B",
+             "F\u266f",
+             "B",
+             "D\u266f",
+             "F\u266f"
+            ],
+            "fingers": [
+             null,
+             1,
+             3,
+             4,
+             4,
+             1
+            ],
+            "barre": {
+             "fret": 2,
+             "from": 1,
+             "to": 5
+            }
+           }
+          ],
+          "picking": "fingers"
+         },
+         {
+          "id": "g-sextuplet-bursts-on-two-strings-e",
+          "name": "Sextuplet bursts on two strings (E)",
+          "domain": "picking",
+          "why": "Short, fast cells across a string change build the synchronized hands that shred lines need.",
+          "instr": "Strict alternate picking, tiny motions. Play the cell 4 times, rest a beat, repeat. Speed comes from relaxation, not force.",
+          "watch": "Tension creeping into the forearm as the tempo rises.",
+          "simplify": "The same cell in 8ths.",
+          "unit": "sextuplets",
+          "goalBpm": 102,
+          "startBpm": 61,
+          "level": 7,
+          "minutes": 4,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 0.16666666666666666,
+             "s": 3,
+             "f": 0
+            },
+            {
+             "t": 0.1667,
+             "d": 0.16666666666666666,
+             "s": 3,
+             "f": 2
+            },
+            {
+             "t": 0.3333,
+             "d": 0.16666666666666666,
+             "s": 2,
+             "f": 0
+            },
+            {
+             "t": 0.5,
+             "d": 0.16666666666666666,
+             "s": 2,
+             "f": 3
+            },
+            {
+             "t": 0.6667,
+             "d": 0.16666666666666666,
+             "s": 2,
+             "f": 3
+            },
+            {
+             "t": 0.8333,
+             "d": 0.16666666666666666,
+             "s": 2,
+             "f": 0
+            },
+            {
+             "t": 1,
+             "d": 0.16666666666666666,
+             "s": 3,
+             "f": 2
+            },
+            {
+             "t": 1.1667,
+             "d": 0.16666666666666666,
+             "s": 3,
+             "f": 0
+            },
+            {
+             "t": 1.3333,
+             "d": 0.16666666666666666,
+             "s": 3,
+             "f": 0
+            },
+            {
+             "t": 1.5,
+             "d": 0.16666666666666666,
+             "s": 3,
+             "f": 2
+            },
+            {
+             "t": 1.6667,
+             "d": 0.16666666666666666,
+             "s": 2,
+             "f": 0
+            },
+            {
+             "t": 1.8333,
+             "d": 0.16666666666666666,
+             "s": 2,
+             "f": 3
+            },
+            {
+             "t": 2,
+             "d": 0.16666666666666666,
+             "s": 2,
+             "f": 3
+            },
+            {
+             "t": 2.1667,
+             "d": 0.16666666666666666,
+             "s": 2,
+             "f": 0
+            },
+            {
+             "t": 2.3333,
+             "d": 0.16666666666666666,
+             "s": 3,
+             "f": 2
+            },
+            {
+             "t": 2.5,
+             "d": 0.16666666666666666,
+             "s": 3,
+             "f": 0
+            },
+            {
+             "t": 2.6667,
+             "d": 0.16666666666666666,
+             "s": 3,
+             "f": 0
+            },
+            {
+             "t": 2.8333,
+             "d": 0.16666666666666666,
+             "s": 3,
+             "f": 2
+            },
+            {
+             "t": 3,
+             "d": 0.16666666666666666,
+             "s": 2,
+             "f": 0
+            },
+            {
+             "t": 3.1667,
+             "d": 0.16666666666666666,
+             "s": 2,
+             "f": 3
+            },
+            {
+             "t": 3.3333,
+             "d": 0.16666666666666666,
+             "s": 2,
+             "f": 3
+            },
+            {
+             "t": 3.5,
+             "d": 0.16666666666666666,
+             "s": 2,
+             "f": 0
+            },
+            {
+             "t": 3.6667,
+             "d": 0.16666666666666666,
+             "s": 3,
+             "f": 2
+            },
+            {
+             "t": 3.8333,
+             "d": 0.16666666666666666,
+             "s": 3,
+             "f": 0
+            },
+            {
+             "t": 4,
+             "d": 0.16666666666666666,
+             "s": 3,
+             "f": 0
+            },
+            {
+             "t": 4.1667,
+             "d": 0.16666666666666666,
+             "s": 3,
+             "f": 2
+            },
+            {
+             "t": 4.3333,
+             "d": 0.16666666666666666,
+             "s": 2,
+             "f": 0
+            },
+            {
+             "t": 4.5,
+             "d": 0.16666666666666666,
+             "s": 2,
+             "f": 3
+            },
+            {
+             "t": 4.6667,
+             "d": 0.16666666666666666,
+             "s": 2,
+             "f": 3
+            },
+            {
+             "t": 4.8333,
+             "d": 0.16666666666666666,
+             "s": 2,
+             "f": 0
+            },
+            {
+             "t": 5,
+             "d": 0.16666666666666666,
+             "s": 3,
+             "f": 2
+            },
+            {
+             "t": 5.1667,
+             "d": 0.16666666666666666,
+             "s": 3,
+             "f": 0
+            }
+           ],
+           "swing": false,
+           "beats": 8
+          },
+          "chords": [],
+          "backing": [],
+          "picking": "strict"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "u1",
+      "title": "Thumb + melody",
+      "summary": "Two voices.",
+      "skills": [
+       {
+        "id": "melody",
+        "title": "Bass with percussive slap",
+        "domain": "picking",
+        "summary": "Groove underneath.",
+        "prereqs": [
+         "thumb"
+        ],
+        "exercises": [
+         {
+          "id": "g-thumb-bass-with-percussive-slaps",
+          "name": "Thumb bass with percussive slaps",
+          "domain": "picking",
+          "why": "Modern fingerstyle turns the guitar into a band: thumb bass, a slap \u201csnare\u201d on 2 and 4, melody on top.",
+          "instr": "Thumb on the low root. On beats 2 and 4, slap the strings with the side of the thumb/palm (the x hits): a muted, snare-like crack. Melody note on the \u201c&\u201d of 3.",
+          "watch": "The bass note dying when you slap; keep the thumb steady.",
+          "simplify": "Bass and slap only.",
+          "unit": "quarters",
+          "goalBpm": 124,
+          "startBpm": 60,
+          "level": 7,
+          "minutes": 5,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 1,
+             "s": 6,
+             "f": 0
+            },
+            {
+             "t": 1,
+             "d": 1,
+             "s": 3,
+             "f": 0,
+             "x": "mute",
+             "chord": true
+            },
+            {
+             "t": 1,
+             "d": 1,
+             "s": 2,
+             "f": 0,
+             "x": "mute",
+             "chord": true
+            },
+            {
+             "t": 1,
+             "d": 1,
+             "s": 1,
+             "f": 0,
+             "x": "mute",
+             "chord": true
+            },
+            {
+             "t": 2,
+             "d": 0.5,
+             "s": 6,
+             "f": 0
+            },
+            {
+             "t": 2.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 0
+            },
+            {
+             "t": 3,
+             "d": 1,
+             "s": 3,
+             "f": 0,
+             "x": "mute",
+             "chord": true
+            },
+            {
+             "t": 3,
+             "d": 1,
+             "s": 2,
+             "f": 0,
+             "x": "mute",
+             "chord": true
+            },
+            {
+             "t": 3,
+             "d": 1,
+             "s": 1,
+             "f": 0,
+             "x": "mute",
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 1,
+             "s": 6,
+             "f": 0
+            },
+            {
+             "t": 5,
+             "d": 1,
+             "s": 3,
+             "f": 0,
+             "x": "mute",
+             "chord": true
+            },
+            {
+             "t": 5,
+             "d": 1,
+             "s": 2,
+             "f": 0,
+             "x": "mute",
+             "chord": true
+            },
+            {
+             "t": 5,
+             "d": 1,
+             "s": 1,
+             "f": 0,
+             "x": "mute",
+             "chord": true
+            },
+            {
+             "t": 6,
+             "d": 0.5,
+             "s": 6,
+             "f": 0
+            },
+            {
+             "t": 6.5,
+             "d": 0.5,
+             "s": 2,
+             "f": 0
+            },
+            {
+             "t": 7,
+             "d": 1,
+             "s": 3,
+             "f": 0,
+             "x": "mute",
+             "chord": true
+            },
+            {
+             "t": 7,
+             "d": 1,
+             "s": 2,
+             "f": 0,
+             "x": "mute",
+             "chord": true
+            },
+            {
+             "t": 7,
+             "d": 1,
+             "s": 1,
+             "f": 0,
+             "x": "mute",
+             "chord": true
+            }
+           ],
+           "swing": false,
+           "beats": 8
+          },
+          "chords": [],
+          "backing": [],
+          "picking": "fingers"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "u2",
+      "title": "Arpeggios",
+      "summary": "p-i-m-a.",
+      "skills": [
+       {
+        "id": "pima",
+        "title": "Classical arpeggios",
+        "domain": "picking",
+        "summary": "Even fingers.",
+        "prereqs": [
+         "melody"
+        ],
+        "exercises": [
+         {
+          "id": "g-p-i-m-a-arpeggios-em-am-b-em",
+          "name": "p-i-m-a arpeggios: Em \u2013 Am \u2013 B \u2013 Em",
+          "domain": "picking",
+          "why": "Classical right-hand independence: thumb on the bass, i-m-a on strings 3-2-1, every note even.",
+          "instr": "p (thumb) bass, then i, m, a, m, i. Plant the fingers on their strings before each chord; rest strokes for a full tone.",
+          "watch": "Uneven volume between fingers (a is usually weakest).",
+          "simplify": "p-i-m only.",
+          "unit": "triplets",
+          "goalBpm": 113,
+          "startBpm": 50,
+          "level": 7,
+          "minutes": 5,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 0.3333333333333333,
+             "s": 6,
+             "f": 0
+            },
+            {
+             "t": 0.3333,
+             "d": 0.3333333333333333,
+             "s": 3,
+             "f": 0
+            },
+            {
+             "t": 0.6667,
+             "d": 0.3333333333333333,
+             "s": 2,
+             "f": 0
+            },
+            {
+             "t": 1,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 0
+            },
+            {
+             "t": 1.3333,
+             "d": 0.3333333333333333,
+             "s": 2,
+             "f": 0
+            },
+            {
+             "t": 1.6667,
+             "d": 0.3333333333333333,
+             "s": 3,
+             "f": 0
+            },
+            {
+             "t": 2,
+             "d": 0.3333333333333333,
+             "s": 5,
+             "f": 0
+            },
+            {
+             "t": 2.3333,
+             "d": 0.3333333333333333,
+             "s": 3,
+             "f": 2
+            },
+            {
+             "t": 2.6667,
+             "d": 0.3333333333333333,
+             "s": 2,
+             "f": 1
+            },
+            {
+             "t": 3,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 0
+            },
+            {
+             "t": 3.3333,
+             "d": 0.3333333333333333,
+             "s": 2,
+             "f": 1
+            },
+            {
+             "t": 3.6667,
+             "d": 0.3333333333333333,
+             "s": 3,
+             "f": 2
+            },
+            {
+             "t": 4,
+             "d": 0.3333333333333333,
+             "s": 5,
+             "f": 2
+            },
+            {
+             "t": 4.3333,
+             "d": 0.3333333333333333,
+             "s": 3,
+             "f": 4
+            },
+            {
+             "t": 4.6667,
+             "d": 0.3333333333333333,
+             "s": 2,
+             "f": 4
+            },
+            {
+             "t": 5,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 2
+            },
+            {
+             "t": 5.3333,
+             "d": 0.3333333333333333,
+             "s": 2,
+             "f": 4
+            },
+            {
+             "t": 5.6667,
+             "d": 0.3333333333333333,
+             "s": 3,
+             "f": 4
+            },
+            {
+             "t": 6,
+             "d": 0.3333333333333333,
+             "s": 6,
+             "f": 0
+            },
+            {
+             "t": 6.3333,
+             "d": 0.3333333333333333,
+             "s": 3,
+             "f": 0
+            },
+            {
+             "t": 6.6667,
+             "d": 0.3333333333333333,
+             "s": 2,
+             "f": 0
+            },
+            {
+             "t": 7,
+             "d": 0.3333333333333333,
+             "s": 1,
+             "f": 0
+            },
+            {
+             "t": 7.3333,
+             "d": 0.3333333333333333,
+             "s": 2,
+             "f": 0
+            },
+            {
+             "t": 7.6667,
+             "d": 0.3333333333333333,
+             "s": 3,
+             "f": 0
+            }
+           ],
+           "swing": false,
+           "beats": 12
+          },
+          "chords": [
+           "Em",
+           "Am",
+           "B",
+           "Em"
+          ],
+          "backing": [],
+          "voicings": [
+           {
+            "name": "Em",
+            "frets": [
+             0,
+             2,
+             2,
+             0,
+             0,
+             0
+            ],
+            "labels": [
+             "R",
+             "5",
+             "R",
+             "\u266d3",
+             "5",
+             "R"
+            ],
+            "names": [
+             "E",
+             "B",
+             "E",
+             "G",
+             "B",
+             "E"
+            ],
+            "fingers": [
+             null,
+             1,
+             1,
+             null,
+             null,
+             null
+            ],
+            "barre": {
+             "fret": 2,
+             "from": 1,
+             "to": 2
+            }
+           },
+           {
+            "name": "Am",
+            "frets": [
+             null,
+             0,
+             2,
+             2,
+             1,
+             0
+            ],
+            "labels": [
+             null,
+             "R",
+             "5",
+             "R",
+             "\u266d3",
+             "5"
+            ],
+            "names": [
+             null,
+             "A",
+             "E",
+             "A",
+             "C",
+             "E"
+            ],
+            "fingers": [
+             null,
+             null,
+             2,
+             3,
+             1,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "B",
+            "frets": [
+             null,
+             2,
+             4,
+             4,
+             4,
+             2
+            ],
+            "labels": [
+             null,
+             "R",
+             "5",
+             "R",
+             "3",
+             "5"
+            ],
+            "names": [
+             null,
+             "B",
+             "F\u266f",
+             "B",
+             "D\u266f",
+             "F\u266f"
+            ],
+            "fingers": [
+             null,
+             1,
+             3,
+             4,
+             4,
+             1
+            ],
+            "barre": {
+             "fret": 2,
+             "from": 1,
+             "to": 5
+            }
+           }
+          ],
+          "picking": "fingers"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "u3",
+      "title": "Harmony",
+      "summary": "Keys.",
+      "skills": [
+       {
+        "id": "key",
+        "title": "Chords of the key",
+        "domain": "theory",
+        "summary": "Numbers.",
+        "prereqs": [
+         "pima"
+        ],
+        "exercises": [
+         {
+          "id": "g-chords-of-e-minor",
+          "name": "Chords of E minor",
+          "domain": "theory",
+          "why": "Every key has seven chords built from its scale; knowing them by number (I, ii, V\u2026) is how players talk and think about songs.",
+          "instr": "Play up the key: i \u2013 ii\u00b0 \u2013 iii \u2013 iv \u2013 v \u2013 vi \u2013 vii, saying each numeral and its quality out loud. The voicings stay in one area of the neck.",
+          "watch": "Mixing up which chords are minor.",
+          "simplify": "Only I, IV and V.",
+          "unit": "one chord per 2 beats",
+          "goalBpm": 118,
+          "startBpm": 50,
+          "level": 8,
+          "minutes": 5,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 2,
+             "s": 4,
+             "f": 9,
+             "chord": true
+            },
+            {
+             "t": 0,
+             "d": 2,
+             "s": 3,
+             "f": 9,
+             "chord": true
+            },
+            {
+             "t": 0,
+             "d": 2,
+             "s": 2,
+             "f": 8,
+             "chord": true
+            },
+            {
+             "t": 2,
+             "d": 2,
+             "s": 4,
+             "f": 10,
+             "chord": true
+            },
+            {
+             "t": 2,
+             "d": 2,
+             "s": 3,
+             "f": 11,
+             "chord": true
+            },
+            {
+             "t": 2,
+             "d": 2,
+             "s": 2,
+             "f": 10,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 4,
+             "f": 12,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 3,
+             "f": 12,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 2,
+             "f": 12,
+             "chord": true
+            },
+            {
+             "t": 6,
+             "d": 2,
+             "s": 4,
+             "f": 14,
+             "chord": true
+            },
+            {
+             "t": 6,
+             "d": 2,
+             "s": 3,
+             "f": 14,
+             "chord": true
+            },
+            {
+             "t": 6,
+             "d": 2,
+             "s": 2,
+             "f": 13,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 2,
+             "s": 4,
+             "f": 12,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 2,
+             "s": 3,
+             "f": 11,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 2,
+             "s": 2,
+             "f": 12,
+             "chord": true
+            },
+            {
+             "t": 10,
+             "d": 2,
+             "s": 4,
+             "f": 14,
+             "chord": true
+            },
+            {
+             "t": 10,
+             "d": 2,
+             "s": 3,
+             "f": 12,
+             "chord": true
+            },
+            {
+             "t": 10,
+             "d": 2,
+             "s": 2,
+             "f": 13,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 2,
+             "s": 4,
+             "f": 12,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 2,
+             "s": 3,
+             "f": 11,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 2,
+             "s": 2,
+             "f": 10,
+             "chord": true
+            },
+            {
+             "t": 14,
+             "d": 2,
+             "s": 4,
+             "f": 14,
+             "chord": true
+            },
+            {
+             "t": 14,
+             "d": 2,
+             "s": 3,
+             "f": 12,
+             "chord": true
+            },
+            {
+             "t": 14,
+             "d": 2,
+             "s": 2,
+             "f": 12,
+             "chord": true
+            }
+           ],
+           "swing": false,
+           "beats": 16
+          },
+          "chords": [
+           "Em",
+           "F\u266fdim",
+           "G",
+           "Am",
+           "Bm",
+           "C",
+           "D",
+           "Em"
+          ],
+          "backing": [],
+          "voicings": [
+           {
+            "name": "Em",
+            "frets": [
+             null,
+             null,
+             9,
+             9,
+             8,
+             null
+            ],
+            "labels": [
+             null,
+             null,
+             "5",
+             "R",
+             "\u266d3",
+             null
+            ],
+            "names": [
+             null,
+             null,
+             "B",
+             "E",
+             "G",
+             null
+            ],
+            "fingers": [
+             null,
+             null,
+             2,
+             3,
+             1,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "F\u266fdim",
+            "frets": [
+             null,
+             null,
+             10,
+             11,
+             10,
+             null
+            ],
+            "labels": [
+             null,
+             null,
+             "\u266d5",
+             "R",
+             "\u266d3",
+             null
+            ],
+            "names": [
+             null,
+             null,
+             "C",
+             "F\u266f",
+             "A",
+             null
+            ],
+            "fingers": [
+             null,
+             null,
+             1,
+             2,
+             1,
+             null
+            ],
+            "barre": {
+             "fret": 10,
+             "from": 2,
+             "to": 4
+            }
+           },
+           {
+            "name": "G",
+            "frets": [
+             null,
+             null,
+             12,
+             12,
+             12,
+             null
+            ],
+            "labels": [
+             null,
+             null,
+             "5",
+             "R",
+             "3",
+             null
+            ],
+            "names": [
+             null,
+             null,
+             "D",
+             "G",
+             "B",
+             null
+            ],
+            "fingers": [
+             null,
+             null,
+             1,
+             1,
+             1,
+             null
+            ],
+            "barre": {
+             "fret": 12,
+             "from": 2,
+             "to": 4
+            }
+           },
+           {
+            "name": "Am",
+            "frets": [
+             null,
+             null,
+             14,
+             14,
+             13,
+             null
+            ],
+            "labels": [
+             null,
+             null,
+             "5",
+             "R",
+             "\u266d3",
+             null
+            ],
+            "names": [
+             null,
+             null,
+             "E",
+             "A",
+             "C",
+             null
+            ],
+            "fingers": [
+             null,
+             null,
+             2,
+             3,
+             1,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "Bm",
+            "frets": [
+             null,
+             null,
+             12,
+             11,
+             12,
+             null
+            ],
+            "labels": [
+             null,
+             null,
+             "\u266d3",
+             "5",
+             "R",
+             null
+            ],
+            "names": [
+             null,
+             null,
+             "D",
+             "F\u266f",
+             "B",
+             null
+            ],
+            "fingers": [
+             null,
+             null,
+             2,
+             1,
+             3,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "C",
+            "frets": [
+             null,
+             null,
+             14,
+             12,
+             13,
+             null
+            ],
+            "labels": [
+             null,
+             null,
+             "3",
+             "5",
+             "R",
+             null
+            ],
+            "names": [
+             null,
+             null,
+             "E",
+             "G",
+             "C",
+             null
+            ],
+            "fingers": [
+             null,
+             null,
+             3,
+             1,
+             2,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "D",
+            "frets": [
+             null,
+             null,
+             12,
+             11,
+             10,
+             null
+            ],
+            "labels": [
+             null,
+             null,
+             "R",
+             "3",
+             "5",
+             null
+            ],
+            "names": [
+             null,
+             null,
+             "D",
+             "F\u266f",
+             "A",
+             null
+            ],
+            "fingers": [
+             null,
+             null,
+             3,
+             2,
+             1,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "Em",
+            "frets": [
+             null,
+             null,
+             14,
+             12,
+             12,
+             null
+            ],
+            "labels": [
+             null,
+             null,
+             "R",
+             "\u266d3",
+             "5",
+             null
+            ],
+            "names": [
+             null,
+             null,
+             "E",
+             "G",
+             "B",
+             null
+            ],
+            "fingers": [
+             null,
+             null,
+             3,
+             1,
+             1,
+             null
+            ],
+            "barre": {
+             "fret": 12,
+             "from": 3,
+             "to": 4
+            }
+           }
+          ]
+         },
+         {
+          "id": "g-interval-shapes-from-e",
+          "name": "Interval shapes from E",
+          "domain": "ear",
+          "why": "Every interval has a fixed shape on the neck; knowing shape + sound is how you play what you hear.",
+          "instr": "Root, then the interval: minor 3rd, major 3rd, 4th, 5th, 6th, minor 7th, major 7th, octave. Sing each interval before you play it.",
+          "watch": "Playing the shapes without listening; name each one as it sounds.",
+          "simplify": "Only the 3rds and the 5th.",
+          "unit": "8ths, root then interval",
+          "goalBpm": 113,
+          "startBpm": 50,
+          "level": 6,
+          "minutes": 4,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 0.5,
+             "s": 5,
+             "f": 7
+            },
+            {
+             "t": 0.5,
+             "d": 0.5,
+             "s": 5,
+             "f": 10
+            },
+            {
+             "t": 1,
+             "d": 0.5,
+             "s": 5,
+             "f": 7
+            },
+            {
+             "t": 1.5,
+             "d": 0.5,
+             "s": 5,
+             "f": 11
+            },
+            {
+             "t": 2,
+             "d": 0.5,
+             "s": 5,
+             "f": 7
+            },
+            {
+             "t": 2.5,
+             "d": 0.5,
+             "s": 4,
+             "f": 7
+            },
+            {
+             "t": 3,
+             "d": 0.5,
+             "s": 5,
+             "f": 7
+            },
+            {
+             "t": 3.5,
+             "d": 0.5,
+             "s": 4,
+             "f": 9
+            },
+            {
+             "t": 4,
+             "d": 0.5,
+             "s": 5,
+             "f": 7
+            },
+            {
+             "t": 4.5,
+             "d": 0.5,
+             "s": 4,
+             "f": 11
+            },
+            {
+             "t": 5,
+             "d": 0.5,
+             "s": 5,
+             "f": 7
+            },
+            {
+             "t": 5.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 7
+            },
+            {
+             "t": 6,
+             "d": 0.5,
+             "s": 5,
+             "f": 7
+            },
+            {
+             "t": 6.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 8
+            },
+            {
+             "t": 7,
+             "d": 0.5,
+             "s": 5,
+             "f": 7
+            },
+            {
+             "t": 7.5,
+             "d": 0.5,
+             "s": 3,
+             "f": 9
+            }
+           ],
+           "swing": false,
+           "beats": 8
+          },
+          "chords": [],
+          "backing": []
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "u4",
+      "title": "Making music",
+      "summary": "Arrange.",
+      "skills": [
+       {
+        "id": "arr",
+        "title": "Arrange a progression",
+        "domain": "repertoire",
+        "summary": "Bass, chords, melody.",
+        "prereqs": [
+         "key"
+        ],
+        "exercises": [
+         {
+          "id": "g-chord-melody-harmonize-the-e-major-sca",
+          "name": "Chord-melody: harmonize the E major scale",
+          "domain": "repertoire",
+          "why": "Chord-melody puts the melody on top of the chord; this harmonized scale is the first step to arranging tunes.",
+          "instr": "The top note of each voicing is the scale; the chord under it changes (I, V, I, IV\u2026). Let the top note ring loudest.",
+          "watch": "Melody note buried under the chord.",
+          "simplify": "Play only the top two strings.",
+          "unit": "half notes",
+          "goalBpm": 106,
+          "startBpm": 50,
+          "level": 9,
+          "minutes": 6,
+          "libId": null,
+          "tab": {
+           "notes": [
+            {
+             "t": 0,
+             "d": 2,
+             "s": 3,
+             "f": 1,
+             "chord": true
+            },
+            {
+             "t": 0,
+             "d": 2,
+             "s": 2,
+             "f": 0,
+             "chord": true
+            },
+            {
+             "t": 0,
+             "d": 2,
+             "s": 1,
+             "f": 0,
+             "chord": true
+            },
+            {
+             "t": 2,
+             "d": 2,
+             "s": 3,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 2,
+             "d": 2,
+             "s": 2,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 2,
+             "d": 2,
+             "s": 1,
+             "f": 2,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 3,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 2,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 4,
+             "d": 2,
+             "s": 1,
+             "f": 4,
+             "chord": true
+            },
+            {
+             "t": 6,
+             "d": 2,
+             "s": 3,
+             "f": 6,
+             "chord": true
+            },
+            {
+             "t": 6,
+             "d": 2,
+             "s": 2,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 6,
+             "d": 2,
+             "s": 1,
+             "f": 5,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 2,
+             "s": 3,
+             "f": 9,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 2,
+             "s": 2,
+             "f": 9,
+             "chord": true
+            },
+            {
+             "t": 8,
+             "d": 2,
+             "s": 1,
+             "f": 7,
+             "chord": true
+            },
+            {
+             "t": 10,
+             "d": 2,
+             "s": 3,
+             "f": 9,
+             "chord": true
+            },
+            {
+             "t": 10,
+             "d": 2,
+             "s": 2,
+             "f": 10,
+             "chord": true
+            },
+            {
+             "t": 10,
+             "d": 2,
+             "s": 1,
+             "f": 9,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 2,
+             "s": 3,
+             "f": 11,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 2,
+             "s": 2,
+             "f": 12,
+             "chord": true
+            },
+            {
+             "t": 12,
+             "d": 2,
+             "s": 1,
+             "f": 11,
+             "chord": true
+            },
+            {
+             "t": 14,
+             "d": 2,
+             "s": 3,
+             "f": 13,
+             "chord": true
+            },
+            {
+             "t": 14,
+             "d": 2,
+             "s": 2,
+             "f": 12,
+             "chord": true
+            },
+            {
+             "t": 14,
+             "d": 2,
+             "s": 1,
+             "f": 12,
+             "chord": true
+            }
+           ],
+           "swing": false,
+           "beats": 16
+          },
+          "chords": [],
+          "backing": [],
+          "voicings": [
+           {
+            "name": "E",
+            "frets": [
+             null,
+             null,
+             null,
+             1,
+             0,
+             0
+            ],
+            "labels": [
+             null,
+             null,
+             null,
+             "3",
+             "5",
+             "R"
+            ],
+            "names": [
+             null,
+             null,
+             null,
+             "G\u266f",
+             "B",
+             "E"
+            ],
+            "fingers": [
+             null,
+             null,
+             null,
+             1,
+             null,
+             null
+            ],
+            "barre": null
+           },
+           {
+            "name": "B",
+            "frets": [
+             null,
+             null,
+             null,
+             4,
+             4,
+             2
+            ],
+            "labels": [
+             null,
+             null,
+             null,
+             "R",
+             "3",
+             "5"
+            ],
+            "names": [
+             null,
+             null,
+             null,
+             "B",
+             "D\u266f",
+             "F\u266f"
+            ],
+            "fingers": [
+             null,
+             null,
+             null,
+             3,
+             4,
+             1
+            ],
+            "barre": null
+           },
+           {
+            "name": "E",
+            "frets": [
+             null,
+             null,
+             null,
+             4,
+             5,
+             4
+            ],
+            "labels": [
+             null,
+             null,
+             null,
+             "5",
+             "R",
+             "3"
+            ],
+            "names": [
+             null,
+             null,
+             null,
+             "B",
+             "E",
+             "G\u266f"
+            ],
+            "fingers": [
+             null,
+             null,
+             null,
+             1,
+             2,
+             1
+            ],
+            "barre": {
+             "fret": 4,
+             "from": 3,
+             "to": 5
+            }
+           },
+           {
+            "name": "A",
+            "frets": [
+             null,
+             null,
+             null,
+             6,
+             5,
+             5
+            ],
+            "labels": [
+             null,
+             null,
+             null,
+             "3",
+             "5",
+             "R"
+            ],
+            "names": [
+             null,
+             null,
+             null,
+             "C\u266f",
+             "E",
+             "A"
+            ],
+            "fingers": [
+             null,
+             null,
+             null,
+             2,
+             1,
+             1
+            ],
+            "barre": {
+             "fret": 5,
+             "from": 4,
+             "to": 5
+            }
+           },
+           {
+            "name": "E",
+            "frets": [
+             null,
+             null,
+             null,
+             9,
+             9,
+             7
+            ],
+            "labels": [
+             null,
+             null,
+             null,
+             "R",
+             "3",
+             "5"
+            ],
+            "names": [
+             null,
+             null,
+             null,
+             "E",
+             "G\u266f",
+             "B"
+            ],
+            "fingers": [
+             null,
+             null,
+             null,
+             3,
+             4,
+             1
+            ],
+            "barre": null
+           },
+           {
+            "name": "A",
+            "frets": [
+             null,
+             null,
+             null,
+             9,
+             10,
+             9
+            ],
+            "labels": [
+             null,
+             null,
+             null,
+             "5",
+             "R",
+             "3"
+            ],
+            "names": [
+             null,
+             null,
+             null,
+             "E",
+             "A",
+             "C\u266f"
+            ],
+            "fingers": [
+             null,
+             null,
+             null,
+             1,
+             2,
+             1
+            ],
+            "barre": {
+             "fret": 9,
+             "from": 3,
+             "to": 5
+            }
+           },
+           {
+            "name": "B",
+            "frets": [
+             null,
+             null,
+             null,
+             11,
+             12,
+             11
+            ],
+            "labels": [
+             null,
+             null,
+             null,
+             "5",
+             "R",
+             "3"
+            ],
+            "names": [
+             null,
+             null,
+             null,
+             "F\u266f",
+             "B",
+             "D\u266f"
+            ],
+            "fingers": [
+             null,
+             null,
+             null,
+             1,
+             2,
+             1
+            ],
+            "barre": {
+             "fret": 11,
+             "from": 3,
+             "to": 5
+            }
+           },
+           {
+            "name": "E",
+            "frets": [
+             null,
+             null,
+             null,
+             13,
+             12,
+             12
+            ],
+            "labels": [
+             null,
+             null,
+             null,
+             "3",
+             "5",
+             "R"
+            ],
+            "names": [
+             null,
+             null,
+             null,
+             "G\u266f",
+             "B",
+             "E"
+            ],
+            "fingers": [
+             null,
+             null,
+             null,
+             2,
+             1,
+             1
+            ],
+            "barre": {
+             "fret": 12,
+             "from": 4,
+             "to": 5
+            }
+           }
+          ]
+         },
+         {
+          "id": "g-gap-click-keep-the-time-yourself",
+          "name": "Gap click: keep the time yourself",
+          "domain": "rhythm",
+          "why": "When the click disappears for two bars, only your internal clock keeps you in time.",
+          "instr": "Play the progression in steady 8ths. The click plays 2 bars and goes silent for 2: you should land exactly with it when it comes back.",
+          "watch": "Rushing in the silent bars.",
+          "simplify": "Quarter-note strums.",
+          "unit": "the click drops out",
+          "goalBpm": 124,
+          "startBpm": 70,
+          "level": 7,
+          "minutes": 4,
+          "libId": null,
+          "tab": null,
+          "chords": [
+           "E",
+           "C\u266fm",
+           "A",
+           "B"
+          ],
+          "backing": [],
+          "metroMode": "gap"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "style": "Independent Thumb"
+   },
+   "lessons": [],
+   "lastPracticed": null,
+   "state": {
+    "skills": {
+     "thumb": {
+      "status": "available",
+      "masteredAt": null,
+      "nextReview": null,
+      "reviewStep": 0,
+      "lastPracticed": null
+     },
+     "melody": {
+      "status": "locked",
+      "masteredAt": null,
+      "nextReview": null,
+      "reviewStep": 0,
+      "lastPracticed": null
+     },
+     "pima": {
+      "status": "locked",
+      "masteredAt": null,
+      "nextReview": null,
+      "reviewStep": 0,
+      "lastPracticed": null
+     },
+     "key": {
+      "status": "locked",
+      "masteredAt": null,
+      "nextReview": null,
+      "reviewStep": 0,
+      "lastPracticed": null
+     },
+     "arr": {
+      "status": "locked",
+      "masteredAt": null,
+      "nextReview": null,
+      "reviewStep": 0,
+      "lastPracticed": null
+     }
+    },
+    "exercises": {
+     "g-travis-picking-e-c-m-a-b": {
+      "target": 55,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-sextuplet-bursts-on-two-strings-e": {
+      "target": 53,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-thumb-bass-with-percussive-slaps": {
+      "target": 58,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-p-i-m-a-arpeggios-em-am-b-em": {
+      "target": 50,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-chords-of-e-minor": {
+      "target": 63,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-interval-shapes-from-e": {
+      "target": 60,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-chord-melody-harmonize-the-e-major-sca": {
+      "target": 46,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     },
+     "g-gap-click-keep-the-time-yourself": {
+      "target": 60,
+      "best": 0,
+      "passes": [],
+      "lastDate": null,
+      "lastTempo": null,
+      "failDates": [],
+      "stalled": false,
+      "mastered": false,
+      "history": []
+     }
+    }
+   }
+  }
+ ],
+ "practiceLog": [
+  {
+   "id": "b9m8yd25",
+   "date": "2026-10-07",
+   "start": 1791372846338,
+   "minutes": 21.9,
+   "source": "routine",
+   "courseId": "2nnhmp49",
+   "genre": "metal"
+  },
+  {
+   "id": "l6cv9udg",
+   "date": "2026-10-07",
+   "start": 1791374935332,
+   "minutes": 0.8,
+   "source": "routine",
+   "courseId": "f8utywuj",
+   "genre": "neosoul"
+  },
+  {
+   "id": "jr1whwdp",
+   "date": "2026-10-07",
+   "start": 1791377465573,
+   "minutes": 1.4,
+   "source": "routine",
+   "courseId": "2nnhmp49",
+   "genre": "metal"
+  }
+ ],
+ "exerciseLog": [
+  {
+   "date": "2026-10-07",
+   "at": 1791373036766,
+   "exerciseId": "crossing",
+   "name": "String-crossing pattern",
+   "courseId": "2nnhmp49",
+   "tempo": 90,
+   "goalBpm": 126,
+   "clean": true,
+   "mastered": false,
+   "source": "routine"
+  },
+  {
+   "date": "2026-10-07",
+   "at": 1791373315571,
+   "exerciseId": "notenames",
+   "name": "Note names on the click",
+   "courseId": "2nnhmp49",
+   "tempo": 120,
+   "goalBpm": 84,
+   "clean": true,
+   "mastered": false,
+   "source": "routine"
+  },
+  {
+   "date": "2026-10-07",
+   "at": 1791373526795,
+   "exerciseId": "spider",
+   "name": "Chromatic spider warm-up",
+   "courseId": "2nnhmp49",
+   "tempo": 130,
+   "goalBpm": 126,
+   "clean": true,
+   "mastered": false,
+   "source": "routine"
+  },
+  {
+   "date": "2026-10-07",
+   "at": 1791373573747,
+   "exerciseId": "gcd",
+   "name": "G\u2013C\u2013D changes on the click",
+   "courseId": "2nnhmp49",
+   "tempo": 240,
+   "goalBpm": 105,
+   "clean": true,
+   "mastered": false,
+   "source": "routine"
+  },
+  {
+   "date": "2026-10-07",
+   "at": 1791373720006,
+   "exerciseId": "subdiv",
+   "name": "Subdivision ladder",
+   "courseId": "2nnhmp49",
+   "tempo": 170,
+   "goalBpm": 105,
+   "clean": true,
+   "mastered": false,
+   "source": "routine"
+  },
+  {
+   "date": "2026-10-07",
+   "at": 1791373967461,
+   "exerciseId": "triads",
+   "name": "Build the key's chords in time",
+   "courseId": "2nnhmp49",
+   "tempo": 110,
+   "goalBpm": 95,
+   "clean": true,
+   "mastered": false,
+   "source": "routine"
+  },
+  {
+   "date": "2026-10-07",
+   "at": 1791374159337,
+   "exerciseId": "improv",
+   "name": "Metal solo over the loop",
+   "courseId": "2nnhmp49",
+   "tempo": 90,
+   "goalBpm": 116,
+   "clean": true,
+   "mastered": false,
+   "source": "routine"
+  },
+  {
+   "date": "2026-10-07",
+   "at": 1791374776667,
+   "exerciseId": "sweep-am",
+   "name": "3-string A minor sweep",
+   "tempo": 140,
+   "goalBpm": 110,
+   "mastered": true,
+   "source": "tools"
+  }
+ ],
+ "evaluations": [],
+ "prescriptions": [],
+ "skillEvidence": {},
+ "levelHistory": [],
+ "songs": [],
+ "customExercises": [],
+ "songRecs": null,
+ "dashboard": {
+  "albumHistory": [
+   "al10",
+   "al2",
+   "al53",
+   "al38",
+   "al34",
+   "al36",
+   "al19",
+   "al54",
+   "al18",
+   "al49"
+  ],
+  "current": {
+   "albumId": "al49",
+   "reason": "Because your last session was in \u201cShred Foundations: Brown Sound Workshop\u201d.",
+   "at": 1791429435311
+  }
+ },
+ "settings": {
+  "referenceA4": 440,
+  "tuning": "standard",
+  "tabAudio": true,
+  "tabScroll": true,
+  "wikiImages": true,
+  "model": "claude-sonnet-5-5",
+  "headphones": false,
+  "tabPicks": true,
+  "pickModes": {},
+  "audioInput": {
+   "deviceId": "",
+   "label": "",
+   "channel": 1,
+   "type": "direct"
+  },
+  "audioOutput": {
+   "deviceId": "",
+   "label": ""
+  }
+ }
+}
