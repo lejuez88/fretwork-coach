@@ -146,7 +146,7 @@ export function ejSpreadDiatonic(c, { key = null } = {}) {
   if (Math.max(...notes.map(n => n.f)) > 22) return null;
   const last = spreadVoicing(K, 'maj', 5, base + 12); if (last) last.tones.forEach(([s, f]) => notes.push(N(s, f, t, 2, null, { chord: true })));
   return make(c, {
-    id: 'ej-spread-diatonic', name: `The chords of ${nameOf(K)} major as spread triads`, domain: 'theory', method: 'variable', unit: '8th notes', goal: 104, start: 52, minutes: 5,
+    id: 'ej-spread-diatonic', name: `Spread triads: the chords of ${nameOf(K)} major`, domain: 'theory', method: 'variable', unit: '8th notes', goal: 104, start: 52, minutes: 5,
     why: 'Harmonizing the major scale in spread triads shows which chords live in the key and gives you a ready-made chord melody: the top notes spell out the scale.',
     instr: `I, ii, iii, IV, V and vi of ${nameOf(K)} major, then I an octave up, all on strings 5, 4 and 2. Two beats each: root, 5th, 10th, 5th. Say the chord name as you play it. Major shapes have the top note two frets above the root fret; minor shapes one fret. Pass: up the key and back clean twice.`,
     watch: 'Forgetting which chords are minor (ii, iii, vi).', simplify: 'I, IV and V only.', voicings: voicings.slice(0, 8), chords, tab: { notes }
@@ -165,7 +165,7 @@ export function buildSpread(c) {
     t += 8;
   }
   return make(c, {
-    id: 'spread-build', name: `Build the spread triad one note at a time: ${nameOf(K)} on three string sets`, domain: 'fretboard', method: 'chunking',
+    id: 'spread-build', name: `Spread triads, one note at a time: ${nameOf(K)} on three string sets`, domain: 'fretboard', method: 'chunking',
     unit: 'quarter notes', goal: 80, start: 50, minutes: 4, picking: 'hybrid', voicings: vs, chords: [nameOf(K)],
     why: 'Three notes on non-adjacent strings, with a string skipped and muted: too much at once for the hands. Bass, then bass and 5th, then the 10th on top, builds the grip and the muting in order.',
     instr: 'On each set: the root alone, the 5th alone, both together; then the 10th alone and all three together. Mute the skipped string with the underside of the finger fretting the 5th. Pass: all three sets with every note clear and the skipped string silent.', watch: 'The skipped string ringing.', simplify: 'The string-5 set only.', tab: { notes }
@@ -282,7 +282,7 @@ export default entry({
     stage('advanced', 'Patterns, minor keys and colour',
       'Arpeggiate voice-led spread triads in 16ths and in wide patterns at 96 BPM, harmonize the minor key and play a minor progression, find any diatonic chord of the minor key from its numeral, shape soft arpeggios against strong pinches, and play a minor-key chord melody.', [
         S('spread-arps', 'Arpeggio patterns', 'picking', 'Hybrid-picked patterns through the changes.', [
-          T_('spread-arp-16', 'Up and down in 16ths: {chords}', 'variable', { prog: 'ballad', inv: 'near', sets: [6, 5, 4], pattern: 'updown', step: 0.25, goal: 96, why: 'Up and back through the three tones in 16ths makes a flowing harp-like texture; with the nearest voicings it never jumps.', instr: SP + 'pattern bass–middle–top–middle–top–middle–bass–middle, two per bar, hybrid picked. Pass: all eight bars clean at the goal tempo.', watch: 'The skipped strings sounding at speed.', simplify: '8th notes.' }),
+          T_('spread-arp-16', 'Spread triads up and down in 16ths: {chords}', 'variable', { prog: 'ballad', inv: 'near', sets: [6, 5, 4], pattern: 'updown', step: 0.25, goal: 96, why: 'Up and back through the three tones in 16ths makes a flowing harp-like texture; with the nearest voicings it never jumps.', instr: SP + 'pattern bass–middle–top–middle–top–middle–bass–middle, two per bar, hybrid picked. Pass: all eight bars clean at the goal tempo.', watch: 'The skipped strings sounding at speed.', simplify: '8th notes.' }),
           T_('spread-arp-wide', 'Wide pattern as triplets: {chords}', 'variable', { prog: 'axis', inv: 'near', sets: [6, 5, 4], pattern: 'wide', step: 1 / 3, goal: 96, why: 'Bass, top, middle, top in triplets: the four-note pattern against a three-note pulse rolls across the beat.', instr: SP + 'the wide pattern as triplets. Pass: four bars clean at the goal tempo.', watch: 'Accenting the bass every time it comes round: accent the beat.', simplify: '8th notes.' })]),
         S('spread-minor', 'The minor key', 'theory', 'Harmonized minor; a minor progression.', [
           T_('spread-dia-minor', 'The chords of {key} as spread triads', 'variable', { dia: 'minor', inv: 'near', sets: [6, 5, 4], pattern: 'rolled', beats: 2, step: 0.5, goal: 96, why: 'The natural minor key’s chords (i, ii°, ♭III, iv, v, ♭VI, ♭VII) in spread voicings: the darker clean palette.', instr: SP + 'each chord of the minor key, two beats, the nearest voicing. Say the numeral. Pass: up the key clean twice.', watch: 'The ii° chord.', simplify: 'i, iv and v.' }),
@@ -294,7 +294,7 @@ export default entry({
     stage('mastery', 'Fluent and your own',
       'Play voice-led 16th-note arpeggios through eight chords at about 110 BPM and the major key in 16ths across the neck, any chord on demand, and perform your own 8-bar spread-triad piece.', [
         S('spread-performance', 'Performance tempo', 'picking', 'At speed.', [
-          as(T_('spread-x', '', 'edge', { prog: 'ballad', inv: 'near', sets: [6, 5, 4], pattern: 'updown', step: 0.25, goal: 104, why: 'The flowing 16th-note texture through eight chords at tempo.', instr: SP + 'tempo ladder: add a few BPM after each clean pass. Pass: all eight bars at the goal tempo.', watch: 'Forearm tension.', simplify: '8th notes.' }), { id: 'spread-arp-fast', method: 'edge', name: x => `Spread-triad arpeggios at performance tempo (${x.chords.slice(0, 4).join(' – ')} …)` }),
+          as(T_('spread-x', '', 'edge', { prog: 'ballad', inv: 'near', sets: [6, 5, 4], pattern: 'updown', step: 0.25, goal: 104, why: 'The flowing 16th-note texture through eight chords at tempo.', instr: SP + 'tempo ladder: add a few BPM after each clean pass. Pass: all eight bars at the goal tempo.', watch: 'Forearm tension.', simplify: '8th notes.' }), { id: 'spread-arp-fast', method: 'edge', name: x => `Spread triads: arpeggios at performance tempo (${x.chords.slice(0, 4).join(' – ')} …)` }),
           T_('spread-dia-fast', 'The chords of {key} rolled in 16ths, nearest voicings', 'edge', { dia: 'major', inv: 'near', sets: [6, 5, 4], pattern: 'rolled', beats: 2, step: 0.25, goal: 100, why: 'The whole harmonized key at tempo with the nearest voicings: chord knowledge as reflex.', instr: SP + 'tempo ladder to the goal. Pass: clean at the goal tempo.', watch: 'The vii° chord.', simplify: '8th notes.' })]),
         S('spread-random-access', 'Any chord, any time', 'theory', 'No warning.', [c => spreadRandom(c), c => targetGuide(c, { prog: 'axis', scale: 'majorPent', name: 'Clean solo over I–V–vi–IV: phrases that start from spread-triad tones' })]),
         S('spread-voice', 'Your own voice', 'improv', 'A study, then your version.', [c => spreadEtude(c), c => targetGuide(c, { prog: 'capo', scale: 'major', name: 'Ballad changes: your own chord melody, then a solo' })])

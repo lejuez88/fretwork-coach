@@ -47,9 +47,9 @@ export default artist({ id: 'eric-johnson', name: 'Eric Johnson', wiki: ['Eric J
       PU(pentatonic, { title: 'The pentatonic boxes', summary: 'All five boxes, sequences and keys: the ground his speed pentatonics run on.', tiers: ['intermediate', 'advanced', 'mastery'] }),
       PU(speedPent, { title: 'Speed pentatonics', summary: 'The six-note cell that drives his fast runs, from one box to the whole neck.' }),
       PU(rolling5s, { title: 'Rolling 5s', summary: 'Groups of five against a 16th-note pulse: the cascading, rolling sound.' }),
+      PU(spreadTriads, { title: 'Spread triads', summary: 'The wide, open chord sound of his clean playing.' }),
       PU(hexatonic, { title: 'Pentatonic plus the 9th', summary: 'The brighter scale of his runs, and the pentatonic of the 5th inside it.' }),
       PU(positionShifts, { title: 'Across the neck', summary: 'Shifting positions inside a line, so runs travel the whole neck.' }),
-      PU(spreadTriads, { title: 'Spread triads', summary: 'The wide, open chord sound of his clean playing.' }),
       U('Putting it together', 'Runs, colours and space in a study of his kind.', [
         S('ej-study', 'A study in his style', 'improv', 'Every technique of the course in eight bars.', [c => ejStudy(c)]),
         S('ej-solo', 'Your own solo', 'improv', 'Cascading runs between phrases with space.', [c => targetGuide(c, { prog: 'minorRock', scale: 'minorPent', name: 'Your own solo: cascades and fives between singing held notes' }), M('transfer', ['callResponse', { chords: '$minorRock', scale: 'minorPent' }])])])

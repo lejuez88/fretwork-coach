@@ -71,7 +71,7 @@ export function fiveCount(c) {
   const r = list.slice().reverse(), notes = [];
   for (let bar = 0; bar < 4; bar++) r.slice(bar, bar + 5).forEach(([s, f], i) => notes.push(N(s, f, bar * 4 + i * 0.5, i === 4 ? 1.5 : 0.5)));
   return make(c, {
-    id: 'r5-count', name: `Count to five: one group per bar, each a note lower (${nameOf(k)} minor pentatonic)`, domain: 'picking', method: 'chunking',
+    id: 'r5-count', name: `Rolling 5s, step one: count to five, one group per bar (${nameOf(k)} minor pentatonic)`, domain: 'picking', method: 'chunking',
     unit: '8th notes', goal: 88, start: 50, minutes: 4,
     why: 'Before a group of five can roll against the beat, it has to be a unit in your head and hands. One group per bar with a rest after it lets you count it out loud: 1-2-3-4-5.',
     instr: 'Each bar: five notes down box 1 in 8ths, counting “1 2 3 4 5” aloud, then hold the fifth. The next bar starts one note lower. Pass: all four bars counted and played clean, twice.',
