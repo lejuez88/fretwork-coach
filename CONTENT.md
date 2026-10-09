@@ -36,7 +36,27 @@ Every knowledge-base entry is a path through four stages (`TIERS` in `js/data/li
 
 ### The depth standard
 
-A stage is **full** when it has **3 or more skills and 6 or more lessons**. A path is **complete** when all four stages are full. The validator prints a coverage table and the app marks complete paths.
+A stage is **full** when it has **3 or more skills and 6 or more lessons**. A path is **complete** when all four stages are full. That is the floor: it makes a path usable from scratch to mastery, and the app marks it "Full path".
+
+### The reference standard (build every path to this)
+
+Every path should be as thorough as `js/data/kb/pentatonic.js`, the reference. "Complete" is not the goal; this is:
+
+| Stage | Skills | Lessons | Learning methods (distinct) |
+|---|---|---|---|
+| Foundations | 4+ | 8+ | 4+ |
+| Intermediate | 4+ | 10+ | 4+, including retrieval, interleaving or variable practice |
+| Advanced | 4+ | 8+ | 4+, including retrieval, interleaving or variable practice |
+| Mastery | 3+ | 6+ | 3+, including retrieval, interleaving or variable practice |
+
+Also, for every path:
+- **Use it in music in every stage:** at least one `transfer` lesson per stage (over a groove or progression, call and response, a study), ending in the capstone study in Mastery.
+- **Research on record:** `sources: ['https://…', …]` on the entry, 3+ URLs (reputable lessons, method books' publishers, teachers' articles, analyses) that the model and sequence come from. The log lists them too.
+- **Concept-first:** a concept model and a composer, every lesson tagged with its method, every generator checked in all 12 keys (see "Concept-first lessons").
+
+The validator checks all of this. Its coverage table marks paths that meet the standard (★), warns about complete paths that fall short (with what's missing), and its Artist readiness table counts only paths that meet the standard. **A new artist can't ship until every path it draws from meets the reference standard.**
+
+Paths that are complete but below the standard (everything built before 2026-10-09, including Paul Gilbert's five) get deepened to it, with priority for the paths artists use. When deepening, add skills that are distinct ideas (new patterns, string sets, rhythms, contexts or combinations), never the same exercise at another tempo.
 
 - **Variety, not repetition.** Each skill is a distinct idea: a pattern, a string set, a rhythm, a key or position, a musical context, a combination. The app already rebuilds every lesson at each level inside the stage, adjusting tempo goals and lengths, so never add the same exercise at another tempo and call it a new lesson.
 - **Pass criteria.** Each stage's `goal` says concretely what the player can do when the stage is done, for example "Travis pattern over G–Em–C–D at 90 BPM for 8 bars without the thumb hesitating". This is the stage's pass criterion.
@@ -84,10 +104,10 @@ An artist course is only as good as the technique courses under it, so an artist
 
 1. **Research the artist.** Interviews, the artist's own lessons and instructional material, transcription-based analyses from reputable publications, and teachers who specialize in the style. Identify their **signature techniques** (usually 3–6) and their **style**: the scales, harmony, rhythm feel, tone and phrasing habits that make them recognizable. Record what you found and the URLs in the log, and the URLs in the artist's `sources`.
 2. **Research each technique until it can be generated.** For each signature technique, follow "Concept-first lessons" below: understand the technique well enough to write its concept model and composer, and pick each lesson's learning method from the evidence table. If the technique already has a path, review it against your research and improve it rather than starting over.
-3. **Build a complete course for each technique.** Each technique becomes (or already is) its own knowledge-base path with **all four stages full** (the depth standard: foundations to mastery), every lesson tagged with a method, and every generator pitch-checked in all 12 keys. These paths are useful on their own: a player can learn the technique without the artist.
+3. **Build a complete course for each technique.** Each technique becomes (or already is) its own knowledge-base path built to **the reference standard** (all four stages at the pentatonic path's depth, varied learning methods, music in every stage, sources on record), with every generator pitch-checked in all 12 keys. These paths are useful on their own: a player can learn the technique without the artist.
 4. **Only then add the artist.** When every signature technique has a complete path, write the artist file. Its units draw from those paths with `PU` (choose the `tiers` that fit the style), in the order a player should learn them. The only lessons the artist file writes itself are in the closing **"put it together"** unit: original studies in the artist's style that combine the techniques, and improvising over their kind of progression.
 
-The validator enforces this: for any new artist it is an **error** if a signature technique has no path (link it with `{name, path}` when the name alone doesn't find it), if a path it uses isn't complete, if a signature technique isn't taught by a `PU` unit, if a unit other than the last has its own lessons, or if `sources` has fewer than 3 URLs. It also prints an **Artist readiness** table: which paths each artist still needs.
+The validator enforces this: for any new artist it is an **error** if a signature technique has no path (link it with `{name, path}` when the name alone doesn't find it), if a path it uses doesn't meet the reference standard, if a signature technique isn't taught by a `PU` unit, if a unit other than the last has its own lessons, or if `sources` has fewer than 3 URLs. It also prints an **Artist readiness** table: which paths each artist still needs.
 
 While an artist's techniques are being built (step 2–3 can take several runs), keep the artist `planned` in `content/ROSTER.md` with a note of which paths are done, so the next run picks up where you left off.
 
@@ -228,7 +248,7 @@ The queue has three sections. Every run keeps them up to date.
    - **Technique, subject or style:** create its knowledge-base entry with at least the foundations and intermediate stages full, and the rest started.
    - **Guitarist:** add them to `content/ROSTER.md` as high priority and start "Building an artist: technique-first": research the artist, then build their technique paths. Add the artist page only when every one of their techniques has a complete path; until then, record progress on the roster.
    - **Artist rebuild** (a request to build an artist's course on researched paths): build or complete each of the artist's technique paths concept-first, then rewrite the artist file so its units draw from those paths with `PU`. Then check every other artist for the same techniques and switch them to `PU` as well.
-3. **Depth.** Bring incomplete paths up to the depth standard. Each run must leave **at least two more paths complete** than before. Priority order:
+3. **Depth.** Bring paths up to the reference standard. Each run must leave **at least two more paths meeting the standard** (★ in the coverage table) than before. Priority order:
    - paths players requested;
    - paths that artists need (see the validator's **Artist readiness** table): first the paths of the artist being built, then the paths the older artists are missing;
    - fundamentals every guitarist needs: alternate picking, legato, bending, vibrato, chord changes, barre chords, strumming, palm muting, fretboard knowledge, timing.

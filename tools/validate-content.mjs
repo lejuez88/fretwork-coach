@@ -7,7 +7,7 @@ import { readdirSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 import { TIERS, TIER_BY_ID } from '../js/data/lib.js';
-import { indexIsCurrent, isFull, FULL_STAGE } from './build-index.mjs';
+import { indexIsCurrent, isFull, FULL_STAGE, STANDARD, meetsDepth, hasSources } from './build-index.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = join(root, 'js', 'data');
@@ -94,17 +94,26 @@ for (const f of kbFiles) {
       });
     }
   }
+  const gaps = [];   // what keeps this path below the reference standard
   try {
     let untagged = 0, total = 0;
+    for (const t of TIERS) { const st = e.stages.find(x => x.tier === t.id); if (!st) gaps.push(`no ${t.name} stage`); else if (!meetsDepth(st)) gaps.push(`${t.name} ${st.skills.length}/${st.skills.reduce((a, x) => a + x.ex.length, 0)} (needs ${STANDARD[t.id].skills}/${STANDARD[t.id].lessons})`); }
+    if (!hasSources(e)) gaps.push('fewer than 3 research URLs in "sources"');
     for (const st of e.stages) {
       const list = await stageLessonList(p, e.id, { tier: st.tier, lvl: st.levels[0] });
       if (!list.length) err(`${w} › ${st.tier}`, 'the app builds no lessons for this stage');
       total += list.length; untagged += list.filter(l => !l.ex.method).length;
+      const ms = new Set(list.map(l => l.ex.method).filter(Boolean)), need = st.tier === 'mastery' ? 3 : 4;
+      if (ms.size < need) gaps.push(`${TIER_BY_ID[st.tier].name} uses ${ms.size} learning method${ms.size === 1 ? '' : 's'} (needs ${need}+)`);
+      if (!ms.has('transfer')) gaps.push(`${TIER_BY_ID[st.tier].name} has no "use it in music" (transfer) lesson`);
+      if (st.tier !== 'foundations' && !ms.has('retrieval') && !ms.has('interleaving') && !ms.has('variable')) gaps.push(`${TIER_BY_ID[st.tier].name} has no retrieval, interleaving or variable-practice lesson`);
       list.filter(l => l.ex.method && !METHOD_IDS.includes(l.ex.method)).forEach(l => err(`${w} › ${st.tier}`, `"${l.ex.name}": unknown method "${l.ex.method}" (use ${METHOD_IDS.join(', ')})`));
     }
     if (untagged) warn(w, `${untagged} of ${total} lessons have no learning-method tag (see CONTENT.md, "Concept-first lessons")`);
   } catch (x) { err(w, 'the app failed to build its lessons: ' + x.message); }
-  coverage.push({ id: e.id, title: e.title, kind: e.kind || 'technique', cells: TIERS.map(t => { const st = e.stages.find(s => s.tier === t.id); return st ? { skills: st.skills.length, lessons: st.skills.reduce((a, s) => a + s.ex.length, 0), full: isFull(st) } : null; }) });
+  const standard = gaps.length === 0;
+  if (!standard && KB_INDEX.find(m => m.id === e.id && m.complete)) warn(w, `complete, but below the reference standard (the pentatonic path): ${gaps.join('; ')}`);
+  coverage.push({ id: e.id, title: e.title, kind: e.kind || 'technique', standard, gaps, cells: TIERS.map(t => { const st = e.stages.find(s => s.tier === t.id); return st ? { skills: st.skills.length, lessons: st.skills.reduce((a, s) => a + s.ex.length, 0), full: isFull(st) } : null; }) });
 }
 // every entry is findable by its own words, and names don't steal each other's requests
 for (const m of KB_INDEX) { const found = matchTechniques(m.title).map(x => x.id); if (!found.includes(m.id)) warn(`kb/${m.id}.js`, `"${m.title}" matches ${found.join(', ') || 'nothing'} instead`); }
@@ -179,24 +188,25 @@ for (const f of artistFiles) {
     else if (!pathUnits.some(u => u.path === t.id)) report(w, `signature technique "${t.name}" (${t.id}) isn't taught by a PU(${t.id}) unit`);
   }
   // every path the artist draws from is complete
-  for (const u of pathUnits) if (KB_META[u.path] && !KB_META[u.path].complete) report(w, `unit "${u.title}" draws from ${u.path}, which isn't a complete path yet (all four stages full): finish the path before the artist`);
+  const STD = Object.fromEntries(coverage.map(r => [r.id, r]));
+  for (const u of pathUnits) if (KB_META[u.path] && !(STD[u.path] && STD[u.path].standard)) report(w, `unit "${u.title}" draws from ${u.path}, which doesn't meet the reference standard yet (${STD[u.path] ? STD[u.path].gaps.slice(0, 3).join('; ') : 'not built'}): finish the path before the artist`);
   // lessons outside paths only in the closing unit
   units.slice(0, -1).filter(u => !u.path).forEach(u => report(w, `unit "${u.title}" has its own lessons: a signature technique belongs in a complete path (draw it with PU); only the closing "put it together" unit holds the artist's own studies`));
   if (!Array.isArray(a.sources) || a.sources.filter(x => /^https?:\/\//.test(x)).length < 3) report(w, 'list the research behind the artist in "sources" (3+ URLs: interviews, lessons, analyses)');
   const ids = [...new Set(techs.map(t => t.id).filter(Boolean).concat(pathUnits.map(u => u.path)))];
-  readiness.push({ id: a.id, legacy, done: ids.filter(id => KB_META[id] && KB_META[id].complete), todo: ids.filter(id => !KB_META[id] || !KB_META[id].complete), missing: techs.filter(t => !t.id).map(t => t.name) });
+  readiness.push({ id: a.id, legacy, done: ids.filter(id => STD[id] && STD[id].standard), todo: ids.filter(id => !(STD[id] && STD[id].standard)), missing: techs.filter(t => !t.id).map(t => t.name), sources: hasSources(a) });
 }
 
 /* ------------------------------- Report ------------------------------- */
 const cell = c => (c ? `${c.full ? '✓' : '·'}${c.skills}/${c.lessons}` : '—').padEnd(9);
 console.log(`\nLearning-path coverage (skills/lessons per stage; ✓ = full: ${FULL_STAGE.skills}+ skills and ${FULL_STAGE.lessons}+ lessons):`);
-console.log(`${'entry'.padEnd(26)}${TIERS.map(t => t.name.slice(0, 8).padEnd(9)).join('')}`);
+console.log(`${'entry'.padEnd(26)}${TIERS.map(t => t.name.slice(0, 8).padEnd(9)).join('')}Reference standard`);
 coverage.sort((a, b) => b.cells.filter(c => c && c.full).length - a.cells.filter(c => c && c.full).length || a.id.localeCompare(b.id))
-  .forEach(r => console.log(`${(r.id + (r.kind !== 'technique' ? ` (${r.kind})` : '')).padEnd(26)}${r.cells.map(cell).join('')}`));
+  .forEach(r => console.log(`${(r.id + (r.kind !== 'technique' ? ` (${r.kind})` : '')).padEnd(26)}${r.cells.map(cell).join('')}${r.standard ? '★ meets it' : r.cells.every(c => c && c.full) ? '· not yet' : ''}`));
 const complete = coverage.filter(r => r.cells.every(c => c && c.full)).length;
-console.log(`${complete} of ${coverage.length} paths complete; ${coverage.length - complete} need more stages or lessons. ${artistFiles.length} artists.\n`);
+console.log(`${complete} of ${coverage.length} paths complete; ${coverage.filter(r => r.standard).length} meet the reference standard; ${coverage.length - complete} need more stages or lessons. ${artistFiles.length} artists.\n`);
 console.log('Artist readiness (technique-first: every signature technique a complete path):');
-readiness.forEach(r => console.log(`${(r.id + (r.legacy ? ' (built before the rule)' : '')).padEnd(38)}${r.todo.length || r.missing.length ? `paths to finish: ${r.todo.join(', ') || '—'}${r.missing.length ? `; techniques with no path yet: ${r.missing.join(', ')}` : ''}` : 'ready'}`));
+readiness.forEach(r => console.log(`${(r.id + (r.legacy ? ' (built before the rule)' : '')).padEnd(38)}${r.todo.length || r.missing.length || !r.sources ? `paths to bring to the standard: ${r.todo.join(', ') || '—'}${r.missing.length ? `; techniques with no path yet: ${r.missing.join(', ')}` : ''}${r.sources ? '' : '; artist sources missing'}` : 'ready'}`));
 console.log('');
 console.log(`Checked ${kbFiles.length} knowledge-base entries and ${artistFiles.length} artists.`);
 warnings.forEach(x => console.log('WARN  ' + x));

@@ -16,6 +16,13 @@ const lessonsIn = skills => skills.reduce((a, s) => a + (s.ex || []).length, 0);
 /** The depth standard (CONTENT.md): a stage is full with 3+ skills and 6+ lessons; a path is complete when all four stages are full. */
 export const FULL_STAGE = { skills: 3, lessons: 6 };
 export const isFull = st => st.skills.length >= FULL_STAGE.skills && lessonsIn(st.skills) >= FULL_STAGE.lessons;
+/**
+ * The reference standard (CONTENT.md, "The reference standard"): the depth of the pentatonic path,
+ * per stage, plus 3+ research sources on the entry. Methods and musical use are checked by the validator.
+ */
+export const STANDARD = { foundations: { skills: 4, lessons: 8 }, intermediate: { skills: 4, lessons: 10 }, advanced: { skills: 4, lessons: 8 }, mastery: { skills: 3, lessons: 6 } };
+export const meetsDepth = st => { const t = STANDARD[st.tier]; return !!t && st.skills.length >= t.skills && lessonsIn(st.skills) >= t.lessons; };
+export const hasSources = e => Array.isArray(e.sources) && e.sources.filter(x => /^https?:\/\//.test(x)).length >= 3;
 const reSrc = re => (re instanceof RegExp ? re.toString() : '/(?!)/');
 
 export async function buildIndex() {
@@ -37,7 +44,8 @@ export async function buildIndex() {
   const kbLines = kb.map(({ e }) => {
     const stages = TIERS.map(t => { const st = e.stages.find(s => s.tier === t.id); return st ? { tier: t.id, title: st.title, goal: st.goal, levels: st.levels, skills: st.skills.length, lessons: lessonsIn(st.skills), full: isFull(st) } : null; }).filter(Boolean);
     const complete = TIERS.every(t => { const st = stages.find(s => s.tier === t.id); return st && st.full; });
-    const meta = { id: e.id, kind: e.kind || 'technique', title: e.title, domain: e.domain, level: e.level, summary: e.summary, aliases: e.aliases || [], prereqs: e.prereqs || [], stages, lessons: stages.reduce((a, s) => a + s.lessons, 0), complete };
+    const deep = complete && TIERS.every(t => { const st = e.stages.find(s => s.tier === t.id); return st && meetsDepth(st); }) && hasSources(e);
+    const meta = { id: e.id, kind: e.kind || 'technique', title: e.title, domain: e.domain, level: e.level, summary: e.summary, aliases: e.aliases || [], prereqs: e.prereqs || [], stages, lessons: stages.reduce((a, s) => a + s.lessons, 0), complete, deep };
     return `  { ...${JSON.stringify(meta)}, re: ${reSrc(e.re)} }`;
   });
   const artistLines = artists.map(({ a }) => {
