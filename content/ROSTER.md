@@ -10,5 +10,5 @@ The artists the Artist Series covers or plans to cover. Content runs pick the ne
 | Stevie Ray Vaughan | needs-work | — | Texas shuffle, wide bends and vibrato, double-stops, raking | 2026-10-08 | Rakes lesson has no tab yet (needs a dead-note mark in the app, see REQUESTS) |
 | Jimi Hendrix | built | — | Chord embellishments, 7♯9 chord, octaves, bends | 2026-10-08 | |
 | David Gilmour | built | — | Bends and pre-bends, vibrato, pentatonic phrasing, space | 2026-10-08 | Pre-bends lesson tabbed 2026-10-08 (shown as bend + release until the app has a pre-bend mark) |
-| Guthrie Govan | planned | high | | | One of Chris's favorite players |
+| Guthrie Govan | built | high | Hybrid picking, economy picking, chromatic passing tones, outside side-stepping, slides, arpeggio melodies | 2026-10-09 | One of Chris's favorite players. Units draw from the hybridPicking, economyPicking, chromaticPassing and slides paths (PU); own lessons: arpeggio melodies, a fusion study. Next: legato and tapping units once those paths exist |
 | Greg Howe | planned | high | | | One of Chris's favorite players |
