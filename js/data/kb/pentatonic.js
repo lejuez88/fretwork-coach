@@ -374,6 +374,7 @@ export default entry({
   aliases: ['pentatonic scale', 'minor pentatonic', 'pentatonic boxes'],
   summary: 'The five-note scale behind rock, blues and most lead guitar, built from scratch: the box, every position, sequences, keys, bends and phrasing, then real soloing.',
   prereqs: [],
+  sources: ['https://www.pickupmusic.com/blog/how-to-play-minor-pentatonic-scales', 'https://jgmusiclessons.com/how-to-play-minor-pentatonic-scales-on-guitar/', 'https://hubguitar.com/fretboard/pentatonic-scale-sequences', 'https://study-guitar.com/blog/the-minor-pentatonic-scale-on-guitar'],
   ctx: { key: 9, minor: true, prog: 'minorRock' },
   stages: [
     stage('foundations', 'Box 1, by ear and from memory',

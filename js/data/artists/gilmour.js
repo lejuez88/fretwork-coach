@@ -1,6 +1,7 @@
 // Artist Series: David Gilmour. Original lessons in this style, built from the knowledge base; famous songs are linked, never transcribed.
-import { OPEN, N, nameOf, minorKey, goalFor, slug, beatsOf, make, fromSeq, pentBox, byString, pent3nps, legatoMarks, chordInfo, OPEN_SHAPES, onString, bassPair, openVoicings, keyChords, topTriad, nextToneUp, spreadVoicing, spreadBar, spreadName, W, S, U, stage, entry, artist, skillsOf, TIERS, TIER_BY_ID, tierOf, mod12, scaleNps, chordTones, parseChord, ROOT_BY_PC, rootFret6, fretOn, scaleBox, SCALE_BY_ID, PU } from '../lib.js';
+import { OPEN, N, nameOf, minorKey, goalFor, slug, beatsOf, make, fromSeq, pentBox, byString, pent3nps, legatoMarks, chordInfo, OPEN_SHAPES, onString, bassPair, openVoicings, keyChords, topTriad, nextToneUp, spreadVoicing, spreadBar, spreadName, W, S, U, stage, entry, artist, skillsOf, TIERS, TIER_BY_ID, tierOf, mod12, scaleNps, chordTones, parseChord, ROOT_BY_PC, rootFret6, fretOn, scaleBox, SCALE_BY_ID, PU, M } from '../lib.js';
 import pentatonic from '../kb/pentatonic.js';
+import bending from '../kb/bending.js';
 
 
 const ARTIST_NOTE = 'Use the Songs tab to learn the real thing: add the song, paste or import a tab, and the app turns it into section lessons.';
@@ -30,10 +31,10 @@ export default artist({ id: 'gilmour', name: 'David Gilmour', wiki: ['David Gilm
     ctx: { key: 11, minor: true, prog: 'minorRock' },
     units: [
       PU(pentatonic, { title: 'The pentatonic box', summary: 'The box he phrases in, learned slowly, by ear and from memory, then joined to its neighbours.', tiers: ['foundations', 'intermediate'] }),
-      U('Bends in tune', 'Every bend lands on pitch.', [S('dg-bend', 'Bends to pitch', 'fretting', 'Check each bend against the fretted target.', [['bendLick'], c => dgPrebends(c)])]),
+      PU(bending, { title: 'Bends in tune', summary: 'Every bend lands on pitch: reference bends, releases, pre-bends that sigh down, unison and wide bends, in any box.', tiers: ['foundations', 'intermediate', 'advanced'] }),
       U('Vibrato', 'Slow, wide vibrato.', [S('dg-vib', 'Vibrato', 'fretting', 'Even, slow vibrato on held notes.', [['vibratoHolds']])]),
       U('Color', 'The Dorian 6th.', [S('dg-dorian', 'Minor pentatonic vs Dorian', 'theory', 'Adding the 2nd and 6th.', [['modeCompare', { modes: ['minor', 'dorian'] }]])]),
-      U('Putting it together', 'Fewer notes, more meaning.', [S('dg-solo', 'Slow phrasing', 'improv', 'Space between phrases.', [['callResponse', { chords: '$minorRock' }], ['targetSolo', { chords: '$slowBlues' }]])])
+      U('Putting it together', 'Fewer notes, more meaning.', [S('dg-bend', 'Pre-bends in his style', 'fretting', 'Silent bends that fall into place, in box 1.', [M('transfer', c => dgPrebends(c))]), S('dg-solo', 'Slow phrasing', 'improv', 'Space between phrases.', [['callResponse', { chords: '$minorRock' }], ['targetSolo', { chords: '$slowBlues' }]])])
     ],
     riffs: [{ title: 'Comfortably Numb', artist: 'Pink Floyd', note: 'Bends and slow phrasing.' }, { title: 'Shine On You Crazy Diamond', artist: 'Pink Floyd', note: 'Slow, singing lead.' },
       { title: 'Time', artist: 'Pink Floyd', note: 'Bends and pentatonic phrasing.' }, { title: 'Money', artist: 'Pink Floyd', note: 'Riff in 7/4 and solo.' },

@@ -39,6 +39,7 @@ export function pgStudy(c) {
 export default artist({ id: 'paul-gilbert', name: 'Paul Gilbert', wiki: ['Paul Gilbert'], genre: 'rock', re: /paul gilbert|\bgilbert\b|racer x/,
     blurb: 'Machine-gun alternate picking, the six-note pentatonic lick, pentatonic sequences, wide stretches and string-skipped arpeggios.',
     techniques: ['Strict alternate picking', 'Six-note pentatonic lick', 'Pentatonic in sixes', 'Stretched pentatonic', 'String-skipped arpeggios'],
+    sources: ['https://www.guitarworld.com/lessons/intense-rock-picking-a-brief-look-at-paul-gilberts-alternate-picking-technique', 'https://www.guitarplayer.com/lessons/paul-gilbert-gives-a-classic-lesson-in-shred', 'https://www.premierguitar.com/articles/23477-cram-session-alternate-picking', 'https://forum.troygrady.com/t/haha-paul-gilbert-admits-that-the-paul-gilbert-lick-is-too-hard-for-beginners/8197', 'https://www.guitarplayer.com/lessons/string-skipping-licks-four-phrases-to-get-your-fingers-flying'],
     ctx: { key: 9, minor: true, prog: 'minorRock' },
     units: [
       PU(alternatePicking, { title: 'Alternate picking', summary: 'The foundation of everything he plays: small, even down-up strokes, inside and outside string changes, three-notes-per-string runs, bursts and accents.' }),
