@@ -105,6 +105,15 @@ export const Audio = {
     src.start(t); src.stop(end + 0.02);
     return src;
   },
+  /** Move a playing note's pitch: points = [[time (audio-clock seconds), cents]], ramped in order. */
+  glide(src, points) {
+    if (!src || !src.detune || !src.detune.setValueAtTime || !points.length) return;
+    const base = src.detune.value || 0, p = src.detune;
+    try {
+      p.setValueAtTime(base + points[0][1], points[0][0]);
+      for (let i = 1; i < points.length; i++) p.linearRampToValueAtTime(base + points[i][1], points[i][0]);
+    } catch { /* ignore */ }
+  },
   strum(midis, t, { dur = 2, gain = 0.6, spread = 0.018 } = {}) {
     const per = gain / Math.sqrt(midis.length) * 1.4;
     midis.forEach((m, i) => this.guitar(m, t + i * spread, { dur, gain: per }));

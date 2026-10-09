@@ -27,6 +27,8 @@ export const GENRE_BACKING = {
 /* ------------------------------ Normalizing ----------------------------- */
 const TECHS = ['h', 'p', '/', '\\', 'b', 'pb', 'r', '~', 'pm', 't', 'mute', 'ghost', 'nh', 'ah'];
 const PICKING = ['alternate', 'strict', 'economy', 'down', 'fingers', 'hybrid'];
+/** Whammy-bar moves a note can carry ({bar, barDepth in semitones}); see CONTENT.md, tab note rules. */
+export const BAR_MOVES = ['dip', 'scoop', 'dive', 'vib', 'flutter'];
 const validTuning = t => (Array.isArray(t) && t.length === 6 && t.every(m => Number.isInteger(m) && m >= 28 && m <= 76) ? t.slice() : null);
 function normTab(tab) {
   if (!tab || !Array.isArray(tab.notes)) return null;
@@ -34,7 +36,9 @@ function normTab(tab) {
   // Already-timed notes (imported tab sections, library exercises): keep their rhythm
   if (tab.notes.length && tab.notes.every(n => n && !Array.isArray(n) && typeof n === 'object')) {
     const notes = tab.notes.slice(0, 400).filter(n => n.s >= 1 && n.s <= 6 && n.f >= 0 && n.f <= 24 && n.t >= 0 && n.d > 0)
-      .map(n => ({ t: +n.t, d: +n.d, s: +n.s, f: +n.f, ...(n.x ? { x: n.x } : {}), ...(n.chord ? { chord: true } : {}), ...(n.bendTo != null ? { bendTo: n.bendTo } : {}) }));
+      .map(n => ({ t: +n.t, d: +n.d, s: +n.s, f: +n.f, ...(n.x ? { x: n.x } : {}), ...(n.chord ? { chord: true } : {}), ...(n.bendTo != null ? { bendTo: n.bendTo } : {}),
+        ...(BAR_MOVES.includes(n.bar) ? { bar: n.bar, ...(n.barDepth > 0 && n.barDepth <= 24 ? { barDepth: +n.barDepth } : {}) } : {}),
+        ...(n.pick === 'd' || n.pick === 'u' ? { pick: n.pick } : {}), ...(['p', 'i', 'm', 'a', 'c'].includes(n.fing) ? { fing: n.fing } : {}) }));
     if (notes.length < 1) return null;
     return { notes, swing: !!tab.swing, ...(tab.beats ? { beats: +tab.beats } : {}), ...(tuning ? { tuning } : {}) };
   }

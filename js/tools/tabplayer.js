@@ -38,6 +38,32 @@ export function techLabel(n) {
   if (n.x === 'nh') return 'NH';
   return n.x;
 }
+/** Whammy-bar mark above a note: dip −1, scoop, dive −12, w/bar ~ (vibrato), flutter. */
+const FRAC = { 0.25: '¼', 0.5: '½', 0.75: '¾' };
+const fmtSemi = d => { const w = Math.floor(d), r = Math.round((d - w) * 4) / 4; return (w || !FRAC[r] ? String(w || '') : '') + (FRAC[r] || (r ? String(r) : '')) || '0'; };
+export const BAR_DEFAULT = { dip: 1, scoop: 1, dive: 12, vib: 0.5, flutter: 0.5 };
+export function barLabel(n) {
+  if (!n.bar) return '';
+  const d = n.barDepth || BAR_DEFAULT[n.bar] || 1;
+  return n.bar === 'vib' ? 'w/bar ~' : n.bar === 'flutter' ? 'flutter' : n.bar === 'scoop' ? `scoop ${fmtSemi(d)}` : `${n.bar} −${fmtSemi(d)}`;
+}
+/**
+ * Pitch movement of a note in cents from its sounding pitch, as [[seconds after the attack, cents]]:
+ * bends glide up to their target, releases glide down, and whammy-bar moves follow the bar.
+ */
+export function pitchMoves(n, len) {
+  const pts = [];
+  if (n.x === 'b' && n.bendTo != null && n.bendTo > n.f) { const up = (n.bendTo - n.f) * 100, at = Math.min(0.18, len * 0.4); pts.push([0, 0], [at, up]); }
+  if (n.x === 'r' && n.bendTo != null && n.bendTo > n.f) { const up = (n.bendTo - n.f) * 100, at = Math.min(0.2, len * 0.45); pts.push([0, up], [at, 0]); }
+  if (n.bar) {
+    const c = (n.barDepth || BAR_DEFAULT[n.bar] || 1) * 100, last = pts.length ? pts[pts.length - 1] : [0, 0], t0 = last[0], v = last[1];
+    if (n.bar === 'dip') pts.push([t0, v], [t0 + Math.min(0.12, len * 0.25), v - c], [t0 + Math.min(0.26, len * 0.5), v]);
+    else if (n.bar === 'scoop') { pts.length = 0; pts.push([0, -c], [Math.min(0.14, len * 0.3), 0]); }
+    else if (n.bar === 'dive') pts.push([t0, v], [t0 + Math.max(0.2, len * 0.8), v - c]);
+    else { const per = n.bar === 'flutter' ? 0.07 : 0.2; let t = t0 || 0.05; pts.push([t, v]); for (let k = 0; t < len && k < 120; k++) { t += per / 2; pts.push([t, v + (k % 2 ? c : -c) / 2]); } }
+  }
+  return pts;
+}
 // Natural harmonics: semitones above the open string for the frets where they ring
 const HARMONIC = { 12: 12, 7: 19, 19: 19, 5: 24, 24: 24, 4: 28, 9: 28, 16: 28, 3: 31, 2: 34 };
 /** The pitch a note actually sounds: harmonics and pre-bends differ from the fretted pitch. */
@@ -156,7 +182,8 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
         if (n.t < start - EPS || n.t >= end - EPS) return;
         const x = PAD + (n.t - start) * pxBeat + NOTE_DX, y = TOP + (n.s - 1) * ROW, lab = n.x === 'ghost' ? `(${n.f})` : n.x === 'mute' ? 'x' : n.x === 'nh' ? `<${n.f}>` : String(n.f), wBox = 7 * lab.length + 6;
         s += `<g class="tab-note" data-i="${i}"><rect x="${x - wBox / 2}" y="${y - 9}" width="${wBox}" height="18" rx="4"/><text x="${x}" y="${y + 5}">${lab}</text></g>`;
-        if (n.x && n.x !== 'ghost' && n.x !== 'mute' && !n.chord) s += `<text x="${x}" y="${TOP - 12}" class="tab-tech">${esc(techLabel(n))}</text>`;
+        const tl = [n.x && n.x !== 'ghost' && n.x !== 'mute' && !n.chord ? techLabel(n) : '', barLabel(n)].filter(Boolean).join(' ');
+        if (tl) s += `<text x="${x}" y="${TOP - 12}" class="tab-tech${n.bar ? ' bar' : ''}">${esc(tl)}</text>`;
         if (picks && picks[i].lead) {
           // Fingers for every note struck together (bass first), the stroke on the group's lowest string
           const fingers = notes.map((m, j) => ({ m, j })).filter(o => Math.abs(o.m.t - n.t) < 1e-3 && picks[o.j].finger).sort((a, b) => b.m.s - a.m.s).map(o => picks[o.j].finger);
@@ -298,8 +325,19 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
     if (!S.sound || t < c.currentTime - 0.01) return;
     const spread = n.chord ? 0.012 * (6 - n.s) : 0;
     if (n.x === 'mute') Audio.guitar(noteMidi(n, tuning), t + spread, { dur: 0.05, gain: n.chord ? 0.2 : 0.35, bright: 0.2 });
-    else if (n.x === 'nh' || n.x === 'ah') Audio.guitar(soundMidi(n, tuning), t + spread, { dur: Math.max(0.4, n.d * spb() * 2), gain: n.chord ? 0.22 : 0.4, bright: 0.85 });
-    else Audio.guitar(soundMidi(n, tuning), t + spread, { dur: Math.max(0.25, n.d * spb() * 1.6), gain: n.chord ? 0.32 : 0.55, bright: n.x === 'pm' ? 0.3 : 0.55 });
+    else if (n.x === 'nh' || n.x === 'ah') {
+      const dur = Math.max(n.bar === 'dive' ? 1 : 0.4, n.d * spb() * 2);
+      const src = Audio.guitar(soundMidi(n, tuning), t + spread, { dur, gain: n.chord ? 0.22 : 0.4, bright: 0.85 });
+      const moves = pitchMoves(n, Math.min(dur, n.d * spb() * 1.5));
+      if (src && moves.length) Audio.glide(src, moves.map(([dt, c]) => [t + spread + dt, c]));
+    }
+    else {
+      const dur = Math.max(n.bar === 'dive' ? 0.8 : 0.25, n.d * spb() * 1.6);
+      const midi = n.x === 'r' && n.bendTo != null ? noteMidi(n, tuning) : soundMidi(n, tuning);
+      const src = Audio.guitar(midi, t + spread, { dur, gain: n.chord ? 0.32 : 0.55, bright: n.x === 'pm' ? 0.3 : 0.55 });
+      const moves = pitchMoves(n, Math.min(dur, n.d * spb()));
+      if (src && moves.length) Audio.glide(src, moves.map(([dt, c]) => [t + spread + dt, c]));
+    }
   }
   /** Schedule every note and click whose time (in beats since the run started) is in [e0, e1). */
   function scheduleWindow(e0, e1) {
@@ -592,7 +630,8 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
     onSettings({ pickModes: Object.assign({}, settings.pickModes || {}, { [pickKey]: S.pickMode }) });
     pickHint(); render();
   });
-  function pickHint() { const m = PICK_MODES.find(x => x[0] === S.pickMode); r('pickhint').textContent = m ? m[2] : ''; }
+  const hasWritten = notes.some(n => n.pick || n.fing);
+  function pickHint() { const m = PICK_MODES.find(x => x[0] === S.pickMode); r('pickhint').textContent = (m ? m[2] : '') + (hasWritten ? ' Strokes and fingers marked by the lesson are shown as written.' : ''); }
   pickHint();
   let lastW = 0;
   const ro = window.ResizeObserver ? new ResizeObserver(() => { const w = r('view').clientWidth; if (!S.scroll && Math.abs(w - lastW) > 8) { lastW = w; render(); } }) : null;

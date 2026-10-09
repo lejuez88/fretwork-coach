@@ -1184,3 +1184,4 @@ body.has-transport .tunefab{bottom:calc(var(--dock-top,0px) + 12px)}
 .tr-tgls label.mini.clicksound{flex-direction:row;flex:0 0 auto;font-size:13px}
 .tr-tgls label.mini.clicksound select{min-height:34px}
 .pathnote{margin:-2px 0 8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tab-tech.bar{fill:#9fd3ff}

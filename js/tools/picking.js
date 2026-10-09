@@ -9,6 +9,8 @@
 //   fingers    p i m a (thumb on strings 4–6, fingers on 3, 2, 1)
 //   hybrid     pick on strings 3–6 (in time), middle/ring finger on strings 2 and 1
 // Hammer-ons, pull-offs, slid-into and tapped notes get no stroke.
+// A lesson can also write the stroke or finger on a note ({pick: 'd'|'u'}, {fing: 'p'|'i'|'m'|'a'|'c'});
+// written marks always win over the computed ones, in every mode.
 
 export const PICK_MODES = [
   ['alternate', 'Alternate (in time)', 'Down on the beat and the “&”, up in between: the hand keeps moving in time, even through rests.'],
@@ -47,7 +49,23 @@ const FINGER_FOR_STRING = { 1: 'a', 2: 'm', 3: 'i', 4: 'p', 5: 'p', 6: 'p' };
  * Returns an array aligned with `notes`: {stroke: 'd'|'u'|null, finger: 'p'|'i'|'m'|'a'|null, lead: bool}
  * `lead` marks the one note per chord/strum that carries the symbol.
  */
-export function computePicks(notes, mode = 'alternate') {
+export const WRITTEN_FINGERS = ['p', 'i', 'm', 'a', 'c'];
+export function computePicks(notes, mode = 'alternate') { return applyWritten(notes, autoPicks(notes, mode)); }
+/** Strokes and fingers written in the lesson replace the computed ones (and carry the symbol for their chord). */
+function applyWritten(notes, out) {
+  const atT = t => notes.map((m, j) => j).filter(j => Math.abs(notes[j].t - t) < 1e-3);
+  notes.forEach((n, i) => {
+    const pick = n.pick === 'd' || n.pick === 'u' ? n.pick : null, fing = WRITTEN_FINGERS.includes(n.fing) ? n.fing : null;
+    if (!pick && !fing) return;
+    const group = atT(n.t);
+    if (pick) { group.forEach(j => { if (j !== i) { out[j].stroke = null; out[j].lead = false; } }); out[i].stroke = pick; }
+    if (fing) { out[i].finger = fing; if (!pick) out[i].stroke = null; }
+    if (!group.some(j => out[j].lead) || pick) { group.forEach(j => { out[j].lead = false; }); out[i].lead = true; }
+    out[i].written = true;
+  });
+  return out;
+}
+function autoPicks(notes, mode) {
   const out = notes.map(() => ({ stroke: null, finger: null, lead: false }));
   // Group simultaneous notes (chords, pinches)
   const groups = [];

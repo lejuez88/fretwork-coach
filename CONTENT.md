@@ -202,6 +202,9 @@ Tab note rules:
   - `ghost`: a ghost note, drawn as "(5)".
   - `nh`: a natural harmonic at frets 12, 7, 5, 4 or 3, drawn as "<12>".
   - `ah`: an artificial or tapped harmonic, sounding an octave above the fretted note.
+  - **Whammy bar** (an extra on any note, alone or with a technique): `{bar: 'dip' | 'scoop' | 'dive' | 'vib' | 'flutter', barDepth: semitones}`. `dip` pushes the pitch down and back, `scoop` starts below and rises to the note, `dive` sinks over the note's length (a dive bomb, often on a harmonic), `vib` is bar vibrato and `flutter` a fast flutter. `barDepth` defaults to 1 (dip, scoop), 12 (dive) or ½ (vib, flutter). Drawn above the note ("dip −1", "dive −12", "w/bar ~") and heard in the player. Example: `N(3, 12, t, 2, 'nh', { bar: 'dive', barDepth: 12 })`.
+  - **Written pick stroke or finger** (an extra on any note): `{pick: 'd' | 'u'}` for a down or up stroke, `{fing: 'p' | 'i' | 'm' | 'a' | 'c'}` for a plucking finger (thumb, index, middle, ring, little; hybrid picking uses `m` and `a`). Marked notes are drawn as written (⊓, V, or the letter) in every picking mode; unmarked notes keep the computed strokes. Mark only where the stroke or finger is the point of the lesson (an upstroke start, an outside string change, a hybrid pluck); the app computes the rest.
+- Bends glide up to `bendTo` in the player, and a release (`r` with `bendTo`) glides back down.
 - Notes struck together share `t` and carry `{ chord: true }`.
 
 Chord parts add two fields:

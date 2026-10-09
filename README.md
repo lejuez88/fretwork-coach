@@ -25,7 +25,15 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: the playback bar, and artists built on shared learning paths
+## Latest: whammy-bar and pick-stroke marks, a higher standard for every learning path
+
+| Area | Included |
+|---|---|
+| Whammy bar in tabs | Any note can carry a bar move: dip, scoop, dive (bomb), bar vibrato or flutter, with a depth in semitones. The tab shows it above the note ("dip −1", "dive −12", "w/bar ~") and the player bends the pitch to match, including on harmonics. Bends now glide up to their target and releases glide back down. |
+| Written strokes and fingers | A lesson can mark the pick stroke (down/up) or the plucking finger (p i m a c) on the notes where it matters; the tab draws those as written in every picking mode, and computes the rest. |
+| Reference standard for paths | Every learning path should be as thorough as the pentatonic path: per stage 4/8, 4/10, 4/8 and 3/6 skills/lessons, 4+ learning methods (with retrieval, interleaving or variable practice from intermediate on), a "use it in music" lesson in every stage, and 3+ research sources. The validator marks the paths that meet it (★), lists what the others are missing, and an artist can only ship when its paths meet it. |
+
+## Earlier: the playback bar, and artists built on shared learning paths
 
 | Area | Included |
 |---|---|

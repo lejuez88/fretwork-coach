@@ -44,6 +44,11 @@ function checkExercise(where, ex) {
       if (!(Number.isInteger(x.f) && x.f >= 0 && x.f <= 22)) err(where, `note ${i}: fret ${x.f} (0–22)`);
       if (!(x.t >= 0 && x.d > 0)) err(where, `note ${i}: bad timing t=${x.t} d=${x.d}`);
       if (x.x && !TECHS.includes(x.x)) err(where, `note ${i}: unknown technique "${x.x}"`);
+      if (x.bar != null && !['dip', 'scoop', 'dive', 'vib', 'flutter'].includes(x.bar)) err(where, `note ${i}: unknown whammy-bar move "${x.bar}" (dip, scoop, dive, vib, flutter)`);
+      if (x.barDepth != null && !(x.barDepth > 0 && x.barDepth <= 24)) err(where, `note ${i}: barDepth ${x.barDepth} (semitones, above 0 and up to 24)`);
+      if (x.barDepth != null && x.bar == null) err(where, `note ${i}: barDepth without a bar move`);
+      if (x.pick != null && !['d', 'u'].includes(x.pick)) err(where, `note ${i}: pick "${x.pick}" (d or u)`);
+      if (x.fing != null && !['p', 'i', 'm', 'a', 'c'].includes(x.fing)) err(where, `note ${i}: fing "${x.fing}" (p, i, m, a or c)`);
     });
     if (n.tab == null) err(where, 'tab dropped by the normalizer (check the note format)');
   } else if (!(ex.chords && ex.chords.length) && !(ex.voicings && ex.voicings.length) && !ex.libId) warn(where, 'no tab, chords or voicings: it will only show the metronome');
