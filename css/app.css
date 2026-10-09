@@ -1077,3 +1077,59 @@ details.customize[open] > summary::before{content:'▾ ';}
 .methods details.method summary{cursor:pointer;list-style:none}
 .methods details.method summary::-webkit-details-marker{display:none}
 .methods details.method p{margin:6px 0 0}
+
+/* ---------------- Layout cleanup (2026-10-09.2): Home = today, Practice = learn, Profile = history ---------------- */
+.slimnote{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;margin:0 0 14px;border:1px solid rgba(245,165,36,.45);border-radius:12px;background:var(--amber-soft);color:var(--text);text-decoration:none;font-size:14px;line-height:1.4}
+.slimnote .go{color:var(--amber);font-weight:600;white-space:nowrap}
+.slimnote:hover{border-color:var(--amber)}
+.courselist .course:first-child{margin-top:4px}
+.courselist .course{padding:8px 10px}
+.courselist .cbody b{font-size:15px}
+/* This week */
+.weekcard.live{border-color:var(--amber)}
+.wk-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:2px 0 12px}
+.wk-sum>div{display:flex;flex-direction:column;gap:1px}
+.wk-sum b{font:600 22px var(--head);line-height:1.1}
+.wk-sum b.ok{color:var(--green)}
+.wk-bars{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:14px}
+.wk-day{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--muted)}
+.wk-col{width:100%;height:46px;background:var(--inset);border-radius:6px;display:flex;align-items:flex-end;overflow:hidden;border:1px solid transparent}
+.wk-col i{display:block;width:100%;border-radius:5px 5px 0 0}
+.wk-col i.some{background:rgba(245,165,36,.35)}
+.wk-col i.done{background:linear-gradient(180deg,#ffbd45,var(--amber-d))}
+.wk-day.today .wk-col{border-color:var(--text)}
+.wk-day.today span{color:var(--text);font-weight:700}
+.wk-day.future{opacity:.45}
+.wk-actions{gap:8px}
+.wk-actions .btn{flex:1}
+.wk-hint{margin:8px 0 0}
+.wk-live select{width:100%;margin-bottom:10px}
+.wk-live .linkbtn{margin-top:8px}
+/* Explore */
+.explore .ex-row{display:flex;align-items:center;gap:12px;width:100%;padding:10px;margin-top:8px;border:1px solid var(--line);border-radius:12px;background:var(--inset);color:var(--text);text-decoration:none;text-align:left;font:inherit;cursor:pointer}
+.explore .ex-row:hover{border-color:var(--amber)}
+.explore .ex-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.explore .ex-txt .label{margin:0;font-size:10px}
+.explore .ex-ic{width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;font-size:22px;border-radius:10px;background:var(--panel2)}
+/* Guided lesson: plan summary, details folded */
+.planbox.guided{padding-top:12px}
+.plan-sum{display:flex;gap:4px;margin-bottom:8px}
+.plan-sum .ps{min-width:46px;display:flex;flex-direction:column;gap:4px;font-size:10px;font-family:var(--head);text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
+.plan-sum .ps i{display:block;height:6px;border-radius:3px;background:var(--bc)}
+.plan-sum .ps span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plan-stretch{margin:6px 0 4px}
+.plan-full{margin:4px 0 12px}
+.plan-full summary{cursor:pointer;color:var(--amber);font-size:13px;padding:6px 0;list-style-position:inside}
+.plan-full[open] summary{margin-bottom:4px}
+/* Practice: learn in depth */
+.learn-grid{display:grid;gap:0 18px}
+.learn-links{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.learn-links .lib-more-card{margin-bottom:0}
+@media(min-width:1000px){
+  .learn-grid{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);align-items:start}
+  .learn-grid .mc-recs{grid-template-columns:1fr 1fr}
+}
+.history .stats{margin:4px 0 10px}
+@media(max-width:560px){.history .stats{grid-template-columns:repeat(2,1fr)}.slimnote{font-size:13px}}
+.history .cal-head{margin:6px 0 8px}.history .cal-title{margin:0}
+.history .cal .cd{aspect-ratio:auto;height:34px}

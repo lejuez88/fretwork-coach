@@ -11,6 +11,8 @@ window.addEventListener('unhandledrejection', e => errors.push('rejection: ' + (
 const origErr = console.error; console.error = (...a) => { errors.push(a.join(' ')); };
 (async () => {
   await import('../js/app.js');
+  const { Store: S0 } = await import('../js/core/store.js');
+  const Store0 = () => S0.profile;
   await sleep(50);
   const go = async h => { const before = errors.length; location.hash = h; window.dispatchEvent(new HashChangeEvent('hashchange')); await sleep(40); ok(errors.length === before, `${h}: ${errors.slice(before).join(' | ')}`); };
   const view = () => document.getElementById('view');
@@ -19,6 +21,32 @@ const origErr = console.error; console.error = (...a) => { errors.push(a.join(' 
   ok(view().className.includes('v-songs'), 'view class per screen');
   await go('#/home');
   ok(document.querySelector('.dash-cols .dash-main [data-r="routine"]') && document.querySelector('.dash-side [data-r="track"]'), 'dashboard columns');
+  // layout: Home is today; discovery on Practice; history on Profile
+  ok(view().querySelector('.dash-side .weekcard .wk-bars') && view().querySelectorAll('.wk-day').length === 7, 'home: this week strip');
+  ok(view().querySelectorAll('.dash-side .explore .ex-row').length >= 2, 'home: explore links');
+  ok(!view().querySelector('.cal') && !view().querySelector('.mastercard') && !view().querySelector('.artistcard') && !view().querySelector('.lv'), 'home: calendar, master classes, artist tiles and skill bars moved off home');
+  ok(view().querySelector('[data-r="routine"] details.plan-full:not([open])') && view().querySelector('[data-r="routine"] .plan-sum .ps'), 'home: the plan is folded into a summary');
+  view().querySelector('.weekcard [data-d="start"]').click(); await sleep(10);
+  const sel = view().querySelector('.weekcard [data-r="sesscourse"]');
+  ok(sel && view().querySelector('.weekcard [data-r="clock"]'), 'free-practice timer runs in the week card');
+  const t0 = JSON.parse(localStorage.getItem('fretworkCoach.activeSession')).startedAt;
+  sel.value = sel.options[1].value; sel.dispatchEvent(new Event('change', { bubbles: true }));
+  const s1 = JSON.parse(localStorage.getItem('fretworkCoach.activeSession'));
+  ok(s1.courseId === sel.options[1].value && s1.startedAt === t0, 'the session can be credited to a course without restarting the clock');
+  localStorage.removeItem('fretworkCoach.activeSession');
+  await go('#/practice');
+  ok(view().querySelector('.learn-grid .mastercard .mc-foryou') && view().querySelector('.learn-links a[href="#/techniques"]') && view().querySelector('.learn-links a[href="#/artist"]'), 'practice: learn in depth (master classes, techniques, artists)');
+  await go('#/profile');
+  const hist = view().querySelector('.history');
+  ok(hist && hist.querySelector('.cal') && hist.querySelectorAll('.stat').length === 4, 'profile: practice history with calendar');
+  const m0 = hist.querySelector('.cal-title').textContent;
+  hist.querySelector('[data-ph="prev"]').click(); await sleep(5);
+  ok(view().querySelector('.history .cal-title').textContent !== m0, 'profile: calendar month navigation');
+  const logs0 = Store0().practiceLog.length;
+  view().querySelector('.history [data-ph="manual"]').click(); await sleep(5);
+  document.querySelector('.sheet [data-r="save"]').click(); await sleep(5);
+  ok(Store0().practiceLog.length === logs0 + 1, 'profile: log practice from the history card');
+  await go('#/home');
   // every library exercise
   const { libraryEntries } = await import('../js/core/library.js');
   const { Store } = await import('../js/core/store.js');

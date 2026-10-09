@@ -14,7 +14,8 @@ import { recommendSession, nextInCourse } from '../core/coach.js';
 import { forYou, isMaster } from '../core/master.js';
 import { timeInputHTML, wireTimeInput, readTime, startRoutine, hasActiveRoutine, attachBriefing } from '../screens/routine.js';
 
-const QUICK_TIMES = [15, 20, 30, 45, 60];
+const SHORT = { warmup: 'Warm-up', review: 'Review', stretch: 'Stretch', theory: 'Theory', music: 'Music' };
+const QUICK_TIMES = [15, 30, 45, 60];
 
 export function mountRoutineBuilder(el, { navigate, courseId = null, skillId = null }) {
   const p = Store.profile;
@@ -57,7 +58,7 @@ export function mountRoutineBuilder(el, { navigate, courseId = null, skillId = n
     el.innerHTML = `
       <div class="label">Today’s lesson · chosen for you</div>
       <h3>${esc(selected.name)}${skill ? `: <span class="hl">${esc(skill.title)}</span>` : ''}</h3>
-      ${rec.reasons.length ? `<ul class="why-list">${rec.reasons.slice(0, 3).map(r => `<li>${esc(r)}</li>`).join('')}</ul>` : ''}
+      ${rec.reasons.length ? `<ul class="why-list">${rec.reasons.slice(0, 2).map(r => `<li>${esc(r)}</li>`).join('')}</ul>` : ''}
       ${isGenericPlan(selected) ? `<p class="note warn">This course still uses the old standard plan. <a class="link" href="#/course/${selected.id}">Rebuild it for ${esc(selected.style)}</a> to practice the style’s own material.</p>` : ''}
       <div class="quick-time"><span class="small muted">Time</span><div class="chips">${[...new Set([...QUICK_TIMES, rec.minutes, minutes])].sort((x, y) => x - y).map(m => `<button class="chip sm ${m === minutes ? 'on' : ''}" data-min="${m}">${m} min</button>`).join('')}</div></div>
       ${selected.tree ? previewHTML() : `<p class="small muted">This course’s lesson plan will be built when you start${Claude.hasKey() ? ' (Claude takes about 30–60 seconds)' : ''}.</p>
@@ -70,7 +71,7 @@ export function mountRoutineBuilder(el, { navigate, courseId = null, skillId = n
     const fy = forYou(p)[0]; if (!fy) return '';
     const covered = courses.some(c => isMaster(c) && c.topic && c.topic.topicId === fy.topic.id) || courses.some(c => { const nx = c.tree && nextInCourse(p, c); return nx && nx.skill.domain === fy.topic.domain; });
     if (covered) return '';
-    return `<p class="small also">Also recommended: <button class="linkbtn small" data-mc="${esc(fy.topic.id)}">${esc(fy.topic.title)} master class ›</button> ${esc(fy.reason)} None of your courses works on it right now.</p>`;
+    return `<p class="small also" title="${esc(fy.reason)}">Also recommended: <button class="linkbtn small" data-mc="${esc(fy.topic.id)}">${esc(fy.topic.title)} master class ›</button> <span class="muted">${esc(fy.reason)} None of your courses covers it yet.</span></p>`;
   }
 
   function renderCustom(courses) {
@@ -106,11 +107,22 @@ export function mountRoutineBuilder(el, { navigate, courseId = null, skillId = n
     const pv = el.querySelector('[data-r="preview"]');
     pv.innerHTML = plan && !building ? previewHTML() : '';
   }
+  /** The plan. Guided: a one-line summary of the blocks with the full list folded under "See the plan". */
   function previewHTML() {
     const total = plan.items.reduce((a, i) => a + i.minutes, 0);
-    return `<div class="planbox"><div class="label">The plan · ${fmtMinutes(total)}</div>
-      ${briefing && briefing.focus ? `<p class="coach">🎯 ${esc(briefing.focus)}</p>` : ''}
-      ${plan.items.map(it => `<div class="planrow b-${it.block}"><span class="pblock">${BLOCKS[it.block].label}</span><div class="pname"><b>${esc(it.ex.name)}</b><span class="muted small">${esc(tempoShort(it.ex, it.targetBpm, it.goalBpm))}${it.note ? ' · ' + esc(it.note) : it.variation ? ' · ↻ ' + esc(it.variation) : ''}</span></div><span class="pmin">${it.minutes}m</span></div>`).join('')}
+    const rows = plan.items.map(it => `<div class="planrow b-${it.block}"><span class="pblock">${BLOCKS[it.block].label}</span><div class="pname"><b>${esc(it.ex.name)}</b><span class="muted small">${esc(tempoShort(it.ex, it.targetBpm, it.goalBpm))}${it.note ? ' · ' + esc(it.note) : it.variation ? ' · ↻ ' + esc(it.variation) : ''}</span></div><span class="pmin">${it.minutes}m</span></div>`).join('');
+    const coach = briefing && briefing.focus ? `<p class="coach">🎯 ${esc(briefing.focus)}</p>` : '';
+    if (custom) {
+      return `<div class="planbox"><div class="label">The plan · ${fmtMinutes(total)}</div>${coach}${rows}
+        <button class="btn primary block" data-r="start">▶ Start today’s lesson</button></div>`;
+    }
+    const sum = {};
+    plan.items.forEach(it => { sum[it.block] = (sum[it.block] || 0) + it.minutes; });
+    const stretch = plan.items.find(it => it.block === 'stretch');
+    return `<div class="planbox guided">
+      <div class="plan-sum">${Object.keys(BLOCKS).filter(k => sum[k]).map(k => `<span class="ps b-${k}" style="flex:${sum[k]}" title="${BLOCKS[k].label}: ${Math.round(sum[k])} min"><i></i><span>${SHORT[k]}</span></span>`).join('')}</div>
+      ${stretch ? `<p class="small plan-stretch"><span class="muted">Today’s stretch:</span> <b>${esc(stretch.ex.name)}</b></p>` : ''}
+      <details class="plan-full"><summary>See the plan · ${plan.items.length} exercises · ${fmtMinutes(total)}</summary>${rows}</details>
       <button class="btn primary block" data-r="start">▶ Start today’s lesson</button></div>`;
   }
   async function ensureTree() {

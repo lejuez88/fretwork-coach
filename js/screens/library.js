@@ -1,7 +1,8 @@
-// Practice tab: the "What do you want to work on?" box and the exercise
-// library. Pick any exercise and any of its variations, play it with the tab
-// player or metronome, log a result, or queue several into a timed session.
-// Course routines are built from the dashboard.
+// Practice tab, the place to find what to learn: the "What do you want to work
+// on?" box, then learning in depth (master classes, the Technique library, the
+// Artist series), then the exercise library. Pick any exercise and any of its
+// variations, play it with the tab player or metronome, log a result, or queue
+// several into a timed session. Today's guided lesson is on Home.
 import { esc, toast, fmtMinutes } from '../core/util.js';
 import { Store } from '../core/store.js';
 import { DOMAIN_BY_KEY } from '../assessment/engine.js';
@@ -9,8 +10,8 @@ import { CATEGORIES, CATEGORY_BY_ID, libraryEntries, libEntry, libVariations, li
 import { paramSummary, describeParams } from '../core/params.js';
 import { paramControlsHTML } from '../ui/paramcontrols.js';
 import { mountIntervalTrainer } from './intervals.js';
-import { topicForEntry } from '../core/master.js';
-import { openMasterSheet, MC_ICON } from '../ui/mastersheet.js';
+import { topicForEntry, forYou, recommendedTopics, MASTER_BY_ID } from '../core/master.js';
+import { openMasterSheet, topicArtHTML, MC_ICON } from '../ui/mastersheet.js';
 import { findVariation } from '../core/variations.js';
 import { makeAdhocRoutine } from '../core/routine.js';
 import { toPlayerExercise } from '../core/coursegen.js';
@@ -45,6 +46,22 @@ function startQueue(navigate) {
   startRoutine(plan, undefined, navigate);
 }
 
+/** Master classes: a "For you" pick, topics that change every time, and any topic you type. */
+function masterCardHTML(p) {
+  const fy = forYou(p), top1 = fy[0] || null;
+  const recs = recommendedTopics(p, 4, top1 ? [top1.topic.id] : []);
+  return `<section class="card mastercard">
+    <div class="sec-head"><h3>${MC_ICON} Master classes</h3></div>
+    <p class="small muted mc-intro">A whole course on one topic, built for your level.</p>
+    ${top1 ? `<button class="mc-foryou" data-mc="${top1.topic.id}">${topicArtHTML(top1.topic.cat)}
+      <span class="mc-txt"><span class="label">For you</span><b>${esc(top1.topic.title)}</b><span class="small">${esc(top1.reason || top1.topic.blurb)}</span></span>
+      <span class="mc-go">Build ›</span></button>` : ''}
+    <div class="label mc-sub">Suggested today</div>
+    <div class="mc-recs">${recs.map(t => `<button class="mc-rec" data-mc="${t.id}">${topicArtHTML(t.cat, 'sm')}<span class="mc-txt"><b>${esc(t.title)}</b><span class="small muted">${esc(t.blurb)}</span></span></button>`).join('')}</div>
+    <form class="mc-ask" data-r="mcask"><input type="text" name="topic" maxlength="80" placeholder="Any topic: sight reading, slide guitar, jazz standards…" aria-label="Master class topic"><button class="btn" type="submit">${MC_ICON} Build</button></form>
+  </section>`;
+}
+
 /* --------------------------------- List --------------------------------- */
 // Topics are buttons with a picture; tapping one opens its exercises below it.
 // Searching opens every topic that has a match and shows only the matches.
@@ -59,14 +76,17 @@ export function mountLibrary(root, { navigate }) {
   root.innerHTML = `
     <h1>Practice</h1>
     <section class="card askcard" data-r="askslot"></section>
+    <h2 class="sechead">Learn in depth</h2>
+    <div class="learn-grid">
+      ${masterCardHTML(p)}
+      <div class="learn-links">
+        <a class="lib-more-card" href="#/techniques"><span class="lm-ic" aria-hidden="true">🎯</span><span><b>Technique library</b><span class="small muted">Rolling 5s, spread triads, tapping, pentatonic mastery and more: step-by-step paths from beginner to mastery.</span></span><span class="mc-go">›</span></a>
+        <a class="lib-more-card" href="#/artist"><span class="lm-ic" aria-hidden="true">🎸</span><span><b>Artist series</b><span class="small muted">The signature techniques of great players, plus their famous songs.</span></span><span class="mc-go">›</span></a>
+      </div>
+    </div>
     <div class="libhead"><h2 class="sechead">Exercise library</h2><span class="muted small">${entries.length} exercises in ${CATEGORIES.length} topics, each with variations from easier to harder</span></div>
     <input type="search" class="libsearch" data-r="q" placeholder="Search: bends, F chord, funk, spider…" value="${esc(ui.q)}" autocomplete="off">
-    <div class="topics" data-r="list"></div>
-    <div class="lib-more">
-      <a class="lib-more-card" href="#/techniques"><span class="lm-ic" aria-hidden="true">🎯</span><span><b>Technique library</b><span class="small muted">Rolling 5s, spread triads, tapping and more, from beginner to advanced. Lessons rebuilt for your level.</span></span><span class="mc-go">›</span></a>
-      <a class="lib-more-card" href="#/artist"><span class="lm-ic" aria-hidden="true">🎸</span><span><b>Artist series</b><span class="small muted">Lessons on the signature techniques of great players, plus their famous songs.</span></span><span class="mc-go">›</span></a>
-    </div>
-    <p class="muted small center">Course routines are built on the <a class="link" href="#/home">dashboard</a>.</p>`;
+    <div class="topics" data-r="list"></div>`;
   offAsk = mountAskBox(root.querySelector('[data-r="askslot"]'), { start: plan => startRoutine(plan, undefined, navigate) });
 
   const match = (e, q) => {
@@ -135,12 +155,23 @@ export function mountLibrary(root, { navigate }) {
     step();
   }
 
-  const onClick = e => { const t = e.target.closest('[data-tg]'); if (t) toggle(t.dataset.tg); };
+  const onClick = e => {
+    const mc = e.target.closest('[data-mc]');
+    if (mc) { const t = MASTER_BY_ID[mc.dataset.mc]; if (t) openMasterSheet({ title: t.title, topicId: t.id, cat: t.cat, domain: t.domain }, { navigate }); return; }
+    const t = e.target.closest('[data-tg]'); if (t) toggle(t.dataset.tg);
+  };
+  const onSubmit = e => {
+    const f = e.target.closest('[data-r="mcask"]'); if (!f) return;
+    e.preventDefault();
+    const v = (f.querySelector('input').value || '').trim();
+    if (v.length < 3) return toast('Type a topic, like “sight reading” or “the modes”.');
+    openMasterSheet({ title: v }, { navigate });
+  };
   const onInput = e => { if (e.target.dataset.r === 'q') { ui.q = e.target.value; setUI(ui); drawList(); } };
   const barClick = e => { const b = e.target.closest('[data-q]'); if (!b) return; if (b.dataset.q === 'clear') { Queue.clear(); queueBar(); drawList(); } else startQueue(navigate); };
-  root.addEventListener('click', onClick); root.addEventListener('input', onInput); Shell.actionBar.addEventListener('click', barClick);
+  root.addEventListener('click', onClick); root.addEventListener('submit', onSubmit); root.addEventListener('input', onInput); Shell.actionBar.addEventListener('click', barClick);
   drawList(); queueBar();
-  return () => { clearTimeout(fillTimer); if (offAsk) offAsk(); root.removeEventListener('click', onClick); root.removeEventListener('input', onInput); Shell.actionBar.removeEventListener('click', barClick); Shell.actions(''); };
+  return () => { clearTimeout(fillTimer); if (offAsk) offAsk(); root.removeEventListener('click', onClick); root.removeEventListener('submit', onSubmit); root.removeEventListener('input', onInput); Shell.actionBar.removeEventListener('click', barClick); Shell.actions(''); };
 }
 
 /* -------------------------------- Detail -------------------------------- */

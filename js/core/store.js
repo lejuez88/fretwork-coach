@@ -4,7 +4,7 @@ import { today, daysBetween, addDays, parseDay } from './util.js';
 
 export const APP_VERSION = 2;
 /** Shown in Settings → About, to tell which version a device is running. Bump with each release. */
-export const BUILD = '2026-10-09.1';
+export const BUILD = '2026-10-09.2';
 const PROFILE_KEY = 'fretworkCoach.profile.v2';
 const LEGACY_KEY = 'fretworkCoach.profile.v1';
 const DRAFT_KEY = 'fretworkCoach.draft.v2';

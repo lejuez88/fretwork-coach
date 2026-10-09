@@ -1,11 +1,13 @@
-// Player Profile: radar + bars, strongest/weakest, focus, edges, copyable profile
-// text, JSON export/import, retake assessment.
+// Player Profile: radar + bars, strongest/weakest, focus, practice history
+// (stats, calendar, logging practice done away from the app), edges, copyable
+// profile text, JSON export/import, retake assessment.
 import { esc, toast, today } from '../core/util.js';
 import { Store } from '../core/store.js';
 import { DOMAINS, DOMAIN_BY_KEY, Charts, ProfileText } from '../assessment/engine.js';
 import { wikiTile, hydrateImages } from '../core/wiki.js';
 import { GENRE_BY_ID } from '../data/catalog.js';
 import { domainStatus } from './reassess.js';
+import { mountPracticeHistory } from '../ui/practicehistory.js';
 
 export function exportProfile(p) {
   const blob = new Blob([JSON.stringify(p, null, 2)], { type: 'application/json' });
@@ -44,6 +46,7 @@ export function mountProfile(root, { navigate, firstRun = false }) {
       <div class="kpi"><div class="k">Weakest</div><div class="v">${low.map(x => x.name).join(', ')} · ${lv[low[0].key]}</div></div>
       <div class="kpi"><div class="k">First focus</div><div class="v">${p.focus.domain ? DOMAIN_BY_KEY[p.focus.domain].name : '—'}</div></div></div>
       <p style="margin-top:12px">${esc(p.focus.reason || '')}</p></section>
+    <section class="card history" id="history" data-r="history"></section>
     ${q.players.length ? `<section class="card"><h3>Players you’re learning from</h3><div class="pcards">${q.players.map(pl => `<div class="pcard">${wikiTile(pl.wikiTitle || pl.name, pl.name, 'round sm')}<div class="pbody"><b>${esc(pl.name)}</b><div class="muted small">${esc((pl.genres || []).map(g => GENRE_BY_ID[g] ? GENRE_BY_ID[g].name : g).join(' · '))}</div><div class="small">${esc(pl.style || '')}</div></div></div>`).join('')}</div></section>` : ''}
     <section class="card edgelist"><h3>Current edges</h3>
       ${DOMAINS.map(x => { const dm = d[x.key] || {}; return `<div class="e"><div class="h"><span>${x.name}<span class="tag">${esc(dm.basis || '')}</span></span><span>${lv[x.key]}/10</span></div>
@@ -57,6 +60,7 @@ export function mountProfile(root, { navigate, firstRun = false }) {
       <div class="row"><button class="btn" data-pf="export">Export (JSON)</button><a class="btn" href="#/settings">Import & settings</a></div>
       <div class="row" style="margin-top:10px"><a class="btn" href="#/reassess">Continue assessment</a><button class="btn" data-pf="retake">Retake everything</button><button class="btn" data-pf="edit">Edit setup answers</button></div></section>`;
   hydrateImages(root);
+  const offHistory = mountPracticeHistory(root.querySelector('[data-r="history"]'), p);
   const onClick = e => {
     const b = e.target.closest('[data-pf]'); if (!b) return;
     if (b.dataset.pf === 'copy') copyText(ProfileText.render(p));
@@ -65,5 +69,5 @@ export function mountProfile(root, { navigate, firstRun = false }) {
     if (b.dataset.pf === 'edit') navigate('#/onboarding');
   };
   root.addEventListener('click', onClick);
-  return () => root.removeEventListener('click', onClick);
+  return () => { offHistory(); root.removeEventListener('click', onClick); };
 }

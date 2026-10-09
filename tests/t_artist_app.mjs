@@ -13,9 +13,8 @@ console.error = (...a) => { errors.push(a.join(' ')); };
   const view = () => document.getElementById('view');
   const { Store } = await import('../js/core/store.js');
   const p = Store.profile;
-  await go('#/home');
-  const card = view().querySelector('.artistcard');
-  ok(card && card.querySelectorAll('a.artist-tile').length === 6, 'dashboard artist series card with 6 artists');
+  await go('#/practice');
+  ok(view().querySelector('a.lib-more-card[href="#/artist"]'), 'practice links to the artist series');
   await go('#/artist');
   ok(view().querySelectorAll('.artist-big').length === 6, 'artist index');
   for (const id of ['eric-johnson', 'van-halen', 'paul-gilbert', 'srv', 'hendrix', 'gilmour']) {
@@ -56,7 +55,7 @@ console.error = (...a) => { errors.push(a.join(' ')); };
   ok(location.hash === '#/practice/run', 'practice opens the runner');
   // Technique library: learning paths
   await go('#/practice');
-  ok(view().querySelector('.lib-more a[href="#/techniques"]'), 'practice page links to the technique library');
+  ok(view().querySelector('.learn-links a[href="#/techniques"]'), 'practice page links to the technique library');
   await go('#/techniques');
   view().querySelector('[data-band="all"]').click(); await sleep(10);
   const { KB_INDEX } = await import('../js/data/kb.js');

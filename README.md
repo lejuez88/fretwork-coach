@@ -25,7 +25,16 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: guided lessons (the app picks, you can still choose)
+## Latest: Pentatonic mastery built concept-first, evidence-based lessons, a calmer layout, metronome sounds
+
+| Area | Included |
+|---|---|
+| Pentatonic mastery | A complete four-stage path (`js/data/kb/pentatonic.js`, 36 lessons) generated from a model of the scale rather than written by hand: the five boxes, scale degrees, sequences (threes to sixes), rhythms from quarter notes to sextuplets, and any key. Foundations: the boxes two strings at a time, roots everywhere, calling out degrees, sing-then-play, call and response, first motifs. Intermediate: connecting boxes with slides, the same box in mixed keys, bends to target notes. Advanced: along one string, the cycle of fourths at the nearest position, landing on chosen degrees. Mastery: random-access boxes and keys, and a capstone étude. Every lesson was checked in all 12 keys for wrong or out-of-range notes. Its master class builds from the path with no API cost. |
+| Learning methods | Each lesson carries the method it uses (`js/core/methods.js`): edge-zone practice, accurate repetitions, chunking, retrieval, interleaving, variable practice, spaced review, focus on the sound, hear it first, and use it in music, each with its research source and an honest note on how strong the evidence is. Lesson cards show the method; each path page explains "How this stage teaches". CONTENT.md now requires the content runs to build every topic this way (model the concept, compose lessons from it, tag the method, verify in all keys) and to rebuild older paths the same way. |
+| Layout | **Home** is about today: the lesson the coach chose (the plan folded into a one-line summary, with "See the plan"), your courses, **This week** (minutes, a 7-day strip, the free-practice timer and "Log practice") and **Explore** shortcuts, then the Track of the Day. **Practice** is where to find what to learn: the ask box, then master classes, the Technique library and the Artist series, then the exercise library. **Profile** holds the history: skill levels and a Practice history card (totals, the calendar, logging practice done away from the app). A free-practice session can be credited to a course while it runs. |
+| Metronome sounds | Nine click sounds (classic click, woodblock, clave, cowbell, rimshot, hi-hat, shaker, digital beep, a drum kit with the kick on 1), chosen in the metronome, the tab player or Settings; the choice is saved and previewed. |
+
+## Earlier: guided lessons (the app picks, you can still choose)
 
 | Area | Included |
 |---|---|
