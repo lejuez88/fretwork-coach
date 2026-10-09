@@ -265,7 +265,7 @@ export function bendTargets(c) {
 export function alongOneString(c, { s = 3 } = {}) {
   const k = minorKey(c), l = oneString(k, s, 0, 17); if (l.length < 6) return null;
   const step = runStep(Math.min(6, c.lvl || 6)), seq = [...l, ...l.slice(0, -1).reverse()];
-  const notes = seq.map(([ss, f], i) => { const prev = seq[i - 1]; return N(ss, f, i * step, step, prev && Math.abs(prev[1] - f) >= 3 ? (f > prev[1] ? '/' : '\\') : null); });
+  const notes = seq.map(([ss, f], i) => { const prev = seq[i - 1]; return N(ss, f, i * step, step, prev && prev[1] > 0 && f > 0 && Math.abs(prev[1] - f) >= 3 ? (f > prev[1] ? '/' : '\\') : null); });
   landOnRoot(notes, k, l);
   return make(c, {
     id: `pent-one-string-${s}`, name: `The whole scale along the ${['', 'high E', 'B', 'G', 'D', 'A', 'low E'][s]} string (${nameOf(k)} minor)`, domain: 'fretboard', method: 'variable',
