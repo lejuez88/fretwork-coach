@@ -154,6 +154,39 @@ for (const f of artistFiles) {
 }
 for (const a of ARTIST_INDEX) for (const b of ARTIST_INDEX) if (a !== b && a.re.test(b.name.toLowerCase())) err(`artists/${a.id}.js`, `its regex also matches "${b.name}"`);
 
+/* ---------------------- Artists are built technique-first ---------------------- */
+// The process (CONTENT.md, "Building an artist"): research the artist and name their signature
+// techniques; research each technique until it can be generated with proven learning methods;
+// build each one as a complete path (all four stages full); only then add the artist, whose
+// units draw from those paths (PU). New artists must pass every check below; the artists that
+// were built before this rule get warnings instead, which form their catch-up list.
+const LEGACY_ARTISTS = new Set(['eric-johnson', 'van-halen', 'paul-gilbert', 'srv', 'hendrix', 'gilmour', 'guthrie-govan'].filter(id => id !== process.env.FC_STRICT_ARTIST));
+const KB_META = Object.fromEntries(KB_INDEX.map(m => [m.id, m]));
+const readiness = [];
+for (const f of artistFiles) {
+  let a; try { a = (await import(pathToFileURL(join(dataDir, 'artists', f)).href)).default; } catch { continue; }
+  if (!a || !a.id) continue;
+  const w = `artists/${f}`, legacy = LEGACY_ARTISTS.has(a.id), report = legacy ? warn : err;
+  const units = a.units || [], pathUnits = units.filter(u => u.path);
+  // every signature technique resolves to a learning path the artist draws from
+  const techs = (a.techniques || []).map((name, i) => {
+    const id = (a.techPaths && a.techPaths[i]) || (matchTechniques(name)[0] || {}).id || null;
+    return { name, id };
+  });
+  for (const t of techs) {
+    if (!t.id) report(w, `signature technique "${t.name}" has no learning path: research it and build it as a complete path first (or link it with {name, path})`);
+    else if (!KB_META[t.id]) report(w, `signature technique "${t.name}" links to unknown path "${t.id}"`);
+    else if (!pathUnits.some(u => u.path === t.id)) report(w, `signature technique "${t.name}" (${t.id}) isn't taught by a PU(${t.id}) unit`);
+  }
+  // every path the artist draws from is complete
+  for (const u of pathUnits) if (KB_META[u.path] && !KB_META[u.path].complete) report(w, `unit "${u.title}" draws from ${u.path}, which isn't a complete path yet (all four stages full): finish the path before the artist`);
+  // lessons outside paths only in the closing unit
+  units.slice(0, -1).filter(u => !u.path).forEach(u => report(w, `unit "${u.title}" has its own lessons: a signature technique belongs in a complete path (draw it with PU); only the closing "put it together" unit holds the artist's own studies`));
+  if (!Array.isArray(a.sources) || a.sources.filter(x => /^https?:\/\//.test(x)).length < 3) report(w, 'list the research behind the artist in "sources" (3+ URLs: interviews, lessons, analyses)');
+  const ids = [...new Set(techs.map(t => t.id).filter(Boolean).concat(pathUnits.map(u => u.path)))];
+  readiness.push({ id: a.id, legacy, done: ids.filter(id => KB_META[id] && KB_META[id].complete), todo: ids.filter(id => !KB_META[id] || !KB_META[id].complete), missing: techs.filter(t => !t.id).map(t => t.name) });
+}
+
 /* ------------------------------- Report ------------------------------- */
 const cell = c => (c ? `${c.full ? '✓' : '·'}${c.skills}/${c.lessons}` : '—').padEnd(9);
 console.log(`\nLearning-path coverage (skills/lessons per stage; ✓ = full: ${FULL_STAGE.skills}+ skills and ${FULL_STAGE.lessons}+ lessons):`);
@@ -162,6 +195,9 @@ coverage.sort((a, b) => b.cells.filter(c => c && c.full).length - a.cells.filter
   .forEach(r => console.log(`${(r.id + (r.kind !== 'technique' ? ` (${r.kind})` : '')).padEnd(26)}${r.cells.map(cell).join('')}`));
 const complete = coverage.filter(r => r.cells.every(c => c && c.full)).length;
 console.log(`${complete} of ${coverage.length} paths complete; ${coverage.length - complete} need more stages or lessons. ${artistFiles.length} artists.\n`);
+console.log('Artist readiness (technique-first: every signature technique a complete path):');
+readiness.forEach(r => console.log(`${(r.id + (r.legacy ? ' (built before the rule)' : '')).padEnd(38)}${r.todo.length || r.missing.length ? `paths to finish: ${r.todo.join(', ') || '—'}${r.missing.length ? `; techniques with no path yet: ${r.missing.join(', ')}` : ''}` : 'ready'}`));
+console.log('');
 console.log(`Checked ${kbFiles.length} knowledge-base entries and ${artistFiles.length} artists.`);
 warnings.forEach(x => console.log('WARN  ' + x));
 errors.forEach(x => console.log('ERROR ' + x));

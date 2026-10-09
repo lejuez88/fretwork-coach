@@ -78,16 +78,35 @@ export default entry({
 
 ## Artists (`js/data/artists/<id>.js`)
 
+### Building an artist: technique-first
+
+An artist course is only as good as the technique courses under it, so an artist is always built in this order. Don't skip or reorder steps, and don't publish the artist early.
+
+1. **Research the artist.** Interviews, the artist's own lessons and instructional material, transcription-based analyses from reputable publications, and teachers who specialize in the style. Identify their **signature techniques** (usually 3–6) and their **style**: the scales, harmony, rhythm feel, tone and phrasing habits that make them recognizable. Record what you found and the URLs in the log, and the URLs in the artist's `sources`.
+2. **Research each technique until it can be generated.** For each signature technique, follow "Concept-first lessons" below: understand the technique well enough to write its concept model and composer, and pick each lesson's learning method from the evidence table. If the technique already has a path, review it against your research and improve it rather than starting over.
+3. **Build a complete course for each technique.** Each technique becomes (or already is) its own knowledge-base path with **all four stages full** (the depth standard: foundations to mastery), every lesson tagged with a method, and every generator pitch-checked in all 12 keys. These paths are useful on their own: a player can learn the technique without the artist.
+4. **Only then add the artist.** When every signature technique has a complete path, write the artist file. Its units draw from those paths with `PU` (choose the `tiers` that fit the style), in the order a player should learn them. The only lessons the artist file writes itself are in the closing **"put it together"** unit: original studies in the artist's style that combine the techniques, and improvising over their kind of progression.
+
+The validator enforces this: for any new artist it is an **error** if a signature technique has no path (link it with `{name, path}` when the name alone doesn't find it), if a path it uses isn't complete, if a signature technique isn't taught by a `PU` unit, if a unit other than the last has its own lessons, or if `sources` has fewer than 3 URLs. It also prints an **Artist readiness** table: which paths each artist still needs.
+
+While an artist's techniques are being built (step 2–3 can take several runs), keep the artist `planned` in `content/ROSTER.md` with a note of which paths are done, so the next run picks up where you left off.
+
+**The artists built before this rule** (Eric Johnson, Van Halen, Paul Gilbert, Stevie Ray Vaughan, Jimi Hendrix, David Gilmour, Guthrie Govan) get the same checks as warnings. Bring them up to the rule over the next runs: build their missing technique paths, then rewrite their files with `PU` units and `sources`. Paul Gilbert only needs `sources`.
+
 ```js
-import { S, U, PU, artist, skillsOf } from '../lib.js';
-import rolling5s from '../kb/rolling5s.js';
+import { S, U, PU, artist } from '../lib.js';
 import pentatonic from '../kb/pentatonic.js';
+import rolling5s from '../kb/rolling5s.js';
+import spreadTriads from '../kb/spreadTriads.js';
 export default artist({ id: 'eric-johnson', name: 'Eric Johnson', wiki: ['Eric Johnson (guitarist)'], genre: 'rock',
-  re: /eric johnson|\bej\b/, blurb: 'One sentence on the sound.', techniques: ['Rolling 5s', …],   // 3–6, shown as chips
+  re: /eric johnson|\bej\b/, blurb: 'One sentence on the sound.',
+  techniques: ['Rolling 5s', { name: 'Violin-like legato tone', path: 'legatoTone' }, …],   // 3–6 chips; each must resolve to a complete path
+  sources: ['https://…interview', 'https://…lesson', 'https://…analysis'],                 // 3+ URLs from step 1
   ctx: { key: 9, minor: true, prog: 'minorRock' },
-  units: [PU(pentatonic, { title: 'The pentatonic boxes', tiers: ['foundations', 'intermediate'] }),
+  units: [PU(pentatonic, { title: 'The pentatonic boxes', tiers: ['intermediate', 'advanced', 'mastery'] }),
           PU(rolling5s, { title: 'Rolling 5s' }),
-          U('Putting it together', 'One sentence.', [S(…)]), …],   // 4–6 units, easiest first; the last puts it together in music
+          PU(spreadTriads, { title: 'Spread triads' }),
+          U('Putting it together', 'One sentence.', [S('ej-study', …), S('ej-solo', …)])],   // the closing unit: the artist's own studies
   riffs: [{ title: 'Cliffs of Dover', note: 'What it showcases.' }, { title: '…', artist: 'Band name', note: '…' }] });
 ```
 
@@ -96,7 +115,7 @@ An artist's signature techniques belong in the knowledge base, each as its own p
 **Draw from paths with `PU(entry, {title, summary, tiers})`.** A path unit doesn't copy lessons: the artist page teaches the stage of that path the player is at (the stage they're partway through, else the first unfinished one at their level), with the path's own lessons and progress. A lesson mastered on the Paul Gilbert page is mastered on the path page and for every other artist who uses that path, and the unit moves on to the next stage when the current one is done. A master class built from the artist climbs each path unit two stages from the player's level. Use `tiers` to keep to the stages that matter for the player's style (for example only `['intermediate', 'advanced', 'mastery']` of the pentatonic path for a shred player). Rules:
 - When an artist uses a technique that has a path, use `PU`. Never copy a multi-stage path with `skillsOf(entry)`; the validator warns when a unit does.
 - Before writing a new artist-specific exercise, check whether an existing path already teaches it; if it does, draw from the path, and put anything genuinely new into that path (where every player gets it) rather than into the artist file.
-- Keep `U(...)` with `S(...)` skills for what is truly the artist's own (a signature lick, a riff-style study) and for the closing "put it together" unit.
+- `U(...)` with `S(...)` skills only in the closing "put it together" unit. If something is truly the artist's own (a signature lick like Paul Gilbert's six-note cell), it still gets its own path (`pgSix`), so it can be taught from scratch to mastery.
 
 ## Concept-first lessons (how every topic is built)
 
@@ -207,13 +226,13 @@ The queue has three sections. Every run keeps them up to date.
 1. Run `git pull --rebase`, read this file, then sync the player requests from Drive into `content/QUEUE.md`.
 2. **Player requests first.** For each new request:
    - **Technique, subject or style:** create its knowledge-base entry with at least the foundations and intermediate stages full, and the rest started.
-   - **Guitarist:** add them to `content/ROSTER.md` as high priority and build their artist page. Their signature techniques become knowledge-base entries, or reuse existing ones with `PU`.
+   - **Guitarist:** add them to `content/ROSTER.md` as high priority and start "Building an artist: technique-first": research the artist, then build their technique paths. Add the artist page only when every one of their techniques has a complete path; until then, record progress on the roster.
    - **Artist rebuild** (a request to build an artist's course on researched paths): build or complete each of the artist's technique paths concept-first, then rewrite the artist file so its units draw from those paths with `PU`. Then check every other artist for the same techniques and switch them to `PU` as well.
 3. **Depth.** Bring incomplete paths up to the depth standard. Each run must leave **at least two more paths complete** than before. Priority order:
    - paths players requested;
-   - paths used by artists;
+   - paths that artists need (see the validator's **Artist readiness** table): first the paths of the artist being built, then the paths the older artists are missing;
    - fundamentals every guitarist needs: alternate picking, legato, bending, vibrato, chord changes, barre chords, strumming, palm muting, fretboard knowledge, timing.
-4. **Artists.** Every other run, build the next `planned` artist in `content/ROSTER.md`, with 8+ lessons and their techniques as knowledge-base paths.
+4. **Artists, technique-first.** Every other run, work on the next `planned` artist in `content/ROSTER.md` following "Building an artist: technique-first": research the artist, then build or complete their technique paths (as many as the run allows, each one complete). Add the artist file only in the run where the last of their paths is complete. In the runs between, also bring one of the older artists up to the rule when its paths are ready (switch its units to `PU`, add `sources`).
 5. **Discovery.** Research 3–5 topics the library doesn't cover yet and add them to the Discovered section of the queue with a one-line reason and a source. Look at:
    - the curricula of reputable teaching programs and methods;
    - what learners commonly ask to learn;

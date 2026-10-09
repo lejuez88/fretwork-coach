@@ -16,7 +16,8 @@ console.error = (...a) => { errors.push(a.join(' ')); };
   await go('#/practice');
   ok(view().querySelector('a.lib-more-card[href="#/artist"]'), 'practice links to the artist series');
   await go('#/artist');
-  ok(view().querySelectorAll('.artist-big').length === 6, 'artist index');
+  const { ARTIST_INDEX } = await import('../js/data/kb.js');
+  ok(view().querySelectorAll('.artist-big').length === ARTIST_INDEX.length && ARTIST_INDEX.length >= 6, 'artist index lists every artist');
   for (const id of ['eric-johnson', 'van-halen', 'paul-gilbert', 'srv', 'hendrix', 'gilmour']) {
     await go('#/artist/' + id); await sleep(80);
     const n = view().querySelectorAll('.artist-lesson').length;

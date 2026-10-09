@@ -196,8 +196,16 @@ export function entry(e) {
   const lo = Math.min(...stages.map(s => s.levels[0])), hi = Math.max(...stages.map(s => s.levels[1]));
   return { kind: 'technique', ctx: { key: 9, minor: true, prog: 'minorRock' }, ...e, stages, level: stages.length ? [lo, hi] : [1, 10] };
 }
-/** An artist: units of lessons on their signature techniques, plus famous songs (title + note links only). */
-export const artist = a => ({ ...a });
+/**
+ * An artist: units of lessons on their signature techniques, plus famous songs (title + note links only).
+ * techniques: names shown as chips; write one as {name, path} to link it to its learning path
+ * (the validator requires every signature technique to have a complete path before a new artist ships).
+ * sources: URLs of the research behind the artist's techniques and style.
+ */
+export const artist = a => {
+  const list = a.techniques || [];
+  return { ...a, techniques: list.map(t => (typeof t === 'string' ? t : t.name)), techPaths: list.map(t => (t && typeof t === 'object' && t.path) || null) };
+};
 /** Skills of a knowledge-base entry (all stages, in order), or only those with the given ids. */
 export function skillsOf(e, ...ids) {
   const all = e.stages.flatMap(s => s.skills);

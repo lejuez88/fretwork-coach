@@ -89,7 +89,7 @@ export function mountArtist(root, { navigate, id }) {
     root.innerHTML = `<a class="link" href="#/artist">← Artist series</a>
       <div class="artist-head">${wikiTile(a.wiki, a.name, 'artist-photo')}
         <div><div class="label">Artist series</div><h1>${esc(a.name)}</h1><p class="why">${esc(a.blurb)}</p>
-          <div class="chips">${a.techniques.map(t => { const tech = techniqueByName(t); return tech ? `<a class="chip sm" href="#/techniques/${tech.id}">${esc(t)}</a>` : `<span class="chip sm">${esc(t)}</span>`; }).join('')}</div>
+          <div class="chips">${a.techniques.map((t, i) => { const tech = (a.techPaths && a.techPaths[i] && KB_BY_ID[a.techPaths[i]]) || techniqueByName(t); return tech ? `<a class="chip sm" href="#/techniques/${tech.id}">${esc(t)}</a>` : `<span class="chip sm">${esc(t)}</span>`; }).join('')}</div>
           <div class="row" style="margin-top:12px">${mc ? `<a class="btn primary" href="#/course/${mc.id}">${MC_ICON} Open your ${esc(a.name)} master class</a>` : `<button class="btn primary" data-al="master" ${building ? 'disabled' : ''}>${building ? '<span class="spinner sm"></span>Building…' : `${MC_ICON} Start the ${esc(a.name)} master class`}</button>`}</div>
           <p class="small muted">${lessons.length} lessons at your level, original exercises in this style that play in the tab player. The master class turns them into a course with progress and reviews.</p></div></div>
       ${nextArtistHTML()}
