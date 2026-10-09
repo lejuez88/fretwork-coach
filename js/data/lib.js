@@ -3,6 +3,7 @@
 // file in js/data/kb/ and js/data/artists/ uses. See CONTENT.md.
 import { mod12, scaleNps, scaleBox, chordTones, parseChord, ROOT_BY_PC, SCALE_BY_ID } from '../core/theory.js';
 import { rootFret6, fretOn } from '../core/atoms.js';
+import { progressionNames } from '../core/styles.js';
 export { mod12, scaleNps, scaleBox, chordTones, parseChord, ROOT_BY_PC, SCALE_BY_ID, rootFret6, fretOn };
 
 /* ------------------------------- Helpers ------------------------------- */
@@ -107,6 +108,34 @@ export function spreadBar(v, t0, notes, { arpeggio = 'pinch' } = {}) {
   }
 }
 export const spreadName = (pc, type) => nameOf(pc) + (type === 'min' ? 'm' : type === 'dim' ? '°' : '');
+/**
+ * An improvisation lesson over a backing progression (like the targetSolo atom) that also gives a
+ * tab: one landing note per bar, a chord tone of that bar's chord (alternating 3rd and root), each
+ * close to the last one. prog: a progression id ('minorRock', 'blues', 'dorianVamp', …); scale: the
+ * scale to improvise with (a SCALE_BY_ID id). Keyed on c.key, like the '$prog' atom arguments.
+ */
+export function targetGuide(c, { prog = 'minorRock', scale = null, name = null, id = null } = {}) {
+  let chords = progressionNames(c.key, prog); if (!chords || !chords.length) return null;
+  while (chords.length < 4) chords = [...chords, ...chords];
+  scale = scale || (c.minor ? 'minorPent' : 'majorPent');
+  const notes = []; let near = 7;
+  chords.forEach((nm, bar) => {
+    const ch = chordInfo(nm); if (!ch) return;
+    const want = ch.pcs[bar % 2 === 0 ? 1 : 0];
+    let best = null;
+    for (const s of [4, 3, 2, 1]) for (let f = 2; f <= 15; f++) if (mod12(OPEN[s] + f) === want) { const d = Math.abs(f - near) + (s === 4 ? 1 : 0); if (!best || d < best.d) best = { s, f, d }; }
+    if (best) { notes.push(N(best.s, best.f, bar * 4, 4, '~')); near = best.f; }
+  });
+  if (notes.length < 3) return null;
+  const sc = SCALE_BY_ID[scale] ? SCALE_BY_ID[scale].name.toLowerCase() : scale;
+  return make(c, {
+    id: id || null, name: name || `Solo over ${chords.join(' – ')}: land on chord tones`, domain: 'improv', method: 'transfer', unit: 'phrases', goal: 110, start: 70, minutes: 6,
+    backing: chords, chords,
+    why: 'Landing on a chord tone at each change makes a solo follow the harmony. The tab gives one landing note per bar (the 3rd, then the root) as a guide.',
+    instr: `Improvise with the ${nameOf(c.key)} ${sc}. Aim every phrase at the guide note on beat 1 of the next bar (the tab shows one per bar), use space between phrases, and repeat ideas before changing them. Pass: four choruses where every bar line lands on a chord tone.`,
+    watch: 'Running the scale up and down without phrasing.', simplify: 'Whole notes: only the guide notes, in time, with vibrato.', tab: { notes }
+  });
+}
 
 /* ------------------------------ Structure ------------------------------ */
 /** A written drill, for things a tab can't show (use sparingly). */

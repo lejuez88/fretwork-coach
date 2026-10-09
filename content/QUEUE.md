@@ -8,14 +8,14 @@ Synced from the player's Google Drive file `Fretwork Coach research requests.jso
 
 | Requested | Topic | Kind | Status | Built as |
 |---|---|---|---|---|
-| | *(none yet; 2026-10-09: no `Fretwork Coach research requests.json` in Drive, only the profile)* | | | |
+| 2026-10-09 | Rebuild the Paul Gilbert course on researched, concept-first paths (alternatePicking, pgSix, pent6s, stretchPent, skipArps) and switch other artists to PU (via the development thread) | artist rebuild | built 2026-10-09 | `alternatePicking` (new), `pgSix`, `pent6s`, `stretchPent`, `skipArps` (all complete); `paul-gilbert` rewritten with PU |
 
 ## Depth backlog
 
-Incomplete paths, from the validator's coverage table (`node tools/validate-content.mjs`). As of 2026-10-09 (second run): **pentatonic**, **hybridPicking** and **economyPicking** are complete (3 of 19). **chromaticPassing** (new) has foundations and intermediate full, advanced started (2 skills/2 lessons), mastery missing. The other 15 paths have one stage of 1–4 lessons and need rebuilding concept-first, with all four stages at the depth standard.
+Incomplete paths, from the validator's coverage table (`node tools/validate-content.mjs`). As of 2026-10-09 (third run): **8 of 20 paths complete**: pentatonic, hybridPicking, economyPicking, alternatePicking, pgSix, pent6s, stretchPent, skipArps. **chromaticPassing** has foundations and intermediate full, advanced started, mastery missing. The other 11 paths have one stage of 1–4 lessons and need rebuilding concept-first.
 
 Priority order:
-1. Paths used by artists: slides (now used by Guthrie Govan too), chromaticPassing (Govan), rolling5s, speedPent, spreadTriads, hexatonic, tapping, openPulls, pgSix, skipArps, pent6s, stretchPent, sharp9, octaves.
+1. Paths used by artists: slides (Govan), chromaticPassing (Govan), rolling5s, speedPent, spreadTriads, hexatonic (Eric Johnson), tapping, openPulls (Van Halen), sharp9, octaves (Hendrix).
 2. Fundamentals: travis, sweepChanges.
 
 ## Discovered
@@ -24,7 +24,7 @@ New topics to build, with a reason and a source. Seeded with the core curriculum
 
 | Topic | Kind | Why | Status |
 |---|---|---|---|
-| Alternate picking | technique | Foundation of single-note playing; prerequisite for economy, sweep and speed paths | planned |
+| Alternate picking | technique | Foundation of single-note playing; prerequisite for economy, sweep and speed paths | built 2026-10-09 as `alternatePicking` (complete) |
 | Legato (hammer-ons and pull-offs) | technique | Prerequisite for tapping, open-string pull-offs and fluid lines | planned |
 | String bending | technique | Core expressive technique; blues, rock and country | planned |
 | Vibrato | technique | Core expressive technique; pairs with bending | planned |
@@ -46,4 +46,5 @@ New topics to build, with a reason and a source. Seeded with the core curriculum
 | String muting (fretting- and picking-hand damping) | technique | Assumed by every string-skipping, hybrid and high-gain lesson (Govan's arpeggio melodies, skipArps, hybrid octaves); no path teaches it. Source: https://www.guitarworld.com/lessons/5-guthrie-govan-guitar-licks | planned |
 | Odd time signatures (5/4, 7/8, 7/4) | subject | Counting and grouping odd meters (2+3, 2+2+3); Govan's "Fives"/"Sevens", prog and fusion. Source: https://www.fundamental-changes.com/odd-time-signatures-on-guitar/ | planned |
 | Seventh-chord arpeggios across the neck | subject | maj7, m7, 7, m7♭5 arpeggios in CAGED shapes: prerequisite for sweepChanges, skipArps, jazz comping and Govan-style arpeggio melodies. Source: https://www.musiclessons.com/pubs/lesson/index.cfm?pub=254 | planned |
+| Odd note groupings against the beat (5s, 7s over 16ths) | subject | Considered for the Gilbert rebuild; the sources didn't single it out as his, and fives against 16ths are now in pent6s and alternatePicking. A general rhythm path (grouping 3, 5, 7 over any pulse) would still help fusion and prog players. Source: https://www.premierguitar.com/articles/23477-cram-session-alternate-picking | planned |
 | Whammy bar technique | technique | Dips, scoops, bar vibrato and flutter (Govan, Vai, Beck, EVH); needs a whammy tab mark (see REQUESTS). Source: https://guitarworld.com/lessons/using-your-vibrato-bar-creatively-and-tastefully | planned |

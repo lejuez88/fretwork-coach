@@ -1,5 +1,6 @@
 // Artist Series: Eric Johnson. Original lessons in this style, built from the knowledge base; famous songs are linked, never transcribed.
-import { OPEN, N, nameOf, minorKey, goalFor, slug, beatsOf, make, fromSeq, pentBox, byString, pent3nps, legatoMarks, chordInfo, OPEN_SHAPES, onString, bassPair, openVoicings, keyChords, topTriad, nextToneUp, spreadVoicing, spreadBar, spreadName, W, S, U, stage, entry, artist, skillsOf, TIERS, TIER_BY_ID, tierOf, mod12, scaleNps, chordTones, parseChord, ROOT_BY_PC, rootFret6, fretOn, scaleBox, SCALE_BY_ID } from '../lib.js';
+import { OPEN, N, nameOf, minorKey, goalFor, slug, beatsOf, make, fromSeq, pentBox, byString, pent3nps, legatoMarks, chordInfo, OPEN_SHAPES, onString, bassPair, openVoicings, keyChords, topTriad, nextToneUp, spreadVoicing, spreadBar, spreadName, W, S, U, stage, entry, artist, skillsOf, TIERS, TIER_BY_ID, tierOf, mod12, scaleNps, chordTones, parseChord, ROOT_BY_PC, rootFret6, fretOn, scaleBox, SCALE_BY_ID, PU } from '../lib.js';
+import pentatonic from '../kb/pentatonic.js';
 import hexatonic from '../kb/hexatonic.js';
 import rolling5s from '../kb/rolling5s.js';
 import speedPent from '../kb/speedPent.js';
@@ -11,6 +12,7 @@ export default artist({ id: 'eric-johnson', name: 'Eric Johnson', wiki: ['Eric J
     techniques: ['Speed pentatonics', 'Rolling 5s', 'Spread triads', 'Pentatonic plus the 9th', 'Position shifting'],
     ctx: { key: 9, minor: true, prog: 'minorRock' },
     units: [
+      PU(pentatonic, { title: 'The pentatonic boxes', summary: 'All five boxes, sequences and keys: the ground his speed pentatonics run on.', tiers: ['intermediate', 'advanced', 'mastery'] }),
       U('Pentatonic sixes', 'The six-note cell that drives his fast runs, in one box.', [skillsOf(speedPent)[0]]),
       U('Rolling 5s', 'Groups of five against a 16th-note pulse.', skillsOf(rolling5s)),
       U('Across the neck', 'Speed pentatonics through all five boxes, and the added 9th.', [skillsOf(speedPent)[1], ...skillsOf(hexatonic)]),

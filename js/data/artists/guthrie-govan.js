@@ -4,6 +4,7 @@ import hybridPicking from '../kb/hybridPicking.js';
 import economyPicking, { position } from '../kb/economyPicking.js';
 import chromaticPassing, { vampChords, place, vampLine, sideStep } from '../kb/chromaticPassing.js';
 import slides from '../kb/slides.js';
+import alternatePicking from '../kb/alternatePicking.js';
 
 const pitch = (s, f) => OPEN[s] + f;
 /** Chord-tone pitches of a chord between lo and hi. */
@@ -59,6 +60,7 @@ export default artist({ id: 'guthrie-govan', name: 'Guthrie Govan', wiki: ['Guth
   units: [
     PU(slides, { title: 'Slides', summary: 'Slides make his fast lines sound vocal instead of mechanical: start here.' }),
     PU(hybridPicking, { title: 'Hybrid picking', summary: 'Pick plus middle and ring fingers: string skips, double stops and snapped notes.' }),
+    PU(alternatePicking, { title: 'Alternate picking at speed', summary: 'Strict alternate picking for his fast chromatic and Dorian lines: bursts, accents, skips and performance tempo.', tiers: ['advanced', 'mastery'] }),
     PU(economyPicking, { title: 'Economy picking', summary: 'One stroke through string changes: the fluid three-note-per-string runs.' }),
     PU(chromaticPassing, { title: 'Chromatic and outside notes', summary: 'Approach notes, enclosures and side-stepping: the bebop-meets-rock vocabulary.' }),
     U('Putting it together', 'Arpeggio melodies and a study in his style, over a Dorian vamp.', [
