@@ -13,6 +13,9 @@ import { suggestedDifficulty, tierName } from '../core/courses.js';
 import { isMaster, masterDifficulty } from '../core/master.js';
 import { topicArtHTML, MC_ICON } from '../ui/mastersheet.js';
 import { Shell } from '../ui/shell.js';
+import { nextInCourse, recommendSession } from '../core/coach.js';
+import { buildRoutine, coachBriefing } from '../core/routine.js';
+import { startRoutine, attachBriefing } from './routine.js';
 import { variationsFor } from '../core/variations.js';
 import { levelRange } from '../ui/variationpicker.js';
 
@@ -38,7 +41,7 @@ export function mountCourse(root, { id, navigate }) {
         ${c.players.length ? `<p class="muted small">Inspired by ${c.players.map(esc).join(', ')}</p>` : ''}
         <div class="cprog big"><div class="bar"><i style="width:${c.progress || 0}%"></i></div><span>${c.progress || 0}%</span></div>
         <p class="small muted">${sessions.length} session${sessions.length === 1 ? '' : 's'} · ${fmtMinutes(mins)} practiced</p>
-        <a class="btn primary block" href="#/home/routine/${c.id}">▶ Practice this course</a>
+        ${nextHTML()}
       </section>
       ${isGenericPlan(c) ? `<section class="card levelup"><div class="label">New: a plan built for ${esc(c.style)}</div>
         <p>This course still uses the old standard plan, which was the same for every style. Rebuild it to get exercises in ${esc(c.style)}’s own keys, rhythms and techniques. Progress on the old exercises resets; your practice time and skill levels are kept.</p>
@@ -53,9 +56,28 @@ export function mountCourse(root, { id, navigate }) {
     hydrateImages(root);
   }
 
+  /** Practice length for a guided lesson: today's usual practice time. */
+  const lessonMinutes = () => (recommendSession(p) || {}).minutes || 30;
+  /** The lesson the app picks next in this course, with the reason. */
+  function nextHTML() {
+    const nx = c.tree && nextInCourse(p, c);
+    if (!nx) return `<a class="btn primary block" href="#/home/routine/${c.id}">▶ Practice this course</a>`;
+    return `<div class="nextlesson"><div class="label">Your next lesson · chosen for you</div>
+      <b>${esc(nx.skill.title)}</b><p class="small">${esc(nx.reason)}</p>
+      <button class="btn primary block" data-c="startnext">▶ Start next lesson · ${lessonMinutes()} min</button>
+      <a class="linkbtn small" href="#/home/routine/${c.id}">Customize: pick the skill or length yourself</a></div>`;
+  }
+  function startNext() {
+    const nx = nextInCourse(p, c); if (!nx) return;
+    const mins = lessonMinutes();
+    const plan = buildRoutine(p, c, { budget: mins, focusSkillId: nx.skill.id });
+    startRoutine(plan, { mode: 'duration', minutes: mins, deadline: Date.now() + mins * 60000 }, navigate);
+    if (Claude.hasKey()) coachBriefing(p, plan).then(bf => { if (bf) attachBriefing(bf); });
+  }
+
   function treeHTML() {
     const st = c.state, now = today();
-    return `<section class="card tree"><h3>Progress tree</h3><p class="muted small">${c.tree.generatedBy === 'claude' ? 'Designed by Claude for you.' : isGenericPlan(c) ? 'Standard plan.' : `Built-in ${esc(c.style)} plan.`} Tap a skill for its exercises.</p>
+    return `<section class="card tree"><h3>The full plan</h3><p class="muted small">${c.tree.generatedBy === 'claude' ? 'Designed by Claude for you.' : isGenericPlan(c) ? 'Standard plan.' : `Built-in ${esc(c.style)} plan.`} The app picks your next lesson from it; tap any skill to see its exercises or practice it instead.</p>
       ${c.tree.units.map((u, ui) => `
         <div class="unit"><div class="unit-head"><span class="unum">${ui + 1}</span><div><b>${esc(u.title)}</b><div class="muted small">${esc(u.summary)}</div></div></div>
         <div class="nodes">${u.skills.map(s => {
@@ -89,7 +111,7 @@ export function mountCourse(root, { id, navigate }) {
         ${varsLine(e)}
         ${es.history.length ? `<div class="spark">${es.history.slice(-12).map(h => `<i class="${h.clean ? 'c' : ''}" style="height:${Math.max(8, Math.round(h.tempo / e.goalBpm * 100))}%" title="${h.date}: ${h.tempo} BPM"></i>`).join('')}</div>` : ''}</div>`; }).join('')}
       ${ss.status === 'locked' ? `<p class="muted small">Unlocks after: ${esc(s.prereqs.map(pid => (c.tree.units.flatMap(u => u.skills).find(x => x.id === pid) || {}).title).filter(Boolean).join(', '))}</p>` : ''}
-      <a class="btn primary block" href="#/home/routine/${c.id}/${s.id}">▶ Practice this skill now</a>`);
+      <a class="btn block" href="#/home/routine/${c.id}/${s.id}">▶ Practice this skill instead</a>`);
     sheet.el.addEventListener('click', e => { if (e.target.closest('a')) sheet.close(); });
   }
 
@@ -108,6 +130,7 @@ export function mountCourse(root, { id, navigate }) {
     const b = e.target.closest('[data-c],[data-skill]'); if (!b) return;
     if (b.dataset.skill) return skillSheet(b.dataset.skill);
     const a = b.dataset.c;
+    if (a === 'startnext') return startNext();
     if (a === 'build') build(false);
     if (a === 'rebuild') build(true);
     if (a === 'restyle') { if (!confirm(`Rebuild “${c.name}” with the ${c.style} plan? Progress on the old exercises resets.`)) return; c.tree = generateTreeLocal(c); c.state = null; Store.save(); toast(`New ${c.style} plan ready.`); render(); }

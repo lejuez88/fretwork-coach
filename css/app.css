@@ -1047,3 +1047,26 @@ body.has-actions .tunepop{bottom:calc(140px + env(safe-area-inset-bottom))}
 .kbq-row > span:first-child{flex:1;min-width:0}
 .kbq-status{font-size:12px;font-weight:600;color:var(--amber);white-space:nowrap}
 .kbq-status.added{color:#7fd49a}
+
+/* ---------- Guided lessons: the app's pick first, your choice under "Customize" ---------- */
+.routine-cta.guided h3 .hl{color:var(--amber)}
+.why-list{margin:6px 0 12px;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:14px;line-height:1.45}
+.why-list li::marker{color:var(--amber)}
+.quick-time{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 12px}
+.quick-time .chips{gap:6px}
+button.linkbtn.small,a.linkbtn.small,.routine-cta .linkbtn{display:inline-block;flex:none;color:var(--amber);font-size:13px;margin-top:10px;text-decoration:none}
+.routine-cta .linkbtn:hover,.linkbtn.small:hover{text-decoration:underline}
+.nextlesson{border:1px solid rgba(245,165,36,.55);background:linear-gradient(180deg,rgba(245,165,36,.10),rgba(245,165,36,.02));border-radius:14px;padding:14px;margin:12px 0}
+.course-hero .nextlesson{margin-top:14px}
+.nextlesson > b{display:block;font-size:17px;margin:4px 0}
+.nextlesson p{margin:4px 0 10px}
+.nextlesson .row{gap:8px}
+.nextlesson.muted-card{border-color:var(--line);background:var(--panel)}
+details.customize{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+details.customize > summary{cursor:pointer;color:var(--amber);font-size:13px;font-weight:600;list-style:none}
+details.customize > summary::-webkit-details-marker{display:none}
+details.customize > summary::before{content:'▸ ';}
+details.customize[open] > summary::before{content:'▾ ';}
+.artist-lesson.flash{outline:2px solid var(--amber);outline-offset:3px;transition:outline-color .3s}
+.routine-cta .also{margin:10px 0 0;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
+.routine-cta .also .linkbtn{margin:0}

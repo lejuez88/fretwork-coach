@@ -13,6 +13,7 @@ import { calibratedTarget } from '../core/progression.js';
 import { tierName } from '../core/courses.js';
 import { MC_ICON } from '../ui/mastersheet.js';
 import { lessonCardHTML, lessonActions, lessonState, lessonTarget } from '../ui/lessoncards.js';
+import { pathStage, nextLesson } from '../core/coach.js';
 import { requestBoxHTML, wireRequestBox } from '../ui/kbrequest.js';
 
 const UI_KEY = 'fretworkCoach.techUI';
@@ -86,8 +87,10 @@ export function mountTechnique(root, { navigate, id }) {
   const p = Store.profile, t = KB_BY_ID[id];
   if (!t) { navigate('#/techniques'); return () => {}; }
   const you = yourLevel(p, t);
-  const startStage = stageFor(t, techniqueLevelFor(p, id)) || t.stages[0];
+  // Where the app says to work: refined by the coach once your progress on every stage is known
+  let startStage = stageFor(t, techniqueLevelFor(p, id)) || t.stages[0], startReason = '', chosenByHand = false, levelOpen = false;
   let tier = startStage.tier, level = Math.min(Math.max(techniqueLevelFor(p, id), startStage.levels[0]), startStage.levels[1]);
+  const fitLevel = s => Math.min(Math.max(you, s.levels[0]), s.levels[1]);
   let lessons = [], targets = [], keysByTier = {}, ready = false, gone = false, building = false;
   const acts = lessonActions(root, { get: () => ({ lessons, targets }), reason: () => `${t.title} path: ${TIER_BY_ID[tier].name}`, title: l => `${t.title}: ${l.ex.name}`, navigate });
   const masterFor = () => p.courses.find(c => isMaster(c) && c.status !== 'archived' && c.topic && c.topic.kbId === id) || null;
@@ -99,12 +102,31 @@ export function mountTechnique(root, { navigate, id }) {
   async function load() {
     // lesson keys for every stage (to show progress), then the selected stage's lessons
     for (const st of t.stages) keysByTier[st.tier] = (await stageLessonList(p, id, { tier: st.tier, lvl: st.levels[0] })).map(l => l.key);
+    const ps = pathStage(p, t, progressOf);
+    if (ps && ps.stage) { startStage = ps.stage; startReason = ps.reason; if (!chosenByHand) { tier = startStage.tier; level = fitLevel(startStage); } }
     await loadStage();
   }
   async function loadStage() {
     lessons = await stageLessonList(p, id, { tier, lvl: level });
     targets = lessons.map(l => lessonTarget(p, l, calibratedTarget(l.ex, l.ex.level || level, p)));
     ready = true; if (!gone) render();
+  }
+  /** The lesson the app picks next on this path (on the recommended stage), or how to get back to it. */
+  function nextHTML() {
+    const rs = TIER_BY_ID[startStage.tier];
+    if (tier !== startStage.tier) return `<section class="card nextlesson muted-card"><p class="small">You’re looking at the ${esc(TIER_BY_ID[tier].name)} stage. The app recommends <b>${esc(rs.name)}</b> for you right now${startReason ? `: ${esc(startReason.charAt(0).toLowerCase() + startReason.slice(1))}` : '.'}</p>
+      <button class="btn sm" data-tier="${startStage.tier}">← Back to my recommended stage</button></section>`;
+    const nx = nextLesson(p, lessons, { label: `the ${rs.name.toLowerCase()} stage` });
+    if (!nx) {
+      const i = t.stages.findIndex(s => s.tier === tier), nextSt = t.stages[i + 1];
+      return `<section class="card nextlesson"><div class="label">Stage complete</div><b>Every ${esc(rs.name.toLowerCase())} lesson is mastered.</b>
+        ${nextSt ? `<button class="btn primary block" data-tier="${nextSt.tier}">Go on to ${esc(TIER_BY_ID[nextSt.tier].name)} ›</button>` : '<p class="small">You’ve reached the top of this path. Keep it alive with the review in your daily lessons.</p>'}</section>`;
+    }
+    const l = lessons[nx.index];
+    return `<section class="card nextlesson"><div class="label">Your next lesson · chosen for you</div>
+      <b>${esc(l.ex.name)}</b>
+      <p class="small">${esc(TIER_BY_ID[tier].name)} stage${startReason ? ` (${esc(startReason.charAt(0).toLowerCase() + startReason.slice(1).replace(/\.$/, ''))})` : ''}. ${esc(nx.reason)}</p>
+      <div class="row"><button class="btn primary" data-al="practice" data-i="${nx.index}">▶ Start this lesson</button><button class="btn" data-jump="${nx.index}">Show it below</button></div></section>`;
   }
   function render() {
     acts.stop();
@@ -125,11 +147,13 @@ export function mountTechnique(root, { navigate, id }) {
       }).join('')}</div>
       <div class="artist-cols">
         <div class="artist-lessons">
+          ${ready ? nextHTML() : ''}
           ${st ? `<section class="card tech-level">
-            <div class="sec-head"><h3>${esc(TIER_BY_ID[tier].name)}: ${esc(st.title)}</h3><span class="small muted">Your ${esc(domName(t.domain)).toLowerCase()} level: ${you}</span></div>
+            <div class="sec-head"><h3>${esc(TIER_BY_ID[tier].name)}: ${esc(st.title)}</h3><span class="small muted">Level ${level} · your ${esc(domName(t.domain)).toLowerCase()} level: ${you}</span></div>
             <p class="small"><b>Goal:</b> ${esc(st.goal)}</p>
-            ${st.levels[1] > st.levels[0] ? `<div class="chips">${Array.from({ length: st.levels[1] - st.levels[0] + 1 }, (_, i) => st.levels[0] + i).map(l => `<button class="chip ${l === level ? 'on' : ''}" data-lv="${l}">Level ${l}${l === you ? ' · you' : ''}</button>`).join('')}</div>
-              <p class="small muted">Lessons are rebuilt for the level you pick: tempo goals, length and subdivisions change with it.</p>` : ''}
+            ${st.levels[1] > st.levels[0] ? `<details class="customize" ${levelOpen ? 'open' : ''}><summary>Customize: build these lessons at another level</summary>
+              <div class="chips">${Array.from({ length: st.levels[1] - st.levels[0] + 1 }, (_, i) => st.levels[0] + i).map(l => `<button class="chip ${l === level ? 'on' : ''}" data-lv="${l}">Level ${l}${l === you ? ' · you' : ''}</button>`).join('')}</div>
+              <p class="small muted">Tempo goals, length and subdivisions change with the level. The app picks the level that fits you by default.</p></details>` : ''}
           </section>` : ''}
           ${!ready ? '<p class="muted"><span class="spinner sm"></span> Loading lessons…</p>' : groups.map(g => `<section class="card"><div class="sec-head"><h3>${esc(g.skill.title)}</h3></div><p class="small muted">${esc(g.skill.summary)}</p>${g.items.map(i => lessonCardHTML(p, lessons[i], i, targets[i])).join('')}</section>`).join('')}
         </div>
@@ -158,9 +182,11 @@ export function mountTechnique(root, { navigate, id }) {
   }
   const onClick = e => {
     const ti = e.target.closest('[data-tier]');
-    if (ti) { tier = ti.dataset.tier; const s = t.stages.find(x => x.tier === tier); level = Math.min(Math.max(you, s.levels[0]), s.levels[1]); ready = false; render(); loadStage(); return; }
+    if (ti) { tier = ti.dataset.tier; chosenByHand = tier !== startStage.tier; const s = t.stages.find(x => x.tier === tier); level = fitLevel(s); ready = false; render(); loadStage(); return; }
+    const jump = e.target.closest('[data-jump]');
+    if (jump) { const card = root.querySelector(`[data-artslot="${jump.dataset.jump}"]`); const box = card && card.closest('.artist-lesson'); if (box) { box.classList.add('flash'); try { box.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch { /* ignore */ } setTimeout(() => box.classList.remove('flash'), 1600); } return; }
     const lv = e.target.closest('[data-lv]');
-    if (lv) { level = +lv.dataset.lv; ready = false; render(); loadStage(); return; }
+    if (lv) { level = +lv.dataset.lv; levelOpen = true; ready = false; render(); loadStage(); return; }
     if (e.target.closest('[data-tm="master"]')) { startPath(); return; }
     acts.onClick(e);
   };

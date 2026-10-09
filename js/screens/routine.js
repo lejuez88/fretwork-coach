@@ -94,11 +94,21 @@ export function startRoutine(plan, t = { mode: 'open', minutes: null, deadline: 
   Store.save(); navigate('#/practice/run');
 }
 
+/** Add the coach's briefing to the routine in progress (it arrives after the routine starts). */
+export function attachBriefing(coach) {
+  const a = getActive(); if (!a || !coach) return;
+  a.routine.coach = coach; saveActive(a);
+  try { window.dispatchEvent(new CustomEvent('fc:briefing', { detail: coach })); } catch { /* old browser */ }
+}
+
 /* -------------------------------- Runner -------------------------------- */
 export function mountRoutineRunner(root, { navigate }) {
   const p = Store.profile;
   let A = getActive();
-  if (!A) { navigate('#/practice'); return () => {}; }
+  // the briefing may arrive after the routine starts: keep it for the items still to come (no re-render mid-exercise)
+  const onBriefing = e => { if (A && A.routine) A.routine.coach = e.detail; };
+  window.addEventListener('fc:briefing', onBriefing);
+  if (!A) { window.removeEventListener('fc:briefing', onBriefing); navigate('#/practice'); return () => {}; }
   const course = A.routine.courseId ? p.courses.find(c => c.id === A.routine.courseId) : null;
   if (course) ensureState(course);
   /** Progress state behind an item (course, prescription, song section or saved exercise). */
@@ -403,7 +413,7 @@ export function mountRoutineRunner(root, { navigate }) {
   root.addEventListener('click', onClick); root.addEventListener('change', onChange); Shell.actionBar.addEventListener('click', barClick);
   render();
   tick = setInterval(update, 250);
-  return () => { clearInterval(tick); teardownTool(); root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); Shell.actionBar.removeEventListener('click', barClick); Shell.actions(''); };
+  return () => { window.removeEventListener('fc:briefing', onBriefing); clearInterval(tick); teardownTool(); root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); Shell.actionBar.removeEventListener('click', barClick); Shell.actions(''); };
 }
 
 /* -------------------------------- Summary ------------------------------- */

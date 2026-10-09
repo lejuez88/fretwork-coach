@@ -12,6 +12,7 @@ import { addSong } from '../core/songs.js';
 import { bestMatchUrl } from '../core/songsterr.js';
 import { openMasterSheet, MC_ICON } from '../ui/mastersheet.js';
 import { lessonCardHTML, lessonActions, lessonTarget } from '../ui/lessoncards.js';
+import { nextLesson } from '../core/coach.js';
 
 const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 /** The library technique an artist's technique chip names (or null). */
@@ -91,6 +92,7 @@ export function mountArtist(root, { navigate, id }) {
           <div class="chips">${a.techniques.map(t => { const tech = techniqueByName(t); return tech ? `<a class="chip sm" href="#/techniques/${tech.id}">${esc(t)}</a>` : `<span class="chip sm">${esc(t)}</span>`; }).join('')}</div>
           <div class="row" style="margin-top:12px">${mc ? `<a class="btn primary" href="#/course/${mc.id}">${MC_ICON} Open your ${esc(a.name)} master class</a>` : `<button class="btn primary" data-al="master" ${building ? 'disabled' : ''}>${building ? '<span class="spinner sm"></span>Building…' : `${MC_ICON} Start the ${esc(a.name)} master class`}</button>`}</div>
           <p class="small muted">${lessons.length} lessons at your level, original exercises in this style that play in the tab player. The master class turns them into a course with progress and reviews.</p></div></div>
+      ${nextArtistHTML()}
       <div class="artist-cols">
         <div class="artist-lessons">${groups.map(g => `<section class="card"><div class="sec-head"><h3>${esc(g.unit.title)}</h3></div><p class="small muted">${esc(g.unit.summary)}</p>${g.items.map(i => lessonCardHTML(p, lessons[i], i, targets[i])).join('')}</section>`).join('')}</div>
         <aside class="artist-side"><section class="card"><h3>Famous songs</h3>
@@ -101,6 +103,15 @@ export function mountArtist(root, { navigate, id }) {
           <p class="small muted">${esc(ARTIST_NOTE)}</p></section></aside>
       </div>`;
     hydrateImages(root);
+  }
+  /** The artist lesson the app picks next (easiest unmastered, stalled first), with the reason. */
+  function nextArtistHTML() {
+    const nx = nextLesson(p, lessons, { label: `the ${a.name} lessons` });
+    if (!nx) return `<section class="card nextlesson"><div class="label">All mastered</div><b>Every ${esc(a.name)} lesson is mastered.</b><p class="small">Keep them fresh in your daily lessons, or learn one of the famous songs below.</p></section>`;
+    const l = lessons[nx.index];
+    return `<section class="card nextlesson"><div class="label">Your next lesson · chosen for you</div>
+      <b>${esc(l.ex.name)}</b><p class="small">${esc(l.unit ? l.unit.title + ': ' : '')}${esc(nx.reason)}</p>
+      <div class="row"><button class="btn primary" data-al="practice" data-i="${nx.index}">▶ Start this lesson</button><button class="btn" data-jump="${nx.index}">Show it below</button></div></section>`;
   }
   async function startMaster() {
     if (building) return;
@@ -123,6 +134,8 @@ export function mountArtist(root, { navigate, id }) {
       return;
     }
     if (e.target.closest('[data-al="master"]')) { startMaster(); return; }
+    const jump = e.target.closest('[data-jump]');
+    if (jump) { const card = root.querySelector(`[data-artslot="${jump.dataset.jump}"]`); const box = card && card.closest('.artist-lesson'); if (box) { box.classList.add('flash'); try { box.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch { /* ignore */ } setTimeout(() => box.classList.remove('flash'), 1600); } return; }
     acts.onClick(e);
   };
   root.addEventListener('click', onClick);

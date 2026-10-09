@@ -25,7 +25,17 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: learning paths from scratch to mastery, a research queue, and a self-growing library
+## Latest: guided lessons (the app picks, you can still choose)
+
+| Area | Included |
+|---|---|
+| The coach (`js/core/coach.js`) | Decides the lesson that will help most and says why, from: stalled exercises (a targeted, simpler version first), spaced reviews that are due or overdue, your weakest skill areas and the struggles and goals you named, how long since you last worked on something, and unmastered work at your edge. |
+| Today's lesson (dashboard) | Guided by default: the app picks the course and the skill to focus on, lists the reasons, and has the plan ready to start; only the length is a quick choice (your usual practice time is preselected). If your biggest need isn't in any of your courses, it says so and offers the master class for it. **Customize** opens the old choices (course, focus skill, exact time) and "Let the app choose" goes back. The coach's briefing (with Claude) is fetched after the lesson starts, so starting is instant. |
+| Courses | A "Your next lesson" card with the reason and one button; the full plan stays below to browse, and any skill can be practiced instead. |
+| Learning paths and artists | A "Your next lesson" card: the right stage (the one you're partway through, else the first unfinished stage at your level), then the right lesson (stalled first, then the one you're on, then the next new one). Choosing another stage offers the way back; building lessons at another level is under Customize. |
+| Exercise library | Opens on the variation recommended for you, with the reason; the variations and the key, strings and chords controls are under Customize, and picking something else shows "Your choice" with a way back. |
+
+## Earlier: learning paths from scratch to mastery, a research queue, and a self-growing library
 
 | Area | Included |
 |---|---|

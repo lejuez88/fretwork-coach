@@ -152,12 +152,22 @@ export function mountLibraryExercise(root, { navigate, id, vid = null }) {
   const list = libVariations(p, entry);
   const edge = edgeVariation(p, entry, list);
   let cur = findVariation(list, vid || (edge && edge.vid));
-  let tool = null, logOpen = false;
+  let tool = null, logOpen = false, custOpen = false;
   const cat = CATEGORY_BY_ID[entry.cat];
   // key / strings / chords: stored per exercise
   let params = getLibParams(entry.id), inst = instanceOf(cur, params);
   const mtopic = topicForEntry(entry);
 
+  /** What the app recommends here and why; when you picked something else, the way back. */
+  function guideHTML(v) {
+    const lvl = levelFor(p, entry.cat), rec = edge || list[0], st = libState(p, entry.id, v.vid);
+    const recWhy = rec.base ? `It matches your ${esc((cat && cat.name || 'skill').toLowerCase())} level (${lvl}).` : `It’s the next step up from your ${esc((cat && cat.name || 'skill').toLowerCase())} level (${lvl}) that you haven’t mastered yet.`;
+    const head = v.vid === rec.vid
+      ? `<div class="label">Recommended for you</div>${v.base ? `<b>The exercise as written</b> <span class="small muted">· level ${v.level}</span>` : ''}<p class="small">${recWhy}${st && st.stalled ? ' It has stalled lately: play it a little slower and clean before pushing the tempo.' : ''}</p>`
+      : `<div class="label">Your choice</div>${v.base ? `<b>The exercise as written</b> <span class="small muted">· level ${v.level}</span>` : ''}
+        <p class="small muted">The app recommends ${esc(rec.base ? 'the exercise as written' : rec.label)} (level ${rec.level}). <button class="linkbtn small" data-vid="${rec.vid}">← Back to the recommended one</button></p>`;
+    return v.base ? head : head.replace(/^(<div class="label">[^<]*<\/div>)/, `$1${variationNoteHTML(v)}`);
+  }
   function teardown() { if (tool) { tool(); tool = null; } Metronome.stop(); }
   function render() {
     teardown();
@@ -173,10 +183,12 @@ export function mountLibraryExercise(root, { navigate, id, vid = null }) {
       <button class="mcbtn" data-a="master">${MC_ICON} <span>Master class: <b>${esc(mtopic.title)}</b></span><span class="small muted">a whole course on this topic ›</span></button>
       <div class="exgrid">
         <section class="card exvar">
-          <div class="sec-head"><div class="label">Variations · ${list.length} · ${levelRange(list)}</div><span class="small muted">Your level: ${levelFor(p, entry.cat)}</span></div>
-          ${variationChipsHTML(list, { current: v.vid, edge: edge && edge.vid, stateOf: x => libState(p, entry.id, x) })}
-          ${variationNoteHTML(v)}
-          ${inst.dims.length ? `<div class="label" style="margin-top:14px">Key, strings and chords</div>${paramControlsHTML(inst.dims, params)}` : ''}
+          ${guideHTML(v)}
+          <details class="customize" ${custOpen ? 'open' : ''}><summary>Customize: ${list.length > 1 ? `${list.length} variations (${levelRange(list)})` : ''}${list.length > 1 && inst.dims.length ? ', ' : ''}${inst.dims.length ? 'key, strings and chords' : ''}</summary>
+            ${list.length > 1 ? `<div class="sec-head" style="margin-top:8px"><div class="label">Variations</div><span class="small muted">Your level: ${levelFor(p, entry.cat)}</span></div>
+            ${variationChipsHTML(list, { current: v.vid, edge: edge && edge.vid, stateOf: x => libState(p, entry.id, x) })}` : ''}
+            ${inst.dims.length ? `<div class="label" style="margin-top:14px">Key, strings and chords</div>${paramControlsHTML(inst.dims, params)}` : ''}
+          </details>
         </section>
         <section class="card exinfo">
           <h3>${esc(ex.name)}</h3>
@@ -236,12 +248,12 @@ export function mountLibraryExercise(root, { navigate, id, vid = null }) {
     params = { ...params, [idp]: value };
     // a choice equal to the exercise's own setting is just the default
     const d = inst.dims.find(x => x.id === idp); if (d && String(d.value) === String(value)) delete params[idp];
-    setLibParams(entry.id, params); inst = instanceOf(cur, params); render();
+    setLibParams(entry.id, params); inst = instanceOf(cur, params); custOpen = true; render();
   }
   const onChange = e => { const sel = e.target.closest('[data-param]'); if (sel) setParam(sel.dataset.param, sel.value); };
   const onClick = e => {
     if (e.target.closest('[data-a="master"]')) return openMasterSheet({ ...mtopic, from: { name: entry.title || entry.ex.name, why: entry.ex.why || '' } }, { navigate });
-    const chip = e.target.closest('[data-vid]'); if (chip) return choose(chip.dataset.vid);
+    const chip = e.target.closest('[data-vid]'); if (chip) { custOpen = !!chip.closest('details.customize'); return choose(chip.dataset.vid); }
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.r === 'openlog') { logOpen = true; drawLog(); return; }
     if (b.dataset.rs) { const inp = root.querySelector('[data-r="rtempo"]'); inp.value = Math.max(20, (+inp.value || 0) + Number(b.dataset.rs)); return; }
