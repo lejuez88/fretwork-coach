@@ -286,7 +286,7 @@ export function sixthsOverChanges(c, { prog = 'country' } = {}) {
   const k = majKey(c), chords = prog === 'axis' ? axis(k) : country(k), notes = []; let t = 0, near = 7;
   for (const nm of chords) {
     const ch = chordInfo(nm); const opts = [];
-    for (let f = 1; f <= 16; f++) { const lo = pitch(3, f); if (!ch.pcs.includes(mod12(lo)) || !inMajor(k, lo)) continue; const hi = diatonicAbove(k, lo, 5); if (ch.pcs.includes(mod12(hi)) && hi - 64 <= 20) opts.push([f, hi - 64]); }
+    for (let f = 1; f <= 16; f++) { const lo = pitch(3, f); if (!ch.pcs.includes(mod12(lo)) || !inMajor(k, lo)) continue; const hi = diatonicAbove(k, lo, 5); if (ch.pcs.includes(mod12(hi)) && hi - 64 >= 1 && hi - 64 <= 20) opts.push([f, hi - 64]); }
     opts.sort((a, b) => Math.abs(a[0] - near) - Math.abs(b[0] - near));
     const [a, b] = opts.slice(0, 2).sort((x, y) => x[0] - y[0]); if (!a || !b) return null; near = a[0];
     // approach: slide into the lower shape from a fret below, then up to the higher shape and back
@@ -421,7 +421,7 @@ export function hybridEtude(c) {
   let t = 16;
   for (const nm of [ch[0], ch[1]]) {
     const info = chordInfo(nm), opts = [];
-    for (let f = 1; f <= 16; f++) { const lo = pitch(3, f); if (!info.pcs.includes(mod12(lo)) || !inMajor(k, lo)) continue; const hi = diatonicAbove(k, lo, 5); if (info.pcs.includes(mod12(hi)) && hi - 64 <= 20) opts.push([f, hi - 64]); }
+    for (let f = 1; f <= 16; f++) { const lo = pitch(3, f); if (!info.pcs.includes(mod12(lo)) || !inMajor(k, lo)) continue; const hi = diatonicAbove(k, lo, 5); if (info.pcs.includes(mod12(hi)) && hi - 64 >= 1 && hi - 64 <= 20) opts.push([f, hi - 64]); }
     opts.sort((a, b) => Math.abs(a[0] - 7) - Math.abs(b[0] - 7));
     const [a, b] = opts.slice(0, 2).sort((x, y) => x[0] - y[0]); if (!a || !b) return null;
     put(3, a[0], t, 1); put(1, a[1], t, 1, null, { chord: true }); put(3, b[0], t + 1, 1, '/'); put(1, b[1], t + 1, 1, '/', { chord: true });
@@ -445,31 +445,145 @@ export function hybridEtude(c) {
   });
 }
 
+
+/* ------------------- Added for the reference standard ------------------- */
+/** A pedal tone: the pick walks up the scale on the G string, the middle finger answers each note with the same 5th on the B string (variable). */
+export function pedalPluck(c) {
+  const k = majKey(c); let r = mod12(k - OPEN[3]); if (r < 2) r += 12;
+  const line = []; for (let f = r; f <= r + 7 && f <= 20; f++) if (inMajor(k, pitch(3, f))) line.push(f);
+  if (line.length < 5) return null;
+  let pf = null; for (let f = 1; f <= 20; f++) if (mod12(pitch(2, f) - k) === 7 && (pf == null || Math.abs(f - (r + 3)) < Math.abs(pf - (r + 3)))) pf = f;
+  if (pf == null) return null;
+  const step = (c.lvl || 2) <= 1 ? 1 : 0.5, seq = [...line, ...line.slice(0, -1).reverse()], notes = []; let t = 0;
+  for (const f of seq) { notes.push(N(3, f, t, step), N(2, pf, t + step, step)); t += 2 * step; }
+  notes.push(N(3, line[0], t, 2), N(2, pf, t, 2, null, { chord: true }));
+  return make(c, {
+    id: 'hybrid-pedal', name: `A pedal tone: the scale picked on the G string, the 5th plucked on the B (${nameOf(k)} major)`, domain: 'picking', method: 'variable',
+    unit: unitName(step), goal: 100, minutes: 4, picking: 'hybrid',
+    why: 'The pick and the middle finger now do different musical jobs: the pick plays a moving line, the finger repeats one note (a pedal) above it. That independence is the basis of banjo rolls, country licks and arpeggio melodies.',
+    instr: 'Pick each scale note on the G string on the beat; on every “and” the middle finger plucks the same note on the B string (the key’s 5th). Up the scale and back. Pass: up and back twice with the pedal note always the same volume.',
+    watch: 'The pedal getting louder as the line rises.', simplify: 'Three notes of the line only.', tab: { notes }
+  });
+}
+/** Say the finger before every note: p (pick), m, a, over the changes, then from memory (retrieval). */
+export function fingerCall(c) {
+  const k = majKey(c), chords = country(k), notes = [], vs = []; let near = 5;
+  for (const [bar, nm] of chords.entries()) {
+    const g = grip(nm, [4, 3, 2, 1], { near }); if (!g) return null; vs.push(voicing(g)); near = g.at[3];
+    [4, 2, 3, 1, 4, 2, 3, 1].forEach((s, i) => notes.push(N(s, g.at[s], bar * 4 + i * 0.5, 0.5)));
+  }
+  return make(c, {
+    id: 'hybrid-finger-call', name: `Which finger? p-m-p-a through ${chords.join(' – ')}, from memory`, domain: 'picking', method: 'retrieval',
+    unit: '8th notes', goal: 96, minutes: 4, picking: 'hybrid', backing: chords, chords, voicings: dedupe(vs),
+    why: 'In hybrid picking every string belongs to a finger: the pick takes the D and G strings, the middle finger the B, the ring finger the high e. Saying the finger before the note, then playing the pattern from memory, makes those assignments automatic.',
+    instr: 'The pattern per beat pair is pick (D), middle (B), pick (G), ring (e). Play one bar saying “p, m, p, a” before each note. Then cover the tab and play all four bars from the chord names alone. Pass: the four bars from memory with no wrong finger, twice.',
+    watch: 'The pick creeping onto the B string out of habit.', simplify: 'One chord, quarter notes.', tab: { notes }
+  });
+}
+/** The pop: pick on the G string, middle finger snapping the B and e strings in the major pentatonic (focus on the sound). */
+export function popNotes(c) {
+  const k = majKey(c), bx = majPentBox(k, 1); if (!bx) return null;
+  const on = s => bx.filter(x => x[0] === s).map(x => x[1]), G = on(3), B = on(2), E = on(1); if (G.length < 2 || B.length < 2 || E.length < 2) return null;
+  const step = (c.lvl || 4) <= 5 ? 0.5 : 0.25, cell = [[3, G[0]], [2, B[0]], [3, G[1]], [2, B[1]], [2, B[0]], [1, E[0]], [2, B[1]], [1, E[1]]];
+  const seq = [...cell, ...cell.slice().reverse()], notes = []; let t = 0;
+  for (let r = 0; r < 2; r++) seq.forEach(([s, f]) => { notes.push(N(s, f, t, step)); t += step; });
+  notes.push(N(3, G[0], t, 2));
+  return make(c, {
+    id: 'hybrid-pop', name: `The pop: snapped middle-finger notes in ${nameOf(k)} major pentatonic`, domain: 'picking', method: 'external-focus',
+    unit: unitName(step), goal: 100, minutes: 4, picking: 'hybrid',
+    why: 'A finger can do what a pick can’t: hook under the string and let it snap back against the frets for a bright, percussive pop. The sound, not the motion, is the target: picked notes round, finger notes popping.',
+    instr: 'Pick the G-string notes; the middle finger plucks the B- and e-string notes, hooking slightly under the string and letting it snap. Listen for two distinct colours and the same loudness. Pass: the pattern twice where every finger note pops and none is louder than the picked notes.',
+    watch: 'Snapping so hard the note goes sharp or rattles.', simplify: 'Only the G and B strings.', tab: { notes }
+  });
+}
+/** Diatonic 6ths with the low note picked on the D string and the high note plucked on the B string (retrieval). */
+export function sixthsFourTwo(c) {
+  const k = majKey(c), notes = []; let t = 0;
+  const all = [];
+  for (let f = 1; f <= 17; f++) {
+    if (!inMajor(k, pitch(4, f))) continue;
+    const hi = diatonicAbove(k, pitch(4, f), 5) - OPEN[2]; if (hi < 0 || hi > 20 || Math.abs(hi - f) > 4) continue;
+    all.push([f, hi]);
+  }
+  const ri = all.findIndex(([f]) => mod12(pitch(4, f) - k) === 0);
+  let pairs = all.slice(Math.max(0, ri), Math.max(0, ri) + 8); if (pairs.length < 6) pairs = all.slice(-8);
+  if (pairs.length < 6) return null;
+  const seq = [...pairs, ...pairs.slice(0, -1).reverse()];
+  seq.forEach(([a, b]) => { notes.push(N(4, a, t, 0.5), N(2, b, t + 0.5, 0.5), N(4, a, t + 1, 1, null, { chord: true }), N(2, b, t + 1, 1, null, { chord: true })); t += 2; });
+  return make(c, {
+    id: 'hybrid-sixths-42', name: `6ths on the D and B strings, from memory (${nameOf(k)} major)`, domain: 'fretboard', method: 'retrieval',
+    unit: '8th notes', goal: 104, minutes: 5, picking: 'hybrid',
+    why: 'A 6th spans one skipped string: the pick takes the bottom, the middle finger the top. Knowing the scale’s 6ths on a second string pair (not just G and e) doubles the places you can play them, and recalling them instead of reading builds that map.',
+    instr: 'For each 6th: pick the D-string note, pluck the B-string note, then pinch both together. Up the scale and back. After one pass with the tab, cover it and say the scale degree of each bottom note before you play it. Pass: up and back from memory, twice.',
+    watch: 'Letting the G string sound: mute it with the underside of the fretting finger.', simplify: 'The first four 6ths.', tab: { notes }
+  });
+}
+/** Seventh-chord arpeggios over ii–V–I: pick on the D and G strings, middle and ring on B and e, in 16ths (variable). */
+export function hybridArp7(c) {
+  const k = majKey(c), chords = [nameOf(k + 2) + 'm7', nameOf(k + 7) + '7', nameOf(k) + 'maj7', nameOf(k) + 'maj7'], notes = [], vs = []; let near = 7;
+  for (const [bar, nm] of chords.entries()) {
+    const g = grip(nm, [4, 3, 2, 1], { near }); if (!g) return null; vs.push(voicing(g)); near = (g.at[3] + g.at[2]) / 2;
+    [4, 3, 2, 1, 2, 3, 4, 3, 4, 3, 2, 1, 2, 3, 2, 1].forEach((s, i) => notes.push(N(s, g.at[s], bar * 4 + i * 0.25, 0.25)));
+  }
+  return make(c, {
+    id: 'hybrid-arp7', name: `Hybrid seventh-chord arpeggios over ii–V–I (${chords.slice(0, 3).join(' – ')})`, domain: 'picking', method: 'variable',
+    unit: '16th notes', goal: 100, minutes: 5, picking: 'hybrid', backing: chords, chords, voicings: dedupe(vs),
+    why: 'Four strings, four chord tones, four jobs: the pick takes the two lower strings, the middle and ring fingers the two higher. Arpeggios become a roll instead of a sweep, which is how fusion players get smooth, even seventh-chord lines.',
+    instr: 'Hold each grip. Pick D and G, middle finger B, ring finger e, then back down; one bar per chord. Keep each note separate (lift as the next sounds). Pass: the four bars at the goal tempo with every string equally loud.',
+    watch: 'The ring finger landing late on the high e.', simplify: '8th notes.', tab: { notes }
+  });
+}
+/** A diatonic chord named every bar: find a bass-and-pinch grip on the spot (retrieval). */
+export function pinchCalled(c) {
+  const k = majKey(c), r = rng(613 + (c.lvl || 7)), deg = [[0, ''], [2, 'm'], [4, 'm'], [5, ''], [7, ''], [9, 'm']], chords = [], notes = [], vs = []; let near = 5;
+  for (let bar = 0; bar < 8; bar++) { const [d, q] = deg[Math.floor(r() * deg.length)]; chords.push(nameOf(k + d) + q); }
+  for (const [bar, nm] of chords.entries()) {
+    const g = bassGrip(nm, [3, 2, 1], near); if (!g) return null; vs.push(voicing(g)); near = g.at[2];
+    const T = bar * 4;
+    notes.push(N(g.bass, g.at[g.bass], T, 1));
+    [3, 2, 1].forEach(s => notes.push(N(s, g.at[s], T + 1, 1, null, { chord: true })));
+    notes.push(N(g.bass, g.at[g.bass], T + 2, 0.5));
+    [2, 1].forEach(s => notes.push(N(s, g.at[s], T + 2.5, 0.5, null, { chord: true })));
+    [3, 2, 1].forEach(s => notes.push(N(s, g.at[s], T + 3, 1, null, { chord: true })));
+  }
+  return make(c, {
+    id: 'hybrid-pinch-called', name: `Chords on demand: ${chords.join(' – ')}, bass and pinches`, domain: 'rhythm', method: 'retrieval',
+    unit: 'quarter notes', goal: 104, minutes: 5, dl: 1, picking: 'hybrid', backing: chords, chords, voicings: dedupe(vs),
+    why: 'Comping from a chart means finding each chord’s grip the moment you read its name. Every bar here is a diatonic chord out of order, played as a picked root and plucked pinches near the last grip.',
+    instr: 'Cover the tab after one pass. Read only the chord names: pick the root on beat 1, pinch the top three strings on beat 2, root and a two-string pinch on beat 3, all three on beat 4. Stay within a few frets. Pass: all 8 bars from the names, at the goal tempo, twice.',
+    watch: 'Jumping to open or root-position shapes far away.', simplify: 'The first four bars.', tab: { notes }
+  });
+}
+
 /* --------------------------------- The path --------------------------------- */
 export default entry({
   id: 'hybridPicking', kind: 'technique', title: 'Hybrid picking', domain: 'picking',
   re: /hybrid.?pick|pick (and|&|\+) fingers?|chicken.?pick/,
   aliases: ['pick and fingers', 'chicken picking'],
+  sources: ['https://www.fundamental-changes.com/hybrid-picking-part-1/', 'https://www.londonguitaracademy.com/hybrid-picking-guitar', 'https://my.artistworks.com/blog/how-practice-hybrid-picking-guitar', 'https://www.premierguitar.com/articles/23906-cosmic-country-finger-rolls', 'https://www.premierguitar.com/lessons/fierce-guitar-intervallic-arpeggios'],
   summary: 'Pick plus middle and ring fingers, from the first pick-and-finger alternation to rolls, string-skipping lines, 6ths, chicken snaps and a capstone study.',
   ctx: { key: 7, minor: false, prog: 'country' },
   stages: [
     stage('foundations', 'Pick and fingers together',
-      'Alternate pick and middle finger on every string pair at 90 BPM in 8ths with even volume, pinch two strings against a picked bass with no flam, and play a short top-string melody over a picked root.', [
+      'Alternate pick and middle finger on every string pair at 90 BPM in 8ths with even volume, pinch two strings against a picked bass with no flam, play a scale line under a plucked pedal note, play p-m-p-a through the changes from memory, and play a short top-string melody over a picked root.', [
         S('hybrid-pm', 'Pick and middle finger', 'picking', 'The first motion: pick on the lower string, middle finger on the next one up.', [c => pmPairs(c), c => pmChanges(c), c => pmEcho(c)]),
         S('hybrid-pinch', 'Bass and pinches', 'picking', 'Middle and ring fingers pluck together against the pick.', [c => pinchSteps(c), c => hybridPinches(c)]),
+        S('hybrid-bass', 'Independence and recall', 'picking', 'A moving line under a plucked pedal; every finger’s string from memory.', [c => pedalPluck(c), c => fingerCall(c)]),
         S('hybrid-first-music', 'First music', 'picking', 'A melody on top, the bass below.', [c => pinchMelody(c)])
       ], [1, 3]),
     stage('intermediate', 'Rolls, skips and double stops',
-      'Roll pick-middle-ring across three strings as triplets at 100 BPM and in 16ths at 90, play octaves and string-skipped arpeggios with no middle string sounding, and play 6ths and 3rds of the major scale up and back from memory.', [
+      'Roll pick-middle-ring across three strings as triplets at 100 BPM and in 16ths at 90, play octaves and string-skipped arpeggios with no middle string sounding, play 6ths and 3rds of the major scale up and back (6ths on two string pairs from memory), and snap middle-finger pops at even volume.', [
         S('hybrid-rolls', 'Hybrid rolls', 'picking', 'Pick, middle, ring across strings 3-2-1.', [c => hybridRolls(c, { cross: false }), c => hybridRolls(c, { cross: true })]),
         S('hybrid-skip', 'String skipping with the fingers', 'picking', 'The pick stays put, the fingers reach across.', [c => octaveSkips(c), c => skipArps(c)]),
         S('hybrid-dstops', 'Double stops', 'picking', '6ths and 3rds of the scale, plucked.', [c => sixthsPluck(c), c => thirdsPinch(c)]),
+        S('hybrid-control', 'Pop and recall', 'picking', 'The snapped finger sound; 6ths on a second string pair from memory.', [c => popNotes(c), c => sixthsFourTwo(c)]),
         S('hybrid-changes', 'Over the changes', 'improv', 'Chord-tone 6ths and a solo over country changes.', [c => sixthsOverChanges(c), M('transfer', ['targetSolo', { chords: '$country', scale: 'majorPent' }])])
       ], [4, 6]),
     stage('advanced', 'Country and fusion lines',
-      'Play the major pentatonic with pick-and-finger string skips in 16ths at 100 BPM, chicken-pick it with a clear cluck on every note, keep the 3 + 3 + 2 roll going through a key change every bar, and comp with off-beat pinches.', [
+      'Play the major pentatonic with pick-and-finger string skips in 16ths at 100 BPM, chicken-pick it with a clear cluck on every note, keep the 3 + 3 + 2 roll going through a key change every bar, roll seventh-chord arpeggios over ii–V–I in 16ths, find any diatonic chord from its name, and comp with off-beat pinches.', [
         S('hybrid-lines', 'String-skipping pentatonic', 'picking', 'Wide intervals with the pick and the middle finger.', [c => skipPent(c), c => chickenSnap(c)]),
         S('hybrid-banjo', 'Banjo rolls', 'picking', 'The 3 + 3 + 2 roll, through chords and keys.', [c => forwardRoll(c), c => rollKeys(c)]),
+        S('hybrid-fusion', 'Arpeggios and chords on demand', 'picking', 'Seventh-chord rolls over ii–V–I; any diatonic chord from its name.', [c => hybridArp7(c), c => pinchCalled(c)]),
         S('hybrid-adv-music', 'Comping and soloing', 'rhythm', 'Hybrid picking as a rhythm part and a lead voice.', [c => hybridComp(c), M('transfer', ['callResponse', { chords: '$country', scale: 'majorPent' }])])
       ], [7, 8]),
     stage('mastery', 'Fluent, fast and your own',

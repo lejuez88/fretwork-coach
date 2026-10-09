@@ -5,6 +5,7 @@ import economyPicking, { position } from '../kb/economyPicking.js';
 import chromaticPassing, { vampChords, place, vampLine, sideStep } from '../kb/chromaticPassing.js';
 import slides from '../kb/slides.js';
 import alternatePicking from '../kb/alternatePicking.js';
+import arpMelodies from '../kb/arpMelodies.js';
 
 const pitch = (s, f) => OPEN[s] + f;
 /** Chord-tone pitches of a chord between lo and hi. */
@@ -55,7 +56,8 @@ export function ggStudy(c) {
 
 export default artist({ id: 'guthrie-govan', name: 'Guthrie Govan', wiki: ['Guthrie Govan'], genre: 'fusion', re: /guthrie|govan|the aristocrats/,
   blurb: 'Every technique at his fingertips, used for melody: hybrid and economy picking, legato and slides, chromatic and outside lines, and arpeggio melodies with wide leaps.',
-  techniques: ['Hybrid picking', 'Economy picking', 'Chromatic passing tones', 'Outside side-stepping', 'Slides', 'Arpeggio melodies'],
+  techniques: [{ name: 'Hybrid picking', path: 'hybridPicking' }, { name: 'Economy picking', path: 'economyPicking' }, { name: 'Chromatic passing tones', path: 'chromaticPassing' }, { name: 'Outside side-stepping', path: 'chromaticPassing' }, { name: 'Slides', path: 'slides' }, { name: 'Arpeggio melodies', path: 'arpMelodies' }],
+  sources: ['https://www.guitarworld.com/lessons/5-guthrie-govan-guitar-licks', 'https://www.premierguitar.com/lessons/guthrie-govans-erotic-cakes', 'https://www.premierguitar.com/lessons/guthrie-govans-single-string-arpeggios', 'https://www.premierguitar.com/lessons/shred/guthrie-govan-tapping-arpeggios', 'https://www.guitarworld.com/lessons/legato-evolution-lesson'],
   ctx: { key: 7, minor: true, prog: 'dorianVamp' },
   units: [
     PU(slides, { title: 'Slides', summary: 'Slides make his fast lines sound vocal instead of mechanical: start here.' }),
@@ -63,8 +65,9 @@ export default artist({ id: 'guthrie-govan', name: 'Guthrie Govan', wiki: ['Guth
     PU(alternatePicking, { title: 'Alternate picking at speed', summary: 'Strict alternate picking for his fast chromatic and Dorian lines: bursts, accents, skips and performance tempo.', tiers: ['advanced', 'mastery'] }),
     PU(economyPicking, { title: 'Economy picking', summary: 'One stroke through string changes: the fluid three-note-per-string runs.' }),
     PU(chromaticPassing, { title: 'Chromatic and outside notes', summary: 'Approach notes, enclosures and side-stepping: the bebop-meets-rock vocabulary.' }),
-    U('Putting it together', 'Arpeggio melodies and a study in his style, over a Dorian vamp.', [
-      S('gg-arpeggios', 'Arpeggio melodies', 'improv', 'Chord tones in wide leaps, joined by slides.', [c => ggArpMelody(c)]),
+    PU(arpMelodies, { title: 'Arpeggio melodies', summary: 'Tunes made of chord tones: arpeggio 3rds, wide leaps and octave displacement, voice-led and joined by slides.' }),
+    U('Putting it together', 'Studies in his style over a Dorian vamp: an arpeggio melody and a fusion study that uses everything.', [
+      S('gg-arpeggios', 'An arpeggio melody in his style', 'improv', 'Chord tones in wide leaps, joined by slides.', [c => ggArpMelody(c)]),
       S('gg-study', 'A fusion study', 'improv', 'Every idea of the course in eight bars.', [c => ggStudy(c), M('transfer', ['targetSolo', { chords: '$dorianVamp', scale: 'dorian', name: 'Your own solo over a Dorian vamp: arpeggios, enclosures, one side-step' }])])
     ])
   ],

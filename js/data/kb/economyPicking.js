@@ -208,6 +208,23 @@ export function economyCell(c) {
   });
 }
 
+/** The seven positions of the scale, one per bar, each run up four strings (interleaving). */
+export function econPositions(c) {
+  const k = minorKey(c), notes = [], names = []; let t = 0;
+  for (const pos of [1, 3, 5, 7, 2, 4, 6]) {
+    const list = position(k, 'minor', pos); if (!list) return null;
+    const run = list.slice(0, 12); run.forEach(([s, f], i) => notes.push(N(s, f, t + i * 0.25, 0.25)));
+    notes.push(N(run[11][0], run[11][1], t + 3, 1)); names.push(String(pos)); t += 4;
+  }
+  return make(c, {
+    id: 'economy-positions', name: `All seven positions out of order: ${nameOf(k)} natural minor`, domain: 'picking', method: 'interleaving',
+    unit: '16th notes', goal: 100, minutes: 5, dl: 1, picking: 'economy',
+    why: 'Each position starts on a different degree and has its stretches on different strings; mixing them out of order makes the hand rebuild the shape every bar while the economy motion stays constant.',
+    instr: `Positions ${names.join(', ')}: four strings ascending in each (twelve notes, every string change swept), then hold the top note while you find the next position. Pass: all seven bars without stopping, then once with the tab covered.`,
+    watch: 'Positions 6 and 7 sitting high on the neck in some keys: look ahead.', simplify: 'Positions 1, 3 and 5.', tab: { notes }
+  });
+}
+
 /* --------------------------- Mastery: capstone --------------------------- */
 /** An original 8-bar study: triad sweeps and turns, a sequenced run, a fast descent, the landing (capstone). */
 export function econEtude(c) {
@@ -240,34 +257,44 @@ export default entry({
   id: 'economyPicking', kind: 'technique', title: 'Economy picking', domain: 'picking',
   re: /economy.?pick/,
   aliases: ['economy picking', 'directional picking'],
+  sources: ['https://www.guitarworld.com/lessons/how-to-use-economy-picking', 'https://guitargearfinder.com/lessons/economy-picking-exercises/', 'https://hubguitar.com/technique/economy-picking-overview', 'https://www.premierguitar.com/lessons/guthrie-govans-erotic-cakes'],
   summary: 'Alternate picking on a string, one continuous stroke through the string change in the direction of travel: from the rest stroke to three-notes-per-string runs in any key, scale and position.',
   prereqs: ['pentatonic'],
   ctx: { key: 9, minor: true, prog: 'minorRock' },
   stages: [
     stage('foundations', 'The rest stroke and odd numbers',
-      'Sweep a triad down and up the top three strings with every note separate at 90 BPM, play the three-and-three cell on the G and B strings 8 times clean as triplets, and say the pick strokes of a 3-1-3 line before playing it.', [
+      'Sweep a triad down and up the top three strings with every note separate at 90 BPM, play the three-and-three cell on the G and B strings 8 times clean as triplets, say the pick strokes of a 3-1-3 line before playing it, and keep the sweep inaudible on the top strings and the bass strings.', [
         S('economy-rest', 'The rest stroke', 'picking', 'The pick keeps going onto the next string.', [c => restStroke(c), c => pairCell(c)]),
         S('economy-odd', 'Odd numbers of notes', 'picking', 'Why three (or one) notes per string make every change a sweep.', [
           E('economy-odd-31', '3-1-3-1 through {key} {scale}: say the strokes first', 'retrieval', { counts: [3, 1, 3, 1, 3, 1], seq: 'updown', step: 0.5, goal: 96, why: 'Economy picking is a rule, not a feel: odd numbers of notes on a string end on the stroke that sweeps into the next string. Working out the strokes yourself, before playing, is what makes the rule automatic.', instr: 'Three notes on one string, one on the next, alternating. Before you play, say the strokes for the first strings out loud ({strokes} …) and check them against the rule: after an odd count you keep going in the same direction. Pass: the whole line up and down with the strokes you said, twice.', watch: 'Defaulting to strict alternation on the single notes.', simplify: 'The first three strings only.' }),
           E('economy-odd-13', '1-3-1-3 through {key} {scale}', 'accurate-reps', { counts: [1, 3, 1, 3, 1, 3], seq: 'updown', step: 1 / 3, goal: 100, why: 'Starting each pair with a single note puts the sweep at the start of the beat instead of the end: the same rule, felt from the other side.', instr: 'One note, then three on the next string, up through the position and back. Strokes start: {strokes}. Count clean repetitions. Pass: 4 clean in a row.', watch: 'The single notes being shorter than the rest.', simplify: 'Ascending only.' })]),
+        S('economy-sound', 'Hear the sweep', 'picking', 'The swept pair as even as the rest; the cell on the bass strings.', [
+          E('economy-even-top', 'Even through the sweep: {key} {scale} on the top three strings', 'external-focus', { counts: [0, 0, 0, 3, 3, 3], seq: 'updown', step: 1 / 3, goal: 96, why: 'The giveaway of a clumsy sweep is in the sound: the two notes on either side of the string change come out rushed or clumped. Listening for perfectly even triplets fixes the motion faster than watching the pick.', instr: 'Up and down the top three strings of the position as triplets. Close your eyes: every note the same length and volume, with no gap or rush at the string changes. Record one pass and listen. Pass: a recorded pass where you can’t hear where the strings change.', watch: 'Accenting the first note after each sweep.', simplify: 'Only the G and B strings.' }),
+          E('economy-low-strings', 'Three and three on the bass strings: {key} {scale}', 'variable', { counts: [3, 3, 3, 0, 0, 0], seq: 'updown', step: 1 / 3, goal: 96, why: 'The thick strings need a firmer sweep and more muting, and the pick travels further between them. Practising the same motion on a new string set makes it general.', instr: 'Up and down the bottom three strings of the position as triplets, sweeping each string change. Rest the side of the picking hand on the strings you have left. Pass: 4 clean in a row.', watch: 'Strings ringing on after you leave them.', simplify: '8th notes.' })]),
         S('economy-first-music', 'First music', 'improv', 'Sweeps and lines over a minor groove.', [c => triadLines(c), M('transfer', ['callResponse', { chords: '$minorRock', scale: 'minor' }])])
       ], [1, 3]),
     stage('intermediate', 'Three notes per string, every position',
-      'Play the full three-notes-per-string position up and down at 110 BPM in triplets with every string change swept, run groups of 3 through it, play positions 1, 3 and 5, and change key every bar without stopping.', [
+      'Play the full three-notes-per-string position up and down at 110 BPM in triplets with every string change swept, run groups of 3 through it, play positions 1 to 5 (position 4 from memory), groups of 4 against triplets, and change key every bar without stopping.', [
         S('economy-scale', 'The full position', 'picking', 'Down-up-down, then sweep onto the next string.', [c => economyScale(c, { fast: false }), c => economyCell(c)]),
         S('economy-positions', 'Positions and sequences', 'picking', 'The same rule anywhere on the neck and in any order.', [
           E('economy-pos3', '{key} {scale}, position 3 (starting on the ♭3)', 'variable', { pos: 3, seq: 'updown', goal: 110, why: 'Every scale has seven three-notes-per-string positions, one starting on each degree. Economy picking works the same in all of them; only the stretches change.', instr: 'Up and down the position as triplets, one string per beat, sweeping each change. Say which degree each string starts on. Pass: 4 clean in a row.', watch: 'The wider stretches pulling the hand out of position: pivot on the thumb.', simplify: 'The bottom four strings.' }),
           E('economy-threes', '{key} {scale} in groups of 3', 'variable', { pos: 1, seq: 'threes', goal: 110, why: 'Groups of three move the string changes to different places in the group, so the picking hand has to apply the rule on the fly instead of by habit.', instr: 'Three notes up from each note of the position, then back down in threes. Follow the rule wherever the string changes. Pass: 4 clean in a row at the goal tempo.', watch: 'Falling back to strict alternation when a change comes mid-group.', simplify: 'The ascending half only.' }),
           c => econKeys(c)]),
+        S('economy-more', 'More positions, from memory', 'picking', 'Positions 2 and 4; fours against triplets.', [
+          E('economy-pos2', '{key} {scale}, position 2 (starting on the 2)', 'variable', { pos: 2, seq: 'updown', goal: 110, why: 'Position 2 joins positions 1 and 3: once it is known, three positions connect into a third of the neck.', instr: 'Up and down as triplets, one string per beat, sweeping each change. Pass: 4 clean in a row.', watch: 'Fingering it like position 1 on the B string.', simplify: 'The bottom four strings.' }),
+          E('economy-pos4-recall', 'From memory: {key} {scale}, position 4', 'retrieval', { pos: 4, seq: 'updown', goal: 106, why: 'Recalling a position from its starting degree (here the 4th of the key on the low E) rather than reading it is what makes the neck usable when improvising.', instr: 'Play the position once with the tab, then cover it. Say the first stroke on each string before you play it ({strokes} …) and play up and back from memory. Pass: twice from memory with every change swept.', watch: 'Drifting into position 3 or 5.', simplify: 'The top three strings.' }),
+          E('economy-fours-trip', '{key} {scale} in groups of 4 as triplets', 'variable', { pos: 1, seq: 'fours', step: 1 / 3, goal: 104, why: 'Four-note groups over a triplet pulse cross the beat: each group starts on a different part of it, and the string changes move with it. The picking rule has to work wherever they fall.', instr: 'Four up from each note, then four down, in steady triplets. Accent the beat, not the group. Pass: 4 clean at the goal tempo.', watch: 'Slipping into 16ths to make the groups line up.', simplify: 'Ascending only.' })]),
         S('economy-music', 'Over the changes', 'improv', 'Lines that follow a minor progression.', [M('transfer', ['targetSolo', { chords: '$minorRock', scale: 'minor' }]), E('economy-pos5-phrase', '{key} {scale}, position 5, landing on the root', 'transfer', { pos: 5, seq: 'thirds', goal: 100, why: 'Thirds give the position a melodic shape, and landing on the root ends it like a phrase rather than an exercise.', instr: 'Play the position in 3rds (every other note) up and back, then land on the root with vibrato. Then play it over the backing as the end of your own phrase. Pass: twice clean, then 4 bars of your own ending on the root.', watch: 'Hitting the skipped note between each pair.', simplify: 'Ascending only.' })])
       ], [4, 6]),
     stage('advanced', 'Speed, sequences and other scales',
-      'Play the position as sextuplets at 100 BPM and in groups of 4 in 16ths at 110, play the Dorian and harmonic minor positions with the same motion, and solo with economy lines over i–iv–V.', [
+      'Play the position as sextuplets at 100 BPM and in groups of 4 in 16ths at 110, play the Dorian and harmonic minor positions with the same motion (Dorian in threes from memory), run all seven positions out of order, and solo with economy lines over i–iv–V.', [
         S('economy-speed', 'Speed', 'picking', 'Two strings per beat and sequences in 16ths.', [c => economyScale(c, { fast: true }),
           E('economy-fours', '{key} {scale} in groups of 4', 'variable', { pos: 1, seq: 'fours', step: 0.25, goal: 104, why: 'Groups of four line up with 16ths, the backbone of rock runs, and put the string changes in shifting places.', instr: 'Four up from each note, then four down from each note. Apply the rule at every string change. Pass: 4 clean at the goal tempo.', watch: 'Rushing the swept pair inside the group.', simplify: '8th notes.' })]),
         S('economy-scales', 'Other scales', 'picking', 'Dorian and harmonic minor under the same hand.', [
           E('economy-dorian', '{key} {scale}, three notes per string', 'variable', { scale: 'dorian', pos: 1, seq: 'updown', step: 0.25, goal: 104, why: 'Dorian has the major 6th: the brighter minor of funk, fusion and Santana. The picking stays the same; the fingering changes on two strings.', instr: 'Up and down in 16ths. Say “6” each time you play the major 6th. Pass: 4 clean at the goal tempo.', watch: 'Slipping back into natural minor on the 6th.', simplify: 'Triplets.' }),
           E('economy-harmonic', '{key} {scale}, three notes per string', 'variable', { scale: 'harmonicMinor', pos: 5, seq: 'updown', step: 0.25, goal: 100, why: 'The harmonic minor’s gap between the ♭6 and the 7 is the sound of neoclassical rock, and its three-note-per-string shapes need a wide stretch on some strings.', instr: 'Position 5 (starting on the 5th), up and down in 16ths. Hear the step-and-a-half gap each time it comes. Pass: 4 clean at the goal tempo.', watch: 'Tension in the wide stretch: keep the thumb low.', simplify: 'Triplets.' })]),
+        S('economy-mix', 'Positions mixed and recalled', 'picking', 'Seven positions out of order; Dorian sequences from memory.', [c => econPositions(c),
+          E('economy-dorian-recall', 'From memory: {key} {scale}, position 4, in groups of 3', 'retrieval', { scale: 'dorian', pos: 4, seq: 'threes', step: 0.25, goal: 100, why: 'A sequence in a less familiar scale and position, recalled rather than read, is the real test of owning both the shape and the picking rule.', instr: 'Play the position up and down once with the tab, then cover it and play it in groups of three as 16ths (the accent drifts across the beat). Say “6” on every major 6th. Pass: up and down from memory at the goal tempo.', watch: 'The natural-minor ♭6 creeping in.', simplify: 'Triplets, ascending only.' })]),
         S('economy-adv-music', 'Neoclassical lines', 'improv', 'Harmonic-minor lines over i–iv–V.', [c => triadLines(c, { harm: true }), M('transfer', ['targetSolo', { chords: '$iiVIminor', scale: 'harmonicMinor' }])])
       ], [7, 8]),
     stage('mastery', 'Instant, fast and your own',
