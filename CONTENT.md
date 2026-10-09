@@ -1,66 +1,108 @@
 # Adding lessons to Fretwork Coach
 
-This is the contract for adding lesson content (the Artist Series and the technique library) without touching the app's code. The automated content runs follow it, and so should anyone adding lessons by hand. App features and UI are developed separately; if content needs something the app can't do yet, write it in `content/REQUESTS.md` instead of changing app code.
+This is the contract for lesson content: the **knowledge base** (techniques, subjects and styles, each taught as a learning path from scratch to mastery) and the **Artist Series**. The scheduled content runs follow it on every run, and so should anyone adding lessons by hand. **This file overrides any older instructions in a run's prompt.**
 
-## Where content lives
+App features and UI are developed separately (the development thread). If content needs something the app can't do, write it in `content/REQUESTS.md` instead of changing app code.
+
+## Goal
+
+Someone who has never played a technique, subject or style must be able to start from scratch in the app and reach true mastery of it. Every topic gets a complete path. The library also keeps growing on its own: each run researches new topics as well as deepening existing ones.
+
+## Files you may edit
 
 | File | What goes there |
 |---|---|
-| `js/data/artists.js` | **All lesson content:** generator functions, the `TECHNIQUES` library, and the `ARTISTS` list. |
-| `content/ROSTER.md` | The list of guitar virtuosos to cover. Each one has a status (`planned`, `built`, `needs-work`), signature techniques, sources and the build date. |
-| `content/LOG.md` | One entry per content run: the date, what was added, sources used, and validator output. |
-| `content/REQUESTS.md` | Things the content needs from the app (a new note technique, a new screen…) for the development thread. |
+| `js/data/kb/<id>.js` | One knowledge-base entry (technique, subject or style) per file: its generators and its learning path. |
+| `js/data/artists/<id>.js` | One artist per file: units of lessons on their signature techniques, plus famous songs as links. |
+| `js/data/index.js` | **Generated** by `node tools/build-index.mjs`. Never edit it by hand, but commit it after every change. |
+| `js/data/lib.js` | Shared helpers. You may **add** new exported helpers to its Helpers section. Don't change existing helpers or the Structure section (`TIERS`, `stage`, `entry`, `artist`, `S`, `U`, `W`). |
+| `content/QUEUE.md` | The research queue: player requests, the depth backlog, and discovered topics. |
+| `content/ROSTER.md` | The guitar virtuosos covered or planned. |
+| `content/LOG.md` | One entry per run. |
+| `content/REQUESTS.md` | What the content needs from the app. |
 
-Content runs edit **only** these files. They never edit anything else in `js/`, `css/`, `index.html`, `sw.js` or `README.md`.
+Never edit anything else in `js/`, `css/`, `index.html`, `sw.js`, `tools/`, `README.md` or this file.
 
-## The technique library (`TECHNIQUES`)
+## Learning paths: four stages
 
-A technique is a named skill a player might ask for ("rolling 5s", "hybrid picking", "travis picking for beginners"). Every technique appears automatically in the app's **Technique Library** (`#/techniques`), where players filter by level (beginner 1–3, intermediate 4–6, advanced 7–10) and skill area and rebuild the lessons at any level inside `level`. Requests and master classes that name it get its skills, and artists reuse them.
+Every knowledge-base entry is a path through four stages (`TIERS` in `js/data/lib.js`):
+
+| Stage (`tier`) | Levels | What it covers |
+|---|---|---|
+| `foundations` | 1–3 | From scratch. Assume only a basic open chord and holding a pick. Include the prerequisite motions as drills, then the first, slow version of the technique. |
+| `intermediate` | 4–6 | The technique itself, in time with the click: several keys, positions and string sets, and simple musical uses. |
+| `advanced` | 7–8 | Faster, longer and harder variations (odd groupings, wider shapes, string skipping), combinations with other techniques, and real-music contexts in several styles. |
+| `mastery` | 9–10 | Performance tempo, endurance, improvising and composing with it, and a capstone: an original study piece that uses the whole technique musically. |
+
+### The depth standard
+
+A stage is **full** when it has **3 or more skills and 6 or more lessons**. A path is **complete** when all four stages are full. The validator prints a coverage table and the app marks complete paths.
+
+- **Variety, not repetition.** Each skill is a distinct idea: a pattern, a string set, a rhythm, a key or position, a musical context, a combination. The app already rebuilds every lesson at each level inside the stage, adjusting tempo goals and lengths, so never add the same exercise at another tempo and call it a new lesson.
+- **Pass criteria.** Each stage's `goal` says concretely what the player can do when the stage is done, for example "Travis pattern over G–Em–C–D at 90 BPM for 8 bars without the thumb hesitating". This is the stage's pass criterion.
+- **Prerequisites.** When an entry depends on another technique, list it in `prereqs: ['alternatePicking']` (the app links to it). If the prerequisite doesn't exist yet, put it in the queue.
+
+### An entry file
 
 ```js
-{ id: 'rolling5s',                 // camelCase or kebab-case, unique
-  title: 'Rolling 5s',             // how players name it
-  re: /rolling (5|five)'?s?|groups? of (5|five)/,  // matches the ways people write it; must match its own title (lowercased)
-  domain: 'picking',               // fretting | picking | rhythm | fretboard | theory | ear | improv
-  level: [5, 9],                   // recommended level range (1–10): the Technique Library filters and sorts by it
-  ctx: { key: 9, minor: true, prog: 'minorRock' },  // optional: key and backing for its lessons (default A minor)
-  summary: 'One sentence on what it is.',
-  skills: [S('rolling5s-box', 'Rolling 5s in box 1', 'picking', 'One sentence.', [c => ejRolling5s(c), ...])] }
+// js/data/kb/travis.js
+import { N, make, OPEN_SHAPES, onString, bassPair, S, stage, entry } from '../lib.js';
+
+export function travisStages(c, { stage = 3 } = {}) { /* … returns make(c, {...}) */ }
+
+export default entry({
+  id: 'travis',                     // camelCase, the same as the file name
+  kind: 'technique',                // technique | subject | style
+  title: 'Travis picking', domain: 'picking',   // fretting | picking | rhythm | fretboard | theory | ear | improv
+  re: /travis(-| )?pick|alternating(-| )thumb/,  // how people write it; must match its own title (lowercased)
+  aliases: ['alternating bass fingerpicking'],   // optional extra names
+  summary: 'One sentence.',
+  prereqs: [],                      // optional: ids of entries to learn first
+  ctx: { key: 0, minor: false, prog: 'folkAxis' },  // default key and backing for its lessons
+  stages: [
+    stage('foundations', 'The alternating thumb', 'Thumb alone over C–Am–G–C at 80 BPM, then one finger on the off-beats, 8 bars clean.', [
+      S('travis-thumb', 'The thumb on autopilot', 'picking', 'One sentence.', [c => travisStages(c, { stage: 1 }), …]),
+      S(…), S(…)
+    ], [1, 3]),                     // optional levels inside the tier's range
+    stage('intermediate', …), stage('advanced', …), stage('mastery', …)
+  ]
+});
 ```
 
 **Skill entries.** Each entry in a skill's list is one of:
-- a generator `(c) => exercise`;
-- an atom `['atomName', {opts}, {ctxPatch}]` from `js/core/atoms.js` (for example `['bendLick']`, `['scaleRun', {scale: 'blues', box: 1}]`, `['callResponse', {chords: '$blues'}]`);
-- a written drill `W(...)` for things a tab can't show. Use `W` sparingly: lessons with tabs are far more useful.
+- a generator `(c) => exercise`, which is preferred;
+- an atom from `js/core/atoms.js`, written `['atomName', {opts}, {ctxPatch}]`;
+- a written drill `W(...)`, used sparingly for things a tab can't show.
 
-## Artists (`ARTISTS`)
+**Reusing work.** Another entry's generators can be imported (`import tapping, { evhTapTriplets } from './tapping.js'`). Artists reuse skills with `skillsOf(entry, 'skill-id')`.
+
+## Artists (`js/data/artists/<id>.js`)
 
 ```js
-{ id: 'eric-johnson', name: 'Eric Johnson', wiki: ['Eric Johnson (guitarist)'],  // Wikipedia article titles (for the photo)
-  genre: 'rock',                  // a genre id from js/data/catalog.js
-  re: /eric johnson|\bej\b/,      // finds the artist in a request; must not match any other artist's name
-  blurb: 'One sentence on the sound.',
-  techniques: ['Speed pentatonics', 'Rolling 5s', ...],   // 3–6 signature techniques, shown as chips
-  ctx: { key: 9, minor: true, prog: 'minorRock' },         // default key (pitch class, C = 0) and backing progression
-  units: [U('Unit title', 'One sentence.', [skills...]), ...],  // 4–6 units, easiest first; the last puts it together in music
-  riffs: [{ title: 'Cliffs of Dover', note: 'What it showcases.' }, { title: '…', artist: 'Band name', note: '…' }] }
+import { S, U, artist, skillsOf } from '../lib.js';
+import rolling5s from '../kb/rolling5s.js';
+export default artist({ id: 'eric-johnson', name: 'Eric Johnson', wiki: ['Eric Johnson (guitarist)'], genre: 'rock',
+  re: /eric johnson|\bej\b/, blurb: 'One sentence on the sound.', techniques: ['Rolling 5s', …],   // 3–6, shown as chips
+  ctx: { key: 9, minor: true, prog: 'minorRock' },
+  units: [U('Rolling 5s', 'One sentence.', skillsOf(rolling5s)), …],   // 4–6 units, easiest first; the last puts it together in music
+  riffs: [{ title: 'Cliffs of Dover', note: 'What it showcases.' }, { title: '…', artist: 'Band name', note: '…' }] });
 ```
 
-Units should reuse `techSkills('id')` from the library wherever a technique already exists, and add new techniques to the library rather than burying them in one artist.
+An artist's signature techniques belong in the knowledge base, each as its own path, and the artist file reuses them. That way a player can learn "rolling 5s" with or without Eric Johnson.
 
 ## Writing a generator
 
-A generator receives `c = { key, minor, lvl, genre, prog }` and returns a raw exercise built with `make(c, {...})`, the helper at the top of `artists.js`. It is pure: no randomness, no network, the same output for the same input.
+A generator receives `c = { key, minor, lvl, genre, prog }` and returns `make(c, {...})`. It is pure: no randomness, no network, the same output for the same input. It must **scale with `c.lvl`** (tempo goal, length, subdivision or a harder variant).
 
 | Field | What it is |
 |---|---|
 | `id` | Kebab-case and unique. |
 | `name` | Specific: name the technique, the key and where it sits on the neck. |
 | `domain` | One of the seven domains listed above. |
-| `unit` | Says what is played against the click, for example `'16th notes'`, `'16th-note sextuplets'`, `'8th-note triplets'` or `'8th notes'`. |
-| `goal` | A base goal tempo; `make` scales it with the level. `start` is optional. |
-| `why` | 1–2 sentences on what this builds and why this player does it. |
-| `instr` | Concrete steps: fingering, picking, what to count. |
+| `unit` | Says what is played against the click (`'16th notes'`, `'16th-note sextuplets'`, `'8th-note triplets'`, `'8th notes'`). |
+| `goal` | A base goal tempo; `start` is optional. |
+| `why` | 1–2 sentences on what it builds. |
+| `instr` | Concrete steps: fingering, picking, counting. End with a pass criterion. |
 | `watch` | The most common mistake. |
 | `simplify` | An easier version for when it's too hard. |
 | `tab` | `{ notes }`, where each note is `N(string, fret, t, d, technique?, extra?)`. |
@@ -68,61 +110,97 @@ A generator receives `c = { key, minor, lvl, genre, prog }` and returns a raw ex
 Tab note rules:
 - String 1 is the high e and string 6 is the low E. Frets run 0–22.
 - `t` and `d` are in beats.
-- Techniques: `h` hammer-on, `p` pull-off, `/` and `\` slides, `b` bend (`extra: { bendTo: semitones }`), `~` vibrato, `pm` palm mute, `t` tap.
-- Notes struck together share `t` and carry `extra: { chord: true }`.
+- Techniques:
+  - `h` hammer-on, `p` pull-off, `/` and `\` slides, `~` vibrato, `pm` palm mute, `t` tap.
+  - `b` bend, with `{bendTo: fret}`, the fret whose pitch the bend reaches.
+  - `pb` pre-bend: bend silently, then pick (`{bendTo: fret}`). Follow it with `r`, release, on the same fret.
+  - `mute`: a dead or raked note, drawn as "x".
+  - `ghost`: a ghost note, drawn as "(5)".
+  - `nh`: a natural harmonic at frets 12, 7, 5, 4 or 3, drawn as "<12>".
+  - `ah`: an artificial or tapped harmonic, sounding an octave above the fretted note.
+- Notes struck together share `t` and carry `{ chord: true }`.
 
 Chord parts add two fields:
 - `voicings`: `[{ name, frets: [lowE … highE] }]`, with `null` for a muted string.
 - `chords`: the chord names. Add `backing` for an accompaniment loop.
 
-Helpers in `artists.js` cover most needs:
-- `pentBox(key, box)`: a minor-pentatonic box.
-- `pent3nps(key)`: three-notes-per-string pentatonic.
-- `spreadVoicing(root, type, set, nearFret)`: spread triads.
-- `legatoMarks(seq)`: adds hammer-on and pull-off marks.
-- `chordInfo(name)`: the notes of a chord.
-- `fromSeq(seq, step)`: turns a sequence into evenly spaced notes.
-- `byString(notes)`: groups notes by string.
-
-You can also import `scaleNps`, `chordTones` and `parseChord` from `js/core/theory.js`, and `fretOn` and `rootFret6` from `js/core/atoms.js`.
+`js/data/lib.js` has helpers for most needs:
+- `pentBox`, `pent3nps`, `scaleNps`, `scaleBox`: scale shapes.
+- `spreadVoicing`, `topTriad`, `keyChords`, `chordInfo`: chords.
+- `OPEN_SHAPES`, `onString`, `bassPair`: open chords for fingerstyle.
+- `legatoMarks`, `fromSeq`, `byString`, `fretOn`, `rootFret6`: building note sequences.
 
 ## Teaching rules
 
-- **Edge zone.** Calibrate every exercise so a player at its level succeeds 70–85% of the time. Keep it measurable: a start and goal tempo, and a clear pass criterion in `instr` or `watch`.
-- **Difficulty from 1 to 10.** Generators should scale with `c.lvl` (tempo goal, length, subdivision, or a harder variant). Cover beginner (1–3), intermediate (4–6) and advanced (7–10) material across the library, not only virtuoso tricks.
-- **Musically correct.** Every note must belong to the scale or chord it claims. Verify pitches from string and fret, using standard tuning MIDI 40 45 50 55 59 64 for strings 6 to 1.
-- **Theory follows the hands.** When a lesson introduces a concept (a scale degree, an arpeggio), say it in `why` or `instr` and apply it on the neck right away.
-- **Specific, not generic.** A lesson for a named technique drills that technique itself, not a generic substitute.
+- **Edge zone.** A player at a lesson's level should succeed 70–85% of the time.
+- **Measurable.** Every lesson has a start and goal tempo and a clear pass criterion.
+- **Musically correct.** Every note belongs to the scale or chord it claims. Verify pitches from string and fret, using standard tuning MIDI 40 45 50 55 59 64 for strings 6 to 1.
+- **Theory follows the hands.** Name the concept in `why` or `instr` and apply it on the neck right away.
+- **Specific, not generic.** A lesson for a named technique drills that technique itself.
+- **Musical.** Every stage ends with at least one skill that uses the technique in music: over a progression, in a groove, in a short original piece.
 
 ## Copyright (non-negotiable)
 
-- Exercises are **original** and written "in the style of" the player. Never transcribe or closely paraphrase a copyrighted riff, solo, melody or tab, including "simplified" versions.
-- Famous songs go in `riffs` as a title and a note only, never notes. The app links them to Songsterr and lets the player add them to My songs.
-- Research sources (interviews, lesson videos, articles) inform which techniques to teach. Their text and tabs are not copied. Paraphrase in your own words and record the source URLs in `content/LOG.md`.
+- Exercises are **original** and written "in the style of" the player. Never transcribe or closely paraphrase a copyrighted riff, solo, melody or tab, simplified or not.
+- Famous songs go in `riffs` as a title and a note only; the app links them to Songsterr.
+- Research sources (teachers, curricula, interviews, lesson videos) inform *what* to teach, never the notes or text. Paraphrase in your own words and record the source URLs in `content/LOG.md`.
+
+## The research queue (`content/QUEUE.md`)
+
+The queue has three sections. Every run keeps them up to date.
+
+1. **Player requests.** When a player asks the app for a technique, subject, style or guitarist it doesn't know, the app offers to add it to the knowledge base. Requests are saved to the player's Google Drive as **`Fretwork Coach research requests.json`** (`requests: [{text, kind, status, at, note?}]`). At the start of every run:
+   - Find the file with the Google Drive connector: search for the title `Fretwork Coach research requests`, then read or download it.
+   - Copy every request with `status: "queued"` into this section with the date, unless it's already there.
+   - Mark a request built here (with the entry or artist id) once it ships. The app marks it "Added" by itself when the new entry matches the request's words, so make sure the new entry's `re` matches them.
+   - If the Drive connector isn't available in the run, say so in the log and carry on with the rest of the queue.
+2. **Depth backlog.** Incomplete paths, copied from the validator's coverage table.
+3. **Discovered.** New topics found by research.
+
+## What every run does, in order
+
+1. Run `git pull --rebase`, read this file, then sync the player requests from Drive into `content/QUEUE.md`.
+2. **Player requests first.** For each new request:
+   - **Technique, subject or style:** create its knowledge-base entry with at least the foundations and intermediate stages full, and the rest started.
+   - **Guitarist:** add them to `content/ROSTER.md` as high priority and build their artist page. Their signature techniques become knowledge-base entries, or reuse existing ones.
+3. **Depth.** Bring incomplete paths up to the depth standard. Each run must leave **at least two more paths complete** than before. Priority order:
+   - paths players requested;
+   - paths used by artists;
+   - fundamentals every guitarist needs: alternate picking, legato, bending, vibrato, chord changes, barre chords, strumming, palm muting, fretboard knowledge, timing.
+4. **Artists.** Every other run, build the next `planned` artist in `content/ROSTER.md`, with 8+ lessons and their techniques as knowledge-base paths.
+5. **Discovery.** Research 3–5 topics the library doesn't cover yet and add them to the Discovered section of the queue with a one-line reason and a source. Look at:
+   - the curricula of reputable teaching programs and methods;
+   - what learners commonly ask to learn;
+   - techniques that the existing artists or paths assume;
+   - styles and subjects as well as techniques (for example sight reading, ear training, jazz comping, bossa nova, slide, chicken picking, flamenco rasgueado).
+   Build the most valuable discovered topic when time allows.
+6. Run the checks below, update `content/ROSTER.md` and `content/QUEUE.md`, and write a `content/LOG.md` entry (date, what was added and completed, sources, the coverage summary line, validator result).
+7. Commit and push (see below). Finish with a short summary.
 
 ## Checking your work
 
-Run this from the repo root:
+Run these from the repo root:
 
 ```
-node tools/validate-content.mjs
+node tools/build-index.mjs        # regenerate js/data/index.js after any change in js/data/kb or js/data/artists
+node tools/validate-content.mjs   # must end with "All content is valid."
 ```
 
-It must end with `All content is valid.`; errors block the commit. It checks:
-- every generator runs and its output survives the app's normalizer;
-- tab ranges, timing, techniques, chord names and voicings are valid;
-- each artist has 8 or more lessons and the required fields;
-- each artist's master class builds;
+The validator checks:
+- every generator at both ends of each stage's levels;
+- tab ranges, timing, techniques, chord names and voicings;
+- stage tiers and levels, and that prerequisites exist;
+- each artist builds 8+ lessons and a master class;
 - regexes find their own names and don't collide;
-- no song in `riffs` carries notes.
+- no song carries notes;
+- the index is current.
 
-Fix warnings when you can.
+It ends with the coverage table. Fix errors before committing and fix warnings when you can.
 
 ## Committing
 
-1. `git pull --rebase` before you start and again before pushing.
-2. Change only the content files listed above.
-3. Run the validator.
-4. Commit with a message like `Content: add Yngwie Malmsteen (5 units, 14 lessons)`, then push to `main`. GitHub Pages deploys in about a minute.
-5. If a rebase conflicts with an app file, stop. Don't resolve it by editing app code; record it in `content/LOG.md` and the run's summary.
-6. If `js/data/artists.js` grows past about 300 KB, add a note to `content/REQUESTS.md` asking for it to be split into per-artist files.
+1. Run `git pull --rebase` before you start and again before pushing.
+2. Change only the files listed in "Files you may edit".
+3. Run both commands above.
+4. Commit with a message like `Content: complete travis + economyPicking paths; add chickenPicking (requested)`, then push to `main`. GitHub Pages deploys in about a minute.
+5. If a rebase conflicts with an app file, stop and report it in `content/LOG.md` and the summary. Don't edit app code.

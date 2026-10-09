@@ -24,6 +24,26 @@ const ROW = 18, BOTTOM = 12, PAD = 28, NOTE_DX = 4;
 const TOP_PLAIN = 26, TOP_PICKS = 46; // room above the strings: technique row, plus the picking row when shown
 const EPS = 1e-6;
 
+/** Tab marks above a note: PM, T (tap), b9 (bend to fret 9), pb9 (pre-bend to 9), r (release), AH (artificial harmonic). */
+export function techLabel(n) {
+  if (n.x === 'pm') return 'PM';
+  if (n.x === 't') return 'T';
+  if (n.x === 'b') return n.bendTo != null ? 'b' + n.bendTo : 'b';
+  if (n.x === 'pb') return n.bendTo != null ? 'pb' + n.bendTo : 'pb';
+  if (n.x === 'ah') return 'AH';
+  if (n.x === 'nh') return 'NH';
+  return n.x;
+}
+// Natural harmonics: semitones above the open string for the frets where they ring
+const HARMONIC = { 12: 12, 7: 19, 19: 19, 5: 24, 24: 24, 4: 28, 9: 28, 16: 28, 3: 31, 2: 34 };
+/** The pitch a note actually sounds: harmonics and pre-bends differ from the fretted pitch. */
+export function soundMidi(n, tuning = STD_TUNING) {
+  const m = noteMidi(n, tuning);
+  if (n.x === 'nh') return m - n.f + (HARMONIC[n.f] != null ? HARMONIC[n.f] : 12);
+  if (n.x === 'ah') return m + 12;
+  if (n.x === 'pb' && n.bendTo != null) return m + (n.bendTo - n.f);
+  return m;
+}
 export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, onLog = null, beatsPerBar: bpbOpt = 4, startBpm = null, compact = false, onBpm = null, ramp = null, evalMode = false } = {}) {
   const beatsPerBar = ex.beatsPerBar || bpbOpt;
   const total = exerciseBeats(ex, beatsPerBar);
@@ -128,9 +148,9 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
       for (let b = start; b < end; b++) s += `<text x="${PAD + (b - start) * pxBeat - 2}" y="${h - 1}" class="tab-count">${(b % beatsPerBar) + 1}</text>`;
       notes.forEach((n, i) => {
         if (n.t < start - EPS || n.t >= end - EPS) return;
-        const x = PAD + (n.t - start) * pxBeat + NOTE_DX, y = TOP + (n.s - 1) * ROW, lab = n.x === 'ghost' ? `(${n.f})` : n.x === 'mute' ? 'x' : String(n.f), wBox = 7 * lab.length + 6;
+        const x = PAD + (n.t - start) * pxBeat + NOTE_DX, y = TOP + (n.s - 1) * ROW, lab = n.x === 'ghost' ? `(${n.f})` : n.x === 'mute' ? 'x' : n.x === 'nh' ? `<${n.f}>` : String(n.f), wBox = 7 * lab.length + 6;
         s += `<g class="tab-note" data-i="${i}"><rect x="${x - wBox / 2}" y="${y - 9}" width="${wBox}" height="18" rx="4"/><text x="${x}" y="${y + 5}">${lab}</text></g>`;
-        if (n.x && n.x !== 'ghost' && n.x !== 'mute' && !n.chord) s += `<text x="${x}" y="${TOP - 12}" class="tab-tech">${esc(n.x === 'pm' ? 'PM' : n.x === 't' ? 'T' : n.x === 'b' && n.bendTo != null ? 'b' + n.bendTo : n.x)}</text>`;
+        if (n.x && n.x !== 'ghost' && n.x !== 'mute' && !n.chord) s += `<text x="${x}" y="${TOP - 12}" class="tab-tech">${esc(techLabel(n))}</text>`;
         if (picks && picks[i].lead) {
           // Fingers for every note struck together (bass first), the stroke on the group's lowest string
           const fingers = notes.map((m, j) => ({ m, j })).filter(o => Math.abs(o.m.t - n.t) < 1e-3 && picks[o.j].finger).sort((a, b) => b.m.s - a.m.s).map(o => picks[o.j].finger);
@@ -269,7 +289,8 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
     if (!S.sound || t < c.currentTime - 0.01) return;
     const spread = n.chord ? 0.012 * (6 - n.s) : 0;
     if (n.x === 'mute') Audio.guitar(noteMidi(n, tuning), t + spread, { dur: 0.05, gain: n.chord ? 0.2 : 0.35, bright: 0.2 });
-    else Audio.guitar(noteMidi(n, tuning), t + spread, { dur: Math.max(0.25, n.d * spb() * 1.6), gain: n.chord ? 0.32 : 0.55, bright: n.x === 'pm' ? 0.3 : 0.55 });
+    else if (n.x === 'nh' || n.x === 'ah') Audio.guitar(soundMidi(n, tuning), t + spread, { dur: Math.max(0.4, n.d * spb() * 2), gain: n.chord ? 0.22 : 0.4, bright: 0.85 });
+    else Audio.guitar(soundMidi(n, tuning), t + spread, { dur: Math.max(0.25, n.d * spb() * 1.6), gain: n.chord ? 0.32 : 0.55, bright: n.x === 'pm' ? 0.3 : 0.55 });
   }
   /** Schedule every note and click whose time (in beats since the run started) is in [e0, e1). */
   function scheduleWindow(e0, e1) {

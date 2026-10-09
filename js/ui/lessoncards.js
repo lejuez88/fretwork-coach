@@ -13,12 +13,17 @@ import { mountTabPlayer } from '../tools/tabplayer.js';
 import { Metronome, mountMetronome } from '../tools/metronome.js';
 import { startRoutine } from '../screens/routine.js';
 
-/** One lesson card. l = {ex, ...}; i = its index; target = today's tempo. */
+/** Saved progress for a lesson (by its stable key), or null. */
+export const lessonState = (p, l) => (l && l.key ? (p.varState || {})[`${l.key}~base`] || null : null);
+/** Today's tempo for a lesson: its saved target once practiced, else the calibrated one. */
+export const lessonTarget = (p, l, calibrated) => { const st = lessonState(p, l); return st && st.target ? st.target : calibrated; };
+
+/** One lesson card. l = {ex, key, ...}; i = its index; target = today's tempo. */
 export function lessonCardHTML(p, l, i, target) {
-  const ex = l.ex, dom = DOMAIN_BY_KEY[ex.domain];
+  const ex = l.ex, dom = DOMAIN_BY_KEY[ex.domain], st = lessonState(p, l);
   const saved = p.customExercises.some(c => c.ex.id === ex.id), inRoutine = p.prescriptions.some(r => r.status === 'active' && r.ex.id === ex.id);
   return `<div class="askex artist-lesson">
-    <div class="askex-h"><b>${esc(ex.name)}</b></div>
+    <div class="askex-h"><b>${esc(ex.name)}</b>${st && st.mastered ? '<span class="lesson-badge ok">✓ Mastered</span>' : st && st.history && st.history.length ? `<span class="lesson-badge">Best ${st.best || st.lastTempo} BPM</span>` : ''}</div>
     <div class="small muted">${dom ? esc(dom.short || dom.name) : esc(ex.domain)}${ex.level ? ` · level ${ex.level}` : ''} · ${esc(tempoShort(ex, target, ex.goalBpm))} · ${ex.minutes || 5} min</div>
     ${ex.why ? `<p class="why">${esc(ex.why)}</p>` : ''}
     ${ex.instr ? `<div class="instr small">${esc(ex.instr)}</div>` : ''}
@@ -70,7 +75,7 @@ export function lessonActions(root, { get, reason, title, genre = null, navigate
       case 'add': if (addToRoutines(p, l.ex, reason(l))) { Store.save(); toast('Added to your daily routines.'); } b.disabled = true; b.textContent = '✓ In your routines'; return true;
       case 'practice': {
         stop();
-        const plan = makeAdhocRoutine({ title: title(l), focus: l.skill ? l.skill.title : l.ex.name, genre: genre || p.questionnaire.genres[0] || null, items: [{ block: 'stretch', ex: l.ex, targetBpm: targets[i], minutes: l.ex.minutes || 5 }], budget: null, kind: 'custom' });
+        const plan = makeAdhocRoutine({ title: title(l), focus: l.skill ? l.skill.title : l.ex.name, genre: genre || p.questionnaire.genres[0] || null, items: [{ block: 'stretch', ex: l.ex, targetBpm: targets[i], minutes: l.ex.minutes || 5, ...(l.key ? { extra: { kbKey: l.key } } : {}) }], budget: null, kind: 'custom' });
         startRoutine(plan, undefined, navigate); return true;
       }
     }

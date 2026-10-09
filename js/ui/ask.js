@@ -19,6 +19,8 @@ import { calibratedTarget } from '../core/progression.js';
 import { variationChipsHTML, variationNoteHTML } from './variationpicker.js';
 import { openMasterSheet, MC_ICON } from './mastersheet.js';
 import { matchTopic } from '../core/master.js';
+import { knowledgeGap } from '../core/kbrequests.js';
+import { gapPromptHTML, onGapClick } from './kbrequest.js';
 
 const ROLE = { drill: 'Drill', main: 'Main exercise', apply: 'Apply it' };
 const DRAFT_KEY = 'fretworkCoach.askDraft';
@@ -96,6 +98,7 @@ export function mountAskBox(el, { start, courseId = null }) {
     const total = result.items.reduce((a, it) => a + (it.ex.minutes || 5), 0);
     return `<div class="askresult">
       ${result.summary ? `<p class="coach">${result.source === 'claude' || result.source === 'cache' ? '🎯 ' : ''}${esc(result.summary)}</p>` : ''}
+      ${gapPromptHTML(result.gap)}
       ${result.source === 'cache' ? '<p class="small muted">♻ Claude designed these for the same request earlier, so they were reused from your saved lessons (no API cost).</p>' : ''}
       ${result.error ? `<p class="small muted">Claude couldn’t answer (${esc(result.error)}), so these come from the drill library.</p>` : ''}
       ${result.items.map((it, i) => exerciseCardHTML(it.ex, { i, role: it.role, target: it.targetBpm })).join('')}
@@ -112,7 +115,7 @@ export function mountAskBox(el, { start, courseId = null }) {
     const ta = el.querySelector('[data-r="ask"]'); request = (ta.value || '').trim();
     if (request.length < 3) return toast('Tell me what you’d like to work on.');
     expanded = true; busy = true; result = null; render();
-    try { result = await generateExercises(p, request); }
+    try { result = await generateExercises(p, request); if (result) result.gap = knowledgeGap(request); }
     catch (e) { toast(e.message || 'Could not create exercises.'); }
     busy = false; keep(); render();
     const out = el.querySelector('.askresult'); if (out && out.scrollIntoView) out.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -152,6 +155,7 @@ export function mountAskBox(el, { start, courseId = null }) {
   }
 
   const onClick = e => {
+    if (onGapClick(e)) return;
     const chip = e.target.closest('[data-ex]');
     if (chip) { const ta = el.querySelector('[data-r="ask"]'); ta.value = chip.dataset.ex; ta.focus(); return; }
     const tv = e.target.closest('[data-tvid]');

@@ -1,17 +1,31 @@
-// Content validator for Fretwork Coach lessons (Artist Series and the technique library).
+// Content validator for Fretwork Coach: the knowledge base (js/data/kb/) and the Artist Series (js/data/artists/).
 // Run from the repo root:  node tools/validate-content.mjs
-// Exits with code 1 when anything is broken. Warnings don't fail the run.
+// Exits with code 1 when anything is broken. Warnings don't fail the run. It ends with a coverage report:
+// how deep every learning path is, which stages are missing or thin, so the content runs know what to build next.
 // See CONTENT.md for the format these checks enforce.
-import { ARTISTS, TECHNIQUES, matchArtist, matchTechniques } from '../js/data/artists.js';
-import { artistLessonList, createMasterClass, buildMasterTree } from '../js/core/master.js';
-import { emptyProfile, normalize } from '../js/core/store.js';
-import { normalizeExercise } from '../js/core/coursegen.js';
+import { readdirSync } from 'node:fs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { dirname, join } from 'node:path';
+import { TIERS, TIER_BY_ID } from '../js/data/lib.js';
+import { indexIsCurrent, isFull, FULL_STAGE } from './build-index.mjs';
 
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const dataDir = join(root, 'js', 'data');
 const errors = [], warnings = [];
 const err = (where, msg) => errors.push(`${where}: ${msg}`);
 const warn = (where, msg) => warnings.push(`${where}: ${msg}`);
-const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const DOMAINS = ['fretting', 'picking', 'rhythm', 'fretboard', 'theory', 'ear', 'improv'];
+const KINDS = ['technique', 'subject', 'style'];
+const TECHS = ['h', 'p', '/', '\\', 'b', 'pb', 'r', '~', 'pm', 't', 'mute', 'ghost', 'nh', 'ah'];
+
+if (!(await indexIsCurrent())) err('js/data/index.js', 'out of date: run `node tools/build-index.mjs` and commit the result');
+
+// app modules (loaded after the index check so a stale index is reported first)
+const { normalizeExercise } = await import('../js/core/coursegen.js');
+const { runAtom } = await import('../js/core/styles.js');
+const { KB_INDEX, ARTIST_INDEX, matchArtist, matchTechniques } = await import('../js/data/kb.js');
+const { artistLessonList, stageLessonList, createMasterClass, buildMasterTree } = await import('../js/core/master.js');
+const { emptyProfile, normalize } = await import('../js/core/store.js');
 
 function checkExercise(where, ex) {
   if (!ex) return err(where, 'generator returned nothing');
@@ -28,38 +42,72 @@ function checkExercise(where, ex) {
       if (!(Number.isInteger(x.s) && x.s >= 1 && x.s <= 6)) err(where, `note ${i}: string ${x.s} (1 = high e … 6 = low E)`);
       if (!(Number.isInteger(x.f) && x.f >= 0 && x.f <= 22)) err(where, `note ${i}: fret ${x.f} (0–22)`);
       if (!(x.t >= 0 && x.d > 0)) err(where, `note ${i}: bad timing t=${x.t} d=${x.d}`);
-      if (x.x && !['h', 'p', '/', '\\', 'b', '~', 'pm', 't'].includes(x.x)) err(where, `note ${i}: unknown technique "${x.x}"`);
+      if (x.x && !TECHS.includes(x.x)) err(where, `note ${i}: unknown technique "${x.x}"`);
     });
     if (n.tab == null) err(where, 'tab dropped by the normalizer (check the note format)');
   } else if (!(ex.chords && ex.chords.length) && !(ex.voicings && ex.voicings.length) && !ex.libId) warn(where, 'no tab, chords or voicings: it will only show the metronome');
   if (ex.chords && n.chords.length !== ex.chords.length) err(where, `chord names not recognized: ${ex.chords.filter(c => !n.chords.includes(c)).join(', ')}`);
   if (ex.voicings && (!n.voicings || n.voicings.length !== ex.voicings.length)) err(where, 'a voicing is invalid (6 frets, low E first, null = muted, 0–22)');
 }
-
-/* Technique library */
-const techIds = new Set();
-for (const t of TECHNIQUES) {
-  const w = `technique "${t.id}"`;
-  if (!KEBAB.test(t.id) && !/^[a-z][a-zA-Z0-9]*$/.test(t.id)) err(w, 'id must be kebab-case or camelCase');
-  if (techIds.has(t.id)) err(w, 'duplicate id'); techIds.add(t.id);
-  if (!(t.re instanceof RegExp)) err(w, '"re" must be a RegExp');
-  else if (!t.re.test(t.title.toLowerCase())) warn(w, `its regex doesn't match its own title "${t.title}" (requests using that name won't find it)`);
-  if (!t.skills || !t.skills.length) err(w, 'no skills');
-  if (!Array.isArray(t.level) || t.level.length !== 2 || !(t.level[0] >= 1 && t.level[1] <= 10 && t.level[0] <= t.level[1])) err(w, '"level" must be [lo, hi] within 1–10 (the Technique Library sorts and filters by it)');
-  if (!DOMAINS.includes(t.domain)) err(w, `domain "${t.domain}" is not one of ${DOMAINS.join(', ')}`);
-  const ctx = t.ctx || { key: 9, minor: true, prog: 'minorRock' };
-  for (const lvl of new Set([...(Array.isArray(t.level) ? t.level : [5])])) for (const s of t.skills || []) for (const [i, e] of (s.ex || []).entries()) {
-    const c = { key: ctx.key, minor: !!ctx.minor, lvl, genre: 'rock', prog: ctx.prog };
-    if (typeof e === 'function') { try { checkExercise(`${w} › ${s.id} #${i + 1} (level ${lvl})`, e(c)); } catch (x) { err(`${w} › ${s.id} #${i + 1} (level ${lvl})`, 'generator threw: ' + x.message); } }
-  }
+/** Run one lesson entry the way the app does. */
+function runOne(c, e, lvl) {
+  if (typeof e === 'function') return e(c);
+  if (Array.isArray(e)) return runAtom({ ...c, ...(e[2] || {}) }, e[0], e[1] || {});
+  if (e && e.spec) return { ...e.spec, level: lvl };
+  return null;
 }
 
-/* Artists */
-const ids = new Set(), p = normalize(emptyProfile());
-for (const a of ARTISTS) {
-  const w = `artist "${a.id}"`;
-  if (!KEBAB.test(a.id)) err(w, 'id must be kebab-case');
-  if (ids.has(a.id)) err(w, 'duplicate id'); ids.add(a.id);
+/* ---------------------------- Knowledge base ---------------------------- */
+const p = normalize(emptyProfile());
+const kbFiles = readdirSync(join(dataDir, 'kb')).filter(f => f.endsWith('.js')).sort();
+const kbIds = new Set(kbFiles.map(f => f.replace(/\.js$/, '')));
+const coverage = [];
+for (const f of kbFiles) {
+  const w = `kb/${f}`;
+  let e;
+  try { e = (await import(pathToFileURL(join(dataDir, 'kb', f)).href)).default; } catch (x) { err(w, 'failed to load: ' + x.message); continue; }
+  if (!e || !e.id) { err(w, 'no default export entry({...})'); continue; }
+  if (`${e.id}.js` !== f) err(w, `the file name must be the entry id (${e.id}.js)`);
+  if (!/^[a-z][a-zA-Z0-9]*$/.test(e.id)) err(w, 'id must be camelCase (letters and digits)');
+  if (!KINDS.includes(e.kind || 'technique')) err(w, `kind "${e.kind}" is not one of ${KINDS.join(', ')}`);
+  for (const k of ['title', 'summary']) if (!e[k]) err(w, `missing "${k}"`);
+  if (!DOMAINS.includes(e.domain)) err(w, `domain "${e.domain}" is not one of ${DOMAINS.join(', ')}`);
+  if (!(e.re instanceof RegExp)) err(w, '"re" must be a RegExp');
+  else if (!e.re.test(e.title.toLowerCase())) warn(w, `its regex doesn't match its own title "${e.title}" (requests using that name won't find it)`);
+  for (const pre of e.prereqs || []) if (!kbIds.has(pre)) err(w, `prereq "${pre}" is not a knowledge-base entry`);
+  if (!e.stages || !e.stages.length) { err(w, 'no stages'); continue; }
+  const seenTiers = new Set();
+  for (const st of e.stages) {
+    const sw = `${w} › ${st.tier}`, T = TIER_BY_ID[st.tier];
+    if (!T) { err(sw, `unknown tier (use ${TIERS.map(t => t.id).join(', ')})`); continue; }
+    if (seenTiers.has(st.tier)) err(sw, 'two stages with the same tier'); seenTiers.add(st.tier);
+    if (!(st.levels[0] >= T.levels[0] && st.levels[1] <= T.levels[1] && st.levels[0] <= st.levels[1])) err(sw, `levels [${st.levels}] must sit inside ${T.name} (${T.levels.join('–')})`);
+    if (!st.goal || /^Play every lesson of this stage clean/.test(st.goal)) warn(sw, 'give the stage a specific goal (what the player can do when it is done)');
+    if (!st.skills.length) err(sw, 'no skills');
+    const ctx = e.ctx || { key: 9, minor: true, prog: 'minorRock' };
+    for (const lvl of new Set(st.levels)) for (const s of st.skills) {
+      if (!s.ex || !s.ex.length) { err(`${sw} › ${s.id}`, 'skill has no lessons'); continue; }
+      s.ex.forEach((x, i) => {
+        const where = `${sw} › ${s.id} #${i + 1} (level ${lvl})`;
+        try { checkExercise(where, runOne({ key: ctx.key, minor: !!ctx.minor, lvl, genre: 'rock', prog: ctx.prog }, x, lvl)); } catch (y) { err(where, 'generator threw: ' + y.message); }
+      });
+    }
+  }
+  try { const list = await stageLessonList(p, e.id, { tier: e.stages[0].tier, lvl: e.stages[0].levels[0] }); if (!list.length) err(w, 'the app builds no lessons for the first stage'); } catch (x) { err(w, 'the app failed to build its lessons: ' + x.message); }
+  coverage.push({ id: e.id, title: e.title, kind: e.kind || 'technique', cells: TIERS.map(t => { const st = e.stages.find(s => s.tier === t.id); return st ? { skills: st.skills.length, lessons: st.skills.reduce((a, s) => a + s.ex.length, 0), full: isFull(st) } : null; }) });
+}
+// every entry is findable by its own words, and names don't steal each other's requests
+for (const m of KB_INDEX) { const found = matchTechniques(m.title).map(x => x.id); if (!found.includes(m.id)) warn(`kb/${m.id}.js`, `"${m.title}" matches ${found.join(', ') || 'nothing'} instead`); }
+
+/* ------------------------------ Artists ------------------------------ */
+const artistFiles = readdirSync(join(dataDir, 'artists')).filter(f => f.endsWith('.js')).sort();
+for (const f of artistFiles) {
+  const w = `artists/${f}`;
+  let a;
+  try { a = (await import(pathToFileURL(join(dataDir, 'artists', f)).href)).default; } catch (x) { err(w, 'failed to load: ' + x.message); continue; }
+  if (!a || !a.id) { err(w, 'no default export artist({...})'); continue; }
+  if (`${a.id}.js` !== f) err(w, `the file name must be the artist id (${a.id}.js)`);
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(a.id)) err(w, 'id must be kebab-case');
   for (const k of ['name', 'blurb', 'genre']) if (!a[k]) err(w, `missing "${k}"`);
   if (!Array.isArray(a.wiki) || !a.wiki.length) err(w, '"wiki" must list at least one Wikipedia article title');
   if (!(a.re instanceof RegExp)) err(w, '"re" must be a RegExp');
@@ -73,10 +121,10 @@ for (const a of ARTISTS) {
     if (r.tab || r.notes) err(w, `riff "${r.title}" carries notes: famous songs are linked, never transcribed`);
   }
   let lessons = [];
-  try { lessons = artistLessonList(p, a.id); } catch (x) { err(w, 'lessons failed to build: ' + x.message); }
+  try { lessons = await artistLessonList(p, a.id); } catch (x) { err(w, 'lessons failed to build: ' + x.message); }
   if (lessons.length < 8) err(w, `only ${lessons.length} lessons build (need 8+)`);
-  const exIds = new Set();
-  lessons.forEach(l => { checkExercise(`${w} › ${l.skill.id} › ${l.ex.name}`, l.ex); if (exIds.has(l.ex.id)) warn(w, `duplicate exercise id ${l.ex.id}`); exIds.add(l.ex.id); });
+  const ids = new Set();
+  lessons.forEach(l => { checkExercise(`${w} › ${l.skill.id} › ${l.ex.name}`, l.ex); if (ids.has(l.ex.id)) warn(w, `duplicate exercise id ${l.ex.id}`); ids.add(l.ex.id); });
   try {
     const course = createMasterClass(p, { title: `${a.name} style` });
     const r = await buildMasterTree(p, course);
@@ -84,12 +132,17 @@ for (const a of ARTISTS) {
     p.courses = [];
   } catch (x) { err(w, 'master class failed to build: ' + x.message); }
 }
-// artist regexes must not catch each other's names
-for (const a of ARTISTS) for (const b of ARTISTS) if (a !== b && a.re.test(b.name.toLowerCase())) err(`artist "${a.id}"`, `its regex also matches "${b.name}"`);
-// every technique id is reachable from its own words
-for (const t of TECHNIQUES) { const found = matchTechniques(t.title).map(x => x.id); if (found.length && found[0] !== t.id && !found.includes(t.id)) warn(`technique "${t.id}"`, `"${t.title}" matches ${found.join(', ')} instead`); }
+for (const a of ARTIST_INDEX) for (const b of ARTIST_INDEX) if (a !== b && a.re.test(b.name.toLowerCase())) err(`artists/${a.id}.js`, `its regex also matches "${b.name}"`);
 
-console.log(`Checked ${ARTISTS.length} artists and ${TECHNIQUES.length} techniques.`);
+/* ------------------------------- Report ------------------------------- */
+const cell = c => (c ? `${c.full ? '✓' : '·'}${c.skills}/${c.lessons}` : '—').padEnd(9);
+console.log(`\nLearning-path coverage (skills/lessons per stage; ✓ = full: ${FULL_STAGE.skills}+ skills and ${FULL_STAGE.lessons}+ lessons):`);
+console.log(`${'entry'.padEnd(26)}${TIERS.map(t => t.name.slice(0, 8).padEnd(9)).join('')}`);
+coverage.sort((a, b) => b.cells.filter(c => c && c.full).length - a.cells.filter(c => c && c.full).length || a.id.localeCompare(b.id))
+  .forEach(r => console.log(`${(r.id + (r.kind !== 'technique' ? ` (${r.kind})` : '')).padEnd(26)}${r.cells.map(cell).join('')}`));
+const complete = coverage.filter(r => r.cells.every(c => c && c.full)).length;
+console.log(`${complete} of ${coverage.length} paths complete; ${coverage.length - complete} need more stages or lessons. ${artistFiles.length} artists.\n`);
+console.log(`Checked ${kbFiles.length} knowledge-base entries and ${artistFiles.length} artists.`);
 warnings.forEach(x => console.log('WARN  ' + x));
 errors.forEach(x => console.log('ERROR ' + x));
 console.log(errors.length ? `${errors.length} error(s).` : 'All content is valid.');

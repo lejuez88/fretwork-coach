@@ -14,7 +14,7 @@ import { normalizeExercise } from './coursegen.js';
 import { matchDrills, drillLibrary } from './drills.js';
 import { parseRequest, exercisesForRequest } from './topics.js';
 import { calibratedTarget, newExerciseState, applyResult } from './progression.js';
-import { matchTechniques, matchArtist } from '../data/artists.js';
+import { matchTechniques, matchArtist, loadEntries, stageFor } from '../data/kb.js';
 import { runAtom } from './styles.js';
 import { getRequest, putRequest } from './lessoncache.js';
 
@@ -70,29 +70,32 @@ Return JSON: {"summary": "1-2 sentences: what these exercises fix and how they'l
   return { summary: String(raw.summary || '').slice(0, 400), items };
 }
 
-/** Exercises from the technique lessons (rolling 5s, spread triads, tapping…) a request names. */
-function techniqueExercises(p, text) {
-  const techs = matchTechniques(text);
-  if (!techs.length) return null;
+/** Exercises from the knowledge-base paths (rolling 5s, travis picking…) a request names, from the stage at your level. */
+async function techniqueExercises(p, text) {
+  const metas = matchTechniques(text);
+  if (!metas.length) return null;
   const a = matchArtist(text);
+  const entries = await loadEntries(metas.slice(0, 3).map(x => x.id));
   const items = [], used = new Set();
-  techs.slice(0, 3).forEach((x, ti) => {
-    const lvl = levelFor(p, x.domain);
-    const c = { key: a ? a.ctx.key : 9, minor: a ? !!a.ctx.minor : true, lvl, genre: p.questionnaire.genres[0] || 'rock', prog: 'minorRock' };
-    const entries = x.skills.flatMap(s => s.ex).slice(0, techs.length > 1 ? 2 : 3);
-    entries.forEach((e, i) => {
-      const raw = typeof e === 'function' ? e(c) : Array.isArray(e) ? runAtom({ ...c, ...(e[2] || {}) }, e[0], e[1] || {}) : null;
+  entries.forEach((x, ti) => {
+    const lvl = levelFor(p, x.domain), st = stageFor(x, lvl) || x.stages[0]; if (!st) return;
+    const L = Math.max(st.levels[0], Math.min(st.levels[1], lvl));
+    const ctx = a ? a.ctx : x.ctx;
+    const c = { key: ctx.key, minor: !!ctx.minor, lvl: L, genre: p.questionnaire.genres[0] || 'rock', prog: ctx.prog || 'minorRock' };
+    const exs = st.skills.flatMap(s => s.ex).slice(0, entries.length > 1 ? 2 : 3);
+    exs.forEach((e, i) => {
+      const raw = typeof e === 'function' ? e(c) : Array.isArray(e) ? runAtom({ ...c, ...(e[2] || {}) }, e[0], e[1] || {}) : e && e.spec ? { ...e.spec, level: L } : null;
       const ex = raw && normalizeExercise({ ...raw, id: 'ask-' + (raw.id || raw.name) }, used);
-      if (ex) { ex.level = Math.max(1, Math.min(10, ex.level || lvl)); items.push({ role: i === 0 && ti === 0 ? 'drill' : 'main', ex }); }
+      if (ex) { ex.level = Math.max(1, Math.min(10, ex.level || L)); items.push({ role: i === 0 && ti === 0 ? 'drill' : 'main', ex }); }
     });
   });
   if (!items.length) return null;
-  return { summary: `Exercises for ${techs.map(x => x.title.toLowerCase()).join(', ')}${a ? ` in ${a.name}’s style` : ''}, from the built-in lessons, set to your level.`, items, understood: techs.map(x => x.title) };
+  return { summary: `Exercises for ${metas.map(x => x.title.toLowerCase()).join(', ')}${a ? ` in ${a.name}’s style` : ''}, from the stage of each path that fits your level. The full paths are in Practice → Technique library.`, items, understood: metas.map(x => x.title) };
 }
 
 /** Local version from keywords. */
-export function localExercises(p, text) {
-  const tech = techniqueExercises(p, text);
+export async function localExercises(p, text) {
+  const tech = await techniqueExercises(p, text);
   if (tech) return tech;
   const built = exercisesForRequest(p, text);
   if (built.items.length) {
@@ -140,7 +143,7 @@ export async function generateExercises(p, text) {
       try { out = await withClaude(p, text); source = 'claude'; putRequest(p, text, out); } catch (e) { error = e.message; }
     }
   }
-  if (!out) out = localExercises(p, text);
+  if (!out) out = await localExercises(p, text);
   out.items.forEach(it => {
     it.ex.request = text.slice(0, 200); it.ex.source = 'request';
     it.targetBpm = calibratedTarget(it.ex, it.ex.level || levelFor(p, it.ex.domain), p);

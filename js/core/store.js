@@ -4,7 +4,7 @@ import { today, daysBetween, addDays, parseDay } from './util.js';
 
 export const APP_VERSION = 2;
 /** Shown in Settings → About, to tell which version a device is running. Bump with each release. */
-export const BUILD = '2026-10-08.8';
+export const BUILD = '2026-10-08.9';
 const PROFILE_KEY = 'fretworkCoach.profile.v2';
 const LEGACY_KEY = 'fretworkCoach.profile.v1';
 const DRAFT_KEY = 'fretworkCoach.draft.v2';
@@ -49,6 +49,7 @@ export function emptyProfile() {
     songs: [],               // Phase D: {id, title, artist, genre, difficulty, status, info, tab, sections, state, lessons}
     customExercises: [],     // Phase D: exercises generated from "what do you want to work on?" {id, ex, request, state}
     lessonCache: { masters: [], requests: [] }, // plans and exercises Claude designed, reused for the same request (no API cost)
+    kbRequests: [],          // topics you asked to add to the knowledge base {id, text, kind, source, note, at}
     songRecs: null,
     varState: {},            // progress per exercise variation and library exercise: {"<scope>~<vid>": exerciseState}          // Phase D: cached recommendations {key, date, items, source}
     dashboard: { trackHistory: [] }, // Track of the Day: today's pick in .track, recent keys in .trackHistory
@@ -83,7 +84,7 @@ export function normalize(p) {
   if (!out.lessonCache || typeof out.lessonCache !== 'object' || Array.isArray(out.lessonCache)) out.lessonCache = { masters: [], requests: [] };
   ['masters', 'requests'].forEach(k => { if (!Array.isArray(out.lessonCache[k])) out.lessonCache[k] = []; });
   if (out.intervalStats != null && (typeof out.intervalStats !== 'object' || Array.isArray(out.intervalStats))) delete out.intervalStats;
-  ['courses', 'practiceLog', 'exerciseLog', 'evaluations', 'prescriptions', 'levelHistory', 'repertoire', 'sessionLog', 'activeExercises', 'reviewQueue', 'weaknesses', 'songs', 'customExercises']
+  ['courses', 'practiceLog', 'exerciseLog', 'evaluations', 'prescriptions', 'levelHistory', 'repertoire', 'sessionLog', 'activeExercises', 'reviewQueue', 'weaknesses', 'songs', 'customExercises', 'kbRequests']
     .forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
   return out;
 }

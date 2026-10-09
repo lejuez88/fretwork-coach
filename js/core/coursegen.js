@@ -25,7 +25,7 @@ export const GENRE_BACKING = {
 };
 
 /* ------------------------------ Normalizing ----------------------------- */
-const TECHS = ['h', 'p', '/', '\\', 'b', '~', 'pm', 't'];
+const TECHS = ['h', 'p', '/', '\\', 'b', 'pb', 'r', '~', 'pm', 't', 'mute', 'ghost', 'nh', 'ah'];
 const PICKING = ['alternate', 'strict', 'economy', 'down', 'fingers', 'hybrid'];
 const validTuning = t => (Array.isArray(t) && t.length === 6 && t.every(m => Number.isInteger(m) && m >= 28 && m <= 76) ? t.slice() : null);
 function normTab(tab) {

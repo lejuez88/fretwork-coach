@@ -5,17 +5,17 @@
 import { esc, toast } from '../core/util.js';
 import { Store } from '../core/store.js';
 import { wikiTile, hydrateImages } from '../core/wiki.js';
-import { ARTISTS, ARTIST_BY_ID, ARTIST_NOTE, TECHNIQUES } from '../data/artists.js';
+import { ARTIST_INDEX as ARTISTS, ARTIST_META_BY_ID, ARTIST_NOTE, KB_INDEX, loadArtist } from '../data/kb.js';
 import { artistLessonList, createMasterClass, buildMasterTree, isMaster } from '../core/master.js';
 import { calibratedTarget } from '../core/progression.js';
 import { addSong } from '../core/songs.js';
 import { bestMatchUrl } from '../core/songsterr.js';
 import { openMasterSheet, MC_ICON } from '../ui/mastersheet.js';
-import { lessonCardHTML, lessonActions } from '../ui/lessoncards.js';
+import { lessonCardHTML, lessonActions, lessonTarget } from '../ui/lessoncards.js';
 
 const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 /** The library technique an artist's technique chip names (or null). */
-const techniqueByName = name => TECHNIQUES.find(t => norm(t.title) === norm(name)) || TECHNIQUES.find(t => t.re.test(String(name).toLowerCase())) || null;
+const techniqueByName = name => KB_INDEX.find(t => norm(t.title) === norm(name)) || KB_INDEX.find(t => t.re.test(String(name).toLowerCase())) || null;
 /** Artists whose names match your favorite players come first. */
 export function artistsForYou(p) {
   const fav = (p.questionnaire.players || []).map(x => norm(x.name));
@@ -72,16 +72,15 @@ export function mountArtistIndex(root, { navigate }) {
 
 /** #/artist/<id>: one artist's lessons and songs. */
 export function mountArtist(root, { navigate, id }) {
-  const p = Store.profile, a = ARTIST_BY_ID[id];
-  if (!a) { navigate('#/artist'); return () => {}; }
-  const lessons = artistLessonList(p, id);
-  const targets = lessons.map(l => calibratedTarget(l.ex, l.ex.level || 4, p));
-  let building = false;
+  const p = Store.profile, meta = ARTIST_META_BY_ID[id];
+  if (!meta) { navigate('#/artist'); return () => {}; }
+  let a = meta, lessons = [], targets = [], building = false, ready = false, gone = false;
   const acts = lessonActions(root, { get: () => ({ lessons, targets }), reason: l => `${a.name} lesson: ${l.skill.title}`, title: l => `${a.name}: ${l.ex.name}`, genre: a.genre, navigate });
 
   const hasSong = r => p.songs.some(s => norm(s.title) === norm(r.title));
   function render() {
     acts.stop();
+    if (!ready) { root.innerHTML = `<a class="link" href="#/artist">← Artist series</a><div class="exhead"><div class="label">Artist series</div><h1>${esc(meta.name)}</h1></div><p class="muted"><span class="spinner sm"></span> Loading lessons…</p>`; return; }
     const mc = masterFor(p, id);
     // group lessons by unit, in order
     const groups = [];
@@ -128,5 +127,9 @@ export function mountArtist(root, { navigate, id }) {
   };
   root.addEventListener('click', onClick);
   render();
-  return () => { acts.stop(); root.removeEventListener('click', onClick); };
+  Promise.all([loadArtist(id), artistLessonList(p, id)]).then(([full, list]) => {
+    if (gone) return;
+    a = full; lessons = list; targets = lessons.map(l => lessonTarget(p, l, calibratedTarget(l.ex, l.ex.level || 4, p))); ready = true; render();
+  }).catch(e => { if (!gone) root.innerHTML = `<a class="link" href="#/artist">← Artist series</a><p class="bad">Couldn’t load the lessons (${esc(e.message)}). Check the connection and reload.</p>`; });
+  return () => { gone = true; acts.stop(); root.removeEventListener('click', onClick); };
 }

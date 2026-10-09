@@ -90,6 +90,31 @@ export async function saveToDrive(profile, { chooseAccount = false } = {}) {
   return f;
 }
 
+/* ------------------------- Research requests file ------------------------- */
+// "Fretwork Coach research requests.json": the topics a player asked to add to the
+// knowledge base. The scheduled content runs read it from Drive (see CONTENT.md).
+const REQ_NAME = 'Fretwork Coach research requests.json';
+async function findRequestsFile() {
+  const q = encodeURIComponent("appProperties has { key='fretworkCoach' and value='requests' } and trashed=false");
+  const j = await api(`/drive/v3/files?q=${q}&orderBy=modifiedTime desc&pageSize=1&fields=files(id,name,modifiedTime)`);
+  return (j.files || [])[0] || null;
+}
+/**
+ * Save the requests file (one file, updated in place). interactive: false only uses a token
+ * this page already has (no sign-in window), and fails quietly otherwise.
+ */
+export async function saveRequestsToDrive(data, { interactive = true } = {}) {
+  if (!interactive && !(token && Date.now() < tokenExp - 60000)) throw new Error('Not signed in to Google in this session.');
+  await getToken();
+  const body = JSON.stringify(data, null, 2);
+  const existing = await findRequestsFile();
+  if (existing) return api(`/upload/drive/v3/files/${existing.id}?uploadType=media&fields=id,name,modifiedTime`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body });
+  const boundary = 'fc' + Math.random().toString(36).slice(2);
+  const meta = { name: REQ_NAME, mimeType: 'application/json', appProperties: { fretworkCoach: 'requests' }, description: 'Topics you asked Fretwork Coach to add. Its scheduled content runs read this file and build each one into the app.' };
+  const multipart = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${boundary}--`;
+  return api('/upload/drive/v3/files?uploadType=multipart&fields=id,name,modifiedTime', { method: 'POST', headers: { 'Content-Type': `multipart/related; boundary=${boundary}` }, body: multipart });
+}
+
 /** Load the profile saved in this Drive. Returns {data, file} or throws when there is none. */
 export async function loadFromDrive({ chooseAccount = false } = {}) {
   await getToken({ chooseAccount });

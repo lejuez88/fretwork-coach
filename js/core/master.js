@@ -15,7 +15,7 @@ import { ROOT_BY_PC, mod12, parseNote } from './theory.js';
 import { runAtom } from './styles.js';
 import { stringNotesDrill } from './drills.js';
 import { normalizeTree, normalizeExercise, profileBrief, TAB_RULES, EXERCISE_SCHEMA, LOCAL_TREE_VERSION } from './coursegen.js';
-import { ARTIST_TOPICS, matchArtist, matchTechniques, ARTIST_BY_ID, TECHNIQUES } from '../data/artists.js';
+import { KB_BY_ID, ARTIST_INDEX, ARTIST_META_BY_ID, matchArtist, matchTechniques, loadEntry, loadEntries, loadArtist, stageFor, TIERS, TIER_BY_ID } from '../data/kb.js';
 import { getMaster, putMaster } from './lessoncache.js';
 import { parseRequest, buildForRequest } from './topics.js';
 import { tierName } from './courses.js';
@@ -336,7 +336,8 @@ export const MASTER_TOPICS = [
     U('Fast changes in songs', 'One beat per chord.', [S('fast', 'Fast changes', 'fretting', 'Changes on every beat.', [['chordChanges', { chords: ['G', 'Em', 'C', 'D'], beats: 1 }], ['strumPattern', { chords: ['C', 'G', 'Am', 'F'], pattern: 'pop' }]])])
   ] }
 ];
-export { ARTIST_TOPICS };
+/** Artists as master-class topics (their lessons load when a class is built). */
+export const ARTIST_TOPICS = ARTIST_INDEX.map(a => ({ id: 'artist-' + a.id, artist: a.id, title: `${a.name} style`, blurb: a.blurb, domain: (KB_BY_ID[(a.uses || [])[0]] || {}).domain || 'improv', cat: 'artist', re: a.re, ctx: a.ctx, units: null, techniques: a.techniques }));
 export const MASTER_BY_ID = Object.fromEntries([...MASTER_TOPICS, ...ARTIST_TOPICS].map(t => [t.id, t]));
 
 /** The built-in topic a text is about (or null). An artist's name wins: "Eric Johnson pentatonic runs" is the Eric Johnson class. */
@@ -410,16 +411,7 @@ function runEntry(c, e, lvl, skillDomain) {
   if (ex && ['theory', 'ear', 'improv'].includes(skillDomain) && ex.domain !== skillDomain) ex.domain = skillDomain;
   return ex;
 }
-function curatedRaw(t, difficulty, genre) {
-  const n = t.units.length;
-  const units = t.units.map((u, ui) => {
-    const lvl = clamp(difficulty - 1 + Math.round(ui * 3 / Math.max(1, n - 1)), 1, 10);
-    const c = { key: t.ctx.key, minor: !!t.ctx.minor, lvl, genre, prog: t.ctx.prog };
-    return { title: u.title, summary: u.summary, skills: u.skills.map(s => ({ id: s.id, title: s.title, domain: s.domain, summary: s.summary, prereqs: [], exercises: s.ex.map(e => runEntry(c, e, lvl, s.domain)).filter(Boolean) })).filter(s => s.exercises.length) };
-  }).filter(u => u.skills.length);
-  const keyNm = ROOT_BY_PC[t.ctx.key] ? ROOT_BY_PC[t.ctx.key].name : '';
-  return { summary: `${t.title}, step by step: ${t.units.map(u => u.title.toLowerCase()).join(', ')}. Starts in ${keyNm}${t.ctx.minor ? ' minor' : ''}; every exercise can be moved to any key.`, units };
-}
+function curatedRaw(t, difficulty, genre) { return unitsRaw(t.units, { ctx: t.ctx, difficulty, genre, title: t.title }); }
 /** Five steps for any topic the request parser understands. */
 function genericRaw(p, topic, difficulty) {
   const req = parseRequest(topic.text || topic.title);
@@ -461,20 +453,32 @@ export function requestPhrases(text) {
     .replace(/\b(such as|including|covering|like|e\.g\.|especially|focus(ing)? on|with)\b/g, ',')
     .split(/[,;:\n/&]|\band\b|\bplus\b/).map(x => x.replace(/[^a-z0-9♯♭# '-]/g, ' ').replace(/\s+/g, ' ').trim()).filter(x => x.length >= 3 && x.length <= 60);
 }
-/** One unit per technique the request names, then a unit for each other built-in topic it names. */
-function requestedUnits(text, { skipTech = new Set(), skipTopics = new Set() } = {}) {
+/** Your level in an area (for picking the right stage of a path). */
+const yourLevel = (p, dom) => clamp(Math.round(levelOf(p, dom) || avgLevel(p)), 1, 10);
+/**
+ * Units for the knowledge-base entries a request names: for each, the stage at your level and the
+ * next one (so a request is never generic), then a unit for each other built-in topic it names.
+ * Units carry their own level (lvl) and key (ctx).
+ */
+async function requestedUnits(p, text, { skipTech = new Set(), skipTopics = new Set() } = {}) {
   const units = [], seen = new Set(skipTopics);
-  matchTechniques(text).filter(x => !skipTech.has(x.id)).forEach(x => units.push(U(x.title, x.summary, x.skills)));
+  const metas = matchTechniques(text).filter(x => !skipTech.has(x.id));
+  const entries = await loadEntries(metas.map(x => x.id));
+  entries.forEach(e => {
+    const lv = yourLevel(p, e.domain), cur = stageFor(e, lv); if (!cur) return;
+    const i = e.stages.indexOf(cur), take = metas.length > 2 ? [cur] : e.stages.slice(i, i + 2);
+    take.forEach((st, k) => units.push({ ...U(take.length > 1 ? `${e.title}: ${TIER_BY_ID[st.tier].name.toLowerCase()}` : e.title, st.goal, st.skills), lvl: k ? st.levels[0] : clamp(lv, st.levels[0], st.levels[1]), ctx: e.ctx }));
+  });
   for (const ph of requestPhrases(text)) {
     if (matchTechniques(ph).length || matchArtist(ph)) continue;
     const t = matchPlainTopic(ph); if (!t || seen.has(t.id)) continue;
     seen.add(t.id);
-    units.push(U(t.title, t.blurb, t.units.slice(0, 2).map(u => u.skills[0]).filter(Boolean)));
+    units.push({ ...U(t.title, t.blurb, t.units.slice(0, 2).map(u => u.skills[0]).filter(Boolean)), ctx: t.ctx });
   }
   return units;
 }
-/** Technique ids an artist's lessons already cover. */
-const artistTechIds = artistId => { const a = ARTIST_BY_ID[artistId]; return new Set(a ? TECHNIQUES.filter(x => x.skills.some(sk => a.units.some(u => u.skills.includes(sk)))).map(x => x.id) : []); };
+/** Knowledge-base entries an artist's lessons already cover. */
+const artistTechIds = artistId => new Set((ARTIST_META_BY_ID[artistId] || {}).uses || []);
 /** Base units with requested ones added before the closing unit, at most 8 in all. */
 function mergeUnits(base, extra) {
   if (!extra.length) return base;
@@ -484,34 +488,64 @@ function mergeUnits(base, extra) {
 const TOGETHER = U('Putting it together', 'Every technique inside real phrases, over a loop.', [
   S('together', 'Mix it into a solo', 'improv', 'Use each technique as one phrase among others.', [['callResponse', { chords: '$minorRock' }], ['targetSolo', { chords: '$minorRock' }]])]);
 
-/** The built-in plan for a course's request: {raw, kind, techniques} or null. kind: artist | topic | techniques | generic. */
-function localMasterRaw(p, course) {
+/** Raw course from units that may carry their own level (lvl) and key (ctx); others ramp from the difficulty. */
+function unitsRaw(units, { ctx, difficulty, genre, title }) {
+  const n = units.length;
+  const out = units.map((u, ui) => {
+    const lvl = u.lvl != null ? u.lvl : clamp(difficulty - 1 + Math.round(ui * 3 / Math.max(1, n - 1)), 1, 10);
+    const x = u.ctx || ctx, c = { key: x.key, minor: !!x.minor, lvl, genre, prog: x.prog };
+    return { title: u.title, summary: u.summary, skills: u.skills.map(s => ({ id: s.id, title: s.title, domain: s.domain, summary: s.summary, prereqs: [], exercises: s.ex.map(e => runEntry(c, e, lvl, s.domain)).filter(Boolean) })).filter(s => s.exercises.length) };
+  }).filter(u => u.skills.length);
+  const keyNm = ROOT_BY_PC[ctx.key] ? ROOT_BY_PC[ctx.key].name : '';
+  return { summary: `${title}, step by step: ${units.map(u => u.title.toLowerCase()).join(', ')}. Starts in ${keyNm}${ctx.minor ? ' minor' : ''}; every exercise can be moved to any key.`, units: out };
+}
+/**
+ * A full learning path as a course: one unit per stage, from the stage at your level (or from
+ * scratch when you're new to it) up to mastery. Each unit's lessons are built at that stage's level.
+ */
+export function pathRaw(e, startLevel, genre) {
+  const first = e.stages.findIndex(s => s.levels[1] >= startLevel);
+  const stages = e.stages.slice(first < 0 ? e.stages.length - 1 : first);
+  const units = stages.map((st, i) => ({ ...U(`${TIER_BY_ID[st.tier].name}: ${st.title}`, st.goal, st.skills), lvl: i ? st.levels[0] : clamp(startLevel, st.levels[0], st.levels[1]) }));
+  const raw = unitsRaw(units, { ctx: e.ctx, genre, title: e.title, difficulty: startLevel });
+  raw.summary = `${e.title} from ${stages.length === e.stages.length && first <= 0 ? 'scratch' : TIER_BY_ID[stages[0].tier].name.toLowerCase()} to ${TIER_BY_ID[stages[stages.length - 1].tier].name.toLowerCase()}: ${stages.map(s => TIER_BY_ID[s.tier].name.toLowerCase()).join(' → ')}. Each stage's lessons are built at its level.`;
+  return raw;
+}
+
+/** The built-in plan for a course's request: {raw, kind, techniques} or null. kind: artist | path | topic | techniques | generic. */
+async function localMasterRaw(p, course) {
   const text = course.topic ? course.topic.text || course.topic.title : course.style;
   const byId = course.topic && course.topic.topicId && MASTER_BY_ID[course.topic.topicId];
   const techs = matchTechniques(text);
   const t = byId && !techs.length ? byId : topicFor(text);
   if (t && t.artist) {
-    const extra = requestedUnits(text, { skipTech: artistTechIds(t.artist) });
-    return { raw: curatedRaw({ ...t, units: mergeUnits(t.units, extra) }, course.difficulty, course.genre), kind: 'artist', techniques: techs };
+    const a = await loadArtist(t.artist);
+    const extra = await requestedUnits(p, text, { skipTech: artistTechIds(t.artist) });
+    return { raw: unitsRaw(mergeUnits(a.units, extra), { ctx: a.ctx, difficulty: course.difficulty, genre: course.genre, title: `${a.name} style` }), kind: 'artist', techniques: techs };
+  }
+  // One knowledge-base entry with a full path (or no built-in topic to lean on): the path itself
+  if (techs.length === 1 && (techs[0].complete || !t)) {
+    const e = await loadEntry(techs[0].id);
+    return { raw: pathRaw(e, course.difficulty, course.genre), kind: 'path', techniques: techs };
   }
   if (t) {
-    const extra = requestedUnits(text, { skipTopics: new Set([t.id]) }).filter(u => techs.some(x => x.title === u.title));
-    return { raw: curatedRaw({ ...t, units: mergeUnits(t.units, extra) }, course.difficulty, course.genre), kind: 'topic', techniques: techs };
+    const extra = (await requestedUnits(p, text, { skipTopics: new Set([t.id]) })).filter(u => techs.some(x => u.title.startsWith(x.title)));
+    return { raw: unitsRaw(mergeUnits(t.units, extra), { ctx: t.ctx, difficulty: course.difficulty, genre: course.genre, title: t.title }), kind: 'topic', techniques: techs };
   }
-  const units = requestedUnits(text);
+  const units = await requestedUnits(p, text);
   if (units.length) {
     const req = parseRequest(text);
     const ctx = { key: req.key ? req.key.pc : 9, minor: req.key ? !!req.key.minor : true, prog: 'minorRock' };
-    const raw = curatedRaw({ title: course.topic ? course.topic.title : course.style, ctx, units: [...units.slice(0, 7), TOGETHER] }, course.difficulty, course.genre);
-    raw.summary = `A course built on what you named: ${units.map(u => u.title.toLowerCase()).join(', ')}, then all of it together in real music.`;
+    const raw = unitsRaw([...units.slice(0, 7), TOGETHER], { ctx, difficulty: course.difficulty, genre: course.genre, title: course.topic ? course.topic.title : course.style });
+    raw.summary = `A course built on what you named: ${techs.map(x => x.title.toLowerCase()).join(', ') || units.map(u => u.title.toLowerCase()).join(', ')}, each from the stage at your level, then all of it together in real music.`;
     return { raw, kind: 'techniques', techniques: techs };
   }
   const g = genericRaw(p, course.topic || { title: course.style, text: course.style }, course.difficulty);
   return g ? { raw: g, kind: 'generic', techniques: [] } : null;
 }
 /** Built-in master class tree, or null when the topic isn't one the app knows. */
-export function generateMasterLocal(p, course) {
-  const r = localMasterRaw(p, course);
+export async function generateMasterLocal(p, course) {
+  const r = await localMasterRaw(p, course);
   if (!r) return null;
   const tree = normalizeTree(r.raw, { generatedBy: 'local', difficulty: course.difficulty, version: LOCAL_TREE_VERSION, style: course.style });
   if (!tree.units.length) return null;
@@ -601,13 +635,13 @@ Return JSON: {"skills":[{"id": string (as given), "exercises":[${EXERCISE_SCHEMA
 }
 
 /** Built-in exercises for one outlined skill (when Claude couldn't write it). */
-function localSkillExercises(p, course, skill, lvl) {
+async function localSkillExercises(p, course, skill, lvl) {
   const text = `${skill.title} ${skill.covers || ''}`;
   const tech = matchTechniques(text)[0] || matchTechniques(skill.plan || '')[0];
   const topic = matchTopic(text);
   let entries = null, ctx = { key: 9, minor: true, prog: 'minorRock' };
-  if (tech) entries = tech.skills.flatMap(k => k.ex).slice(0, 3);
-  else if (topic) { entries = topic.units.slice(0, 2).flatMap(u => u.skills[0] ? u.skills[0].ex : []).slice(0, 3); ctx = topic.ctx; }
+  if (tech) { const e = await loadEntry(tech.id), st = stageFor(e, lvl); entries = (st ? st.skills : e.stages[0].skills).flatMap(k => k.ex).slice(0, 3); ctx = e.ctx; }
+  else if (topic && topic.units) { entries = topic.units.slice(0, 2).flatMap(u => u.skills[0] ? u.skills[0].ex : []).slice(0, 3); ctx = topic.ctx; }
   if (entries) {
     const c = { key: ctx.key, minor: !!ctx.minor, lvl, genre: course.genre, prog: ctx.prog };
     return entries.map(e => runEntry(c, e, lvl, skill.domain)).filter(Boolean);
@@ -629,15 +663,15 @@ export async function generateMasterWithClaude(p, course, { onProgress = () => {
     finally { onProgress({ step: 'units', done: ++done, total: n }); }
   }), 3);
   let filled = 0;
-  const units = outline.units.map((u, ui) => {
+  const units = await Promise.all(outline.units.map(async (u, ui) => {
     const lvl = clamp(course.difficulty - 1 + Math.round(ui * 3 / Math.max(1, n - 1)), 1, 10);
     const written = results[ui] && results[ui].ok ? results[ui].value : {};
-    return { title: u.title, summary: u.summary, skills: u.skills.map(s => {
+    return { title: u.title, summary: u.summary, skills: await Promise.all(u.skills.map(async s => {
       let exercises = written[s.id] || [];
-      if (!exercises.length) { exercises = localSkillExercises(p, course, s, lvl); if (exercises.length) filled++; }
+      if (!exercises.length) { exercises = await localSkillExercises(p, course, s, lvl); if (exercises.length) filled++; }
       return { id: s.id, title: s.title, domain: s.domain, summary: s.summary, prereqs: [], exercises };
-    }) };
-  });
+    })) };
+  }));
   if (results.every(r => !r.ok)) throw results[0].error || new Error('Claude couldn’t write the exercises.');
   const tree = normalizeTree({ summary: outline.summary, units }, { generatedBy: 'claude', difficulty: course.difficulty, style: course.style });
   if (!tree.units.length) throw new Error('Claude returned an empty course.');
@@ -653,7 +687,7 @@ function techniqueName(course, techs) {
 
 /**
  * Build (or rebuild) a master class plan. Returns {tree, usedClaude, source, error?, cached?}.
- * source: 'artist' (built-in Artist Series lessons), 'cache' (a plan Claude designed before for the
+ * source: 'artist' (built-in Artist Series lessons), 'path' (a knowledge-base learning path), 'cache' (a plan Claude designed before for the
  * same request: no API cost), 'claude', or 'local'. fresh: skip the saved plan (a rebuild).
  */
 export async function buildMasterTree(p, course, { fresh = false, onProgress = () => {} } = {}) {
@@ -665,8 +699,14 @@ export async function buildMasterTree(p, course, { fresh = false, onProgress = (
 
   // Artists: the built-in Artist Series lessons, no API call
   if (t && t.artist) {
-    const tree = generateMasterLocal(p, course);
-    if (tree) { const a = ARTIST_BY_ID[t.artist]; rename(`${a.name} Master Class`, a.blurb); if (course.topic) course.topic.cat = 'artist'; return done(tree, { source: 'artist' }); }
+    const tree = await generateMasterLocal(p, course);
+    if (tree) { const a = ARTIST_META_BY_ID[t.artist]; rename(`${a.name} Master Class`, a.blurb); if (course.topic) course.topic.cat = 'artist'; return done(tree, { source: 'artist' }); }
+  }
+  // One topic with a complete learning path in the knowledge base: the path itself, no API call
+  const techs = matchTechniques(text);
+  if (techs.length === 1 && techs[0].complete && !fresh) {
+    const tree = await generateMasterLocal(p, course);
+    if (tree) { rename(`${techs[0].title} Master Class`, techs[0].summary); return done(tree, { source: 'path' }); }
   }
   // A plan Claude already designed for this request (same or similar words, same level): no API call
   if (!fresh) {
@@ -683,12 +723,12 @@ export async function buildMasterTree(p, course, { fresh = false, onProgress = (
     } catch (e) { error = e.message || String(e); }
   }
   if (!tree) {
-    tree = generateMasterLocal(p, course);
+    tree = await generateMasterLocal(p, course);
     if (tree) { const n = techniqueName(course, matchTechniques(text)); if (n) rename(n, null); }
   }
   if (!tree) throw new Error(error ? `Claude couldn’t build it (${error}), and the built-in plans don’t cover “${course.topic.title}”.` : `The built-in plans don’t cover “${course.topic.title}” yet. Connect Claude in Settings and any topic works, or pick one of the suggested topics.`);
   course.tree = tree; course.state = null;
-  return { tree, usedClaude, error, source: usedClaude ? 'claude' : 'local' };
+  return { tree, usedClaude, error, source: usedClaude ? 'claude' : tree.kind === 'path' ? 'path' : 'local' };
 }
 
 /** Can this topic be built right now (Claude connected, or a built-in plan exists)? */
@@ -797,43 +837,53 @@ export function topicForExercise(ex) {
 }
 
 /* ----------------------------- Artist Series ----------------------------- */
+/** Build normalized lessons from skills at a level: [{skill, ex}]. */
+function buildLessons(skills, c, lvl, idPrefix, keyPrefix, used = new Set()) {
+  return skills.flatMap(s => s.ex.map(e => runEntry(c, e, lvl, s.domain)).filter(Boolean).map(raw => {
+    const base = raw.id || raw.name;
+    const ex = normalizeExercise({ ...raw, id: `${idPrefix}-${base}` }, used);
+    if (ex && ex.level == null) ex.level = lvl;
+    return ex ? { skill: s, ex, key: `${keyPrefix}:${base}` } : null;
+  }).filter(Boolean));
+}
 /**
- * An artist's lessons at the player's level, ready to practice:
- * [{unit, skill, ex}] with exercises normalized like any course exercise.
+ * An artist's lessons at the player's level, ready to practice: [{unit, skill, ex, key}].
+ * key identifies the lesson across levels (its progress lives in profile.varState).
  */
-export function artistLessonList(p, artistId) {
-  const a = ARTIST_BY_ID[artistId]; if (!a) return [];
-  const t = MASTER_BY_ID['artist-' + artistId];
+export async function artistLessonList(p, artistId) {
+  const meta = ARTIST_META_BY_ID[artistId]; if (!meta) return [];
+  const a = await loadArtist(artistId), t = MASTER_BY_ID['artist-' + artistId];
   const lvl = masterDifficulty(p, { title: t.title, text: t.title, topicId: t.id });
   const used = new Set();
-  return t.units.flatMap((u, ui) => {
-    const ulvl = clamp(lvl - 1 + Math.round(ui * 3 / Math.max(1, t.units.length - 1)), 1, 10);
-    const c = { key: t.ctx.key, minor: !!t.ctx.minor, lvl: ulvl, genre: a.genre, prog: t.ctx.prog };
-    return u.skills.flatMap(s => s.ex.map(e => runEntry(c, e, ulvl, s.domain)).filter(Boolean).map(raw => {
-      const ex = normalizeExercise({ ...raw, id: `${artistId}-${raw.id || raw.name}` }, used);
-      if (ex && ex.level == null) ex.level = ulvl;
-      return ex ? { unit: u, skill: s, ex } : null;
-    }).filter(Boolean));
+  return a.units.flatMap((u, ui) => {
+    const ulvl = clamp(lvl - 1 + Math.round(ui * 3 / Math.max(1, a.units.length - 1)), 1, 10);
+    const c = { key: a.ctx.key, minor: !!a.ctx.minor, lvl: ulvl, genre: a.genre, prog: a.ctx.prog };
+    return buildLessons(u.skills, c, ulvl, artistId, `artist:${artistId}`, used).map(l => ({ ...l, unit: u }));
   });
 }
 
 /* ---------------------------- Technique Library ---------------------------- */
-/** The level to show a technique at: your level in its skill area, inside its recommended range. */
+/** The level to start a topic at: your level in its skill area, inside the path's range. */
 export function techniqueLevelFor(p, techId) {
-  const t = TECHNIQUES.find(x => x.id === techId); if (!t) return 4;
-  const [lo, hi] = Array.isArray(t.level) ? t.level : [3, 8];
+  const t = KB_BY_ID[techId]; if (!t) return 4;
+  const [lo, hi] = t.level || [1, 10];
   return clamp(Math.round(levelOf(p, t.domain) || avgLevel(p)), lo, hi);
 }
-/** A technique's lessons built at a level: [{skill, ex}], normalized like course exercises. */
-export function techniqueLessonList(p, techId, lvl = null) {
-  const t = TECHNIQUES.find(x => x.id === techId); if (!t) return [];
+/** One stage's lessons built at a level: [{skill, ex, key}]. tier defaults to the stage at that level. */
+export async function stageLessonList(p, techId, { tier = null, lvl = null } = {}) {
+  const e = await loadEntry(techId);
   const L = clamp(Math.round(lvl || techniqueLevelFor(p, techId)), 1, 10);
-  const ctx = t.ctx || { key: 9, minor: true, prog: 'minorRock' };
-  const c = { key: ctx.key, minor: !!ctx.minor, lvl: L, genre: (p.questionnaire.genres || [])[0] || 'rock', prog: ctx.prog };
-  const used = new Set();
-  return t.skills.flatMap(s => s.ex.map(e => runEntry(c, e, L, s.domain)).filter(Boolean).map(raw => {
-    const ex = normalizeExercise({ ...raw, id: `tech-${techId}-${raw.id || raw.name}` }, used);
-    if (ex && ex.level == null) ex.level = L;
-    return ex ? { skill: s, ex } : null;
-  }).filter(Boolean));
+  const st = (tier && e.stages.find(s => s.tier === tier)) || stageFor(e, L); if (!st) return [];
+  const level = clamp(L, st.levels[0], st.levels[1]);
+  const c = { key: e.ctx.key, minor: !!e.ctx.minor, lvl: level, genre: (p.questionnaire.genres || [])[0] || 'rock', prog: e.ctx.prog };
+  return buildLessons(st.skills, c, level, `tech-${techId}`, `kb:${techId}`);
+}
+/** Progress on a path: per stage, lessons practiced and mastered (from profile.varState). */
+export function pathProgress(p, meta, lessonKeysByTier) {
+  const vs = p.varState || {};
+  return Object.fromEntries((meta.stages || []).map(st => {
+    const keys = lessonKeysByTier[st.tier] || [];
+    const states = keys.map(k => vs[`${k}~base`]).filter(Boolean);
+    return [st.tier, { total: st.lessons, practiced: states.filter(x => x.history && x.history.length).length, mastered: states.filter(x => x.mastered).length }];
+  }));
 }

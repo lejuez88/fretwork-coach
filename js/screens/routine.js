@@ -102,12 +102,12 @@ export function mountRoutineRunner(root, { navigate }) {
   const course = A.routine.courseId ? p.courses.find(c => c.id === A.routine.courseId) : null;
   if (course) ensureState(course);
   /** Progress state behind an item (course, prescription, song section or saved exercise). */
-  // Every variation (and every library exercise) keeps its own progress in
+  // Every variation (and every library exercise, knowledge-base and artist lesson) keeps its own progress in
   // profile.varState under "<scope>~<vid>"; the original exercise of a course,
   // song, request or prescription keeps using its usual place.
-  const scopeOf = it => it.libId ? `lib:${it.libId}` : course && it.fromTree ? `${A.routine.courseId}:${it.exId}` : it.prescriptionId ? `rx:${it.prescriptionId}`
+  const scopeOf = it => it.kbKey ? it.kbKey : it.libId ? `lib:${it.libId}` : course && it.fromTree ? `${A.routine.courseId}:${it.exId}` : it.prescriptionId ? `rx:${it.prescriptionId}`
     : it.songId ? `song:${it.songId}:${it.ex.sectionKey || it.exId}` : it.customId ? `custom:${it.customId}` : course ? `${A.routine.courseId}:x:${it.exId}` : `ex:${it.exId}`;
-  const usesVarState = it => !!it.libId || (!!it.vid && it.vid !== 'base');
+  const usesVarState = it => !!it.libId || !!it.kbKey || (!!it.vid && it.vid !== 'base');
   const varKeyOf = it => `${scopeOf(it)}~${it.vid || 'base'}`;
   const varsOf = it => { try { return variationsFor(it.baseEx || it.ex, { course, level: (it.baseEx || it.ex).level || (course && course.difficulty) || 4 }); } catch { return []; } };
   let varOpen = false;
