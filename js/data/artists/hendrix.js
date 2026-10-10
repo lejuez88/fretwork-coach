@@ -3,18 +3,21 @@ import { OPEN, N, nameOf, minorKey, goalFor, slug, beatsOf, make, fromSeq, pentB
 import pentatonic from '../kb/pentatonic.js';
 import octaves from '../kb/octaves.js';
 import sharp9 from '../kb/sharp9.js';
+import bending from '../kb/bending.js';
+import vibrato from '../kb/vibrato.js';
 
 const ARTIST_NOTE = 'Use the Songs tab to learn the real thing: add the song, paste or import a tab, and the app turns it into section lessons.';
 export default artist({ id: 'hendrix', name: 'Jimi Hendrix', wiki: ['Jimi Hendrix'], genre: 'classic-rock', re: /hendrix|\bjimi\b/,
     blurb: 'Chord embellishments, the 7♯9 chord, octaves, thumb-over grips and vocal bends.',
-    techniques: ['Chord embellishments', 'The 7♯9 chord', 'Octaves', 'Bends and vibrato'],
+    techniques: ['Chord embellishments', 'The 7♯9 chord', 'Octaves', { name: 'Bends and vibrato', path: 'bending' }],
     ctx: { key: 4, minor: true, prog: 'minorRock' },
     units: [
       U('Rhythm with melody', 'Chords decorated with hammer-ons and fills.', [S('hx-emb', 'Chord embellishments', 'fretting', 'Hammer-ons inside the chord shape.', [['embellish', { chords: ['E', 'A', 'D', 'A'] }], ['embellish', { chords: ['Em', 'G', 'Am', 'Em'] }]])]),
       U('The 7♯9', 'The Hendrix chord.', skillsOf(sharp9)),
       U('Octaves', 'Big, simple melodies.', skillsOf(octaves)),
       PU(pentatonic, { title: 'Pentatonic phrasing', summary: 'The boxes, bends and phrasing under his leads.', tiers: ['foundations', 'intermediate', 'advanced'] }),
-      U('Bends and vibrato', 'Vocal bends.', [S('hx-bend', 'Bends and vibrato', 'fretting', 'Bends to pitch, wide vibrato.', [['bendLick'], ['vibratoHolds']])]),
+      PU(bending, { title: 'Vocal bends', summary: 'Bends to pitch, pre-bends, unison, oblique and double-stop bends.', tiers: ['foundations', 'intermediate', 'advanced'] }),
+      PU(vibrato, { title: 'Wide vibrato', summary: 'A wide, wrist vibrato, on bends and on double-stops.', tiers: ['intermediate', 'advanced'] }),
       U('Putting it together', 'Lead and rhythm as one part.', [S('hx-solo', 'Pentatonic phrasing', 'improv', 'Licks and fills over a vamp.', [['callResponse', { chords: '$minorRock' }], ['doubleStops', { interval: '3rds' }]])])
     ],
     riffs: [{ title: 'Little Wing', note: 'Chord embellishments.' }, { title: 'Purple Haze', note: 'The 7♯9 chord.' }, { title: 'Voodoo Child (Slight Return)', note: 'Wah riff and pentatonic lead.' },

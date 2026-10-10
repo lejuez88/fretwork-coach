@@ -1,7 +1,9 @@
 // Artist Series: David Gilmour. Original lessons in this style, built from the knowledge base; famous songs are linked, never transcribed.
 import { OPEN, N, nameOf, minorKey, goalFor, slug, beatsOf, make, fromSeq, pentBox, byString, pent3nps, legatoMarks, chordInfo, OPEN_SHAPES, onString, bassPair, openVoicings, keyChords, topTriad, nextToneUp, spreadVoicing, spreadBar, spreadName, W, S, U, stage, entry, artist, skillsOf, TIERS, TIER_BY_ID, tierOf, mod12, scaleNps, chordTones, parseChord, ROOT_BY_PC, rootFret6, fretOn, scaleBox, SCALE_BY_ID, PU, M } from '../lib.js';
 import pentatonic from '../kb/pentatonic.js';
-import bending from '../kb/bending.js';
+import bending, { phrase } from '../kb/bending.js';
+import vibrato from '../kb/vibrato.js';
+import phrasing from '../kb/phrasing.js';
 
 
 const ARTIST_NOTE = 'Use the Songs tab to learn the real thing: add the song, paste or import a tab, and the app turns it into section lessons.';
@@ -25,17 +27,45 @@ export function dgPrebends(c) {
   });
 }
 
+/** An original 8-bar slow study in his style: a pickup, a bend that resolves, silence, a pre-bend falling through the Dorian 6th, held notes with vibrato. */
+export function dgStudy(c) {
+  const k = minorKey(c);
+  const notes = phrase(k, 1, [
+    [null, 0, 3.5], [2, 7, 0.5],                                   // bar 1: space, then a pickup on the 5th
+    [3, 5, 1, 'b', 7], [3, 5, 1, 'r'], [3, 3, 2, '~'],              // bar 2: the 4 bent to the 5th, released, the ♭3 held
+    [null, 0, 4],                                                   // bar 3: silence
+    [2, 10, 1, 'pb', 0], [2, 10, 1, 'r'], [2, 9, 0.5], [2, 7, 1.5, '~'],   // bar 4: pre-bend ♭7 → R falls, through the 6th to the 5th
+    [null, 0, 2], [1, 0, 0.5], [1, 3, 1.5, '~'],                    // bar 5: half a bar of space, then up to the ♭3
+    [1, 3, 1, 'b', 5], [1, 3, 1, 'r'], [2, 10, 1], [2, 7, 1, '~'],  // bar 6: the ♭3 bent to the 4, falling back to the 5th
+    [3, 5, 2, 'b', 7], [3, 5, 1, 'r'], [3, 3, 1],                   // bar 7: a slow bend, released
+    [4, 0, 4, '~']                                                  // bar 8: the root, with a wide, slow vibrato
+  ]);
+  if (!notes) return null;
+  const chords = [nameOf(k) + 'm7', nameOf(k + 5) + '9'];
+  return make(c, {
+    id: 'dg-study', name: `Slow study in his style: bends, a Dorian 6th and space (${nameOf(k)} minor)`, domain: 'improv', method: 'transfer', unit: 'phrases', goal: 72, start: 48, minutes: 6,
+    backing: [...chords, ...chords, ...chords, ...chords], chords,
+    why: 'An original 8-bar piece that puts his techniques together: a phrase that starts on a pickup, a bend that resolves and a held ♭3, a whole bar of silence, a pre-bend falling through the Dorian 6th, and long notes with slow vibrato over a minor vamp.',
+    instr: 'Clean tone, neck pickup, plenty of delay if you have it. Check every bend against its fretted target first; give every held note a slow, even vibrato; count the silent bar. Then play your own 8 bars with the same plan (pickup, bend, silence, pre-bend, landing). Pass: the study at the goal tempo with every bend on pitch, then your version.',
+    watch: 'Filling bar 3: the silence is the point.', simplify: 'Bars 1–4.', tab: { notes }
+  });
+}
+
 export default artist({ id: 'gilmour', name: 'David Gilmour', wiki: ['David Gilmour'], genre: 'classic-rock', re: /gilmour|pink floyd/,
-    blurb: 'Slow, singing phrasing, perfectly pitched bends and pre-bends, and space.',
-    techniques: ['Bends and pre-bends', 'Vibrato', 'Pentatonic phrasing', 'Space'],
+    blurb: 'Slow, singing phrasing, perfectly pitched bends and pre-bends, a slow, wide vibrato, the Dorian colour, and space.',
+    techniques: [{ name: 'Bends and pre-bends', path: 'bending' }, { name: 'Vibrato', path: 'vibrato' }, { name: 'Pentatonic phrasing', path: 'pentatonic' }, { name: 'Space', path: 'phrasing' }],
+    sources: ['https://www.guitarworld.com/lessons/david-gilmour-10-lead-guitar-ideas', 'https://www.musicradar.com/how-to/david-gilmour-guitar-lesson-pink-floyd', 'https://riffhard.com/?p=36564', 'https://www.premierguitar.com/lessons/shake-it-off-everything-you-need-to-know-about-vibrato'],
     ctx: { key: 11, minor: true, prog: 'minorRock' },
     units: [
       PU(pentatonic, { title: 'The pentatonic box', summary: 'The box he phrases in, learned slowly, by ear and from memory, then joined to its neighbours.', tiers: ['foundations', 'intermediate'] }),
       PU(bending, { title: 'Bends in tune', summary: 'Every bend lands on pitch: reference bends, releases, pre-bends that sigh down, unison and wide bends, in any box.', tiers: ['foundations', 'intermediate', 'advanced'] }),
-      U('Vibrato', 'Slow, wide vibrato.', [S('dg-vib', 'Vibrato', 'fretting', 'Even, slow vibrato on held notes.', [['vibratoHolds']])]),
-      U('Color', 'The Dorian 6th.', [S('dg-dorian', 'Minor pentatonic vs Dorian', 'theory', 'Adding the 2nd and 6th.', [['modeCompare', { modes: ['minor', 'dorian'] }]])]),
-      U('Putting it together', 'Fewer notes, more meaning.', [S('dg-bend', 'Pre-bends in his style', 'fretting', 'Silent bends that fall into place, in box 1.', [M('transfer', c => dgPrebends(c))]), S('dg-solo', 'Slow phrasing', 'improv', 'Space between phrases.', [['callResponse', { chords: '$minorRock' }], ['targetSolo', { chords: '$slowBlues' }]])])
+      PU(vibrato, { title: 'A vibrato that sings', summary: 'Slow, even, in-tune vibrato: measured pulses, delayed and widening vibrato, vibrato on bends and unisons.', tiers: ['foundations', 'intermediate', 'advanced'] }),
+      PU(phrasing, { title: 'Phrasing and space', summary: 'A bar of melody and a bar of silence, motifs developed and answered, the Dorian 6th as colour, solos with a shape.' }),
+      U('Putting it together', 'Fewer notes, more meaning: his techniques in original studies and slow solos.', [
+        S('dg-bend', 'Pre-bends in his style', 'fretting', 'Silent bends that fall into place, in box 1.', [M('transfer', c => dgPrebends(c))]),
+        S('dg-study', 'A slow study', 'improv', 'Bends, the Dorian 6th, vibrato and silence in one piece.', [c => dgStudy(c), M('variable', ['modeCompare', { modes: ['minor', 'dorian'] }])]),
+        S('dg-solo', 'Slow phrasing', 'improv', 'Space between phrases.', [['callResponse', { chords: '$minorRock' }], ['targetSolo', { chords: '$slowBlues' }]])])
     ],
-    riffs: [{ title: 'Comfortably Numb', artist: 'Pink Floyd', note: 'Bends and slow phrasing.' }, { title: 'Shine On You Crazy Diamond', artist: 'Pink Floyd', note: 'Slow, singing lead.' },
+    riffs: [{ title: 'Comfortably Numb', artist: 'Pink Floyd', note: 'Bends, vibrato and slow phrasing.' }, { title: 'Shine On You Crazy Diamond', artist: 'Pink Floyd', note: 'Slow, singing lead with space.' },
       { title: 'Time', artist: 'Pink Floyd', note: 'Bends and pentatonic phrasing.' }, { title: 'Money', artist: 'Pink Floyd', note: 'Riff in 7/4 and solo.' },
       { title: 'Wish You Were Here', artist: 'Pink Floyd', note: 'Acoustic intro lick.' }] });
