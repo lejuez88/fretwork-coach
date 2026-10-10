@@ -55,6 +55,7 @@ export function mountCourse(root, { id, navigate }) {
         <button class="btn primary block" data-c="build" ${building ? 'disabled' : ''}>${building ? 'Building your course plan…' : 'Build course plan'}</button></section>`}
       <section class="card"><div class="row"><button class="btn" data-c="archive">Archive</button>${c.tree ? '<button class="btn" data-c="rebuild">Rebuild plan</button>' : ''}<button class="btn ghost danger" data-c="delete">Delete</button></div></section>`;
     hydrateImages(root);
+    requestAnimationFrame(drawLines);
   }
 
   /** Practice length for a guided lesson: today's usual practice time. */
@@ -82,19 +83,50 @@ export function mountCourse(root, { id, navigate }) {
     if (Claude.hasKey()) coachBriefing(p, plan).then(bf => { if (bf) attachBriefing(bf); });
   }
 
+  /**
+   * The plan as a skill tree, like a video game's: one tier per unit, each skill a node with a
+   * progress ring (mastered exercises), its status (locked, ready, in progress, mastered, review
+   * due) and lines from the skills it needs. Tap a node for its exercises.
+   */
   function treeHTML() {
-    const st = c.state, now = today();
-    return `<section class="card tree"><h3>The full plan</h3><p class="muted small">${c.tree.generatedBy === 'claude' ? 'Designed by Claude for you.' : isGenericPlan(c) ? 'Standard plan.' : `Built-in ${esc(c.style)} plan.`} The app picks your next lesson from it; tap any skill to see its exercises or practice it instead.</p>
+    const st = c.state, now = today(), nx = nextInCourse(p, c);
+    const ICON = { fretting: '✋', picking: '⛏', rhythm: '🥁', fretboard: '🎯', theory: '📐', ear: '👂', improv: '✨', repertoire: '🎵' };
+    return `<section class="card tree skilltree-card"><div class="sec-head"><h3>Skill tree</h3><span class="small muted">${c.tree.generatedBy === 'claude' ? 'Designed by Claude for you' : isGenericPlan(c) ? 'Standard plan' : `Built-in ${esc(c.style)} plan`}</span></div>
+      <p class="muted small">Unlock skills from the top down. Tap any skill to see its exercises and practice it.</p>
+      <div class="st-legend small muted"><span><i class="stl available"></i>Ready</span><span><i class="stl in_progress"></i>In progress</span><span><i class="stl mastered"></i>Mastered</span><span><i class="stl locked"></i>Locked</span><span><i class="stl due"></i>Review due</span></div>
+      <div class="skilltree" data-r="stree"><svg class="st-lines" data-r="stlines" aria-hidden="true"></svg>
       ${c.tree.units.map((u, ui) => `
-        <div class="unit"><div class="unit-head"><span class="unum">${ui + 1}</span><div><b>${esc(u.title)}</b><div class="muted small">${esc(u.summary)}</div></div></div>
-        <div class="nodes">${u.skills.map(s => {
-          const ss = st.skills[s.id], [ic, lbl] = STATUS[ss.status];
-          const done = s.exercises.filter(e => st.exercises[e.id].mastered).length;
+        <div class="st-tier"><div class="st-tier-head"><span class="unum">${ui + 1}</span><div><b>${esc(u.title)}</b><div class="muted small">${esc(u.summary)}</div></div></div>
+        <div class="st-nodes">${u.skills.map(s => {
+          const ss = st.skills[s.id], [, lbl] = STATUS[ss.status];
+          const done = s.exercises.filter(e => st.exercises[e.id].mastered).length, n = s.exercises.length;
           const due = ss.status === 'mastered' && ss.nextReview && ss.nextReview <= now;
-          return `<button class="node ${ss.status}" data-skill="${s.id}"><span class="nic">${ic}</span><span class="nbody"><b>${esc(s.title)}</b>
-            <span class="muted small">${DOMAIN_BY_KEY[s.domain] ? DOMAIN_BY_KEY[s.domain].name : s.domain} · ${done}/${s.exercises.length} mastered${due ? ' · <span class="due">review due</span>' : ''}</span></span><span class="nlbl">${lbl}</span></button>`;
+          const isNext = nx && nx.skill.id === s.id;
+          const pct = n ? Math.round(done / n * 100) : 0;
+          return `<button class="st-node ${ss.status} ${due ? 'due' : ''} ${isNext ? 'next' : ''} dom-${s.domain}" data-skill="${s.id}" data-prereqs="${esc((s.prereqs || []).join(' '))}" title="${esc(s.title)}: ${lbl}${due ? ', review due' : ''}">
+            <span class="st-orb" style="--pct:${pct}"><span class="st-ic">${ss.status === 'locked' ? '🔒' : ss.status === 'mastered' ? '★' : ICON[s.domain] || '●'}</span></span>
+            <span class="st-name">${esc(s.title)}</span>
+            <span class="st-sub small">${isNext ? '<b class="st-nextlbl">Next</b> · ' : ''}${done}/${n}${due ? ' · <span class="due">review</span>' : ''}</span>
+          </button>`;
         }).join('')}</div></div>`).join('')}
+      </div>
     </section>`;
+  }
+  /** Lines from each skill to the skills it unlocks (drawn after layout, and again on resize). */
+  function drawLines() {
+    const tree = root.querySelector('[data-r="stree"]'), svg = root.querySelector('[data-r="stlines"]'); if (!tree || !svg || !tree.getBoundingClientRect) return;
+    const box = tree.getBoundingClientRect(); if (!box.width) return;
+    svg.setAttribute('width', box.width); svg.setAttribute('height', box.height); svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+    const nodes = Object.fromEntries([...tree.querySelectorAll('.st-node')].map(n => [n.dataset.skill, n]));
+    const centre = (el, bottom) => { const o = el.querySelector('.st-orb').getBoundingClientRect(), nb = el.getBoundingClientRect(); return [o.left + o.width / 2 - box.left, (bottom ? nb.bottom - 2 : o.top) - box.top]; };
+    let d = '';
+    Object.values(nodes).forEach(n => (n.dataset.prereqs || '').split(' ').filter(Boolean).forEach(pid => {
+      const from = nodes[pid]; if (!from) return;
+      const [x1, y1] = centre(from, true), [x2, y2] = centre(n, false), my = (y1 + y2) / 2;
+      const lit = from.classList.contains('mastered');
+      d += `<path class="${lit ? 'lit' : ''}" d="M${x1} ${y1} C${x1} ${my} ${x2} ${my} ${x2} ${y2}"/>`;
+    }));
+    svg.innerHTML = d;
   }
 
   /** The exercise's variations, with marks for the ones practiced or mastered. */
@@ -151,5 +183,7 @@ export function mountCourse(root, { id, navigate }) {
   };
   root.addEventListener('click', onClick);
   render();
-  return () => root.removeEventListener('click', onClick);
+  const onResize = () => drawLines();
+  window.addEventListener('resize', onResize);
+  return () => { root.removeEventListener('click', onClick); window.removeEventListener('resize', onResize); };
 }

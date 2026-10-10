@@ -14,6 +14,7 @@ import { tierName } from '../core/courses.js';
 import { MC_ICON } from '../ui/mastersheet.js';
 import { lessonGroupHTML, lessonActions, lessonState, lessonTarget } from '../ui/lessoncards.js';
 import { pathStage, nextLesson } from '../core/coach.js';
+import { levelPill, LEVEL_BANDS as COLOR_BANDS } from '../ui/colors.js';
 import { methodOf } from '../core/methods.js';
 import { requestBoxHTML, wireRequestBox } from '../ui/kbrequest.js';
 
@@ -54,26 +55,36 @@ export function mountTechniqueIndex(root, { navigate }) {
       <div class="exhead"><div class="label">Technique library</div><h1>Learn anything, from scratch to mastery</h1>
         <p class="why">${KB_INDEX.length} techniques${kinds.length > 1 ? ', subjects and styles' : ''}, each a path in four stages: foundations, intermediate, advanced and mastery. ${full ? `${full} ${full === 1 ? 'path is' : 'paths are'} complete; the` : 'The'} rest are filling in as new lessons are researched and added.</p></div>
       <div class="tech-filters">
-        ${kinds.length > 1 ? `<div class="chips" role="group" aria-label="Kind"><button class="chip ${ui.kind === 'all' ? 'on' : ''}" data-kind="all">Everything</button>${kinds.map(([k, n]) => `<button class="chip ${ui.kind === k ? 'on' : ''}" data-kind="${k}">${esc(n)}</button>`).join('')}</div>` : ''}
+        ${kinds.length > 1 ? `<div class="chips" role="group" aria-label="Kind"><button class="chip ${ui.kind === 'all' ? 'on' : ''}" data-kind="all">Everything</button>${kinds.map(([k, n]) => `<button class="chip kind-chip kind-${k} ${ui.kind === k ? 'on' : ''}" data-kind="${k}">${esc(n)}</button>`).join('')}</div>` : ''}
         <div class="chips" role="group" aria-label="Level">${LEVEL_BANDS.map(b => `<button class="chip ${ui.band === b.id ? 'on' : ''}" data-band="${b.id}">${esc(b.name)}</button>`).join('')}</div>
-        <div class="chips" role="group" aria-label="Skill area"><button class="chip ${ui.domain === 'all' ? 'on' : ''}" data-dom="all">All areas</button>${domains.map(d => `<button class="chip ${ui.domain === d.key ? 'on' : ''}" data-dom="${d.key}">${esc(d.short || d.name)}</button>`).join('')}</div>
+        <div class="chips" role="group" aria-label="Skill area"><button class="chip ${ui.domain === 'all' ? 'on' : ''}" data-dom="all">All areas</button>${domains.map(d => `<button class="chip dom-chip dom-${d.key} ${ui.domain === d.key ? 'on' : ''}" data-dom="${d.key}">${esc(d.short || d.name)}</button>`).join('')}</div>
+        <div class="tech-legend small muted"><span>Outline: ${kinds.map(([k, n]) => `<i class="kdot kind-${k}"></i>${esc(n.replace(/s$/, ''))}`).join(' ')}</span><span>Pill: your level ${COLOR_BANDS.map(b => `${levelPill(b.lo === b.hi ? b.lo : b.lo, b.name)}`).join('')}</span></div>
       </div>
       ${list.length ? '' : `<section class="card"><p class="muted">Nothing matches${ui.band === 'foryou' ? ' your current levels with these filters' : ''}. Try another level or area.</p></section>`}
-      <div class="tech-grid">${list.map(t => {
-        const you = yourLevel(p, t), st = stageFor(t, you), arts = artistsUsing(t.id);
-        return `<a class="tech-card" href="#/techniques/${t.id}">
-          <div class="tc-top"><span class="tc-dom">${esc(t.kind && t.kind !== 'technique' ? t.kind + ' · ' : '')}${esc(domName(t.domain))}</span>${stageDots(t)}</div>
-          <b>${esc(t.title)}</b><p class="small muted">${esc(t.summary)}</p>
-          <div class="small">${t.complete ? '<span class="ok">Full path</span> · ' : ''}${t.lessons} lesson${t.lessons === 1 ? '' : 's'} · levels ${t.level[0]}–${t.level[1]}</div>
-          <div class="small tc-fit fit">${st ? `Start at: ${esc(TIER_BY_ID[st.tier].name)} (you're at ${you})` : ''}</div>
-          ${arts.length ? `<div class="small muted">Used by ${arts.map(a => esc(a.name)).join(', ')}</div>` : ''}
-        </a>`;
+      <div class="tech-bubbles">${list.map(t => {
+        const you = yourLevel(p, t), st = stageFor(t, you), arts = artistsUsing(t.id), open = ui.open === t.id;
+        return `<div class="tech-bubble kind-${t.kind || 'technique'} dom-${t.domain} ${open ? 'open' : ''}" data-tb="${t.id}">
+          <button class="tb-head" data-tbopen="${t.id}" aria-expanded="${open}">
+            <span class="tb-dom">${esc(domName(t.domain))}</span>${levelPill(you, `Your ${domName(t.domain).toLowerCase()} level: ${you}`)}
+            <b>${esc(t.title)}</b>
+          </button>
+          ${open ? `<div class="tb-body">
+            <p class="small muted">${esc(t.summary)}</p>
+            ${stageDots(t)}
+            <div class="small">${t.complete ? '<span class="ok">Full path</span> · ' : ''}${t.lessons} lesson${t.lessons === 1 ? '' : 's'} · levels ${t.level[0]}–${t.level[1]}${t.kind && t.kind !== 'technique' ? ` · ${esc(t.kind)}` : ''}</div>
+            ${st ? `<div class="small fit">Start at: ${esc(TIER_BY_ID[st.tier].name)} (you're at ${you})</div>` : ''}
+            ${arts.length ? `<div class="small muted">Used by ${arts.map(a => esc(a.name)).join(', ')}</div>` : ''}
+            <a class="btn sm primary" href="#/techniques/${t.id}">Open the path ›</a>
+          </div>` : ''}
+        </div>`;
       }).join('')}</div>
-      <section class="card" data-r="req">${requestBoxHTML({ title: 'Don’t see it?', hint: 'Name a technique, subject, style or guitarist and it goes into the research queue. New lessons are researched and added twice a week.' })}</section>`;
+      <section class="card" data-r="req">${requestBoxHTML({ title: 'Don’t see it?', hint: 'Name a technique, subject, style or guitarist and it goes into the research queue. New lessons are researched and added every day.' })}</section>`;
     if (offReq) offReq();
     offReq = wireRequestBox(root.querySelector('[data-r="req"]'), { navigate });
   }
   const onClick = e => {
+    const tb = e.target.closest('[data-tbopen]');
+    if (tb) { ui.open = ui.open === tb.dataset.tbopen ? null : tb.dataset.tbopen; setUI(ui); render(); return; }
     const b = e.target.closest('[data-band],[data-dom],[data-kind]'); if (!b) return;
     if (b.dataset.band) ui.band = b.dataset.band; else if (b.dataset.dom) ui.domain = b.dataset.dom; else ui.kind = b.dataset.kind;
     setUI(ui); render();
@@ -153,9 +164,8 @@ export function mountTechnique(root, { navigate, id }) {
           <span class="ps-bar"><i style="width:${pr.total ? Math.round(pr.mastered / pr.total * 100) : 0}%"></i></span>
           <span class="small">${pr.mastered ? `${pr.mastered}/${pr.total} mastered` : pr.practiced ? `${pr.practiced} practiced` : 'Not started'}</span></button>`;
       }).join('')}</div>
-      <div class="artist-cols">
-        <div class="artist-lessons">
-          ${ready ? nextHTML() : ''}
+      <div class="page-cols">
+        <div class="pc-main">
           ${st ? `<section class="card tech-level">
             <div class="sec-head"><h3>${esc(TIER_BY_ID[tier].name)}: ${esc(st.title)}</h3><span class="small muted">Level ${level} · your ${esc(domName(t.domain)).toLowerCase()} level: ${you}</span></div>
             <p class="small"><b>Goal:</b> ${esc(st.goal)}</p>
@@ -163,15 +173,17 @@ export function mountTechnique(root, { navigate, id }) {
               <div class="chips">${Array.from({ length: st.levels[1] - st.levels[0] + 1 }, (_, i) => st.levels[0] + i).map(l => `<button class="chip ${l === level ? 'on' : ''}" data-lv="${l}">Level ${l}${l === you ? ' · you' : ''}</button>`).join('')}</div>
               <p class="small muted">Tempo goals, length and subdivisions change with the level. The app picks the level that fits you by default.</p></details>` : ''}
           </section>` : ''}
-          ${!ready ? '<p class="muted"><span class="spinner sm"></span> Loading lessons…</p>' : groups.map((g, gi) => lessonGroupHTML(p, lessons, targets, { title: g.skill.title, items: g.items }, gi, { note: g.skill.summary ? `<p class="small muted lg-note">${esc(g.skill.summary)}</p>` : '' })).join('')}
+          ${methodsHTML()}
+          ${missing.length ? `<section class="card"><h3>Still to come</h3><p class="small muted">${missing.map(x => esc(x.name)).join(', ')} ${missing.length === 1 ? 'stage is' : 'stages are'} being researched and added to this path. The daily research runs fill incomplete paths first.</p></section>` : ''}
+          ${arts.length ? `<section class="card"><h3>Players who use it</h3><div class="riffs">${arts.map(a => `<div class="riff"><a class="link" href="#/artist/${a.id}"><b>${esc(a.name)}</b></a><div class="small muted">${esc(a.blurb)}</div></div>`).join('')}</div></section>` : ''}
         </div>
-        <aside class="artist-side">
-          <section class="card"><h3>${MC_ICON} The whole path as a course</h3>
+        <aside class="pc-side">
+          ${ready ? nextHTML() : ''}
+          <section class="card side-course"><h3>${MC_ICON} The whole path as a course</h3>
             <p class="small muted">Every stage from ${esc(TIER_BY_ID[startStage.tier].name.toLowerCase())} up, in order, as a master class with progress and reviews. Built from these lessons (no API cost).</p>
             ${mc ? `<a class="btn primary block" href="#/course/${mc.id}">${MC_ICON} Open your ${esc(t.title)} course</a>` : `<button class="btn primary block" data-tm="master" ${building ? 'disabled' : ''}>${building ? '<span class="spinner sm"></span>Building…' : `${MC_ICON} Start the ${esc(t.title)} path`}</button>`}</section>
-          ${missing.length ? `<section class="card"><h3>Still to come</h3><p class="small muted">${missing.map(x => esc(x.name)).join(', ')} ${missing.length === 1 ? 'stage is' : 'stages are'} being researched and added to this path. The research runs (twice a week) fill incomplete paths first.</p></section>` : ''}
-          ${methodsHTML()}
-          ${arts.length ? `<section class="card"><h3>Players who use it</h3><div class="riffs">${arts.map(a => `<div class="riff"><a class="link" href="#/artist/${a.id}"><b>${esc(a.name)}</b></a><div class="small muted">${esc(a.blurb)}</div></div>`).join('')}</div></section>` : ''}
+          <div class="artist-lessons"><h2 class="sechead">Lessons${st ? ` · ${esc(TIER_BY_ID[tier].name)}` : ''}</h2>
+          ${!ready ? '<p class="muted"><span class="spinner sm"></span> Loading lessons…</p>' : groups.map((g, gi) => lessonGroupHTML(p, lessons, targets, { title: g.skill.title, items: g.items }, gi, { note: g.skill.summary ? `<p class="small muted lg-note">${esc(g.skill.summary)}</p>` : '' })).join('')}</div>
         </aside>
       </div>`;
   }

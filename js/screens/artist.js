@@ -90,23 +90,29 @@ export function mountArtist(root, { navigate, id }) {
     const groups = [];
     lessons.forEach((l, i) => { let g = groups[groups.length - 1]; if (!g || g.unit !== l.unit) groups.push(g = { unit: l.unit, items: [] }); g.items.push(i); });
     const chips = a.techniques.map((t, i) => { const tech = (a.techPaths && a.techPaths[i] && KB_BY_ID[a.techPaths[i]]) || techniqueByName(t); return tech ? `<a class="chip sm" href="#/techniques/${tech.id}">${esc(t)}</a>` : `<span class="chip sm">${esc(t)}</span>`; }).join('');
+    const masterBtn = mc ? `<a class="btn primary block" href="#/course/${mc.id}">${MC_ICON} Open your ${esc(a.name)} master class</a>` : `<button class="btn primary block" data-al="master" ${building ? 'disabled' : ''}>${building ? '<span class="spinner sm"></span>Building…' : `${MC_ICON} Start the ${esc(a.name)} master class`}</button>`;
     root.innerHTML = `<a class="link" href="#/artist">← Artist series</a>
-      <div class="artist-head">${wikiTile(a.wiki, a.name, 'artist-photo')}
-        <div class="ah-title"><div class="label">Artist series</div><h1>${esc(a.name)}</h1></div>
-        <div class="ah-body">
-          ${bioHTML()}
-          <div data-r="video">${videoHTML()}</div>
-          <div class="chips ah-chips">${chips}</div>
-          <div class="row ah-act">${mc ? `<a class="btn primary" href="#/course/${mc.id}">${MC_ICON} Open your ${esc(a.name)} master class</a>` : `<button class="btn primary" data-al="master" ${building ? 'disabled' : ''}>${building ? '<span class="spinner sm"></span>Building…' : `${MC_ICON} Start the ${esc(a.name)} master class`}</button>`}<span class="small muted">${lessons.length} lessons at your level</span></div></div></div>
-      ${nextArtistHTML()}
-      <div class="artist-cols">
-        <div class="artist-lessons"><h2 class="sechead">Lessons</h2>${groups.map((g, gi) => lessonGroupHTML(p, lessons, targets, { title: g.unit.title, items: g.items }, gi, { note: unitNoteHTML(g.unit), side: g.unit.path && TIER_BY_ID[g.unit.tier] ? `<span class="chip sm">${esc(TIER_BY_ID[g.unit.tier].name)}</span>` : '' })).join('')}</div>
-        <aside class="artist-side"><details class="card songs-card" ${narrow() ? '' : 'open'}><summary><h3>Famous songs</h3><span class="small muted">${a.riffs.length} songs</span><span class="lr-chev" aria-hidden="true">›</span></summary>
-          <p class="small muted">Linked, not copied: open the tab on Songsterr, or add the song to My songs, where you can paste a tab and get section-by-section lessons.</p>
-          <div class="riffs">${a.riffs.map((r, i) => `<div class="riff"><div><b>${esc(r.title)}</b>${r.artist ? ` <span class="small muted">(${esc(r.artist)})</span>` : ''}<div class="small muted">${esc(r.note)}</div></div>
-            <div class="riff-act"><a class="btn sm ghost" href="${esc(bestMatchUrl(r.title, r.artist || a.name))}" target="_blank" rel="noopener">Tab ↗</a>
-            <button class="btn sm" data-riff="${i}" ${hasSong(r) ? 'disabled' : ''}>${hasSong(r) ? '✓ In My songs' : '+ My songs'}</button></div></div>`).join('')}</div>
-          <p class="small muted">${esc(ARTIST_NOTE)}</p></details></aside>
+      <div class="page-cols">
+        <div class="pc-main">
+          <div class="artist-head">${wikiTile(a.wiki, a.name, 'artist-photo')}
+            <div class="ah-title"><div class="label">Artist series</div><h1>${esc(a.name)}</h1></div>
+            <div class="ah-body">
+              ${bioHTML()}
+              <div data-r="video">${videoHTML()}</div>
+              <div class="chips ah-chips">${chips}</div>
+            </div></div>
+          <details class="card songs-card" ${narrow() ? '' : 'open'}><summary><h3>Famous songs</h3><span class="small muted">${a.riffs.length} songs</span><span class="lr-chev" aria-hidden="true">›</span></summary>
+            <p class="small muted">Linked, not copied: open the tab on Songsterr, or add the song to My songs, where you can paste a tab and get section-by-section lessons.</p>
+            <div class="riffs">${a.riffs.map((r, i) => `<div class="riff"><div><b>${esc(r.title)}</b>${r.artist ? ` <span class="small muted">(${esc(r.artist)})</span>` : ''}<div class="small muted">${esc(r.note)}</div></div>
+              <div class="riff-act"><a class="btn sm ghost" href="${esc(bestMatchUrl(r.title, r.artist || a.name))}" target="_blank" rel="noopener">Tab ↗</a>
+              <button class="btn sm" data-riff="${i}" ${hasSong(r) ? 'disabled' : ''}>${hasSong(r) ? '✓ In My songs' : '+ My songs'}</button></div></div>`).join('')}</div>
+            <p class="small muted">${esc(ARTIST_NOTE)}</p></details>
+        </div>
+        <aside class="pc-side">
+          ${nextArtistHTML()}
+          <section class="card side-course"><h3>${MC_ICON} The whole style as a course</h3><p class="small muted">${lessons.length} lessons at your level, in order, as a master class with progress and reviews.</p>${masterBtn}</section>
+          <div class="artist-lessons"><h2 class="sechead">Lessons</h2>${groups.map((g, gi) => lessonGroupHTML(p, lessons, targets, { title: g.unit.title, items: g.items }, gi, { note: unitNoteHTML(g.unit), side: g.unit.path && TIER_BY_ID[g.unit.tier] ? `<span class="chip sm">${esc(TIER_BY_ID[g.unit.tier].name)}</span>` : '' })).join('')}</div>
+        </aside>
       </div>`;
     hydrateImages(root);
   }

@@ -1381,3 +1381,96 @@ body.playmode .tunefab{display:none}
 .tabplayer.tp-light .fb-num{fill:#7a6a55}.tabplayer.tp-light .fb-num.em{fill:#3d3328}
 .tabplayer.tp-light .fb-sname{fill:#5f4f3c}
 .tabplayer.tp-light .fb-inlay{fill:#c8ad80}
+
+/* Two-column pages (artist, technique path): details on the left, next lesson + course + lessons on the right */
+.page-cols{display:flex;flex-direction:column;gap:0}
+.page-cols .pc-side{order:-1}
+.page-cols .pc-main{order:0}
+.page-cols .artist-head{margin-top:6px}
+.side-course .btn{margin-top:6px}
+@media(min-width:1000px){
+  .page-cols{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:0 24px;align-items:start}
+  .page-cols .pc-side,.page-cols .pc-main{order:0}
+}
+@media(max-width:999px){.v-artist .page-cols .pc-main{display:contents}.v-artist .page-cols .artist-head{order:0}.v-artist .page-cols .pc-side{order:1}.v-artist .page-cols .songs-card{order:2}}
+
+/* Color language: skill areas (.dom-*), kinds of topic (.kind-*), level bands (.lvl-*) */
+.dom-fretting{--dc:#ff8a7a}.dom-picking{--dc:#f5c044}.dom-rhythm{--dc:#6fd3a0}.dom-fretboard{--dc:#7aa7ff}.dom-theory{--dc:#b593ec}.dom-ear{--dc:#5cc4e0}.dom-improv{--dc:#ff9f4a}.dom-repertoire{--dc:#e47ad8}
+.kind-technique{--kc:#f5a524}.kind-subject{--kc:#5cc4b4}.kind-style{--kc:#e2708a}
+.lvl-found{--lc:#5cc46b}.lvl-inter{--lc:#4f9df5}.lvl-adv{--lc:#a77bf0}.lvl-mast{--lc:#ff6b5a}
+.lvl-pill{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:22px;padding:0 7px;border-radius:999px;background:var(--lc,#f5a524);color:#120d09;font:700 12px var(--head)}
+.lv.dom-fretting .lv-name,.lv[class*="dom-"] .lv-name{color:var(--dc)}
+.lv[class*="dom-"] .bar i{background:var(--dc)}
+.lv .lvl-pill{margin-left:8px}
+.lvl-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px}
+.lvl-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--lc);margin-right:5px;vertical-align:-1px}
+.edgelist .e[class*="dom-"] .e-name{color:var(--dc);font-weight:600}
+/* Technique library: bubbles (area + name; tap for details) */
+.tech-legend{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;margin-top:4px}
+.tech-legend .lvl-pill{margin-left:4px;min-width:22px;height:18px;font-size:10px}
+.kdot{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid var(--kc);margin:0 4px 0 8px;vertical-align:-2px}
+.chip.dom-chip.on{border-color:var(--dc);color:var(--dc);background:transparent}
+.chip.kind-chip.on{border-color:var(--kc);color:var(--kc);background:transparent}
+.tech-bubbles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin:14px 0 18px;align-items:start;grid-auto-flow:row dense}
+.tech-bubble{border:2px solid var(--kc);border-radius:18px;background:var(--panel);transition:transform .12s,box-shadow .12s}
+.tech-bubble:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.tech-bubble.open{grid-column:span 2;box-shadow:0 8px 26px rgba(0,0,0,.4)}
+.tb-head{appearance:none;display:grid;grid-template-columns:1fr auto;gap:4px 8px;width:100%;padding:12px 14px;background:none;border:0;text-align:left;color:var(--text);font:inherit;cursor:pointer}
+.tb-head .tb-dom{font:700 11px var(--head);text-transform:uppercase;letter-spacing:.12em;color:var(--dc)}
+.tb-head .lvl-pill{grid-row:1;grid-column:2}
+.tb-head b{grid-column:1 / -1;font:600 16px var(--head);line-height:1.25}
+.tb-body{padding:0 14px 14px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.tb-body .btn{margin-top:4px}
+@media(max-width:560px){.tech-bubbles{grid-template-columns:repeat(2,minmax(0,1fr))}.tech-bubble.open{grid-column:1 / -1}.tb-head b{font-size:14px}}
+/* Practice hub: exercise library main, learning shortcuts and master classes in a narrow right column */
+.practice-cols{display:flex;flex-direction:column}
+@media(min-width:1000px){
+  .practice-cols{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:0 24px;align-items:start}
+  .v-practice .practice-cols .topics{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:999px){.practice-cols .px-side{order:-1}}
+.mastercard.compact .mc-intro{font-size:13px}
+.mastercard.compact .mc-recs{grid-template-columns:1fr !important;gap:6px}
+.mastercard.compact .mc-foryou{padding:10px;flex-wrap:wrap;align-items:flex-start}
+.mastercard.compact .mc-foryou .mc-txt{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:3px}
+.mastercard.compact .mc-foryou .mc-txt .small{font-size:12.5px;line-height:1.4}
+.mastercard.compact .mc-foryou .mc-go{flex-basis:100%;text-align:right}
+.mastercard.compact .mc-rec .small{display:none}
+.mastercard.compact .mc-ask input{font-size:14px}
+.px-side .learn-links{margin-bottom:12px}
+
+/* Course skill tree (video-game style): tiers of glowing orbs with progress rings and unlock lines */
+.skilltree-card{overflow:hidden}
+.st-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:4px 0 6px}
+.stl{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:-2px;border:2px solid var(--line)}
+.stl.available{border-color:var(--amber);box-shadow:0 0 8px var(--amber)}.stl.in_progress{border-color:#4f9df5;background:conic-gradient(#4f9df5 50%,transparent 0)}.stl.mastered{background:linear-gradient(180deg,#ffd27a,#c47f0e);border-color:#ffd27a}.stl.locked{opacity:.5}.stl.due{border-color:#ff6b5a;box-shadow:0 0 8px #ff6b5a}
+.skilltree{position:relative;padding:6px 0 10px;background:radial-gradient(ellipse at 50% 0%,rgba(245,165,36,.06),transparent 60%)}
+.st-lines{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.st-lines path{fill:none;stroke:#3d3644;stroke-width:3;stroke-linecap:round}
+.st-lines path.lit{stroke:#c9932c;filter:drop-shadow(0 0 4px rgba(245,165,36,.5))}
+.st-tier{position:relative;margin:18px 0 6px}
+.st-tier-head{display:flex;gap:12px;align-items:flex-start;max-width:min(300px,40%);margin:0 0 10px 18px;text-align:left}
+.st-tier+.st-tier{border-top:1px dashed rgba(255,255,255,.06);padding-top:14px}
+@media(min-width:760px){.st-tier{min-height:120px}.st-tier-head{position:absolute;left:0;top:14px;max-width:min(240px,26%);margin:0 0 0 18px}.st-tier:first-child .st-tier-head{top:0}}
+.st-nodes{display:flex;flex-wrap:wrap;justify-content:center;gap:18px 26px}
+.st-node{appearance:none;position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px;width:118px;padding:4px;border:0;background:none;color:var(--text);font:inherit;cursor:pointer;text-align:center}
+.st-orb{--ring:var(--dc,#f5a524);position:relative;width:70px;height:70px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--ring) calc(var(--pct) * 1%),#2b2630 0);transition:transform .15s,box-shadow .15s}
+.st-orb::before{content:'';position:absolute;inset:6px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#3a3340,#17141a 70%);border:1px solid #4a4251}
+.st-ic{position:relative;font-size:26px;line-height:1}
+.st-node:hover .st-orb{transform:scale(1.06)}
+.st-node:focus-visible{outline:none}.st-node:focus-visible .st-orb{box-shadow:0 0 0 3px var(--amber)}
+.st-name{font:600 13px var(--head);line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.st-sub{color:var(--muted)}
+.st-node.locked{filter:grayscale(1);opacity:.5}
+.st-node.available .st-orb{box-shadow:0 0 0 2px var(--amber),0 0 18px rgba(245,165,36,.45);animation:stGlow 2.4s ease-in-out infinite}
+.st-node.in_progress .st-orb{box-shadow:0 0 14px rgba(79,157,245,.35)}
+.st-node.mastered .st-orb{--ring:#ffd27a;box-shadow:0 0 0 2px #ffd27a,0 0 20px rgba(255,210,122,.55)}
+.st-node.mastered .st-orb::before{background:radial-gradient(circle at 35% 30%,#ffe2a0,#c47f0e 75%);border-color:#ffd27a}
+.st-node.mastered .st-ic{color:#3a2400}
+.st-node.due .st-orb{box-shadow:0 0 0 2px #ff6b5a,0 0 18px rgba(255,107,90,.5)}
+.st-node.next .st-name{color:var(--amber)}
+.st-nextlbl{color:var(--amber)}
+@keyframes stGlow{0%,100%{box-shadow:0 0 0 2px var(--amber),0 0 12px rgba(245,165,36,.35)}50%{box-shadow:0 0 0 2px var(--amber),0 0 24px rgba(245,165,36,.6)}}
+@media(prefers-reduced-motion:reduce){.st-node.available .st-orb{animation:none}}
+@media(max-width:560px){.st-node{width:96px}.st-orb{width:58px;height:58px}.st-ic{font-size:22px}.st-nodes{gap:14px 12px}.st-tier-head{max-width:none;margin-left:6px;position:relative;z-index:1;width:fit-content;padding:4px 8px 4px 0;background:var(--panel);border-radius:8px}}
+@media(max-width:560px){.tech-filters .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-right:-16px;padding-right:16px}.tech-filters .chips::-webkit-scrollbar{display:none}.tech-filters .chip{flex:none;min-height:40px;padding:8px 14px}}

@@ -4,6 +4,7 @@
 import { Audio as AudioEngine } from '../core/audio.js';
 import { esc, clamp, shuffle, pick, rand, today, addDays, uid } from '../core/util.js';
 import { GENRE_BY_ID } from '../data/catalog.js';
+import { DOMAIN_COLORS, LEVEL_BANDS, levelBand, levelPill } from '../ui/colors.js';
 
 const U = { esc, clamp, shuffle, pick, rand, today, addDays, uid, pct: s => Math.round(s * 100) + '%' };
 const DOMAINS = [
@@ -629,16 +630,18 @@ const Charts = {
     [2,4,6,8,10].forEach(v=>{s+=`<polygon points="${DOMAINS.map((_,i)=>pt(i,v).join(',')).join(' ')}" fill="none" stroke="#332e38" stroke-width="1"/>`});
     DOMAINS.forEach((d,i)=>{const [x,y]=pt(i,10);s+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#332e38"/>`});
     const poly=DOMAINS.map((d,i)=>pt(i,levels[d.key]||1).join(',')).join(' ');
-    s+=`<polygon points="${poly}" fill="rgba(245,165,36,.25)" stroke="#f5a524" stroke-width="2.5" stroke-linejoin="round"/>`;
+    s+=`<polygon points="${poly}" fill="rgba(245,165,36,.18)" stroke="#f5a524" stroke-width="2" stroke-linejoin="round"/>`;
     DOMAINS.forEach((d,i)=>{
-      const [x,y]=pt(i,levels[d.key]||1); s+=`<circle cx="${x}" cy="${y}" r="4.5" fill="#ffd27a"/>`;
+      const col=DOMAIN_COLORS[d.key]||'#ffd27a', lv=levels[d.key]||1, band=levelBand(lv);
+      const [x,y]=pt(i,lv); s+=`<circle cx="${x}" cy="${y}" r="5.5" fill="${col}" stroke="#120d09" stroke-width="1.5"/>`;
       const [lx,ly]=pt(i,11.9); const anchor=Math.abs(lx-cx)<8?'middle':lx>cx?'start':'end';
-      s+=`<text x="${lx}" y="${ly+4}" text-anchor="${anchor}" fill="#ece6da" font-size="13" font-family="Inter,sans-serif">${d.short} <tspan fill="#f5a524" font-weight="700">${levels[d.key]}</tspan></text>`;
+      s+=`<text x="${lx}" y="${ly+4}" text-anchor="${anchor}" fill="${col}" font-size="13" font-weight="600" font-family="Inter,sans-serif">${d.short} <tspan fill="${band.color}" font-weight="700">${lv}</tspan></text>`;
     });
     return s+'</svg>';
   },
   bars(levels){
-    return `<div>${DOMAINS.map(d=>`<div class="lv"><span>${d.short}</span><div class="bar"><i style="width:${levels[d.key]*10}%"></i></div><b>${levels[d.key]}</b></div>`).join('')}</div>`;
+    return `<div>${DOMAINS.map(d=>`<div class="lv dom-${d.key}"><span class="lv-name">${d.short}</span><div class="bar"><i style="width:${levels[d.key]*10}%"></i></div>${levelPill(levels[d.key])}</div>`).join('')}</div>
+      <div class="lvl-legend small muted">${LEVEL_BANDS.map(b=>`<span><i class="lvl-${b.id}"></i>${b.name} ${b.lo}–${b.hi}</span>`).join('')}</div>`;
   }
 };
 

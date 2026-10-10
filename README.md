@@ -25,7 +25,17 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: a compact artist page
+## Latest: a practice page, Trainers, a scales glossary, study notes, color codes and skill trees
+
+- **Practice page (`#/play`).** Every "Practice" button opens the lesson on its own page: the tab and player stay fixed on screen and never scroll away. A rail on the right opens a slide-out panel: Study (the concept, why it matters, the theory), Customize (variations, key, tempo, display, light or dark tab), Log tempo, Evaluate this take and Build a master class. Previous / next lesson and "back to the course tree" sit in the top bar. No timer here: timers are only for routines (Build practice routine, or "Timed session" on a course).
+- **Study before you play.** Lessons carry study notes (content files: `S(..., study)`), with facts worked out from the exercise itself and an optional deeper explanation from Claude.
+- **Tools → Trainers** replaces Tabs: the interval trainer and a new note finder (find a named note on a chosen string, or name a marked fret; pick strings, notes, fret range, order and round length, or randomize). **Tools → Scales** is a scales glossary with sound, construction, where it fits and neck diagrams.
+- **Ask box.** Built-in topics are searched first; "Not what you were looking for?" asks Claude instead, and topics the library lacks go into the research queue automatically (with Undo). "Diminished scale" now finds the scale, not diminished chords.
+- **Layouts.** Artist and technique pages put the next lesson, the whole course and the lesson list in a right-hand column. The Practice hub shows the exercise library first, with master classes in a smaller side column. The technique library is a grid of color-coded bubbles that open one at a time.
+- **Color codes** (js/ui/colors.js): one color per skill area, per kind (technique, subject, style: the bubble outline) and per level band (the level pills), used in the library, the profile radar and the edges list.
+- **Skill trees.** Course trees are drawn as a game-style skill tree with progress rings, glowing next skills and lines from each prerequisite.
+
+## Earlier: a compact artist page
 
 | Area | Included |
 |---|---|

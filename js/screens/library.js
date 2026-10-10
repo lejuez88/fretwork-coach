@@ -49,8 +49,8 @@ function startQueue(navigate) {
 /** Master classes: a "For you" pick, topics that change every time, and any topic you type. */
 function masterCardHTML(p) {
   const fy = forYou(p), top1 = fy[0] || null;
-  const recs = recommendedTopics(p, 4, top1 ? [top1.topic.id] : []);
-  return `<section class="card mastercard">
+  const recs = recommendedTopics(p, 3, top1 ? [top1.topic.id] : []);
+  return `<section class="card mastercard compact">
     <div class="sec-head"><h3>${MC_ICON} Master classes</h3></div>
     <p class="small muted mc-intro">A whole course on one topic, built for your level.</p>
     ${top1 ? `<button class="mc-foryou" data-mc="${top1.topic.id}">${topicArtHTML(top1.topic.cat)}
@@ -76,17 +76,20 @@ export function mountLibrary(root, { navigate }) {
   root.innerHTML = `
     <h1>Practice</h1>
     <section class="card askcard" data-r="askslot"></section>
-    <h2 class="sechead">Learn in depth</h2>
-    <div class="learn-grid">
-      ${masterCardHTML(p)}
-      <div class="learn-links">
-        <a class="lib-more-card" href="#/techniques"><span class="lm-ic" aria-hidden="true">🎯</span><span><b>Technique library</b><span class="small muted">Rolling 5s, spread triads, tapping, pentatonic mastery and more: step-by-step paths from beginner to mastery.</span></span><span class="mc-go">›</span></a>
-        <a class="lib-more-card" href="#/artist"><span class="lm-ic" aria-hidden="true">🎸</span><span><b>Artist series</b><span class="small muted">The signature techniques of great players, plus their famous songs.</span></span><span class="mc-go">›</span></a>
+    <div class="practice-cols">
+      <div class="px-main">
+        <div class="libhead"><h2 class="sechead">Exercise library</h2><span class="muted small">${entries.length} exercises in ${CATEGORIES.length} topics, each with variations from easier to harder</span></div>
+        <input type="search" class="libsearch" data-r="q" placeholder="Search: bends, F chord, funk, spider…" value="${esc(ui.q)}" autocomplete="off">
+        <div class="topics" data-r="list"></div>
       </div>
-    </div>
-    <div class="libhead"><h2 class="sechead">Exercise library</h2><span class="muted small">${entries.length} exercises in ${CATEGORIES.length} topics, each with variations from easier to harder</span></div>
-    <input type="search" class="libsearch" data-r="q" placeholder="Search: bends, F chord, funk, spider…" value="${esc(ui.q)}" autocomplete="off">
-    <div class="topics" data-r="list"></div>`;
+      <aside class="px-side">
+        <div class="learn-links">
+          <a class="lib-more-card" href="#/techniques"><span class="lm-ic" aria-hidden="true">🎯</span><span><b>Technique library</b><span class="small muted">Step-by-step paths from beginner to mastery.</span></span><span class="mc-go">›</span></a>
+          <a class="lib-more-card" href="#/artist"><span class="lm-ic" aria-hidden="true">🎸</span><span><b>Artist series</b><span class="small muted">Signature techniques of great players.</span></span><span class="mc-go">›</span></a>
+        </div>
+        ${masterCardHTML(p)}
+      </aside>
+    </div>`;
   offAsk = mountAskBox(root.querySelector('[data-r="askslot"]'), { start: plan => startRoutine(plan, undefined, navigate) });
 
   const match = (e, q) => {

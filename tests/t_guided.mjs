@@ -72,7 +72,7 @@ console.error = (...a) => { errors.push(a.join(' ')); };
   await go('#/course/' + c1.id);
   const nl = view().querySelector('.nextlesson');
   ok(nl && /chosen for you/i.test(nl.textContent) && nl.querySelector('[data-c="startnext"]'), 'course page shows the next lesson');
-  ok(/practice it instead/.test(view().querySelector('.tree').textContent), 'the tree is there to browse');
+  ok(view().querySelector('.skilltree .st-node') && view().querySelector('.st-node.next'), 'the skill tree is there to browse, with the next skill marked');
   nl.querySelector('[data-c="startnext"]').click(); await sleep(80);
   ok(location.hash === '#/play', 'practice the next lesson opens the practice page (no timer)');
   const pc = JSON.parse(sessionStorage.getItem('fretworkCoach.play') || 'null');

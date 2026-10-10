@@ -35,7 +35,7 @@ const origErr = console.error; console.error = (...a) => { errors.push(a.join(' 
   ok(s1.courseId === sel.options[1].value && s1.startedAt === t0, 'the session can be credited to a course without restarting the clock');
   localStorage.removeItem('fretworkCoach.activeSession');
   await go('#/practice');
-  ok(view().querySelector('.learn-grid .mastercard .mc-foryou') && view().querySelector('.learn-links a[href="#/techniques"]') && view().querySelector('.learn-links a[href="#/artist"]'), 'practice: learn in depth (master classes, techniques, artists)');
+  ok(view().querySelector('.px-side .mastercard .mc-foryou') && view().querySelector('.px-main .topics') && view().querySelector('.learn-links a[href="#/techniques"]') && view().querySelector('.learn-links a[href="#/artist"]'), 'practice: library in the main column; master classes, techniques and artists on the side');
   await go('#/profile');
   const hist = view().querySelector('.history');
   ok(hist && hist.querySelector('.cal') && hist.querySelectorAll('.stat').length === 4, 'profile: practice history with calendar');
