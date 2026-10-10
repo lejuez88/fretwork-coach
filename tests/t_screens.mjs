@@ -16,7 +16,7 @@ const origErr = console.error; console.error = (...a) => { errors.push(a.join(' 
   await sleep(50);
   const go = async h => { const before = errors.length; location.hash = h; window.dispatchEvent(new HashChangeEvent('hashchange')); await sleep(40); ok(errors.length === before, `${h}: ${errors.slice(before).join(' | ')}`); };
   const view = () => document.getElementById('view');
-  for (const h of ['#/home', '#/practice', '#/tools', '#/tools/metronome', '#/tools/chords', '#/tools/tabs', '#/tools/evaluate', '#/profile', '#/settings', '#/songs', '#/reassess']) await go(h);
+  for (const h of ['#/home', '#/practice', '#/tools', '#/tools/metronome', '#/tools/chords', '#/tools/trainers', '#/tools/trainers/intervals', '#/tools/scales', '#/tools/evaluate', '#/profile', '#/settings', '#/songs', '#/reassess']) await go(h);
   await go('#/songs');
   ok(view().className.includes('v-songs'), 'view class per screen');
   await go('#/home');

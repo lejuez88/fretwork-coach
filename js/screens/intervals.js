@@ -90,7 +90,7 @@ const pct = x => `${Math.round(x * 100)}%`;
 const refMidi = pc => 48 + mod12(pc); // C3–B3: clear on phone speakers, inside the guitar's range
 
 /* --------------------------------- Screen --------------------------------- */
-export function mountIntervalTrainer(root, { navigate, entry }) {
+export function mountIntervalTrainer(root, { navigate, entry, embedded = false }) {
   const p = Store.profile;
   let S = loadTrainerSettings();
   let state = 'idle';            // idle | playing | feedback | done
@@ -100,11 +100,11 @@ export function mountIntervalTrainer(root, { navigate, entry }) {
   const cat = CATEGORY_BY_ID[entry.cat] || { name: 'Theory' };
 
   root.innerHTML = `
-    <a class="link" href="#/practice">← Exercise library</a>
+    ${embedded ? `<p class="small muted">${esc(entry.ex.why || '')}</p>` : `<a class="link" href="#/practice">← Exercise library</a>
     <div class="label">${esc(cat.name)}</div>
     <h1>${esc(entry.title || 'Interval trainer')}</h1>
-    ${entry.ex.why ? `<p class="why">${esc(entry.ex.why)}</p>` : ''}
-    <button class="mcbtn" data-it="master">${MC_ICON} <span>Master class: <b>${esc(topicForEntry(entry).title)}</b></span><span class="small muted">a whole course on this topic ›</span></button>
+    ${entry.ex.why ? `<p class="why">${esc(entry.ex.why)}</p>` : ''}`}
+    <button class="mcbtn" data-it="master" ${embedded ? 'hidden' : ''}>${MC_ICON} <span>Master class: <b>${esc(topicForEntry(entry).title)}</b></span><span class="small muted">a whole course on this topic ›</span></button>
     <section class="card itplay" data-r="play" aria-live="polite"></section>
     <section class="card itset" data-r="settings"></section>
     <section class="card" data-r="stats"></section>`;

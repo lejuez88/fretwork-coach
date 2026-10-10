@@ -1,6 +1,6 @@
 // Offline cache for the app shell. Network-first for app files so updates show
 // up on the next load; images from Wikipedia are cached as they are viewed.
-const CACHE = 'fretwork-v2k-15';
+const CACHE = 'fretwork-v2k-16';
 const SHELL = [
   './', 'index.html', 'css/app.css', 'manifest.json', 'icon.svg',
   'js/app.js', 'js/core/util.js', 'js/core/store.js', 'js/core/claude.js', 'js/core/wiki.js', 'js/core/audio.js',
@@ -17,7 +17,8 @@ const SHELL = [
   'js/core/master.js', 'js/ui/mastersheet.js', 'js/core/songsterr.js',
   'js/core/tempo.js', 'js/ui/chordsync.js', 'js/ui/temporow.js', 'js/core/keys.js', 'js/vendor/qrcode.js', 'js/core/gdrive.js',
   'js/data/kb.js', 'js/data/lib.js', 'js/data/index.js', 'js/core/kbrequests.js', 'js/ui/kbrequest.js', 'js/core/lessoncache.js', 'js/screens/artist.js', 'js/screens/techniques.js', 'js/ui/lessoncards.js', 'js/core/coach.js',
-  'js/core/methods.js', 'js/ui/clicksound.js', 'js/ui/practicehistory.js', 'js/ui/transport.js'
+  'js/core/methods.js', 'js/ui/clicksound.js', 'js/ui/practicehistory.js', 'js/ui/transport.js',
+  'js/screens/notefinder.js', 'js/screens/scales.js', 'js/data/scaleinfo.js'
 ];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {

@@ -506,7 +506,14 @@ export const SCALES = [
   S('minorPent', 'Minor pentatonic', [0, 3, 5, 7, 10], ['R', '♭3', '4', '5', '♭7']),
   S('majorPent', 'Major pentatonic', [0, 2, 4, 7, 9], ['R', '2', '3', '5', '6']),
   S('blues', 'Blues scale', [0, 3, 5, 6, 7, 10], ['R', '♭3', '4', '♭5', '5', '♭7']),
-  S('majorBlues', 'Major blues', [0, 2, 3, 4, 7, 9], ['R', '2', '♭3', '3', '5', '6'])
+  S('majorBlues', 'Major blues', [0, 2, 3, 4, 7, 9], ['R', '2', '♭3', '3', '5', '6']),
+  S('lydianDominant', 'Lydian dominant', [0, 2, 4, 6, 7, 9, 10], ['R', '2', '3', '♯4', '5', '6', '♭7']),
+  S('altered', 'Altered (super Locrian)', [0, 1, 3, 4, 6, 8, 10], ['R', '♭9', '♯9', '3', '♭5', '♯5', '♭7']),
+  S('dimWH', 'Diminished (whole–half)', [0, 2, 3, 5, 6, 8, 9, 11], ['R', '2', '♭3', '4', '♭5', '♭6', '6', '7']),
+  S('dimHW', 'Diminished (half–whole)', [0, 1, 3, 4, 6, 7, 9, 10], ['R', '♭9', '♯9', '3', '♯4', '5', '6', '♭7']),
+  S('wholeTone', 'Whole tone', [0, 2, 4, 6, 8, 10], ['R', '2', '3', '♯4', '♯5', '♭7']),
+  S('hungarianMinor', 'Hungarian minor', [0, 2, 3, 6, 7, 8, 11], ['R', '2', '♭3', '♯4', '5', '♭6', '7']),
+  S('chromatic', 'Chromatic', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ['R', '♭2', '2', '♭3', '3', '4', '♭5', '5', '♭6', '6', '♭7', '7'])
 ];
 export const SCALE_BY_ID = Object.fromEntries(SCALES.map(s => [s.id, s]));
 

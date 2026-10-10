@@ -19,7 +19,7 @@ export const KEY_NAMES = Array.from({ length: 12 }, (_, pc) => ROOT_BY_PC[pc].na
 export const AREAS = { neck: [0, 15, 'Whole neck'], open: [0, 4, 'Open position (frets 0–4)'], p5: [5, 8, 'Frets 5–8'], p7: [7, 10, 'Frets 7–10'], p9: [9, 12, 'Frets 9–12'], p12: [12, 15, 'Frets 12–15'] };
 export const STRING_NAMES = ['', 'high e', 'B', 'G', 'D', 'A', 'low E'];
 export const OPEN_MIDI = [64, 59, 55, 50, 45, 40]; // string 1 … string 6
-export const SCALE_CHOICES = [['chromatic', 'All 12 (chromatic)'], ...SCALES.map(s => [s.id, s.name])];
+export const SCALE_CHOICES = [['chromatic', 'All 12 (chromatic)'], ...SCALES.filter(s => s.id !== 'chromatic').map(s => [s.id, s.name])];
 export const DEFAULTS = {
   key: 9,                 // pc | 'random-round' | 'random-prompt' | 'cycle4'
   scale: 'major',         // scale id | 'chromatic' | 'random'

@@ -1271,3 +1271,30 @@ body.has-transport .tunefab{bottom:calc(var(--dock-top,0px) + 12px)}
 .songs-card[open] summary{margin-bottom:10px}
 .songs-card[open] summary .lr-chev{transform:rotate(90deg);color:var(--amber)}
 .songs-card .lr-chev{font-size:20px;color:var(--muted);transition:transform .15s}
+
+/* Tools: six tabs, trainers, note finder, scales glossary */
+.segtabs.six{grid-template-columns:repeat(6,1fr)}
+.segtabs.six a{font-size:14px;padding:12px 2px}
+@media(max-width:560px){.segtabs.six{grid-template-columns:repeat(3,1fr)}.segtabs.six a{font-size:12px}}
+.trainer-pick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 14px}
+.trainer-tab{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);text-decoration:none}
+.trainer-tab.on{border-color:var(--amber);background:var(--amber-soft)}
+.nf-q{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:2px 0 8px}
+.nf-note{font:700 56px var(--head);color:var(--amber);line-height:1}
+.nf-on{font-size:18px}
+.nf-stats{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:4px 0 8px}
+.nf-stats b{color:var(--text);font-size:16px;margin-right:4px}
+.nf-neck{margin:6px 0 10px}
+.nf-fb{min-height:20px;margin:4px 0 10px}
+.nf-fb.bad{color:#ff8a80}
+.nf-choices{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:6px 0}
+.nf-choices .chip{justify-content:center}
+.nf-choices .chip.bad{border-color:var(--red);color:#ff8a80}
+@media(min-width:1000px){.nf{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:0 18px;align-items:start}}
+.sc-act{align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0}
+.sc-act .btn{flex:none}
+.sc-pos{margin:6px 0 10px}
+.sc-info{display:grid;grid-template-columns:150px 1fr;gap:8px 16px;margin:14px 0 0}
+.sc-info dt{font:600 12px var(--head);text-transform:uppercase;letter-spacing:.1em;color:var(--amber);padding-top:2px}
+.sc-info dd{margin:0;line-height:1.55}
+@media(max-width:560px){.sc-info{grid-template-columns:1fr;gap:2px}.sc-info dd{margin-bottom:10px}}
