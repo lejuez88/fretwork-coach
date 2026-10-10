@@ -12,7 +12,7 @@ import { stageLessonList, techniqueLevelFor, createMasterClass, buildMasterTree,
 import { calibratedTarget } from '../core/progression.js';
 import { tierName } from '../core/courses.js';
 import { MC_ICON } from '../ui/mastersheet.js';
-import { lessonCardHTML, lessonActions, lessonState, lessonTarget } from '../ui/lessoncards.js';
+import { lessonGroupHTML, lessonActions, lessonState, lessonTarget } from '../ui/lessoncards.js';
 import { pathStage, nextLesson } from '../core/coach.js';
 import { methodOf } from '../core/methods.js';
 import { requestBoxHTML, wireRequestBox } from '../ui/kbrequest.js';
@@ -163,7 +163,7 @@ export function mountTechnique(root, { navigate, id }) {
               <div class="chips">${Array.from({ length: st.levels[1] - st.levels[0] + 1 }, (_, i) => st.levels[0] + i).map(l => `<button class="chip ${l === level ? 'on' : ''}" data-lv="${l}">Level ${l}${l === you ? ' · you' : ''}</button>`).join('')}</div>
               <p class="small muted">Tempo goals, length and subdivisions change with the level. The app picks the level that fits you by default.</p></details>` : ''}
           </section>` : ''}
-          ${!ready ? '<p class="muted"><span class="spinner sm"></span> Loading lessons…</p>' : groups.map(g => `<section class="card"><div class="sec-head"><h3>${esc(g.skill.title)}</h3></div><p class="small muted">${esc(g.skill.summary)}</p>${g.items.map(i => lessonCardHTML(p, lessons[i], i, targets[i])).join('')}</section>`).join('')}
+          ${!ready ? '<p class="muted"><span class="spinner sm"></span> Loading lessons…</p>' : groups.map((g, gi) => lessonGroupHTML(p, lessons, targets, { title: g.skill.title, items: g.items }, gi, { note: g.skill.summary ? `<p class="small muted lg-note">${esc(g.skill.summary)}</p>` : '' })).join('')}
         </div>
         <aside class="artist-side">
           <section class="card"><h3>${MC_ICON} The whole path as a course</h3>

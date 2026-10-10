@@ -201,6 +201,8 @@ for (const f of artistFiles) {
   const bioWords = typeof a.bio === 'string' ? a.bio.trim().split(/\s+/).filter(Boolean).length : 0;
   if (!bioWords) report(w, 'no "bio": write a 120–200 word bio from your research (CONTENT.md, "The bio")');
   else if (bioWords < 80 || bioWords > 260) warn(w, `bio is ${bioWords} words (aim for 120–200)`);
+  if (a.topVideo == null) warn(w, 'no "topVideo": add their most-viewed official YouTube video (CONTENT.md, "The most popular video")');
+  else if (!/^[A-Za-z0-9_-]{11}$/.test(a.topVideo.id || '') || !a.topVideo.title) err(w, 'topVideo needs an 11-character YouTube id and a title');
   const ids = [...new Set(techs.map(t => t.id).filter(Boolean).concat(pathUnits.map(u => u.path)))];
   readiness.push({ id: a.id, legacy, done: ids.filter(id => STD[id] && STD[id].standard), todo: ids.filter(id => !(STD[id] && STD[id].standard)), missing: techs.filter(t => !t.id).map(t => t.name), sources: hasSources(a), bio: !!bioWords });
 }

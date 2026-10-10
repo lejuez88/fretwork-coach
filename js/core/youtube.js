@@ -378,3 +378,44 @@ export function mountPlayer(host, ids, { onBad, onFail, onState } = {}) {
   });
   return ctl;
 }
+
+/* ----------------------- An artist's most popular video ----------------------- */
+// Artist pages show the artist's most-viewed video. With a YouTube key, the app asks YouTube
+// for the most-viewed music videos naming the artist (or one of their bands) and picks the
+// one with the most views; without a key it uses the video the content runs researched
+// (`topVideo` in the artist file), else it links to YouTube's search sorted by views.
+const TOP_STORE = 'fretworkCoach.topVideo.v1';
+let tops = {};
+try { tops = JSON.parse(localStorage.getItem(TOP_STORE) || '{}') || {}; } catch { tops = {}; }
+const saveTops = () => { try { localStorage.setItem(TOP_STORE, JSON.stringify(tops)); } catch { /* full */ } };
+/** YouTube search sorted by view count, for an artist (the no-key fallback link). */
+export const popularSearchUrl = q => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}&sp=CAM%253D`;
+/** "1.2B views", "48M views", "730K views". */
+export function fmtViews(n) {
+  n = +n; if (!(n > 0)) return '';
+  const f = (v, s) => `${v >= 100 ? Math.round(v) : Math.round(v * 10) / 10}${s}`;
+  return (n >= 1e9 ? f(n / 1e9, 'B') : n >= 1e6 ? f(n / 1e6, 'M') : n >= 1e3 ? f(n / 1e3, 'K') : String(n)) + ' views';
+}
+/**
+ * The artist's most popular video: {id, title, channel, views, src: 'youtube'|'curated'} or null.
+ * a = {id, name, bands?, topVideo?}. Cached for 30 days per artist (per key).
+ */
+export async function artistTopVideo(a, { refresh = false } = {}) {
+  const c = tops[a.id];
+  const curated = a.topVideo && VALID_ID.test(a.topVideo.id) ? { id: a.topVideo.id, title: a.topVideo.title || '', channel: a.topVideo.channel || '', views: a.topVideo.views || null, src: 'curated' } : null;
+  if (!hasKey()) return curated;
+  if (c && !refresh && c.keyed === keyTag() && Date.now() - c.at < 30 * DAY) return c.v || curated;
+  const names = [a.name, ...(a.bands || [])];
+  try {
+    const j = await getJSON('https://www.googleapis.com/youtube/v3/search?' + new URLSearchParams({ part: 'snippet', type: 'video', order: 'viewCount', videoCategoryId: '10', videoEmbeddable: 'true', maxResults: '15', q: a.ytQuery || a.name, key: getKey() }));
+    const items = (j && j.items || []).filter(it => it.id && VALID_ID.test(it.id.videoId))
+      .filter(it => { const sn = it.snippet || {}, txt = `${decodeEntities(sn.title || '')} ${decodeEntities(sn.channelTitle || '')}`; return names.some(n => artistMatches(txt, n)) && !JUNK.test(decodeEntities(sn.title || '')); });
+    let best = null;
+    if (items.length) {
+      const st = await getJSON('https://www.googleapis.com/youtube/v3/videos?' + new URLSearchParams({ part: 'statistics,snippet', id: items.slice(0, 10).map(it => it.id.videoId).join(','), key: getKey() }));
+      (st && st.items || []).forEach(v => { const views = +(v.statistics && v.statistics.viewCount) || 0; if (!best || views > best.views) best = { id: v.id, title: decodeEntities(v.snippet.title || ''), channel: decodeEntities(v.snippet.channelTitle || ''), views, src: 'youtube' }; });
+    }
+    tops[a.id] = { v: best, at: Date.now(), keyed: keyTag() }; saveTops();
+    return best || curated;
+  } catch { return curated; } // key or network trouble: fall back without remembering the miss
+}

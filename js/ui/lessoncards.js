@@ -60,6 +60,25 @@ export function lessonCardHTML(p, l, i, target) {
 }
 
 /**
+ * A topic of lessons as one button that opens its list (one topic open at a time, see lessonActions).
+ * g = {title, items: [lesson indexes]}; note: extra markup shown above the list when open;
+ * side: a small chip (a stage name, for example). Shows how many lessons and how many are mastered.
+ */
+export function lessonGroupHTML(p, lessons, targets, g, gi, { note = '', side = '' } = {}) {
+  const done = g.items.filter(i => { const st = lessonState(p, lessons[i]); return st && st.mastered; }).length, n = g.items.length;
+  const started = g.items.some(i => { const st = lessonState(p, lessons[i]); return st && st.history && st.history.length; });
+  return `<section class="lesson-group ${done === n && n ? 'done' : ''}" data-group="${gi}">
+    <button class="lg-head" data-grp-open="${gi}" aria-expanded="false" aria-controls="lg-body-${gi}">
+      <span class="lg-txt"><b>${esc(g.title)}</b><span class="small muted">${n} lesson${n === 1 ? '' : 's'}${done ? ` · <span class="ok">${done} mastered</span>` : started ? ' · started' : ''}</span></span>
+      ${side ? `<span class="lg-side">${side}</span>` : ''}
+      <span class="lg-prog" aria-hidden="true"><i style="width:${n ? Math.round(done / n * 100) : 0}%"></i></span>
+      <span class="lr-chev" aria-hidden="true">›</span>
+    </button>
+    <div class="lg-body" id="lg-body-${gi}" hidden>${note}${g.items.map(i => lessonCardHTML(p, lessons[i], i, targets[i])).join('')}</div>
+  </section>`;
+}
+
+/**
  * Click handling for a page of lesson cards.
  * get() returns {lessons, targets}; reason(l) says where a lesson came from (for routines and saves);
  * title(l) names the practice session. Returns {onClick(e) → handled?, stop()}.
@@ -73,10 +92,28 @@ export function lessonActions(root, { get, reason, title, genre = null, navigate
     root.querySelectorAll('[data-artslot]').forEach(s => { s.innerHTML = ''; });
     root.querySelectorAll('[data-al="try"]').forEach(b => { b.textContent = '▶ Try it here'; });
   };
-  const stop = () => { clearTry(); openIdx = null; };
+  const stop = () => { clearTry(); openIdx = null; openGroup = null; };
+  let openGroup = null;
+  /** Open one topic (closing the one that was open, with its lessons); openGroupAt(null) closes all. */
+  function openGroupAt(gi) {
+    const next = gi == null ? null : String(gi);
+    if (openGroup !== next) { clearTry(); openIdx = null; root.querySelectorAll('.lesson-row.open').forEach(r => { r.classList.remove('open'); const b = r.querySelector('.lr-body'); if (b) b.hidden = true; const h = r.querySelector('.lr-head'); if (h) h.setAttribute('aria-expanded', 'false'); }); }
+    root.querySelectorAll('.lesson-group').forEach(g => {
+      const on = next != null && g.dataset.group === next;
+      g.classList.toggle('open', on);
+      const body = g.querySelector('.lg-body'), head = g.querySelector('.lg-head');
+      if (body) body.hidden = !on;
+      if (head) head.setAttribute('aria-expanded', on);
+    });
+    openGroup = next;
+    return next != null ? root.querySelector(`.lesson-group[data-group="${next}"]`) : null;
+  }
   /** Open one lesson (closing the one that was open, and its player); open(null) closes all. */
   function open(i, { scroll = false } = {}) {
     const next = i == null ? null : String(i);
+    const row0 = next != null && root.querySelector(`.lesson-row[data-lesson="${next}"]`);
+    const grp = row0 && row0.closest('.lesson-group');
+    if (grp && grp.dataset.group !== openGroup) openGroupAt(grp.dataset.group);
     if (openIdx !== next) clearTry();
     root.querySelectorAll('.lesson-row').forEach(row => {
       const on = next != null && row.dataset.lesson === next;
@@ -107,6 +144,12 @@ export function lessonActions(root, { get, reason, title, genre = null, navigate
     }
   }
   function onClick(e) {
+    const gh = e.target.closest('[data-grp-open]');
+    if (gh && root.contains(gh)) {
+      const gi = gh.dataset.grpOpen, g = openGroupAt(openGroup === gi ? null : gi);
+      if (g && g.getBoundingClientRect && g.scrollIntoView && g.getBoundingClientRect().top < 0) { try { g.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch { /* ignore */ } }
+      return true;
+    }
     const h = e.target.closest('[data-al-open]');
     if (h && root.contains(h)) { const i = h.dataset.alOpen; open(openIdx === i ? null : i); return true; }
     const b = e.target.closest('[data-al]'); if (!b || b.dataset.i == null) return false;
@@ -124,5 +167,5 @@ export function lessonActions(root, { get, reason, title, genre = null, navigate
     }
     return false;
   }
-  return { onClick, stop, open, get openIndex() { return openIdx; } };
+  return { onClick, stop, open, openGroup: openGroupAt, get openIndex() { return openIdx; } };
 }

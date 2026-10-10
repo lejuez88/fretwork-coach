@@ -25,7 +25,14 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: artist bios and a cleaner lesson list
+## Latest: a compact artist page
+
+| Area | Included |
+|---|---|
+| Artist page | The bio sits right under the artist's name (no heading), shortened with "Read more"; on phones the photo sits beside the name. Under the bio, the artist's **most popular YouTube video**: with a YouTube key the app finds the most-viewed music video naming the artist or one of their bands (cached for 30 days); otherwise it uses the video the content runs researched (`topVideo`), or links to YouTube sorted by views. Tapping the thumbnail plays it on the page. |
+| Lesson topics | Lessons are grouped into topic buttons (on artist and technique pages) showing the lesson count, how many are mastered and the stage; tapping one opens its lessons, one topic at a time, and each lesson still opens on its own. Famous songs fold away on phones. |
+
+## Earlier: artist bios and a cleaner lesson list
 
 | Area | Included |
 |---|---|

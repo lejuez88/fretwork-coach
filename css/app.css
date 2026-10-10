@@ -990,7 +990,7 @@ body.has-actions .tunepop{bottom:calc(140px + env(safe-area-inset-bottom))}
 .riffs .riff{display:flex;flex-direction:column;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
 .riffs .riff:last-child{border-bottom:0}
 .riff-act{display:flex;gap:6px;flex:none}
-@media (max-width:620px){.artist-head{flex-direction:column}.artist-head .wimg.artist-photo{width:100%;height:180px}}
+
 @media (min-width:1000px){.artist-cols{grid-template-columns:minmax(0,1fr) 340px;align-items:start}.artist-side{position:sticky;top:12px}}
 
 /* ---------- Technique library ---------- */
@@ -1209,3 +1209,65 @@ body.has-transport .tunefab{bottom:calc(var(--dock-top,0px) + 12px)}
 .bio-text p{margin:0 0 10px;line-height:1.6}
 .bio.clamped .bio-text{max-height:7.4em;overflow:hidden;-webkit-mask-image:linear-gradient(180deg,#000 55%,transparent);mask-image:linear-gradient(180deg,#000 55%,transparent)}
 .bio-credit{margin:6px 0 0}
+
+/* Lesson topics: one button per topic, opening its lesson rows (one topic open at a time) */
+.lesson-group{border:1px solid var(--line);border-radius:14px;background:var(--panel);margin:0 0 10px;overflow:hidden}
+.lesson-group .lg-head{appearance:none;display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:none;border:0;color:var(--text);text-align:left;font:inherit;cursor:pointer}
+.lesson-group .lg-head:hover{background:rgba(255,255,255,.03)}
+.lesson-group .lg-head:focus-visible{outline:2px solid var(--amber);outline-offset:-2px}
+.lesson-group .lg-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.lesson-group .lg-txt b{font:600 16px var(--head)}
+.lesson-group .lg-side{flex:none}
+.lesson-group .lg-prog{flex:none;width:54px;height:6px;border-radius:99px;background:var(--inset);overflow:hidden;border:1px solid var(--line)}
+.lesson-group .lg-prog i{display:block;height:100%;background:linear-gradient(90deg,var(--amber-d),var(--amber))}
+.lesson-group.done .lg-prog i{background:var(--green)}
+.lesson-group.open{border-color:rgba(245,165,36,.55)}
+.lesson-group.open .lg-head{border-bottom:1px solid var(--line)}
+.lesson-group.open .lg-head .lr-chev{transform:rotate(90deg);color:var(--amber)}
+.lesson-group .lr-chev{font-size:20px;color:var(--muted);transition:transform .15s;line-height:1}
+.lesson-group .lg-body{padding:6px 12px 10px}
+.lesson-group .lg-body[hidden]{display:none}
+.lesson-group .lg-note{margin:6px 4px 8px}
+.lesson-group .pathnote{display:block;margin:-2px 4px 8px}
+@media(max-width:560px){.lesson-group .lg-prog{display:none}.lesson-group .lg-head{padding:13px 14px}.lesson-group .lg-body{padding:4px 8px 8px}}
+/* Artist head: bio and most popular video under the name */
+.artist-head .ah-body{flex:1;min-width:0}
+.ah-bio{margin:4px 0 10px;max-width:760px}
+.ah-bio .bio-text p{margin:0 0 8px;line-height:1.6;color:#ddd5c8}
+.ah-bio.clamped .bio-text{max-height:6.4em;overflow:hidden;-webkit-mask-image:linear-gradient(180deg,#000 50%,transparent);mask-image:linear-gradient(180deg,#000 50%,transparent)}
+.ah-bio .why{margin:0}
+.ah-chips{margin:10px 0 0}
+.ah-act{margin-top:12px;align-items:center;gap:12px}
+.topvid{appearance:none;display:flex;align-items:center;gap:12px;width:100%;max-width:520px;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--inset);color:var(--text);text-align:left;font:inherit;cursor:pointer;text-decoration:none}
+.topvid:hover{border-color:var(--amber)}
+.topvid .tv-thumb{position:relative;flex:none;width:128px;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#000}
+.topvid .tv-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.topvid .tv-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;background:rgba(0,0,0,.25);text-shadow:0 2px 8px rgba(0,0,0,.6)}
+.topvid .tv-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.topvid .tv-txt .label{margin:0;font-size:10px}
+.topvid .tv-txt b{font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.topvid.link-only{padding:10px 12px}
+.topvid .tv-ic{width:36px;height:36px;border-radius:10px;background:#c4302b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex:none}
+.topvid-player{max-width:560px}
+.topvid-player .yt-embed{position:relative;aspect-ratio:16/9}
+.topvid-player iframe{position:absolute;inset:0;width:100%;height:100%;border-radius:10px}
+.tv-under{margin-top:6px;max-width:560px}
+@media (max-width:620px){.topvid .tv-thumb{width:112px}}
+
+/* Artist head: photo | name, then bio, video, chips and the master class (photo beside the name on phones) */
+.artist-head{display:grid;grid-template-columns:150px minmax(0,1fr);grid-template-areas:"photo title" "photo body";column-gap:18px;align-items:start}
+.artist-head .wimg.artist-photo{grid-area:photo}
+.artist-head .ah-title{grid-area:title}
+.artist-head .ah-body{grid-area:body}
+@media (max-width:620px){
+  .artist-head{grid-template-columns:76px minmax(0,1fr);grid-template-areas:"photo title" "body body";column-gap:14px;align-items:center}
+  .artist-head .wimg.artist-photo{width:76px;height:76px;border-radius:12px}
+  .artist-head .ah-title h1{font-size:28px;margin:0}
+  .artist-head .ah-body{margin-top:10px}
+}
+.songs-card summary{list-style:none;display:flex;align-items:center;gap:10px;cursor:pointer}
+.songs-card summary::-webkit-details-marker{display:none}
+.songs-card summary h3{margin:0;flex:1}
+.songs-card[open] summary{margin-bottom:10px}
+.songs-card[open] summary .lr-chev{transform:rotate(90deg);color:var(--amber)}
+.songs-card .lr-chev{font-size:20px;color:var(--muted);transition:transform .15s}

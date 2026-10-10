@@ -33,6 +33,27 @@ console.error = (...a) => { errors.push(a.join(' ')); };
     ok(players >= n - 4, `${id}: ${players}/${n} lessons open in the tab player`);
   }
   await go('#/artist/eric-johnson'); await sleep(80);
+  // topics are buttons that open their lesson lists, one at a time
+  {
+    const groups = [...view().querySelectorAll('.lesson-group')];
+    ok(groups.length >= 4 && groups.every(g => g.querySelector('.lg-body').hidden), `artist topics start closed (${groups.length})`);
+    ok(groups.every(g => /\d+ lessons?/.test(g.querySelector('.lg-head').textContent)), 'each topic shows its lesson count');
+    groups[0].querySelector('.lg-head').click(); await sleep(5);
+    ok(!groups[0].querySelector('.lg-body').hidden && groups[0].querySelector('.lg-head').getAttribute('aria-expanded') === 'true', 'tapping a topic opens its lessons');
+    groups[1].querySelector('.lg-head').click(); await sleep(5);
+    ok(groups[0].querySelector('.lg-body').hidden && !groups[1].querySelector('.lg-body').hidden, 'opening another topic closes the first');
+    groups[1].querySelector('.lg-head').click(); await sleep(5);
+    ok(!view().querySelector('.lesson-group.open'), 'tapping the open topic closes it');
+    const jump = view().querySelector('.nextlesson [data-jump]');
+    if (jump) {
+      jump.click(); await sleep(10);
+      const row = view().querySelector(`.lesson-row[data-lesson="${jump.dataset.jump}"]`);
+      ok(row && row.classList.contains('open') && row.closest('.lesson-group').classList.contains('open'), '“Show it in the list” opens its topic and the lesson');
+    }
+    ok(view().querySelector('.ah-body [data-r="bio"]') && !/About Eric Johnson/.test(view().querySelector('.artist-head').textContent), 'the bio sits under the name, without an “About” heading');
+    ok(view().querySelector('.ah-body [data-r="video"] .topvid'), 'the bio area has the YouTube video (or the link to the most-viewed videos)');
+    view().querySelectorAll('.lesson-group.open .lg-head').forEach(h => h.click());
+  }
   // lessons are rows: name + summary, one open at a time
   {
     const rows = [...view().querySelectorAll('.lesson-row')];

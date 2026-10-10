@@ -11,10 +11,12 @@ import { calibratedTarget } from '../core/progression.js';
 import { addSong } from '../core/songs.js';
 import { bestMatchUrl } from '../core/songsterr.js';
 import { openMasterSheet, MC_ICON } from '../ui/mastersheet.js';
-import { lessonCardHTML, lessonActions, lessonTarget } from '../ui/lessoncards.js';
+import { lessonGroupHTML, lessonActions, lessonTarget } from '../ui/lessoncards.js';
+import { artistTopVideo, popularSearchUrl, fmtViews, thumbUrl, watchUrl, mountEmbed } from '../core/youtube.js';
 import { nextLesson } from '../core/coach.js';
 
 const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const narrow = () => typeof matchMedia === 'function' && matchMedia('(max-width: 999px)').matches;
 /** The library technique an artist's technique chip names (or null). */
 const techniqueByName = name => KB_INDEX.find(t => norm(t.title) === norm(name)) || KB_INDEX.find(t => t.re.test(String(name).toLowerCase())) || null;
 /** Artists whose names match your favorite players come first. */
@@ -81,47 +83,65 @@ export function mountArtist(root, { navigate, id }) {
   const hasSong = r => p.songs.some(s => norm(s.title) === norm(r.title));
   function render() {
     acts.stop();
+    if (embed) { try { embed.destroy(); } catch { /* ignore */ } embed = null; } vidPlaying = false;
     if (!ready) { root.innerHTML = `<a class="link" href="#/artist">← Artist series</a><div class="exhead"><div class="label">Artist series</div><h1>${esc(meta.name)}</h1></div><p class="muted"><span class="spinner sm"></span> Loading lessons…</p>`; return; }
     const mc = masterFor(p, id);
     // group lessons by unit, in order
     const groups = [];
     lessons.forEach((l, i) => { let g = groups[groups.length - 1]; if (!g || g.unit !== l.unit) groups.push(g = { unit: l.unit, items: [] }); g.items.push(i); });
+    const chips = a.techniques.map((t, i) => { const tech = (a.techPaths && a.techPaths[i] && KB_BY_ID[a.techPaths[i]]) || techniqueByName(t); return tech ? `<a class="chip sm" href="#/techniques/${tech.id}">${esc(t)}</a>` : `<span class="chip sm">${esc(t)}</span>`; }).join('');
     root.innerHTML = `<a class="link" href="#/artist">← Artist series</a>
       <div class="artist-head">${wikiTile(a.wiki, a.name, 'artist-photo')}
-        <div><div class="label">Artist series</div><h1>${esc(a.name)}</h1><p class="why">${esc(a.blurb)}</p>
-          <div class="chips">${a.techniques.map((t, i) => { const tech = (a.techPaths && a.techPaths[i] && KB_BY_ID[a.techPaths[i]]) || techniqueByName(t); return tech ? `<a class="chip sm" href="#/techniques/${tech.id}">${esc(t)}</a>` : `<span class="chip sm">${esc(t)}</span>`; }).join('')}</div>
-          <div class="row" style="margin-top:12px">${mc ? `<a class="btn primary" href="#/course/${mc.id}">${MC_ICON} Open your ${esc(a.name)} master class</a>` : `<button class="btn primary" data-al="master" ${building ? 'disabled' : ''}>${building ? '<span class="spinner sm"></span>Building…' : `${MC_ICON} Start the ${esc(a.name)} master class`}</button>`}</div>
-          <p class="small muted">${lessons.length} lessons at your level, original exercises in this style that play in the tab player. The master class turns them into a course with progress and reviews.</p></div></div>
-      ${bioHTML()}
+        <div class="ah-title"><div class="label">Artist series</div><h1>${esc(a.name)}</h1></div>
+        <div class="ah-body">
+          ${bioHTML()}
+          <div data-r="video">${videoHTML()}</div>
+          <div class="chips ah-chips">${chips}</div>
+          <div class="row ah-act">${mc ? `<a class="btn primary" href="#/course/${mc.id}">${MC_ICON} Open your ${esc(a.name)} master class</a>` : `<button class="btn primary" data-al="master" ${building ? 'disabled' : ''}>${building ? '<span class="spinner sm"></span>Building…' : `${MC_ICON} Start the ${esc(a.name)} master class`}</button>`}<span class="small muted">${lessons.length} lessons at your level</span></div></div></div>
       ${nextArtistHTML()}
       <div class="artist-cols">
-        <div class="artist-lessons">${groups.map(g => `<section class="card"><div class="sec-head"><h3>${esc(g.unit.title)}</h3>${g.unit.path ? `<a class="link small" href="#/techniques/${esc(g.unit.path)}">Full path →</a>` : ''}</div>${unitNoteHTML(g.unit)}${g.items.map(i => lessonCardHTML(p, lessons[i], i, targets[i])).join('')}</section>`).join('')}</div>
-        <aside class="artist-side"><section class="card"><h3>Famous songs</h3>
+        <div class="artist-lessons"><h2 class="sechead">Lessons</h2>${groups.map((g, gi) => lessonGroupHTML(p, lessons, targets, { title: g.unit.title, items: g.items }, gi, { note: unitNoteHTML(g.unit), side: g.unit.path && TIER_BY_ID[g.unit.tier] ? `<span class="chip sm">${esc(TIER_BY_ID[g.unit.tier].name)}</span>` : '' })).join('')}</div>
+        <aside class="artist-side"><details class="card songs-card" ${narrow() ? '' : 'open'}><summary><h3>Famous songs</h3><span class="small muted">${a.riffs.length} songs</span><span class="lr-chev" aria-hidden="true">›</span></summary>
           <p class="small muted">Linked, not copied: open the tab on Songsterr, or add the song to My songs, where you can paste a tab and get section-by-section lessons.</p>
           <div class="riffs">${a.riffs.map((r, i) => `<div class="riff"><div><b>${esc(r.title)}</b>${r.artist ? ` <span class="small muted">(${esc(r.artist)})</span>` : ''}<div class="small muted">${esc(r.note)}</div></div>
             <div class="riff-act"><a class="btn sm ghost" href="${esc(bestMatchUrl(r.title, r.artist || a.name))}" target="_blank" rel="noopener">Tab ↗</a>
             <button class="btn sm" data-riff="${i}" ${hasSong(r) ? 'disabled' : ''}>${hasSong(r) ? '✓ In My songs' : '+ My songs'}</button></div></div>`).join('')}</div>
-          <p class="small muted">${esc(ARTIST_NOTE)}</p></section></aside>
+          <p class="small muted">${esc(ARTIST_NOTE)}</p></details></aside>
       </div>`;
     hydrateImages(root);
   }
-  /** The artist's bio (written in the artist file), or Wikipedia's introduction with credit until there is one. */
+  /** The bio under the artist's name (from the artist file), or Wikipedia's introduction with credit, or the one-line blurb. */
   let wikiBio = null, bioOpen = false;
   function bioHTML() {
     const paras = a.bio ? String(a.bio).split(/\n\s*\n/).map(x => x.trim()).filter(Boolean) : wikiBio ? [wikiBio.extract] : null;
-    if (!paras) return '<div data-r="bio"></div>';
-    const long = paras.length > 1 || paras[0].length > 320;
-    return `<section class="card bio ${long && !bioOpen ? 'clamped' : ''}" data-r="bio"><h3>About ${esc(a.name)}</h3>
+    if (!paras) return `<div class="ah-bio" data-r="bio"><p class="why">${esc(a.blurb)}</p></div>`;
+    const long = paras.length > 1 || paras[0].length > 300;
+    return `<div class="ah-bio ${long && !bioOpen ? 'clamped' : ''}" data-r="bio">
       <div class="bio-text">${paras.map(x => `<p>${esc(x)}</p>`).join('')}</div>
       ${long ? `<button class="linkbtn small" data-bio="toggle">${bioOpen ? 'Show less' : 'Read more'}</button>` : ''}
-      ${!a.bio && wikiBio ? `<p class="small muted bio-credit">From <a class="link" href="${esc(wikiBio.url)}" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA).</p>` : ''}</section>`;
+      ${!a.bio && wikiBio ? `<p class="small muted bio-credit">From <a class="link" href="${esc(wikiBio.url)}" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA).</p>` : ''}</div>`;
+  }
+  /** The artist's most popular YouTube video: a thumbnail row that plays inline when tapped. */
+  let topVid = null, vidPlaying = false, embed = null;
+  function videoHTML() {
+    if (!topVid) return `<a class="topvid link-only" href="${esc(popularSearchUrl(a.ytQuery || a.name))}" target="_blank" rel="noopener"><span class="tv-ic" aria-hidden="true">▶</span><span class="tv-txt"><span class="label">Most popular on YouTube</span><span class="small">See ${esc(a.name)}’s most-viewed videos ↗</span></span></a>`;
+    if (vidPlaying) return `<div class="topvid-player" data-r="vidhost"></div><div class="small muted tv-under">${esc(topVid.title)}${topVid.views ? ` · ${esc(fmtViews(topVid.views))}` : ''} · <a class="link" href="${esc(watchUrl(topVid.id))}" target="_blank" rel="noopener">YouTube ↗</a></div>`;
+    return `<button class="topvid" data-vid="play"><span class="tv-thumb"><img src="${esc(thumbUrl(topVid.id))}" alt="" loading="lazy" referrerpolicy="no-referrer"><span class="tv-play" aria-hidden="true">▶</span></span>
+      <span class="tv-txt"><span class="label">Most popular on YouTube</span><b>${esc(topVid.title)}</b><span class="small muted">${esc([topVid.channel, fmtViews(topVid.views)].filter(Boolean).join(' · '))}</span></span></button>`;
+  }
+  function refreshVideo() {
+    const el = root.querySelector('[data-r="video"]'); if (!el) return;
+    if (embed) { try { embed.destroy(); } catch { /* ignore */ } embed = null; }
+    el.innerHTML = videoHTML();
+    const host = el.querySelector('[data-r="vidhost"]');
+    if (host) embed = mountEmbed(host, [topVid.id], { autoplay: true, onFail: () => { vidPlaying = false; refreshVideo(); toast('That video can’t play here. Opening it on YouTube works.'); } });
   }
   function refreshBio() { const el = root.querySelector('[data-r="bio"]'); if (el) el.outerHTML = bioHTML(); }
   /** A unit's summary; for a unit drawn from a learning path, the stage you're on and that progress is shared. */
   function unitNoteHTML(u) {
-    if (!u.path) return `<p class="small muted">${esc(u.summary)}</p>`;
-    return `<p class="small muted">${esc(u.summary)}</p>
-      <p class="small pathnote"><span class="chip sm">${esc(TIER_BY_ID[u.tier] ? TIER_BY_ID[u.tier].name : u.tier)} stage</span> ${esc(u.reason || '')} ${u.total ? `${u.mastered}/${u.total} mastered. ` : ''}<span class="muted">Shared with the ${esc(String((KB_BY_ID[u.path] || {}).title || 'technique').replace(/^the /i, ''))} path and every artist who uses it.</span></p>`;
+    if (!u.path) return `<p class="small muted lg-note">${esc(u.summary)}</p>`;
+    return `<p class="small muted lg-note">${esc(u.summary)}</p>
+      <p class="small pathnote">${esc(TIER_BY_ID[u.tier] ? TIER_BY_ID[u.tier].name : u.tier)} stage: ${esc(u.reason || '')} <span class="muted">Progress is shared with the <a class="link" href="#/techniques/${esc(u.path)}">${esc(String((KB_BY_ID[u.path] || {}).title || 'technique').replace(/^the /i, ''))} path</a> and every artist who uses it.</span></p>`;
   }
   /** The artist lesson the app picks next (easiest unmastered, stalled first), with the reason. */
   function nextArtistHTML() {
@@ -154,6 +174,7 @@ export function mountArtist(root, { navigate, id }) {
     }
     if (e.target.closest('[data-al="master"]')) { startMaster(); return; }
     if (e.target.closest('[data-bio="toggle"]')) { bioOpen = !bioOpen; refreshBio(); return; }
+    if (e.target.closest('[data-vid="play"]')) { vidPlaying = true; refreshVideo(); return; }
     const jump = e.target.closest('[data-jump]');
     if (jump) { const box = acts.open(jump.dataset.jump, { scroll: true }); if (box) { box.classList.add('flash'); setTimeout(() => box.classList.remove('flash'), 1600); } return; }
     acts.onClick(e);
@@ -164,6 +185,7 @@ export function mountArtist(root, { navigate, id }) {
     if (gone) return;
     a = full; lessons = list; targets = lessons.map(l => lessonTarget(p, l, calibratedTarget(l.ex, l.ex.level || 4, p))); ready = true; render();
     if (!a.bio && p.settings.wikiImages !== false) wikiSummary(a.wiki).then(v => { if (v && !gone) { wikiBio = v; refreshBio(); } });
+    artistTopVideo(a).then(v => { if (v && !gone) { topVid = v; refreshVideo(); } });
   }).catch(e => { if (!gone) root.innerHTML = `<a class="link" href="#/artist">← Artist series</a><p class="bad">Couldn’t load the lessons (${esc(e.message)}). Check the connection and reload.</p>`; });
-  return () => { gone = true; acts.stop(); root.removeEventListener('click', onClick); };
+  return () => { gone = true; acts.stop(); if (embed) { try { embed.destroy(); } catch { /* ignore */ } } root.removeEventListener('click', onClick); };
 }

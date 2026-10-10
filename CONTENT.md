@@ -123,6 +123,8 @@ export default artist({ id: 'eric-johnson', name: 'Eric Johnson', wiki: ['Eric J
   techniques: ['Rolling 5s', { name: 'Violin-like legato tone', path: 'legatoTone' }, …],   // 3–6 chips; each must resolve to a complete path
   sources: ['https://…interview', 'https://…lesson', 'https://…analysis'],                 // 3+ URLs from step 1
   bio: `First paragraph…\n\nSecond paragraph…`,                                            // 120–200 words, original (see below)
+  bands: ['Racer X', 'Mr. Big'],                                                           // optional: bands they're known for (finds their videos)
+  topVideo: { id: 'xxxxxxxxxxx', title: 'Official video title', channel: 'Channel' },     // their most-viewed video on YouTube (see below)
   ctx: { key: 9, minor: true, prog: 'minorRock' },
   units: [PU(pentatonic, { title: 'The pentatonic boxes', tiers: ['intermediate', 'advanced', 'mastery'] }),
           PU(rolling5s, { title: 'Rolling 5s' }),
@@ -134,6 +136,8 @@ export default artist({ id: 'eric-johnson', name: 'Eric Johnson', wiki: ['Eric J
 An artist's signature techniques belong in the knowledge base, each as its own path, and the artist file reuses them. That way a player can learn "rolling 5s" with or without Eric Johnson.
 
 **The bio** (`bio`, shown at the top of the artist page) is written from your step-1 research, in your own words: never copied or closely paraphrased from Wikipedia or any other source. 120–200 words in two or three short paragraphs, separated by a blank line: (1) who they are: era, bands and the records that made their name; (2) what defines their guitar playing: the sound, the techniques, the habits a listener recognizes; (3) why it's worth studying and how this course approaches it (which paths it draws on and in what order). Facts only, checked against at least two of your sources; no hype words. Until an artist has a bio, the page shows Wikipedia's introduction with credit.
+
+**The most popular video** (`topVideo`, shown under the bio): the most-viewed YouTube video of the artist or a band they're known for, as an official upload (the artist's, band's or label's channel, VEVO or "- Topic"), not a cover, lesson or fan upload. Find it by searching YouTube sorted by view count and checking the view counts; give the 11-character video id, the title and the channel. List their bands in `bands`. When a player has a YouTube key, the app looks up the current most-viewed video itself and uses `topVideo` when it can't.
 
 **Draw from paths with `PU(entry, {title, summary, tiers})`.** A path unit doesn't copy lessons: the artist page teaches the stage of that path the player is at (the stage they're partway through, else the first unfinished one at their level), with the path's own lessons and progress. A lesson mastered on the Paul Gilbert page is mastered on the path page and for every other artist who uses that path, and the unit moves on to the next stage when the current one is done. A master class built from the artist climbs each path unit two stages from the player's level. Use `tiers` to keep to the stages that matter for the player's style (for example only `['intermediate', 'advanced', 'mastery']` of the pentatonic path for a shred player). Rules:
 - When an artist uses a technique that has a path, use `PU`. Never copy a multi-stage path with `skillsOf(entry)`; the validator warns when a unit does.
