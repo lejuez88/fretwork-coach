@@ -141,7 +141,11 @@ export function targetGuide(c, { prog = 'minorRock', scale = null, name = null, 
 /** A written drill, for things a tab can't show (use sparingly). */
 export const W = (id, name, domain, unit, start, goal, why, instr, watch, simplify, minutes = 5) => ({ spec: { id, name, domain, unit, startBpm: start, goalBpm: goal, why, instr, watch, simplify, minutes } });
 /** A skill: a few lessons on one idea. ex entries: (c) => exercise, ['atom', opts, ctxPatch] or W(...). */
-export const S = (id, title, domain, summary, ex) => ({ id, title, domain, summary, ex });
+/**
+ * A skill: a few lessons on one idea. study (optional, shown on the practice page before playing):
+ * {concept: 'what it is', why: 'why it matters and where it is used', theory: ['facts behind it', …]}.
+ */
+export const S = (id, title, domain, summary, ex, study = null) => ({ id, title, domain, summary, ex, ...(study ? { study } : {}) });
 /**
  * Tag a lesson entry with the learning method it applies (see js/core/methods.js): works for a
  * generator (c) => exercise, an atom ['atom', opts, ctx] or a written drill W(...).

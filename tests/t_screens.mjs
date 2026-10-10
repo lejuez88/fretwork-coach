@@ -58,16 +58,45 @@ const origErr = console.error; console.error = (...a) => { errors.push(a.join(' 
     if (view().querySelector('.tabplayer')) withPlayer++;
     if (view().querySelector('.tpneck .fboard')) withNeck++;
     if (view().querySelector('.tempo-row b.tv')) withTempo++;
-    ok(view().querySelector('.exgrid .exvar') && view().querySelector('.exgrid .explayer'), e.id + ' uses the exercise grid');
+    ok(view().querySelector('.play .play-stage [data-r="tool"]') && (view().querySelector('.play-stage .tabplayer') || view().querySelector('.play-stage .metro')), e.id + ' opens on the practice page');
   }
   const n = ents.filter(e => !e.special).length;
   ok(withTempo === n, `tempo row with beat label on every exercise (${withTempo}/${n})`);
   ok(withNeck === withPlayer && withPlayer > 30, `neck under every tab player (${withNeck}/${withPlayer})`);
-  // a routine from the library
+  // the practice page: study, customize, log, prev / next, light tab
   await go('#/practice/ex/strum');
-  const timerBtn = document.querySelector('#actionbar [data-a="timer"]');
-  ok(!!timerBtn, 'practice with timer button');
-  if (timerBtn) { timerBtn.click(); await sleep(80); }
+  ok(!document.getElementById('tabbar').classList.contains('show') && document.body.classList.contains('playmode'), 'practice page: full screen (no tab bar)');
+  ok(document.querySelector('#transport.show'), 'practice page: the playback bar');
+  const rail = k => view().querySelector(`[data-rail="${k}"]`);
+  ok(['study', 'custom', 'log', 'eval', 'master', 'theme'].every(rail), 'the right rail has study, customize, log tempo, evaluate, master class and the tab theme');
+  if (view().querySelector('[data-r="panel"]').hidden) rail('study').click();
+  await sleep(5);
+  ok(!view().querySelector('[data-r="panel"]').hidden && /The concept|Why it matters/.test(view().querySelector('.pp-body').textContent) && /How to practice it/.test(view().querySelector('.pp-body').textContent), 'study: concept, why and how');
+  ok(/The theory/.test(view().querySelector('.pp-body').textContent), 'study: the theory');
+  rail('custom').click(); await sleep(5);
+  ok(view().querySelector('.pp-body .varchip') && view().querySelector('.pp-body [data-dtg="scroll"]'), 'customize: variations and display');
+  const other = [...view().querySelectorAll('.pp-body .varchip')].find(b => !b.classList.contains('on'));
+  if (other) { other.click(); await sleep(10); ok(/Variation|as written/.test(document.getElementById('toast').textContent), 'choosing a variation'); }
+  rail('log').click(); await sleep(5);
+  const elog0 = Store.profile.exerciseLog.length;
+  view().querySelector('.pp-body [data-clean="1"]').click(); await sleep(5);
+  ok(Store.profile.exerciseLog.length === elog0 + 1 && view().querySelector('.pp-body .note'), 'log tempo from the panel');
+  const t1 = view().querySelector('.pb-title b').textContent;
+  view().querySelector('[data-pl="next"]').click(); await sleep(20);
+  ok(view().querySelector('.pb-title b').textContent !== t1 && /#\/practice\/ex\//.test(location.hash), 'next goes to the next exercise in the topic');
+  view().querySelector('[data-pl="prev"]').click(); await sleep(20);
+  ok(view().querySelector('.pb-title b').textContent === t1, 'previous comes back');
+  rail('theme').click(); await sleep(5);
+  ok(view().querySelector('.tabplayer.tp-light') && Store.profile.settings.tabTheme === 'light', 'light tab');
+  rail('theme').click(); await sleep(5);
+  ok(!view().querySelector('.tabplayer.tp-light'), 'dark tab again');
+  // a timed session: add it from the panel, start it from the library
+  rail('custom').click(); await sleep(5);
+  view().querySelector('.pp-body [data-pl="queue"]').click(); await sleep(5);
+  await go('#/practice');
+  const startQ = document.querySelector('#actionbar [data-q="start"]');
+  ok(!!startQ, 'the timed session starts from the library');
+  if (startQ) { startQ.click(); await sleep(80); }
   ok(view().querySelector('.run-grid .run-a') && view().querySelector('.runcard .tabplayer'), 'routine runner layout with player');
   ok(/8th notes/.test(view().querySelector('.tempo-row').textContent), 'runner tempo row says 8th notes');
   // the strum's chord boxes light up while it plays

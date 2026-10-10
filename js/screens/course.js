@@ -16,6 +16,7 @@ import { Shell } from '../ui/shell.js';
 import { nextInCourse, recommendSession } from '../core/coach.js';
 import { buildRoutine, coachBriefing } from '../core/routine.js';
 import { startRoutine, attachBriefing } from './routine.js';
+import { openPractice, courseContext } from './play.js';
 import { variationsFor } from '../core/variations.js';
 import { levelRange } from '../ui/variationpicker.js';
 
@@ -64,10 +65,16 @@ export function mountCourse(root, { id, navigate }) {
     if (!nx) return `<a class="btn primary block" href="#/home/routine/${c.id}">▶ Practice this course</a>`;
     return `<div class="nextlesson"><div class="label">Your next lesson · chosen for you</div>
       <b>${esc(nx.skill.title)}</b><p class="small">${esc(nx.reason)}</p>
-      <button class="btn primary block" data-c="startnext">▶ Start next lesson · ${lessonMinutes()} min</button>
+      <div class="row"><button class="btn primary" data-c="startnext">▶ Practice it</button><button class="btn" data-c="timed">⏱ Timed session · ${lessonMinutes()} min</button></div>
       <a class="linkbtn small" href="#/home/routine/${c.id}">Customize: pick the skill or length yourself</a></div>`;
   }
+  /** Practice the next lesson on the practice page (no timer), with the whole course to step through. */
   function startNext() {
+    const nx = nextInCourse(p, c); if (!nx) return;
+    openPractice(courseContext(p, c, { skillId: nx.skill.id }), navigate);
+  }
+  /** The timed version: a routine built around the next lesson. */
+  function startTimed() {
     const nx = nextInCourse(p, c); if (!nx) return;
     const mins = lessonMinutes();
     const plan = buildRoutine(p, c, { budget: mins, focusSkillId: nx.skill.id });
@@ -111,8 +118,11 @@ export function mountCourse(root, { id, navigate }) {
         ${varsLine(e)}
         ${es.history.length ? `<div class="spark">${es.history.slice(-12).map(h => `<i class="${h.clean ? 'c' : ''}" style="height:${Math.max(8, Math.round(h.tempo / e.goalBpm * 100))}%" title="${h.date}: ${h.tempo} BPM"></i>`).join('')}</div>` : ''}</div>`; }).join('')}
       ${ss.status === 'locked' ? `<p class="muted small">Unlocks after: ${esc(s.prereqs.map(pid => (c.tree.units.flatMap(u => u.skills).find(x => x.id === pid) || {}).title).filter(Boolean).join(', '))}</p>` : ''}
-      <a class="btn block" href="#/home/routine/${c.id}/${s.id}">▶ Practice this skill instead</a>`);
-    sheet.el.addEventListener('click', e => { if (e.target.closest('a')) sheet.close(); });
+      <div class="row"><button class="btn primary" data-sk="practice">▶ Practice this skill</button><a class="btn" href="#/home/routine/${c.id}/${s.id}">⏱ Timed session</a></div>`);
+    sheet.el.addEventListener('click', e => {
+      if (e.target.closest('a')) sheet.close();
+      if (e.target.closest('[data-sk="practice"]')) { sheet.close(); openPractice(courseContext(p, c, { skillId: s.id }), navigate); }
+    });
   }
 
   async function build(rebuild) {
@@ -131,6 +141,7 @@ export function mountCourse(root, { id, navigate }) {
     if (b.dataset.skill) return skillSheet(b.dataset.skill);
     const a = b.dataset.c;
     if (a === 'startnext') return startNext();
+    if (a === 'timed') return startTimed();
     if (a === 'build') build(false);
     if (a === 'rebuild') build(true);
     if (a === 'restyle') { if (!confirm(`Rebuild “${c.name}” with the ${c.style} plan? Progress on the old exercises resets.`)) return; c.tree = generateTreeLocal(c); c.state = null; Store.save(); toast(`New ${c.style} plan ready.`); render(); }

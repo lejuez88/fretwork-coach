@@ -12,7 +12,7 @@ import { exerciseDiagramsHTML } from './fretboard.js';
 import { tempoShort } from './temporow.js';
 import { mountTabPlayer } from '../tools/tabplayer.js';
 import { Metronome, mountMetronome } from '../tools/metronome.js';
-import { startRoutine } from '../screens/routine.js';
+import { openPractice } from '../screens/play.js';
 
 /** Saved progress for a lesson (by its stable key), or null. */
 export const lessonState = (p, l) => (l && l.key ? (p.varState || {})[`${l.key}~base`] || null : null);
@@ -50,7 +50,6 @@ export function lessonCardHTML(p, l, i, target) {
       ${exerciseDiagramsHTML(ex)}
       <div class="row askex-act">
         <button class="btn sm primary" data-al="practice" data-i="${i}">▶ Practice</button>
-        <button class="btn sm" data-al="try" data-i="${i}">▶ Try it here</button>
         <button class="btn sm" data-al="add" data-i="${i}" ${inRoutine ? 'disabled' : ''}>${inRoutine ? '✓ In your routines' : '+ Add to my routines'}</button>
         <button class="btn sm" data-al="save" data-i="${i}" ${saved ? 'disabled' : ''}>${saved ? '★ Saved' : '☆ Save'}</button>
       </div>
@@ -83,7 +82,7 @@ export function lessonGroupHTML(p, lessons, targets, g, gi, { note = '', side = 
  * get() returns {lessons, targets}; reason(l) says where a lesson came from (for routines and saves);
  * title(l) names the practice session. Returns {onClick(e) → handled?, stop()}.
  */
-export function lessonActions(root, { get, reason, title, genre = null, navigate }) {
+export function lessonActions(root, { get, reason, title, genre = null, navigate, listTitle = 'Lessons' }) {
   const p = Store.profile;
   let tool = null, tryIdx = null, openIdx = null;
   const clearTry = () => {
@@ -161,8 +160,10 @@ export function lessonActions(root, { get, reason, title, genre = null, navigate
       case 'add': if (addToRoutines(p, l.ex, reason(l))) { Store.save(); toast('Added to your daily routines.'); } b.disabled = true; b.textContent = '✓ In your routines'; return true;
       case 'practice': {
         stop();
-        const plan = makeAdhocRoutine({ title: title(l), focus: l.skill ? l.skill.title : l.ex.name, genre: genre || p.questionnaire.genres[0] || null, items: [{ block: 'stretch', ex: l.ex, targetBpm: targets[i], minutes: l.ex.minutes || 5, ...(l.key ? { extra: { kbKey: l.key } } : {}) }], budget: null, kind: 'custom' });
-        startRoutine(plan, undefined, navigate); return true;
+        const lt = typeof listTitle === 'function' ? listTitle() : listTitle;
+        openPractice({ kind: 'lessons', title: lt, back: location.hash || '#/practice', backLabel: lt, idx: i,
+          items: lessons.map((x, j) => ({ ex: x.ex, kbKey: x.key || null, exId: x.ex.id, targetBpm: targets[j], skill: x.skill ? { title: x.skill.title, summary: x.skill.summary, study: x.skill.study || null } : null, unit: x.unit ? x.unit.title : null })) }, navigate);
+        return true;
       }
     }
     return false;

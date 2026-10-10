@@ -74,7 +74,7 @@ export function soundMidi(n, tuning = STD_TUNING) {
   if (n.x === 'pb' && n.bendTo != null) return m + (n.bendTo - n.f);
   return m;
 }
-export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, onLog = null, beatsPerBar: bpbOpt = 4, startBpm = null, compact = false, onBpm = null, ramp = null, evalMode = false, dock = false } = {}) {
+export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, onLog = null, beatsPerBar: bpbOpt = 4, startBpm = null, compact = false, onBpm = null, ramp = null, evalMode = false, dock = false, theme = null } = {}) {
   const beatsPerBar = ex.beatsPerBar || bpbOpt;
   const total = exerciseBeats(ex, beatsPerBar);
   const notes = [...ex.notes].sort((a, b) => a.t - b.t);
@@ -106,7 +106,7 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
   S.pickMode = (settings.pickModes && settings.pickModes[pickKey]) || suggestPicking(ex);
 
   el.innerHTML = `
-  <div class="tabplayer">
+  <div class="tabplayer${(theme || settings.tabTheme) === 'light' ? ' tp-light' : ''}">
     ${compact ? '' : `<div class="tp-head">
       <div><div class="label">${esc(ex.unit || '')}${ex.swing ? ' · swing' : ''}</div><h3>${esc(ex.name)}</h3></div>
       <div class="tp-goal" title="${esc(clickNote(ex))}"><span>Goal</span><b>${ex.goalBpm || '—'}</b><span>BPM · ${esc(label)}</span></div>
@@ -625,11 +625,12 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
     if (k === 'loop') rebase(); // switching the loop off finishes the current pass
   }
   r('range').addEventListener('input', e => setBpm(+e.target.value));
-  r('pickmode').addEventListener('change', e => {
-    S.pickMode = e.target.value;
+  function setPickMode(m) {
+    S.pickMode = m; const sel = r('pickmode'); if (sel) sel.value = m;
     onSettings({ pickModes: Object.assign({}, settings.pickModes || {}, { [pickKey]: S.pickMode }) });
     pickHint(); render();
-  });
+  }
+  r('pickmode').addEventListener('change', e => setPickMode(e.target.value));
   const hasWritten = notes.some(n => n.pick || n.fing);
   function pickHint() { const m = PICK_MODES.find(x => x[0] === S.pickMode); r('pickhint').textContent = (m ? m[2] : '') + (hasWritten ? ' Strokes and fingers marked by the lesson are shown as written.' : ''); }
   pickHint();
@@ -654,6 +655,11 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
 
   const cleanup = () => { pause(); if (ro) ro.disconnect(); highlightChord(findDiagrams(el), null); if (docked) { docked.detach(); docked = null; } };
   cleanup.getBpm = () => S.bpm;
+  cleanup.flip = k => flip(k);
+  cleanup.display = () => ({ scroll: S.scroll, picks: S.picks, neck: S.neck, pickMode: S.pickMode });
+  cleanup.setPickMode = m => setPickMode(m);
+  cleanup.setTheme = t => { const tp = el.querySelector('.tabplayer'); if (tp) tp.classList.toggle('tp-light', t === 'light'); };
+  cleanup.relayout = () => { if (!S.scroll) render(); else follow(true); };
   cleanup.getPeakBpm = () => Math.max(S.peakBpm, S.bpm);
   cleanup.stop = stop;
   cleanup.pause = pause;

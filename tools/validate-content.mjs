@@ -116,6 +116,8 @@ for (const f of kbFiles) {
     }
     if (untagged) warn(w, `${untagged} of ${total} lessons have no learning-method tag (see CONTENT.md, "Concept-first lessons")`);
   } catch (x) { err(w, 'the app failed to build its lessons: ' + x.message); }
+  const noStudy = e.stages.flatMap(st => st.skills).filter(sk => !(sk.study && sk.study.concept && sk.study.why)).length;
+  if (noStudy) warn(w, `${noStudy} skill${noStudy === 1 ? '' : 's'} without study notes (CONTENT.md, "Study notes")`);
   const standard = gaps.length === 0;
   if (!standard && KB_INDEX.find(m => m.id === e.id && m.complete)) warn(w, `complete, but below the reference standard (the pentatonic path): ${gaps.join('; ')}`);
   coverage.push({ id: e.id, title: e.title, kind: e.kind || 'technique', standard, gaps, cells: TIERS.map(t => { const st = e.stages.find(s => s.tier === t.id); return st ? { skills: st.skills.length, lessons: st.skills.reduce((a, s) => a + s.ex.length, 0), full: isFull(st) } : null; }) });

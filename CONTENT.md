@@ -144,6 +144,22 @@ An artist's signature techniques belong in the knowledge base, each as its own p
 - Before writing a new artist-specific exercise, check whether an existing path already teaches it; if it does, draw from the path, and put anything genuinely new into that path (where every player gets it) rather than into the artist file.
 - `U(...)` with `S(...)` skills only in the closing "put it together" unit. If something is truly the artist's own (a signature lick like Paul Gilbert's six-note cell), it still gets its own path (`pgSix`), so it can be taught from scratch to mastery.
 
+## Study notes (read before playing)
+
+The practice page opens every lesson with a **Study** panel: the concept, why it matters, and the theory behind it, so a player can understand a lesson before playing it. Write them per skill, as the sixth argument of `S(...)`:
+
+```js
+S('pent-boxes', 'The five boxes', 'fretboard', 'Each box two strings at a time.', [ … lessons … ], {
+  concept: 'The minor pentatonic is five notes (R ♭3 4 5 ♭7) that repeat as five interlocking shapes ("boxes") along the neck.',
+  why: 'Most rock, blues and funk solos are built from these shapes; knowing all five frees you from one position.',
+  theory: ['Box 1 starts on the root on the low E string; each next box starts on the next scale note.', 'No half steps: that is why almost every note sounds right over a minor or dominant chord.']
+})
+```
+
+- 2–3 sentences for `concept`, 1–2 for `why`, 2–4 short facts for `theory`; your own words, checked against your sources; correct theory only.
+- The app adds what it can work out itself (the notes the exercise uses and the scale they form, the chord tones, the rhythm, the learning method), so don't repeat those mechanically.
+- The validator warns about skills without study notes. Add them to every new skill, and to the existing paths over the next runs, starting with the paths artists use.
+
 ## Concept-first lessons (how every topic is built)
 
 Don't write a list of fixed tabs. **Understand the topic well enough to generate its exercises**, then let the code produce them at any key, level and variation. `js/data/kb/pentatonic.js` is the reference implementation: read it before building or deepening any path.

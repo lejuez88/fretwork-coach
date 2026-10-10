@@ -13,6 +13,8 @@ import { mountOnboarding } from './screens/onboarding.js';
 import { mountAssessment } from './screens/assessment.js';
 import { mountDashboard } from './screens/dashboard.js';
 import { mountTools } from './screens/tools.js';
+import { mountPlay, libraryContext } from './screens/play.js';
+import { isSpecial } from './core/library.js';
 import { mountProfile } from './screens/profile.js';
 import { mountSettings, mountKeyImport, takeKeysFromUrl } from './screens/settings.js';
 import { importBlockHTML, wireImport } from './ui/importui.js';
@@ -95,7 +97,7 @@ function applySettings() {
 }
 
 const LIB_FOR_TAB = { 'spider-1234': 'spider', 'penta-box1': 'penta', 'penta-16ths': 'penta', 'gcd-changes': 'open-changes', 'legato-3nps': 'legato', 'blues-shuffle-a': 'shuffle', 'string-skip': 'string-cross', 'sweep-am': 'sweep' };
-const needsProfile = new Set(['home', 'tools', 'profile', 'course', 'results', 'practice', 'reassess', 'evaluate', 'songs', 'song', 'artist', 'techniques']);
+const needsProfile = new Set(['home', 'tools', 'profile', 'course', 'results', 'practice', 'reassess', 'evaluate', 'songs', 'song', 'artist', 'techniques', 'play']);
 
 function route() {
   if (cleanup) { try { cleanup(); } catch { /* ignore */ } cleanup = null; }
@@ -112,7 +114,8 @@ function route() {
   root.className = `view v-${page}${sub ? ` v-${page}-${sub}` : ''}`;
   window.scrollTo(0, 0);
   const tabFor = { home: 'home', course: 'home', artist: 'home', techniques: 'practice', practice: 'practice', reassess: 'profile', evaluate: 'tools', tools: 'tools', profile: 'profile', results: 'profile', songs: 'songs', song: 'songs' };
-  Shell.tabs(!!ready && !['welcome', 'onboarding', 'assessment'].includes(page) && !(page === 'reassess' && parts[1] === 'run'), tabFor[page]);
+  const playing = page === 'play' || (page === 'practice' && parts[1] === 'ex' && parts[2] && !isSpecial(decodeURIComponent(parts[2])));
+  Shell.tabs(!!ready && !playing && !['welcome', 'onboarding', 'assessment'].includes(page) && !(page === 'reassess' && parts[1] === 'run'), tabFor[page]);
 
   switch (page) {
     case 'welcome': cleanup = welcome(root); break;
@@ -149,10 +152,15 @@ function route() {
       if (parts[1] === 'tabs' && parts[2] && LIB_FOR_TAB[parts[2]]) { navigate('#/practice/ex/' + LIB_FOR_TAB[parts[2]]); return; }
       cleanup = mountTools(root, { tab: parts[1] || 'tuner', exerciseId: parts[2] ? decodeURIComponent(parts[2]) : null, navigate }); break;
     case 'course': cleanup = mountCourse(root, { id: parts[1], navigate }); break;
+    case 'play': cleanup = mountPlay(root, { navigate }); break;
     case 'practice':
       if (parts[1] === 'run') cleanup = mountRoutineRunner(root, { navigate });
       else if (parts[1] === 'summary') cleanup = mountRoutineSummary(root, { navigate });
-      else if (parts[1] === 'ex' && parts[2]) cleanup = mountLibraryExercise(root, { navigate, id: decodeURIComponent(parts[2]), vid: parts[3] ? decodeURIComponent(parts[3]) : null });
+      else if (parts[1] === 'ex' && parts[2]) {
+        const id = decodeURIComponent(parts[2]);
+        if (isSpecial(id)) cleanup = mountLibraryExercise(root, { navigate, id });
+        else { const ctx = libraryContext(Store.profile, id, parts[3] ? decodeURIComponent(parts[3]) : null); if (!ctx) { navigate('#/practice'); return; } cleanup = mountPlay(root, { navigate, ctx }); }
+      }
       // course routines are built on the dashboard now; keep old links working
       else if (parts[1] === 'course') { navigate(`#/home/routine/${parts[2] || ''}${parts[3] ? '/' + parts[3] : ''}`); return; }
       else cleanup = mountLibrary(root, { navigate });

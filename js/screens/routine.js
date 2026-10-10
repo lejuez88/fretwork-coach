@@ -14,7 +14,8 @@ import { variationsFor, findVariation } from '../core/variations.js';
 import { variationChipsHTML } from '../ui/variationpicker.js';
 import { paramDims, resolveParams, withParams, describeParams } from '../core/params.js';
 import { paramControlsHTML } from '../ui/paramcontrols.js';
-import { addEvidence, recomputeLevels } from '../core/skills.js';
+import { recomputeLevels } from '../core/skills.js';
+import { recordItemResult } from '../core/record.js';
 import { openEvalSheet } from '../eval/ui.js';
 import { mountTabPlayer } from '../tools/tabplayer.js';
 import { Metronome, mountMetronome } from '../tools/metronome.js';
@@ -300,31 +301,8 @@ export function mountRoutineRunner(root, { navigate }) {
     it.actualMin = Math.round(itemElapsed() / 6) / 10;
     let decision = null;
     if (result) {
-      const res = { tempo: result.tempo, clean: result.clean, date: today() };
-      if (usesVarState(it)) {
-        p.varState = p.varState || {};
-        const k = varKeyOf(it);
-        const es = p.varState[k] || (p.varState[k] = newExerciseState(it.targetBpm));
-        decision = applyResult(es, it.ex, res);
-        if (it.isReview && result.clean && course) markReviewed(course, it.skillId);
-      } else if (course && it.fromTree) {
-        decision = recordResult(course, it.exId, res);
-        if (it.isReview && result.clean) markReviewed(course, it.skillId);
-      } else if (it.prescriptionId) {
-        decision = recordPrescription(p, it.prescriptionId, res);
-      } else if (it.songId) {
-        decision = recordSongResult(p, it.songId, it.ex, res);
-      } else if (it.customId) {
-        decision = recordCustom(p, it.customId, res);
-      } else if (course) {
-        const st = ensureState(course); st.extras = st.extras || {};
-        const es = st.extras[it.exId] || (st.extras[it.exId] = newExerciseState(it.targetBpm));
-        decision = applyResult(es, it.ex, res);
-      }
-      if (!decision) decision = { decision: result.clean ? 'hold' : 'retry', message: result.clean ? `Clean at ${result.tempo} BPM.` : `Logged ${result.tempo} BPM.` };
-      addEvidence(p, { key: usesVarState(it) ? varKeyOf(it) : it.songId ? `song:${it.songId}:${it.ex.sectionKey || it.exId}` : it.customId ? 'custom:' + it.customId : (it.fromTree ? A.routine.courseId + ':' : '') + it.exId, domain: it.ex.domain, label: it.ex.name + (it.vid && it.vid !== 'base' && it.ex.varLabel ? ` (${it.ex.varLabel})` : ''), level: usesVarState(it) ? (it.ex.level || 4) : (decision.level || it.ex.level || (course && course.difficulty) || 4), tempo: result.tempo, goal: it.goalBpm, clean: result.clean, source: A.routine.kind === 'library' ? 'library' : 'routine' });
+      decision = recordItemResult(p, it, result, { course, source: A.routine.kind === 'library' ? 'library' : (A.routine.kind || 'routine') });
       A.prefill = null; A.peakBpm = 0;
-      p.exerciseLog.push({ date: today(), at: Date.now(), exerciseId: usesVarState(it) ? it.ex.id : it.exId, name: it.ex.name + (it.vid && it.vid !== 'base' && it.ex.varLabel ? ` (${it.ex.varLabel})` : ''), ...(it.vid ? { vid: it.vid } : {}), courseId: A.routine.courseId, ...(it.songId ? { songId: it.songId } : {}), tempo: result.tempo, goalBpm: it.goalBpm, clean: result.clean, mastered: decision && decision.decision === 'mastered', source: A.routine.kind || 'routine' });
       toast(decision.message, 3800);
     }
     A.results.push({ key: it.key, name: it.ex.name + (it.vid && it.vid !== 'base' && it.ex.varLabel ? ` · ${it.ex.varLabel}` : ''), block: it.block, minutes: it.actualMin, tempo: result ? result.tempo : null, clean: result ? result.clean : null, skipped: !result, decision: decision ? decision.decision : 'skipped', message: decision ? decision.message : 'Skipped' });

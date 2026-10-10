@@ -93,7 +93,7 @@ export function mountTechnique(root, { navigate, id }) {
   let tier = startStage.tier, level = Math.min(Math.max(techniqueLevelFor(p, id), startStage.levels[0]), startStage.levels[1]);
   const fitLevel = s => Math.min(Math.max(you, s.levels[0]), s.levels[1]);
   let lessons = [], targets = [], keysByTier = {}, ready = false, gone = false, building = false;
-  const acts = lessonActions(root, { get: () => ({ lessons, targets }), reason: () => `${t.title} path: ${TIER_BY_ID[tier].name}`, title: l => `${t.title}: ${l.ex.name}`, navigate });
+  const acts = lessonActions(root, { get: () => ({ lessons, targets }), reason: () => `${t.title} path: ${TIER_BY_ID[tier].name}`, title: l => `${t.title}: ${l.ex.name}`, navigate, listTitle: () => t.title });
   const masterFor = () => p.courses.find(c => isMaster(c) && c.status !== 'archived' && c.topic && c.topic.kbId === id) || null;
 
   const progressOf = tid => {

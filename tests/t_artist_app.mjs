@@ -23,14 +23,16 @@ console.error = (...a) => { errors.push(a.join(' ')); };
     const n = view().querySelectorAll('.artist-lesson').length;
     ok(n >= 8, `${id}: ${n} lessons`);
     ok(view().querySelectorAll('.riff').length >= 5, id + ' riffs');
-    // try every lesson
+    // practice every lesson: open the first on the practice page and step through with ›
     let players = 0;
+    view().querySelector('[data-al="practice"][data-i="0"]').click(); await sleep(60);
+    ok(location.hash === '#/play', id + ': practice opens the practice page');
     for (let i = 0; i < n; i++) {
-      const b = view().querySelector(`[data-al="try"][data-i="${i}"]`); b.click(); await sleep(5);
-      if (view().querySelector(`[data-artslot="${i}"] .tabplayer`)) players++;
-      if (view().querySelector(`[data-artslot="${i}"] .tabplayer .tpneck`)) {}
+      if (view().querySelector('.play-stage .tabplayer')) players++;
+      const nx = view().querySelector('[data-pl="next"]'); if (nx && !nx.disabled) { nx.click(); await sleep(8); }
     }
     ok(players >= n - 4, `${id}: ${players}/${n} lessons open in the tab player`);
+    ok(/← /.test(view().querySelector('.pb-back').textContent) && view().querySelector('.pb-back').getAttribute('href') === '#/artist/' + id, id + ': back goes to the artist page');
   }
   await go('#/artist/eric-johnson'); await sleep(80);
   // topics are buttons that open their lesson lists, one at a time
@@ -63,10 +65,8 @@ console.error = (...a) => { errors.push(a.join(' ')); };
     ok(!rows[0].querySelector('.lr-body').hidden && rows[0].classList.contains('open') && rows[0].querySelector('.lr-head').getAttribute('aria-expanded') === 'true', 'tapping a row opens the full lesson');
     rows[1].querySelector('.lr-head').click(); await sleep(5);
     ok(rows[0].querySelector('.lr-body').hidden && !rows[1].querySelector('.lr-body').hidden && view().querySelectorAll('.lesson-row.open').length === 1, 'opening another closes the first');
-    rows[1].querySelector('[data-al="try"]').click(); await sleep(10);
-    ok(rows[1].querySelector('[data-artslot] .tabplayer, [data-artslot] .metro'), 'try it plays inside the open lesson');
+    ok(rows[1].querySelector('[data-al="practice"]') && !rows[1].querySelector('[data-al="try"]') && !view().querySelector('.tabplayer'), 'an open lesson offers Practice; no player on the list page');
     rows[2].querySelector('.lr-head').click(); await sleep(10);
-    ok(!rows[1].querySelector('[data-artslot] .tabplayer, [data-artslot] .metro') && !document.querySelector('#transport.show'), 'closing a lesson stops its player');
     rows[2].querySelector('.lr-head').click(); await sleep(5);
     ok(!view().querySelector('.lesson-row.open'), 'tapping the open row closes it');
     ok(view().querySelector('[data-r="bio"]'), 'the artist page has a place for the bio');
@@ -91,7 +91,8 @@ console.error = (...a) => { errors.push(a.join(' ')); };
   ok(view().querySelector('a.btn.primary[href^="#/course/"]'), 'artist page links to your master class');
   // practice a lesson
   view().querySelector('[data-al="practice"][data-i="2"]').click(); await sleep(80);
-  ok(location.hash === '#/practice/run', 'practice opens the runner');
+  ok(location.hash === '#/play' && view().querySelector('.play-stage'), 'practice opens the practice page');
+  ok(!localStorage.getItem('fretworkCoach.activeRoutine'), 'no timer for a single lesson');
   // Technique library: learning paths
   await go('#/practice');
   ok(view().querySelector('.learn-links a[href="#/techniques"]'), 'practice page links to the technique library');
@@ -109,8 +110,8 @@ console.error = (...a) => { errors.push(a.join(' ')); };
     ok(n >= 1, `${t.id}: ${n} lessons`);
     ok(view().querySelectorAll('.path-stage').length === 4, t.id + ' shows all four stages');
     ok(view().querySelectorAll('.path-stage.missing').length === 4 - t.stages.length, t.id + ' marks missing stages');
-    const b = view().querySelector('[data-al="try"][data-i="0"]'); b.click(); await sleep(5);
-    ok(view().querySelector('[data-artslot="0"] .tabplayer, [data-artslot="0"] .metro'), t.id + ' try opens a player');
+    view().querySelector('[data-al="practice"][data-i="0"]').click(); await sleep(40);
+    ok(view().querySelector('.play-stage .tabplayer, .play-stage .metro'), t.id + ' practice opens a player');
   }
   // the request box on the library page
   await go('#/techniques');

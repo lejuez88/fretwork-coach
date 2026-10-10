@@ -78,7 +78,7 @@ export function mountArtist(root, { navigate, id }) {
   const p = Store.profile, meta = ARTIST_META_BY_ID[id];
   if (!meta) { navigate('#/artist'); return () => {}; }
   let a = meta, lessons = [], targets = [], building = false, ready = false, gone = false;
-  const acts = lessonActions(root, { get: () => ({ lessons, targets }), reason: l => `${a.name} lesson: ${l.skill.title}`, title: l => `${a.name}: ${l.ex.name}`, genre: a.genre, navigate });
+  const acts = lessonActions(root, { get: () => ({ lessons, targets }), reason: l => `${a.name} lesson: ${l.skill.title}`, title: l => `${a.name}: ${l.ex.name}`, genre: a.genre, navigate, listTitle: () => a.name });
 
   const hasSong = r => p.songs.some(s => norm(s.title) === norm(r.title));
   function render() {

@@ -20,13 +20,14 @@ import { variationChipsHTML, variationNoteHTML } from './variationpicker.js';
 import { openMasterSheet, MC_ICON } from './mastersheet.js';
 import { matchTopic } from '../core/master.js';
 import { gapPromptHTML, onGapClick, saveAndSync } from './kbrequest.js';
+import { openPractice } from '../screens/play.js';
 import { knowledgeGap, addRequest, hasRequest, removeRequest } from '../core/kbrequests.js';
 
 const ROLE = { drill: 'Drill', main: 'Main exercise', apply: 'Apply it' };
 const DRAFT_KEY = 'fretworkCoach.askDraft';
 
 /** Card for one exercise. i = index used by buttons; opts.saved = saved entry */
-export function exerciseCardHTML(ex, { i, role = null, target = null, saved = null, actions = ['try', 'add', 'save'] } = {}) {
+export function exerciseCardHTML(ex, { i, role = null, target = null, saved = null, actions = ['practice', 'add', 'save'] } = {}) {
   const dom = DOMAIN_BY_KEY[ex.domain];
   const tab = ex.tab && ex.tab.notes && ex.tab.notes.length ? notesToText(ex.tab.notes, { tuning: ex.tab.tuning || undefined, maxBars: 2 }) : '';
   return `<div class="askex b-${role ? roleBlock(role) : 'stretch'}">
@@ -81,7 +82,7 @@ export function mountAskBox(el, { start, courseId = null }) {
       ${!Claude.hasKey() ? '<p class="small muted">Without a Claude key, exercises come from the built-in drill library. <a class="link small" href="#/settings">Add key</a></p>' : ''}
       <div data-r="out">${result ? resultHTML() : ''}</div>
       ${saved.length ? `<div class="savedhead"><button class="btn ghost sm" data-ask="toggleSaved">${showSaved ? '▾' : '▸'} Your exercises (${saved.length})</button></div>
-        ${showSaved ? `<div class="savedlist">${saved.map((c, i) => exerciseCardHTML(c.ex, { i: 's' + i, target: c.state.target, saved: c, actions: ['practice', 'try', 'add', 'remove'] }) + (c.request ? `<p class="small muted askreq">You asked: “${esc(c.request)}”</p>` : '')).join('')}</div>` : ''}` : ''}
+        ${showSaved ? `<div class="savedlist">${saved.map((c, i) => exerciseCardHTML(c.ex, { i: 's' + i, target: c.state.target, saved: c, actions: ['practice', 'add', 'remove'] }) + (c.request ? `<p class="small muted askreq">You asked: “${esc(c.request)}”</p>` : '')).join('')}</div>` : ''}` : ''}
       </div>`;
   }
   /** Open or fold the box without redrawing it, so typing focus is kept. */
@@ -103,7 +104,7 @@ export function mountAskBox(el, { start, courseId = null }) {
       ${result.source === 'cache' ? '<p class="small muted">♻ Claude designed these for the same request earlier, so they were reused from your saved lessons (no API cost).</p>' : ''}
       ${result.error ? `<p class="small muted">Claude couldn’t answer (${esc(result.error)}), so these come from the drill library.</p>` : ''}
       ${result.items.map((it, i) => exerciseCardHTML(it.ex, { i, role: it.role, target: it.targetBpm })).join('')}
-      <div class="row"><button class="btn primary" data-ask="practice">▶ Practice ${result.items.length > 1 ? 'these' : 'this'} now · ${total} min</button><button class="btn ghost" data-ask="clear">Clear</button></div>
+      <div class="row"><button class="btn primary" data-ask="practice">▶ Practice ${result.items.length > 1 ? 'these' : 'this'}</button><button class="btn ghost" data-ask="clear">Clear</button></div>
     </div>`;
   }
 
@@ -163,16 +164,14 @@ export function mountAskBox(el, { start, courseId = null }) {
     }
   }
 
-  function practice(items) {
-    const entries = items.map(it => {
+  /** Practice on the practice page (no timer), stepping through the exercises. */
+  function practice(items, startAt = 0) {
+    const list = items.map(it => {
       const entry = it.saved || saveCustom(p, it.ex, request);
-      return { block: roleBlock(it.role), ex: entry.ex, targetBpm: entry.state.target, minutes: entry.ex.minutes || 5, extra: { customId: entry.id } };
+      return { ex: entry.ex, customId: entry.id, exId: entry.ex.id, targetBpm: entry.state.target, skill: { title: entry.request ? `You asked: “${entry.request}”` : entry.ex.name, summary: '' } };
     });
-    Store.save();
-    const first = items[0].saved ? items[0].saved.request : request;
-    const plan = makeAdhocRoutine({ title: items.length > 1 ? 'Your request' : entries[0].ex.name, focus: first || entries[0].ex.name, genre: p.questionnaire.genres[0] || null, items: entries, budget: null, kind: 'custom' });
-    stopTry();
-    start(plan);
+    Store.save(); stopTry();
+    openPractice({ kind: 'custom', title: items.length > 1 ? 'Your request' : list[0].ex.name, back: location.hash || '#/practice', backLabel: 'Practice', idx: startAt, items: list });
   }
 
   const onClick = e => {
@@ -198,7 +197,7 @@ export function mountAskBox(el, { start, courseId = null }) {
     if (a === 'try') return tryIt(i);
     if (a === 'practice') return result && practice(result.items);
     const it = itemAt(i); if (!it) return;
-    if (a === 'practice1') return practice([it]);
+    if (a === 'practice1') { if (String(i).startsWith('s')) return practice(p.customExercises.map(c => ({ ex: c.ex, saved: c })), +String(i).slice(1)); return result && practice(result.items, +i); }
     if (a === 'save') { saveCustom(p, it.ex, request); Store.save(); toast('Saved to Your exercises.'); b.disabled = true; b.textContent = '★ Saved'; return; }
     if (a === 'add') {
       const rx = addToRoutines(p, it.ex, it.saved ? it.saved.request : request, courseId);
