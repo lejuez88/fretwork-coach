@@ -74,7 +74,8 @@ const pitch = n => STD_LOW[6 - n.s] + n.f;
     ok(t.kind === 'techniques' && t.units.map(u => u.title).slice(0, 3).join() === 'Speed pentatonics,Rolling 5s,Spread triads', 'technique course: ' + t.units.map(u => u.title).join());
     const c2 = createMasterClass(p, { title: 'pentatonic with rolling 5s' });
     const t2 = await generateMasterLocal(p, c2);
-    ok(t2.kind === 'topic' && t2.units.some(u => u.title === 'Rolling 5s'), 'pentatonic course gets the rolling 5s unit');
+    // rolling 5s is a complete path now: the request gets that path (stage by stage), or a topic course with a rolling 5s unit
+    ok((t2.kind === 'path' && t2.units.length >= 2 && t2.units.every(u => /^(Foundations|Intermediate|Advanced|Mastery): /.test(u.title))) || (t2.kind === 'topic' && t2.units.some(u => /^Rolling 5s/.test(u.title))), 'pentatonic with rolling 5s gets rolling 5s units: ' + t2.kind + ' ' + t2.units.map(u => u.title).join());
     const c3 = createMasterClass(p, { title: 'Eric Johnson style plus sweep picking' });
     const t3 = await generateMasterLocal(p, c3);
     ok(t3.kind === 'artist' && t3.units.some(u => u.title === 'Sweep picking'), 'artist + extra topic: ' + t3.units.map(u => u.title).join());
