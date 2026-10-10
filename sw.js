@@ -1,6 +1,6 @@
 // Offline cache for the app shell. Network-first for app files so updates show
 // up on the next load; images from Wikipedia are cached as they are viewed.
-const CACHE = 'fretwork-v2k-19';
+const CACHE = 'fretwork-v2k-20';
 const SHELL = [
   './', 'index.html', 'css/app.css', 'manifest.json', 'icon.svg',
   'js/app.js', 'js/core/util.js', 'js/core/store.js', 'js/core/claude.js', 'js/core/wiki.js', 'js/core/audio.js',

@@ -14,7 +14,8 @@ import { tierName } from '../core/courses.js';
 import { MC_ICON } from '../ui/mastersheet.js';
 import { lessonGroupHTML, lessonActions, lessonState, lessonTarget } from '../ui/lessoncards.js';
 import { pathStage, nextLesson } from '../core/coach.js';
-import { levelPill, LEVEL_BANDS as COLOR_BANDS } from '../ui/colors.js';
+import { levelDots, levelBand, LEVEL_BANDS as COLOR_BANDS } from '../ui/colors.js';
+const levelBandName = l => levelBand(l).name;
 import { methodOf } from '../core/methods.js';
 import { requestBoxHTML, wireRequestBox } from '../ui/kbrequest.js';
 
@@ -58,14 +59,14 @@ export function mountTechniqueIndex(root, { navigate }) {
         ${kinds.length > 1 ? `<div class="chips" role="group" aria-label="Kind"><button class="chip ${ui.kind === 'all' ? 'on' : ''}" data-kind="all">Everything</button>${kinds.map(([k, n]) => `<button class="chip kind-chip kind-${k} ${ui.kind === k ? 'on' : ''}" data-kind="${k}">${esc(n)}</button>`).join('')}</div>` : ''}
         <div class="chips" role="group" aria-label="Level">${LEVEL_BANDS.map(b => `<button class="chip ${ui.band === b.id ? 'on' : ''}" data-band="${b.id}">${esc(b.name)}</button>`).join('')}</div>
         <div class="chips" role="group" aria-label="Skill area"><button class="chip ${ui.domain === 'all' ? 'on' : ''}" data-dom="all">All areas</button>${domains.map(d => `<button class="chip dom-chip dom-${d.key} ${ui.domain === d.key ? 'on' : ''}" data-dom="${d.key}">${esc(d.short || d.name)}</button>`).join('')}</div>
-        <div class="tech-legend small muted"><span>Outline: ${kinds.map(([k, n]) => `<i class="kdot kind-${k}"></i>${esc(n.replace(/s$/, ''))}`).join(' ')}</span><span>Pill: your level ${COLOR_BANDS.map(b => `${levelPill(b.lo === b.hi ? b.lo : b.lo, b.name)}`).join('')}</span></div>
+        <div class="tech-legend small muted"><span>Outline: ${kinds.map(([k, n]) => `<i class="kdot kind-${k}"></i>${esc(n.replace(/s$/, ''))}`).join(' ')}</span><span class="lvl-key">Pills: your level ${COLOR_BANDS.map(b => `<span><i class="lvl-sw lvl-${b.id}"></i>${esc(b.name)} ${b.lo}–${b.hi}</span>`).join('')}</span></div>
       </div>
       ${list.length ? '' : `<section class="card"><p class="muted">Nothing matches${ui.band === 'foryou' ? ' your current levels with these filters' : ''}. Try another level or area.</p></section>`}
       <div class="tech-bubbles">${list.map(t => {
         const you = yourLevel(p, t), st = stageFor(t, you), arts = artistsUsing(t.id), open = ui.open === t.id;
         return `<div class="tech-bubble kind-${t.kind || 'technique'} dom-${t.domain} ${open ? 'open' : ''}" data-tb="${t.id}">
           <button class="tb-head" data-tbopen="${t.id}" aria-expanded="${open}">
-            <span class="tb-dom">${esc(domName(t.domain))}</span>${levelPill(you, `Your ${domName(t.domain).toLowerCase()} level: ${you}`)}
+            <span class="tb-dom">${esc(domName(t.domain))}</span>${levelDots(you, `Your ${domName(t.domain).toLowerCase()} level: ${you} (${levelBandName(you)})`)}
             <b>${esc(t.title)}</b>
           </button>
           ${open ? `<div class="tb-body">

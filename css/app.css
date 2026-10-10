@@ -1474,3 +1474,12 @@ body.playmode .tunefab{display:none}
 @media(prefers-reduced-motion:reduce){.st-node.available .st-orb{animation:none}}
 @media(max-width:560px){.st-node{width:96px}.st-orb{width:58px;height:58px}.st-ic{font-size:22px}.st-nodes{gap:14px 12px}.st-tier-head{max-width:none;margin-left:6px;position:relative;z-index:1;width:fit-content;padding:4px 8px 4px 0;background:var(--panel);border-radius:8px}}
 @media(max-width:560px){.tech-filters .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-right:-16px;padding-right:16px}.tech-filters .chips::-webkit-scrollbar{display:none}.tech-filters .chip{flex:none;min-height:40px;padding:8px 14px}}
+/* Technique library: the four small level pills, colored by band */
+.lvl-dots{display:inline-flex;gap:3px;align-items:center}
+.lvl-dots i{width:14px;height:6px;border-radius:3px;background:rgba(255,255,255,.12)}
+.lvl-dots i.on{background:var(--lc)}
+.lvl-dots i.cur{box-shadow:0 0 6px var(--lc)}
+.tb-head .lvl-dots{grid-row:1;grid-column:2;align-self:center}
+.lvl-key{display:inline-flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
+.lvl-key>span{display:inline-flex;align-items:center;gap:5px}
+.lvl-sw{display:inline-block;width:14px;height:6px;border-radius:3px;background:var(--lc)}
