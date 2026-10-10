@@ -9,6 +9,12 @@ const ARTIST_NOTE = 'Use the Songs tab to learn the real thing: add the song, pa
 export default artist({ id: 'srv', name: 'Stevie Ray Vaughan', wiki: ['Stevie Ray Vaughan'], genre: 'blues', re: /stevie ray|\bsrv\b|vaughan/,
     blurb: 'Texas shuffle, huge bends with a wide vibrato, raking and double-stop fills.',
     techniques: ['Texas shuffle', { name: 'Wide bends and vibrato', path: 'bending' }, 'Double-stops', 'Raking'],
+    sources: ['https://en.wikipedia.org/wiki/Stevie_Ray_Vaughan', 'https://www.londonguitaracademy.com/?p=8981', 'https://guitarworld.com/lessons/stevie-ray-vaughan-5-licks', 'https://www.premierguitar.com/beyond-blues-texas-rhythm-101'],
+    bio: `Stevie Ray Vaughan (1954–1990) grew up in Dallas, Texas, following his older brother Jimmie onto the guitar, and moved to Austin as a teenager to play the club circuit. He formed Double Trouble with drummer Chris Layton and bassist Tommy Shannon. A 1982 set at the Montreux Jazz Festival led David Bowie to hire him for Let's Dance, and the band's debut, Texas Flood (1983), put him at the front of the 1980s blues revival. Couldn't Stand the Weather, Soul to Soul and In Step followed before he died in a helicopter crash after a concert in Wisconsin in 1990.
+
+His playing joins Albert King's huge bends, Jimi Hendrix's rhythm and fire, and the Texas shuffle, played with great force: heavy strings tuned down a half step, a wide vibrato, rakes across muted strings into a note, double-stop fills, and a shuffle that is rhythm and lead at once.
+
+This course draws on the pentatonic box, bending and vibrato paths. Paths for the shuffle, double-stops and raking are being built, and a closing unit puts his phrasing over a shuffle and a slow blues.`,
     ctx: { key: 4, minor: true, prog: 'blues' },
     units: [
       U('The shuffle', 'The Texas shuffle groove.', [S('srv-shuffle', 'Texas shuffle', 'rhythm', 'Swung 8ths with bass and chord stabs.', [['shuffleRiff'], ['strumPattern', { chords: '$blues', pattern: 'rock8', swing: true }]])]),

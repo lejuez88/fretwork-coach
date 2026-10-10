@@ -7,6 +7,12 @@ const ARTIST_NOTE = 'Use the Songs tab to learn the real thing: add the song, pa
 export default artist({ id: 'van-halen', name: 'Eddie Van Halen', wiki: ['Eddie Van Halen'], genre: 'rock', re: /van halen|\bevh\b|eddie van|eruption/,
     blurb: 'Two-hand tapping, open-string legato, tight palm-muted riffs and fearless whammy work.',
     techniques: ['Two-hand tapping', 'Tapped pentatonic', 'Open-string pull-offs', 'Palm-muted riffs', 'Harmonics'],
+    sources: ['https://www.nme.com/features/eddie-van-halen-obituary-tribute-2774589', 'https://www.scotsman.com/whats-on/arts-and-entertainment/eddie-van-halen-life-and-career-of-legendary-guitarist-who-has-died-aged-65-and-most-famous-songs-and-solos-from-jump-to-beat-it-2995439', 'https://guitarworld.com/lessons/6-guitar-tricks-you-can-learn-from-eddie-van-halen'],
+    bio: `Eddie Van Halen (1955–2020) was born in Amsterdam and moved with his family to the United States in 1962. With his brother Alex on drums he founded Van Halen in 1972, and the band's 1978 debut album, with the short instrumental "Eruption", changed rock guitar almost overnight. He also played the guitar solo on Michael Jackson's "Beat It", and "Jump", from the album 1984, became the band's only number-one single. He died of cancer in October 2020.
+
+He popularised two-hand tapping: a picking-hand finger taps notes on the fretboard for fast arpeggios with wide intervals. Around it he built open-string pull-offs, natural and tapped harmonics, whammy-bar dives and scoops, tremolo picking, and riffs that keep a palm-muted open string ringing under short chord shapes, all with a loose, playful sense of time.
+
+This course teaches tapping, his open-string legato lines and his riffs. Paths for palm-muted riffs and harmonics are being built so the page can draw on them, and a closing unit puts taps, legato and speed into a solo.`,
     ctx: { key: 4, minor: true, prog: 'minorRock' },
     units: [
       U('Tapping basics', 'Tap, pull off, hammer on: one string, one chord at a time.', [skillsOf(tapping)[0]]),
