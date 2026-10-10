@@ -58,6 +58,11 @@ export default artist({ id: 'guthrie-govan', name: 'Guthrie Govan', wiki: ['Guth
   blurb: 'Every technique at his fingertips, used for melody: hybrid and economy picking, legato and slides, chromatic and outside lines, and arpeggio melodies with wide leaps.',
   techniques: [{ name: 'Hybrid picking', path: 'hybridPicking' }, { name: 'Economy picking', path: 'economyPicking' }, { name: 'Chromatic passing tones', path: 'chromaticPassing' }, { name: 'Outside side-stepping', path: 'chromaticPassing' }, { name: 'Slides', path: 'slides' }, { name: 'Arpeggio melodies', path: 'arpMelodies' }],
   sources: ['https://www.guitarworld.com/lessons/5-guthrie-govan-guitar-licks', 'https://www.premierguitar.com/lessons/guthrie-govans-erotic-cakes', 'https://www.premierguitar.com/lessons/guthrie-govans-single-string-arpeggios', 'https://www.premierguitar.com/lessons/shred/guthrie-govan-tapping-arpeggios', 'https://www.guitarworld.com/lessons/legato-evolution-lesson'],
+  bio: `Guthrie Govan (born 1971 in Chelmsford, England) spent years as a teacher and writer before he was widely known as a performer: he wrote lessons and transcriptions for Guitar Techniques magazine and taught at guitar schools in Britain. His solo album Erotic Cakes (2006) made his name, and he has since played with Asia, the trio The Aristocrats, Steven Wilson's band and the Hans Zimmer Live band.
+
+He is known for having almost every technique at his fingertips and using all of it for melody. His lines mix hybrid and economy picking, legato and slides that make fast runs sound vocal, chromatic approach notes and outside side-steps from jazz, and arpeggio melodies with wide leaps, all with a light, humorous sense of phrasing.
+
+This course starts with slides, then hybrid picking, alternate and economy picking, the chromatic and outside vocabulary, and arpeggio melodies, and ends with studies in his style over a Dorian vamp.`,
   ctx: { key: 7, minor: true, prog: 'dorianVamp' },
   units: [
     PU(slides, { title: 'Slides', summary: 'Slides make his fast lines sound vocal instead of mechanical: start here.' }),

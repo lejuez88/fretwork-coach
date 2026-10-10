@@ -42,6 +42,11 @@ export default artist({ id: 'eric-johnson', name: 'Eric Johnson', wiki: ['Eric J
     blurb: 'Violin-like tone, cascading pentatonic runs, rolling 5s, the bright added 9th, runs that travel the neck and wide spread-triad chords.',
     techniques: [{ name: 'Speed pentatonics', path: 'speedPent' }, { name: 'Rolling 5s', path: 'rolling5s' }, { name: 'Spread triads', path: 'spreadTriads' }, { name: 'Pentatonic plus the 9th', path: 'hexatonic' }, { name: 'Position shifting', path: 'positionShifts' }],
     sources: ['https://www.premierguitar.com/eric-johnson-concepts-and-techniques', 'https://guitarworld.com/lessons/eric-johnson-fluid-streams-of-notes', 'https://www.guitarworld.com/lessons/eric-johnson-tasty-solos', 'https://www.musicradar.com/how-to/5-guitar-tricks-you-can-learn-from-eric-johnson-today', 'https://www.pickupmusic.com/guitar/guitar-classes/play-like-eric-johnson-in-10-days'],
+    bio: `Eric Johnson (born 1954) is a guitarist, singer and composer from Austin, Texas. He played in the Austin fusion band the Electromagnets in the 1970s, released Tones on Warner Bros. in 1986, and broke through with Ah Via Musicom (1990), a platinum album whose instrumental "Cliffs of Dover" won the Grammy for Best Rock Instrumental Performance. In 1996 he toured with Joe Satriani and Steve Vai on the first G3 tour.
+
+His sound is known first for its tone: a smooth, violin-like lead voice from a Stratocaster and carefully chosen amplifiers. Underneath it are cascading pentatonic runs built from small repeated cells, groups of five that roll across the beat, the added 9th that brightens the minor pentatonic, lines that shift position to travel the neck, and wide spread-triad chords in his clean playing.
+
+This course builds those habits in order: the pentatonic boxes, the six-note speed cell, rolling 5s, spread triads, the pentatonic with the 9th, and position shifts, then a closing study that combines runs, colour and space.`,
     ctx: { key: 9, minor: true, prog: 'minorRock' },
     units: [
       PU(pentatonic, { title: 'The pentatonic boxes', summary: 'All five boxes, sequences and keys: the ground his speed pentatonics run on.', tiers: ['intermediate', 'advanced', 'mastery'] }),

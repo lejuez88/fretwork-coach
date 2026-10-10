@@ -55,6 +55,11 @@ export default artist({ id: 'gilmour', name: 'David Gilmour', wiki: ['David Gilm
     blurb: 'Slow, singing phrasing, perfectly pitched bends and pre-bends, a slow, wide vibrato, the Dorian colour, and space.',
     techniques: [{ name: 'Bends and pre-bends', path: 'bending' }, { name: 'Vibrato', path: 'vibrato' }, { name: 'Pentatonic phrasing', path: 'pentatonic' }, { name: 'Space', path: 'phrasing' }],
     sources: ['https://www.guitarworld.com/lessons/david-gilmour-10-lead-guitar-ideas', 'https://www.musicradar.com/how-to/david-gilmour-guitar-lesson-pink-floyd', 'https://riffhard.com/?p=36564', 'https://www.premierguitar.com/lessons/shake-it-off-everything-you-need-to-know-about-vibrato'],
+    bio: `David Gilmour (born 1946 in Cambridge, England) joined Pink Floyd at the end of 1967, first alongside and then in place of Syd Barrett, as lead guitarist and one of its singers. His guitar is central to The Dark Side of the Moon (1973), Wish You Were Here (1975), Animals (1977) and The Wall (1979), and after Roger Waters left he led the band on A Momentary Lapse of Reason and The Division Bell. His solo albums include On an Island (2006).
+
+His playing is rooted in the blues and built on melody rather than speed. Listeners recognise the bends that land exactly on pitch, including slow pre-bends that fall into place, a slow and even vibrato, minor-pentatonic phrases coloured by the Dorian 6th, and the space he leaves between phrases, often filled by echo.
+
+This course follows that order: the pentatonic box, bends in tune, a singing vibrato, and phrasing with space, then a closing unit with pre-bends, an original slow study and slow-phrasing practice.`,
     ctx: { key: 11, minor: true, prog: 'minorRock' },
     units: [
       PU(pentatonic, { title: 'The pentatonic box', summary: 'The box he phrases in, learned slowly, by ear and from memory, then joined to its neighbours.', tiers: ['foundations', 'intermediate'] }),

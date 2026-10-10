@@ -40,6 +40,11 @@ export default artist({ id: 'paul-gilbert', name: 'Paul Gilbert', wiki: ['Paul G
     blurb: 'Machine-gun alternate picking, the six-note pentatonic lick, pentatonic sequences, wide stretches and string-skipped arpeggios.',
     techniques: ['Strict alternate picking', 'Six-note pentatonic lick', 'Pentatonic in sixes', 'Stretched pentatonic', 'String-skipped arpeggios'],
     sources: ['https://www.guitarworld.com/lessons/intense-rock-picking-a-brief-look-at-paul-gilberts-alternate-picking-technique', 'https://www.guitarplayer.com/lessons/paul-gilbert-gives-a-classic-lesson-in-shred', 'https://www.premierguitar.com/articles/23477-cram-session-alternate-picking', 'https://forum.troygrady.com/t/haha-paul-gilbert-admits-that-the-paul-gilbert-lick-is-too-hard-for-beginners/8197', 'https://www.guitarplayer.com/lessons/string-skipping-licks-four-phrases-to-get-your-fingers-flying'],
+    bio: `Paul Gilbert (born 1966 in Carbondale, Illinois) was hired as an instructor at the Guitar Institute of Technology in Los Angeles while still a teenager, and formed the speed-metal band Racer X there in 1985. In 1988 he co-founded Mr. Big with bassist Billy Sheehan; the band's "To Be with You" reached number one in the United States in 1991. He has released solo albums since 1996 and still teaches widely.
+
+His playing is famous for strict, even alternate picking at very high speed, made of small repeated cells: the six-note pentatonic lick across two strings, pentatonic sequences in groups of three to six, stretched three-note-per-string pentatonic shapes, and wide arpeggios played with string skipping rather than sweeps, mixed with a strong blues and pop sense of melody.
+
+This course follows that order: alternate picking first, then the six-note lick, pentatonic sequences, stretched shapes and string-skipped arpeggios, and a closing piece and solo that combine them.`,
     ctx: { key: 9, minor: true, prog: 'minorRock' },
     units: [
       PU(alternatePicking, { title: 'Alternate picking', summary: 'The foundation of everything he plays: small, even down-up strokes, inside and outside string changes, three-notes-per-string runs, bursts and accents.' }),
