@@ -48,7 +48,7 @@ export function progressionIn(keyPc, mode, degrees, sevenths = false) {
 /** Ascending scale notes for a box / 3nps position. */
 function positionNotes(keyPc, scale, box = 1, nps = null) {
   const sc = SCALE_BY_ID[scale];
-  nps = nps || (sc.steps.length <= 6 ? 2 : 3);
+  nps = nps || (scale === 'wholeTone' ? 3 : scale === 'chromatic' ? 4 : sc.steps.length <= 6 ? 2 : 3);
   const r = rootFret6(keyPc);
   // start fret of box k = k-th scale tone on string 6 from the root
   let f = r, k = 1; const pcs = sc.steps.map(x => mod12(keyPc + x));
@@ -146,7 +146,8 @@ export function modeCompare(c, { modes = ['minor', 'dorian'] } = {}) {
   if (parts.length < 2) return null;
   const notes = []; let t = 0;
   parts.forEach(pts => { pts.forEach(p => { notes.push(N(p.s, p.f, t, 0.5)); t += 0.5; }); t = Math.ceil(t / 4) * 4; });
-  const names = modes.map(m => SCALE_BY_ID[m].name.split(' (')[0]);
+  let names = modes.map(m => SCALE_BY_ID[m].name.split(' (')[0]);
+  if (new Set(names).size < names.length) names = modes.map(m => SCALE_BY_ID[m].name);
   return make(c, {
     name: `${keyName(c)} ${names.join(' vs ')}`, domain: 'theory', unit: '8ths', goal: 130, minutes: 5,
     why: `${names.join(' and ')} share a root but differ by one or two notes; hearing that difference is what modes are about.`,

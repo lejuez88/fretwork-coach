@@ -8,7 +8,7 @@ import { REQUEST_KINDS, addRequest, removeRequest, myRequests, hasRequest, syncR
 const kindName = k => (REQUEST_KINDS.find(([x]) => x === k) || [k, k])[1].toLowerCase();
 
 /** After adding: save the profile, then write the requests file to Drive (may open Google sign-in). */
-async function saveAndSync(p) {
+export async function saveAndSync(p) {
   Store.save();
   const r = await syncRequests(p);
   if (r.ok) toast('Added to the research queue. The next content run will pick it up.', 4200);

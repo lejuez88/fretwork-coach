@@ -19,8 +19,8 @@ import { calibratedTarget } from '../core/progression.js';
 import { variationChipsHTML, variationNoteHTML } from './variationpicker.js';
 import { openMasterSheet, MC_ICON } from './mastersheet.js';
 import { matchTopic } from '../core/master.js';
-import { knowledgeGap } from '../core/kbrequests.js';
-import { gapPromptHTML, onGapClick } from './kbrequest.js';
+import { gapPromptHTML, onGapClick, saveAndSync } from './kbrequest.js';
+import { knowledgeGap, addRequest, hasRequest, removeRequest } from '../core/kbrequests.js';
 
 const ROLE = { drill: 'Drill', main: 'Main exercise', apply: 'Apply it' };
 const DRAFT_KEY = 'fretworkCoach.askDraft';
@@ -98,7 +98,8 @@ export function mountAskBox(el, { start, courseId = null }) {
     const total = result.items.reduce((a, it) => a + (it.ex.minutes || 5), 0);
     return `<div class="askresult">
       ${result.summary ? `<p class="coach">${result.source === 'claude' || result.source === 'cache' ? '🎯 ' : ''}${esc(result.summary)}</p>` : ''}
-      ${gapPromptHTML(result.gap)}
+      ${result.queued ? `<div class="kbgap done"><b>“${esc(result.queued.text)}”</b> isn’t in the knowledge base yet, so it’s been added to the research queue: it will be researched and built into the app. <button class="linkbtn small" data-ask="unqueue">Undo</button></div>` : ''}
+      ${(result.source === 'local' || result.source === 'cache') && result.items.length ? `<div class="notwhat"><button class="btn sm" data-ask="claude" ${busy ? 'disabled' : ''}>${busy ? '<span class="spinner sm"></span>Asking Claude…' : 'Not what you were looking for?'}</button><span class="small muted">${Claude.hasKey() ? 'Claude will design exercises for exactly what you typed.' : 'Add a Claude key in Settings and Claude will design exercises for exactly what you typed.'}</span></div>` : ''}
       ${result.source === 'cache' ? '<p class="small muted">♻ Claude designed these for the same request earlier, so they were reused from your saved lessons (no API cost).</p>' : ''}
       ${result.error ? `<p class="small muted">Claude couldn’t answer (${esc(result.error)}), so these come from the drill library.</p>` : ''}
       ${result.items.map((it, i) => exerciseCardHTML(it.ex, { i, role: it.role, target: it.targetBpm })).join('')}
@@ -115,8 +116,28 @@ export function mountAskBox(el, { start, courseId = null }) {
     const ta = el.querySelector('[data-r="ask"]'); request = (ta.value || '').trim();
     if (request.length < 3) return toast('Tell me what you’d like to work on.');
     expanded = true; busy = true; result = null; render();
-    try { result = await generateExercises(p, request); if (result) result.gap = knowledgeGap(request); }
+    try { result = await generateExercises(p, request); if (result) queueIfMissing(result, knowledgeGap(request)); }
     catch (e) { toast(e.message || 'Could not create exercises.'); }
+    busy = false; keep(); render();
+    const out = el.querySelector('.askresult'); if (out && out.scrollIntoView) out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /** A topic the knowledge base doesn't teach goes to the research queue (no question asked). */
+  function queueIfMissing(res, gap, note = '') {
+    if (!gap || hasRequest(p, gap.text)) return;
+    const r = addRequest(p, { text: gap.text, kind: gap.kind, source: 'ask', note });
+    if (r) { res.queued = { id: r.id, text: r.text }; saveAndSync(p); }
+  }
+  /** "Not what you were looking for?": Claude designs for the exact words, and the topic is queued for research. */
+  async function askClaude() {
+    if (!Claude.hasKey()) { toast('Add your Claude API key in Settings so Claude can design exercises for exactly what you asked.', 4500); queueIfMissing(result, { text: request, kind: null }, 'The built-in match was not what the player wanted.'); keep(); render(); return; }
+    const rejected = result && result.summary;
+    busy = true; render();
+    try {
+      const next = await generateExercises(p, request, { mode: 'claude', rejected });
+      queueIfMissing(next, { text: request, kind: null }, `The built-in match was not what the player wanted: ${String(rejected || '').slice(0, 140)}`);
+      result = next;
+    } catch (e) { toast(e.message || 'Claude couldn’t answer.'); }
     busy = false; keep(); render();
     const out = el.querySelector('.askresult'); if (out && out.scrollIntoView) out.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -165,6 +186,8 @@ export function mountAskBox(el, { start, courseId = null }) {
     const a = b.dataset.ask, i = b.dataset.i;
     if (a === 'toggle') { setExpanded(!expanded); if (!expanded) { const ta = el.querySelector('[data-r="ask"]'); if (ta) ta.blur(); } return; }
     if (a === 'go') return go();
+    if (a === 'claude') return askClaude();
+    if (a === 'unqueue' && result && result.queued) { removeRequest(p, result.queued.id); Store.save(); result.queued = null; keep(); toast('Removed from the research queue.'); return render(); }
     if (a === 'master') {
       const t = ((el.querySelector('[data-r="ask"]') || {}).value || request || '').trim();
       const cur = matchTopic(t);

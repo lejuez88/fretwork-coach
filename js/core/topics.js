@@ -13,6 +13,9 @@ import { normalizeExercise } from './coursegen.js';
 
 /* ------------------------------- Parsing ------------------------------- */
 const SCALE_WORDS = [
+  [/half.?whole|dominant diminished|diminished (scale )?over (a )?dominant/, 'dimHW'], [/whole.?half|diminished scales?|octatonic|diminished (mode|runs?|licks?)/, 'dimWH'],
+  [/whole.?tone/, 'wholeTone'], [/altered scale|super.?locrian|\baltered mode/, 'altered'], [/lydian (dominant|b7|♭7)|overtone scale|acoustic scale/, 'lydianDominant'],
+  [/hungarian minor|gypsy minor/, 'hungarianMinor'], [/chromatic scale/, 'chromatic'],
   [/harmonic minor/, 'harmonicMinor'], [/melodic minor/, 'melodicMinor'], [/phrygian dominant|spanish/, 'phrygianDominant'],
   [/minor pent|pentatonic minor|minor penta/, 'minorPent'], [/major pent|pentatonic major/, 'majorPent'], [/major blues/, 'majorBlues'], [/blues scale/, 'blues'],
   [/dorian/, 'dorian'], [/mixolydian/, 'mixolydian'], [/lydian/, 'lydian'], [/phrygian/, 'phrygian'], [/locrian/, 'locrian'], [/aeolian|natural minor|minor scale/, 'minor'],
@@ -42,7 +45,7 @@ function chordTypesIn(t) {
   if (/add.?9|add.?2/.test(t)) out.add('add9');
   if (/6th chords?|\b6 chords?|six chords?/.test(t)) out.add('6');
   if (/augmented|\baug\b/.test(t)) out.add('aug');
-  if (/diminished(?!\s*7)|\bdim\b(?!7)/.test(t) && !out.has('dim7')) out.add('dim');
+  if (/diminished(?!\s*(7|scales?|modes?|runs?|licks?|over))|\bdim\b(?!7)/.test(t) && !/half.?whole|whole.?half|octatonic/.test(t) && !out.has('dim7')) out.add('dim');
   if (/minor chords?|\bminor triads?/.test(t)) out.add('min');
   if (/major chords?|\bmajor triads?/.test(t)) out.add('maj');
   if (/power.?chords?/.test(t)) out.add('5');
@@ -235,15 +238,15 @@ export function buildForRequest(profile, req) {
     what.push(`the modes from ${kn}`);
     add('main', A.modeCompare(c('theory'), { modes: ['major', 'lydian'] })); add('main', A.modeCompare(c('theory'), { modes: ['mixolydian', 'dorian'] })); add('main', A.modeCompare(c('theory'), { modes: ['minor', 'phrygian'] }));
   } else if ((T.has('scale') || T.has('modes')) && req.scale) {
-    const sc = req.scale, minorish = /minor|dorian|phrygian|locrian|blues|minorPent/.test(sc);
+    const sc = req.scale, minorish = /minor|dorian|phrygian|locrian|blues|minorPent|hungarian/i.test(sc) && sc !== 'phrygianDominant';
     const cc = { ...c('fretboard'), minor: minorish };
     what.push(`the ${kn} ${SCALE_BY_ID[sc].name.toLowerCase()}`);
     add('drill', A.scaleRun(cc, { scale: sc, box: 1, unit: '8ths' }));
     add('main', A.scaleRun(cc, { scale: sc, box: 1, pattern: SCALE_BY_ID[sc].steps.length > 6 ? 'thirds' : 'threes' }));
     add('main', A.connectPositions(cc, { scale: sc, from: 1, to: 2 }));
-    const parent = { dorian: ['minor', 'dorian'], mixolydian: ['major', 'mixolydian'], lydian: ['major', 'lydian'], phrygian: ['minor', 'phrygian'], locrian: ['minor', 'locrian'], harmonicMinor: ['minor', 'harmonicMinor'], melodicMinor: ['minor', 'melodicMinor'], phrygianDominant: ['phrygian', 'phrygianDominant'], majorPent: ['majorPent', 'major'], minorPent: ['minorPent', 'blues'], blues: ['minorPent', 'blues'] }[sc];
+    const parent = { dimWH: ['dimWH', 'dimHW'], dimHW: ['mixolydian', 'dimHW'], wholeTone: ['mixolydian', 'wholeTone'], altered: ['mixolydian', 'altered'], lydianDominant: ['mixolydian', 'lydianDominant'], hungarianMinor: ['harmonicMinor', 'hungarianMinor'], dorian: ['minor', 'dorian'], mixolydian: ['major', 'mixolydian'], lydian: ['major', 'lydian'], phrygian: ['minor', 'phrygian'], locrian: ['minor', 'locrian'], harmonicMinor: ['minor', 'harmonicMinor'], melodicMinor: ['minor', 'melodicMinor'], phrygianDominant: ['phrygian', 'phrygianDominant'], majorPent: ['majorPent', 'major'], minorPent: ['minorPent', 'blues'], blues: ['minorPent', 'blues'] }[sc];
     if (parent) add('apply', A.modeCompare(cc, { modes: parent }));
-    const vamp = { dorian: 'dorianVamp', mixolydian: 'mixo', phrygianDominant: 'andalusian', blues: 'blues', minorPent: 'minorRock', majorPent: 'country' }[sc];
+    const vamp = { dorian: 'dorianVamp', mixolydian: 'mixo', phrygianDominant: 'andalusian', blues: 'blues', minorPent: 'minorRock', majorPent: 'country', dimWH: 'dimVamp', dimHW: 'dom7b9', wholeTone: 'augVamp', altered: 'alteredV', lydianDominant: 'lydDom', hungarianMinor: 'minMaj', melodicMinor: 'minMaj', harmonicMinor: 'minMaj' }[sc];
     add('apply', A.targetSolo(cc, { chords: vamp ? prog(vamp) : P, scale: sc }));
   } else if (T.has('scale')) { what.push(`${kn} ${key.minor ? 'minor' : 'major'} pentatonic`); const sc = key.minor ? 'minorPent' : 'majorPent'; add('main', A.scaleRun(c('fretboard'), { scale: sc })); add('main', A.connectPositions(c('fretboard'), { scale: sc })); add('apply', A.callResponse(c('improv'), { chords: P, scale: sc })); }
   if (T.has('intervals')) { what.push('intervals'); add('main', A.intervalShapes(c('ear'))); add('apply', A.echoPhrases(c('ear'), { chords: P })); }

@@ -10,7 +10,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const out = join(here, '.build');
 mkdirSync(out, { recursive: true });
 // tests that boot the whole app with a player profile
-const WITH_PROFILE = new Set(['t_screens', 't_artist_app', 't_guided', 't_dock']);
+const WITH_PROFILE = new Set(['t_screens', 't_artist_app', 't_guided', 't_dock', 't_ask']);
 const only = process.argv.slice(2);
 const tests = readdirSync(here).filter(f => /^t_.*\.mjs$/.test(f)).map(f => f.replace(/\.mjs$/, '')).filter(t => !only.length || only.includes(t));
 let bad = 0;

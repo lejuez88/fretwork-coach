@@ -35,7 +35,13 @@ const P = {
   latinRock: [[0, 'm7'], [5, '9']],
   slowBlues: [[0, '9'], [5, '9'], [0, '9'], [7, '9']],
   sus: [[0, 'sus2'], [0, 'maj'], [0, 'sus4'], [0, 'maj']],
-  capo: [[0, 'maj'], [9, 'min'], [4, 'min'], [5, 'maj']]
+  capo: [[0, 'maj'], [9, 'min'], [4, 'min'], [5, 'maj']],
+  dimVamp: [[0, 'dim7'], [0, 'dim7'], [3, 'dim7'], [3, 'dim7']],
+  dom7b9: [[0, '7b9'], [0, '7b9'], [5, 'maj7'], [5, 'maj7']],
+  augVamp: [[0, 'aug7'], [0, 'aug7'], [5, 'maj7'], [5, 'maj7']],
+  alteredV: [[0, '7s9'], [0, '7s9'], [5, 'm7'], [5, 'm7']],
+  lydDom: [[0, '9'], [0, '9'], [10, 'maj7'], [10, 'maj7']],
+  minMaj: [[0, 'mmaj7'], [0, 'mmaj7'], [5, 'm6'], [7, '7b9']]
 };
 export const progressionNames = (keyPc, id) => (P[id] || P.axis).map(([s, t]) => chordName(mod12(keyPc + s), t));
 

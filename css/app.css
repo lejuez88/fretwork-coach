@@ -1298,3 +1298,5 @@ body.has-transport .tunefab{bottom:calc(var(--dock-top,0px) + 12px)}
 .sc-info dt{font:600 12px var(--head);text-transform:uppercase;letter-spacing:.1em;color:var(--amber);padding-top:2px}
 .sc-info dd{margin:0;line-height:1.55}
 @media(max-width:560px){.sc-info{grid-template-columns:1fr;gap:2px}.sc-info dd{margin-bottom:10px}}
+.notwhat{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 12px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px}
+.notwhat .btn{flex:none}

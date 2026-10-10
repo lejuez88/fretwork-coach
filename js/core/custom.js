@@ -39,7 +39,7 @@ const levelFor = (p, domain) => (p.domains && p.domains[domain] ? p.domains[doma
 function tempoInText(text) { const m = String(text).match(/(\d{2,3})\s*bpm/i); return m ? Math.max(30, Math.min(260, +m[1])) : null; }
 
 /** Claude version. Returns {summary, items:[{role, ex}]} */
-async function withClaude(p, text) {
+async function withClaude(p, text, rejected = null) {
   const lib = EXERCISES.map(e => ({ libId: e.id, name: e.name, domain: e.domain, level: e.level, goalBpm: e.goalBpm }));
   const req = parseRequest(text);
   const hint = { topics: req.topics, chordTypes: req.chordTypes, chords: req.chords, key: req.key ? `${(req.key.minor ? 'minor ' : '')}pc${req.key.pc}` : null, scale: req.scale, progression: req.progression, genre: req.genre };
@@ -47,7 +47,8 @@ async function withClaude(p, text) {
     system: 'You are a world-class guitar teacher who designs deliberate-practice exercises at the edge of a student\'s ability (70–85% success). You give exactly what was asked for, never a generic substitute.',
     content: `The student typed what they want to work on: "${String(text).slice(0, 600)}"
 STUDENT: ${JSON.stringify(brief(p))}
-The app's reading of the request (a hint; correct it if it's wrong): ${JSON.stringify(hint)}
+The app's reading of the request (a hint; correct it if it's wrong): ${JSON.stringify(hint)}${rejected ? `
+The app first offered this from its built-in library, and the student said it was NOT what they meant: "${String(rejected).slice(0, 300)}". Work out what they actually want and design for that.` : ''}
 Design 2–4 exercises that address EXACTLY this request and nothing generic, in order: a focused drill that isolates the core skill ("drill"), the main exercise(s) ("main"), and a musical application ("apply"). Example: "7th chords and inversions" → the four 7th-chord qualities on one root, the inversions of a 7th chord on one string set up the neck, then a ii–V–I using the nearest inversions. Never answer a chord-type or voicing request with basic open-chord changes.
 Rules:
 - Calibrate to the student's level in the relevant domain. startBpm = a tempo they can play cleanly today; goalBpm = mastery tempo.${tempoInText(text) ? ` They mentioned ${tempoInText(text)} BPM: use it as the goal if realistic.` : ''}
@@ -90,7 +91,7 @@ async function techniqueExercises(p, text) {
     });
   });
   if (!items.length) return null;
-  return { summary: `Exercises for ${metas.map(x => x.title.toLowerCase()).join(', ')}${a ? ` in ${a.name}’s style` : ''}, from the stage of each path that fits your level. The full paths are in Practice → Technique library.`, items, understood: metas.map(x => x.title) };
+  return { summary: `Exercises for ${metas.map(x => x.title.toLowerCase()).join(', ')}${a ? ` in ${a.name}’s style` : ''}, from the stage of each path that fits your level. The full paths are in Practice → Technique library.`, items, understood: metas.map(x => x.title), matched: true, paths: metas.map(x => x.id) };
 }
 
 /** Local version from keywords. */
@@ -101,12 +102,12 @@ export async function localExercises(p, text) {
   if (built.items.length) {
     const summary = `I read this as: ${built.understood.join(' + ') || 'your request'}${/chord|invers|voicing|triad|arpegg|scale|mode|key|progress|tone/.test(built.understood.join(' ')) ? ` (in ${built.key})` : ''}. ${built.items.length > 1 ? 'Start with the drill, then the main exercise' + (built.items.some(i => i.role === 'apply') ? ', then use it musically.' : '.') : ''}${built.req.key ? '' : ' Add “in G”, “A minor” etc. to choose the key.'}`.trim();
     built.items.forEach(it => { it.ex.level = Math.max(1, Math.min(10, it.ex.level || levelFor(p, it.ex.domain))); });
-    return { summary, items: built.items, understood: built.understood };
+    return { summary, items: built.items, understood: built.understood, matched: true };
   }
   const genre = p.questionnaire.genres[0] || 'rock';
   const avg = Math.round(Object.values(p.domains || {}).reduce((a, d) => a + d.level, 0) / Math.max(1, Object.keys(p.domains || {}).length)) || 4;
   let { label, picks } = matchDrills(text, { level: avg, genre });
-  let summary;
+  let summary, matched = picks.length > 0;
   if (!picks.length) {
     // Nothing matched: work on their current focus area
     const focus = (p.focus && p.focus.domain) || 'picking';
@@ -124,26 +125,32 @@ export async function localExercises(p, text) {
     if (goal && role === 'main') { ex.goalBpm = goal; ex.startBpm = Math.min(ex.startBpm, goal); }
     return { role, ex };
   }).filter(Boolean);
-  return { summary, items };
+  return { summary, items, matched };
 }
 
 /**
  * Generate exercises for a request. Returns {summary, items:[{role, ex, targetBpm}], source, error?}.
  * Every exercise is tagged with the request so it can be traced later.
  */
-export async function generateExercises(p, text) {
+export async function generateExercises(p, text, { mode = 'auto', rejected = null } = {}) {
   text = String(text || '').trim();
   if (!text) return { summary: '', items: [], source: 'none' };
   let out = null, error = null, source = 'local';
-  if (Claude.hasKey()) {
-    // the same request (in the same or similar words) answered before: reuse it, no API call
-    const hit = getRequest(p, text);
+  if (mode === 'claude') {
+    // "Not what you were looking for?": Claude designs for the exact words (and is told what missed)
+    if (!Claude.hasKey()) throw new Error('Add your Claude API key in Settings so Claude can design exercises for exactly what you asked.');
+    out = await withClaude(p, text, rejected); source = 'claude'; putRequest(p, text, out);
+  } else {
+    // 1) the same request answered by Claude before; 2) the app's own library and theory engine when it
+    // recognizes the request (shown with "Not what you were looking for?"); 3) Claude; 4) the closest drills
+    const hit = Claude.hasKey() ? getRequest(p, text) : null;
     if (hit) { out = { summary: hit.summary, items: hit.items }; source = 'cache'; }
     else {
-      try { out = await withClaude(p, text); source = 'claude'; putRequest(p, text, out); } catch (e) { error = e.message; }
+      const local = await localExercises(p, text);
+      if (local.matched || !Claude.hasKey()) out = local;
+      else { try { out = await withClaude(p, text); source = 'claude'; putRequest(p, text, out); } catch (e) { error = e.message; out = local; } }
     }
   }
-  if (!out) out = await localExercises(p, text);
   out.items.forEach(it => {
     it.ex.request = text.slice(0, 200); it.ex.source = 'request';
     it.targetBpm = calibratedTarget(it.ex, it.ex.level || levelFor(p, it.ex.domain), p);
