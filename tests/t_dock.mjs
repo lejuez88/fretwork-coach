@@ -57,7 +57,10 @@ console.error = (...a) => { errors.push(a.join(' ')); };
   document.body.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', bubbles: true })); await sleep(5);
 
   // --- the routine runner keeps it, above the action bar
-  document.querySelector('#actionbar [data-a="timer"]').click(); await sleep(120);
+  const { Queue } = await import('../js/core/library.js');
+  Queue.clear(); Queue.toggle('spider', 'base');
+  await go('#/practice');
+  document.querySelector('#actionbar [data-q="start"]').click(); await sleep(120);
   ok(location.hash === '#/practice/run' && bar().classList.contains('show'), 'the bar stays on the routine runner');
   ok(document.getElementById('actionbar').classList.contains('show'), 'with the action bar under it');
   localStorage.removeItem('fretworkCoach.activeRoutine');
