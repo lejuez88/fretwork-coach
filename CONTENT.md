@@ -107,11 +107,11 @@ An artist course is only as good as the technique courses under it, so an artist
 3. **Build a complete course for each technique.** Each technique becomes (or already is) its own knowledge-base path built to **the reference standard** (all four stages at the pentatonic path's depth, varied learning methods, music in every stage, sources on record), with every generator pitch-checked in all 12 keys. These paths are useful on their own: a player can learn the technique without the artist.
 4. **Only then add the artist.** When every signature technique has a complete path, write the artist file. Its units draw from those paths with `PU` (choose the `tiers` that fit the style), in the order a player should learn them. The only lessons the artist file writes itself are in the closing **"put it together"** unit: original studies in the artist's style that combine the techniques, and improvising over their kind of progression.
 
-The validator enforces this: for any new artist it is an **error** if a signature technique has no path (link it with `{name, path}` when the name alone doesn't find it), if a path it uses doesn't meet the reference standard, if a signature technique isn't taught by a `PU` unit, if a unit other than the last has its own lessons, or if `sources` has fewer than 3 URLs. It also prints an **Artist readiness** table: which paths each artist still needs.
+The validator enforces this: for any new artist it is an **error** if a signature technique has no path (link it with `{name, path}` when the name alone doesn't find it), if a path it uses doesn't meet the reference standard, if a signature technique isn't taught by a `PU` unit, if a unit other than the last has its own lessons, if `sources` has fewer than 3 URLs, or if it has no `bio`. It also prints an **Artist readiness** table: which paths each artist still needs.
 
 While an artist's techniques are being built (step 2–3 can take several runs), keep the artist `planned` in `content/ROSTER.md` with a note of which paths are done, so the next run picks up where you left off.
 
-**The artists built before this rule** (Eric Johnson, Van Halen, Paul Gilbert, Stevie Ray Vaughan, Jimi Hendrix, David Gilmour, Guthrie Govan) get the same checks as warnings. Bring them up to the rule over the next runs: build their missing technique paths, then rewrite their files with `PU` units and `sources`. Paul Gilbert only needs `sources`.
+**The artists built before this rule** (Eric Johnson, Van Halen, Paul Gilbert, Stevie Ray Vaughan, Jimi Hendrix, David Gilmour, Guthrie Govan) get the same checks as warnings. Bring them up to the rule over the next runs: build their missing technique paths, then rewrite their files with `PU` units, `sources` and a `bio`. Artists already rewritten only need their `bio`: add those first, in the next run.
 
 ```js
 import { S, U, PU, artist } from '../lib.js';
@@ -122,6 +122,7 @@ export default artist({ id: 'eric-johnson', name: 'Eric Johnson', wiki: ['Eric J
   re: /eric johnson|\bej\b/, blurb: 'One sentence on the sound.',
   techniques: ['Rolling 5s', { name: 'Violin-like legato tone', path: 'legatoTone' }, …],   // 3–6 chips; each must resolve to a complete path
   sources: ['https://…interview', 'https://…lesson', 'https://…analysis'],                 // 3+ URLs from step 1
+  bio: `First paragraph…\n\nSecond paragraph…`,                                            // 120–200 words, original (see below)
   ctx: { key: 9, minor: true, prog: 'minorRock' },
   units: [PU(pentatonic, { title: 'The pentatonic boxes', tiers: ['intermediate', 'advanced', 'mastery'] }),
           PU(rolling5s, { title: 'Rolling 5s' }),
@@ -131,6 +132,8 @@ export default artist({ id: 'eric-johnson', name: 'Eric Johnson', wiki: ['Eric J
 ```
 
 An artist's signature techniques belong in the knowledge base, each as its own path, and the artist file reuses them. That way a player can learn "rolling 5s" with or without Eric Johnson.
+
+**The bio** (`bio`, shown at the top of the artist page) is written from your step-1 research, in your own words: never copied or closely paraphrased from Wikipedia or any other source. 120–200 words in two or three short paragraphs, separated by a blank line: (1) who they are: era, bands and the records that made their name; (2) what defines their guitar playing: the sound, the techniques, the habits a listener recognizes; (3) why it's worth studying and how this course approaches it (which paths it draws on and in what order). Facts only, checked against at least two of your sources; no hype words. Until an artist has a bio, the page shows Wikipedia's introduction with credit.
 
 **Draw from paths with `PU(entry, {title, summary, tiers})`.** A path unit doesn't copy lessons: the artist page teaches the stage of that path the player is at (the stage they're partway through, else the first unfinished one at their level), with the path's own lessons and progress. A lesson mastered on the Paul Gilbert page is mastered on the path page and for every other artist who uses that path, and the unit moves on to the next stage when the current one is done. A master class built from the artist climbs each path unit two stages from the player's level. Use `tiers` to keep to the stages that matter for the player's style (for example only `['intermediate', 'advanced', 'mastery']` of the pentatonic path for a shred player). Rules:
 - When an artist uses a technique that has a path, use `PU`. Never copy a multi-stage path with `skillsOf(entry)`; the validator warns when a unit does.

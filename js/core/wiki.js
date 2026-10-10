@@ -47,6 +47,27 @@ export const Wiki = {
   }
 };
 
+/**
+ * A short introduction from Wikipedia (the summary's first paragraph), for artist pages that don't
+ * have a written bio yet: {extract, url, title} or null. Cached like the images. Shown with credit.
+ */
+const SUM_KEY = 'fretworkCoach.wikiSummary.v1';
+let sums = {};
+try { sums = JSON.parse(localStorage.getItem(SUM_KEY) || '{}'); } catch { sums = {}; }
+export async function wikiSummary(titles) {
+  for (const t of [].concat(titles).filter(Boolean)) {
+    if (t in sums) { if (sums[t]) return sums[t]; continue; }
+    try {
+      const r = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(t.replace(/ /g, '_')), { headers: { accept: 'application/json' } });
+      const j = r.ok ? await r.json() : null;
+      const v = j && j.type !== 'disambiguation' && j.extract ? { extract: j.extract, url: (j.content_urls && j.content_urls.desktop && j.content_urls.desktop.page) || `https://en.wikipedia.org/wiki/${encodeURIComponent(t.replace(/ /g, '_'))}`, title: j.title || t } : null;
+      sums[t] = v; try { localStorage.setItem(SUM_KEY, JSON.stringify(sums)); } catch { /* full */ }
+      if (v) return v;
+    } catch { return null; } // offline: try again next time
+  }
+  return null;
+}
+
 /** Markup for an image tile that hydrates later. */
 export function wikiTile(titles, label, cls = '') {
   const hue = hash(label) % 360;

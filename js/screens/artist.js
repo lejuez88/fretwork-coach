@@ -4,7 +4,7 @@
 // artist; #/artist/<id> is one artist.
 import { esc, toast } from '../core/util.js';
 import { Store } from '../core/store.js';
-import { wikiTile, hydrateImages } from '../core/wiki.js';
+import { wikiTile, hydrateImages, wikiSummary } from '../core/wiki.js';
 import { ARTIST_INDEX as ARTISTS, ARTIST_META_BY_ID, ARTIST_NOTE, KB_INDEX, KB_BY_ID, TIER_BY_ID, loadArtist } from '../data/kb.js';
 import { artistLessonList, createMasterClass, buildMasterTree, isMaster } from '../core/master.js';
 import { calibratedTarget } from '../core/progression.js';
@@ -92,6 +92,7 @@ export function mountArtist(root, { navigate, id }) {
           <div class="chips">${a.techniques.map((t, i) => { const tech = (a.techPaths && a.techPaths[i] && KB_BY_ID[a.techPaths[i]]) || techniqueByName(t); return tech ? `<a class="chip sm" href="#/techniques/${tech.id}">${esc(t)}</a>` : `<span class="chip sm">${esc(t)}</span>`; }).join('')}</div>
           <div class="row" style="margin-top:12px">${mc ? `<a class="btn primary" href="#/course/${mc.id}">${MC_ICON} Open your ${esc(a.name)} master class</a>` : `<button class="btn primary" data-al="master" ${building ? 'disabled' : ''}>${building ? '<span class="spinner sm"></span>Building…' : `${MC_ICON} Start the ${esc(a.name)} master class`}</button>`}</div>
           <p class="small muted">${lessons.length} lessons at your level, original exercises in this style that play in the tab player. The master class turns them into a course with progress and reviews.</p></div></div>
+      ${bioHTML()}
       ${nextArtistHTML()}
       <div class="artist-cols">
         <div class="artist-lessons">${groups.map(g => `<section class="card"><div class="sec-head"><h3>${esc(g.unit.title)}</h3>${g.unit.path ? `<a class="link small" href="#/techniques/${esc(g.unit.path)}">Full path →</a>` : ''}</div>${unitNoteHTML(g.unit)}${g.items.map(i => lessonCardHTML(p, lessons[i], i, targets[i])).join('')}</section>`).join('')}</div>
@@ -104,11 +105,23 @@ export function mountArtist(root, { navigate, id }) {
       </div>`;
     hydrateImages(root);
   }
+  /** The artist's bio (written in the artist file), or Wikipedia's introduction with credit until there is one. */
+  let wikiBio = null, bioOpen = false;
+  function bioHTML() {
+    const paras = a.bio ? String(a.bio).split(/\n\s*\n/).map(x => x.trim()).filter(Boolean) : wikiBio ? [wikiBio.extract] : null;
+    if (!paras) return '<div data-r="bio"></div>';
+    const long = paras.length > 1 || paras[0].length > 320;
+    return `<section class="card bio ${long && !bioOpen ? 'clamped' : ''}" data-r="bio"><h3>About ${esc(a.name)}</h3>
+      <div class="bio-text">${paras.map(x => `<p>${esc(x)}</p>`).join('')}</div>
+      ${long ? `<button class="linkbtn small" data-bio="toggle">${bioOpen ? 'Show less' : 'Read more'}</button>` : ''}
+      ${!a.bio && wikiBio ? `<p class="small muted bio-credit">From <a class="link" href="${esc(wikiBio.url)}" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA).</p>` : ''}</section>`;
+  }
+  function refreshBio() { const el = root.querySelector('[data-r="bio"]'); if (el) el.outerHTML = bioHTML(); }
   /** A unit's summary; for a unit drawn from a learning path, the stage you're on and that progress is shared. */
   function unitNoteHTML(u) {
     if (!u.path) return `<p class="small muted">${esc(u.summary)}</p>`;
     return `<p class="small muted">${esc(u.summary)}</p>
-      <p class="small pathnote"><span class="chip sm">${esc(TIER_BY_ID[u.tier] ? TIER_BY_ID[u.tier].name : u.tier)} stage</span> ${esc(u.reason || '')} ${u.total ? `${u.mastered}/${u.total} mastered. ` : ''}<span class="muted">Shared with the ${esc((KB_BY_ID[u.path] || {}).title || 'technique')} path and every artist who uses it.</span></p>`;
+      <p class="small pathnote"><span class="chip sm">${esc(TIER_BY_ID[u.tier] ? TIER_BY_ID[u.tier].name : u.tier)} stage</span> ${esc(u.reason || '')} ${u.total ? `${u.mastered}/${u.total} mastered. ` : ''}<span class="muted">Shared with the ${esc(String((KB_BY_ID[u.path] || {}).title || 'technique').replace(/^the /i, ''))} path and every artist who uses it.</span></p>`;
   }
   /** The artist lesson the app picks next (easiest unmastered, stalled first), with the reason. */
   function nextArtistHTML() {
@@ -117,7 +130,7 @@ export function mountArtist(root, { navigate, id }) {
     const l = lessons[nx.index];
     return `<section class="card nextlesson"><div class="label">Your next lesson · chosen for you</div>
       <b>${esc(l.ex.name)}</b><p class="small">${esc(l.unit ? l.unit.title + ': ' : '')}${esc(nx.reason)}</p>
-      <div class="row"><button class="btn primary" data-al="practice" data-i="${nx.index}">▶ Start this lesson</button><button class="btn" data-jump="${nx.index}">Show it below</button></div></section>`;
+      <div class="row"><button class="btn primary" data-al="practice" data-i="${nx.index}">▶ Start this lesson</button><button class="btn" data-jump="${nx.index}">Show it in the list</button></div></section>`;
   }
   async function startMaster() {
     if (building) return;
@@ -140,8 +153,9 @@ export function mountArtist(root, { navigate, id }) {
       return;
     }
     if (e.target.closest('[data-al="master"]')) { startMaster(); return; }
+    if (e.target.closest('[data-bio="toggle"]')) { bioOpen = !bioOpen; refreshBio(); return; }
     const jump = e.target.closest('[data-jump]');
-    if (jump) { const card = root.querySelector(`[data-artslot="${jump.dataset.jump}"]`); const box = card && card.closest('.artist-lesson'); if (box) { box.classList.add('flash'); try { box.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch { /* ignore */ } setTimeout(() => box.classList.remove('flash'), 1600); } return; }
+    if (jump) { const box = acts.open(jump.dataset.jump, { scroll: true }); if (box) { box.classList.add('flash'); setTimeout(() => box.classList.remove('flash'), 1600); } return; }
     acts.onClick(e);
   };
   root.addEventListener('click', onClick);
@@ -149,6 +163,7 @@ export function mountArtist(root, { navigate, id }) {
   Promise.all([loadArtist(id), artistLessonList(p, id)]).then(([full, list]) => {
     if (gone) return;
     a = full; lessons = list; targets = lessons.map(l => lessonTarget(p, l, calibratedTarget(l.ex, l.ex.level || 4, p))); ready = true; render();
+    if (!a.bio && p.settings.wikiImages !== false) wikiSummary(a.wiki).then(v => { if (v && !gone) { wikiBio = v; refreshBio(); } });
   }).catch(e => { if (!gone) root.innerHTML = `<a class="link" href="#/artist">← Artist series</a><p class="bad">Couldn’t load the lessons (${esc(e.message)}). Check the connection and reload.</p>`; });
   return () => { gone = true; acts.stop(); root.removeEventListener('click', onClick); };
 }

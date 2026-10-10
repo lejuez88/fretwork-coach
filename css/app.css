@@ -1185,3 +1185,27 @@ body.has-transport .tunefab{bottom:calc(var(--dock-top,0px) + 12px)}
 .tr-tgls label.mini.clicksound select{min-height:34px}
 .pathnote{margin:-2px 0 8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .tab-tech.bar{fill:#9fd3ff}
+
+/* Lesson rows (artist and technique pages): name + one-line summary; tap to open the full lesson */
+.lesson-row{padding:0;margin:8px 0;overflow:hidden;transition:border-color .15s}
+.lesson-row .lr-head{appearance:none;display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:none;border:0;color:var(--text);text-align:left;font:inherit;cursor:pointer}
+.lesson-row .lr-head:hover{background:rgba(255,255,255,.03)}
+.lesson-row .lr-head:focus-visible{outline:2px solid var(--amber);outline-offset:-2px}
+.lesson-row .lr-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.lesson-row .lr-txt b{font-size:15px}
+.lesson-row .lr-sum{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lesson-row .lr-side{display:flex;align-items:center;gap:8px;flex:none}
+.lesson-row .lr-chev{font-size:20px;color:var(--muted);transition:transform .15s;line-height:1}
+.lesson-row.open{border-color:var(--amber)}
+.lesson-row.open .lr-chev{transform:rotate(90deg);color:var(--amber)}
+.lesson-row.open .lr-sum{display:none}
+.lesson-row .lr-body{padding:0 14px 14px}
+.lesson-row .lr-body[hidden]{display:none}
+.lesson-row .lr-meta{margin-bottom:6px}
+.lesson-row.done .lr-txt b{color:#cfe9d6}
+@media(max-width:560px){.lesson-row .lr-head{padding:11px 12px}.lesson-row .lr-body{padding:0 12px 12px}}
+/* Artist bio */
+.card.bio h3{margin-bottom:6px}
+.bio-text p{margin:0 0 10px;line-height:1.6}
+.bio.clamped .bio-text{max-height:7.4em;overflow:hidden;-webkit-mask-image:linear-gradient(180deg,#000 55%,transparent);mask-image:linear-gradient(180deg,#000 55%,transparent)}
+.bio-credit{margin:6px 0 0}

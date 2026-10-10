@@ -127,7 +127,7 @@ export function mountTechnique(root, { navigate, id }) {
     return `<section class="card nextlesson"><div class="label">Your next lesson · chosen for you</div>
       <b>${esc(l.ex.name)}</b>
       <p class="small">${esc(TIER_BY_ID[tier].name)} stage${startReason ? ` (${esc(startReason.charAt(0).toLowerCase() + startReason.slice(1).replace(/\.$/, ''))})` : ''}. ${esc(nx.reason)}</p>
-      <div class="row"><button class="btn primary" data-al="practice" data-i="${nx.index}">▶ Start this lesson</button><button class="btn" data-jump="${nx.index}">Show it below</button></div></section>`;
+      <div class="row"><button class="btn primary" data-al="practice" data-i="${nx.index}">▶ Start this lesson</button><button class="btn" data-jump="${nx.index}">Show it in the list</button></div></section>`;
   }
   /** How this stage teaches: the learning methods its lessons use, with the evidence behind each. */
   function methodsHTML() {
@@ -193,7 +193,7 @@ export function mountTechnique(root, { navigate, id }) {
     const ti = e.target.closest('[data-tier]');
     if (ti) { tier = ti.dataset.tier; chosenByHand = tier !== startStage.tier; const s = t.stages.find(x => x.tier === tier); level = fitLevel(s); ready = false; render(); loadStage(); return; }
     const jump = e.target.closest('[data-jump]');
-    if (jump) { const card = root.querySelector(`[data-artslot="${jump.dataset.jump}"]`); const box = card && card.closest('.artist-lesson'); if (box) { box.classList.add('flash'); try { box.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch { /* ignore */ } setTimeout(() => box.classList.remove('flash'), 1600); } return; }
+    if (jump) { const box = acts.open(jump.dataset.jump, { scroll: true }); if (box) { box.classList.add('flash'); setTimeout(() => box.classList.remove('flash'), 1600); } return; }
     const lv = e.target.closest('[data-lv]');
     if (lv) { level = +lv.dataset.lv; levelOpen = true; ready = false; render(); loadStage(); return; }
     if (e.target.closest('[data-tm="master"]')) { startPath(); return; }

@@ -33,6 +33,23 @@ console.error = (...a) => { errors.push(a.join(' ')); };
     ok(players >= n - 4, `${id}: ${players}/${n} lessons open in the tab player`);
   }
   await go('#/artist/eric-johnson'); await sleep(80);
+  // lessons are rows: name + summary, one open at a time
+  {
+    const rows = [...view().querySelectorAll('.lesson-row')];
+    ok(rows.length >= 8 && rows.every(r => r.querySelector('.lr-head b') && r.querySelector('.lr-body').hidden), 'artist lessons start as closed rows');
+    ok(rows.filter(r => r.querySelector('.lr-sum').textContent.trim().length > 10).length >= rows.length - 1 && rows.every(r => r.querySelector('.lr-sum').textContent.length <= 121), 'each row has a short summary');
+    rows[0].querySelector('.lr-head').click(); await sleep(5);
+    ok(!rows[0].querySelector('.lr-body').hidden && rows[0].classList.contains('open') && rows[0].querySelector('.lr-head').getAttribute('aria-expanded') === 'true', 'tapping a row opens the full lesson');
+    rows[1].querySelector('.lr-head').click(); await sleep(5);
+    ok(rows[0].querySelector('.lr-body').hidden && !rows[1].querySelector('.lr-body').hidden && view().querySelectorAll('.lesson-row.open').length === 1, 'opening another closes the first');
+    rows[1].querySelector('[data-al="try"]').click(); await sleep(10);
+    ok(rows[1].querySelector('[data-artslot] .tabplayer, [data-artslot] .metro'), 'try it plays inside the open lesson');
+    rows[2].querySelector('.lr-head').click(); await sleep(10);
+    ok(!rows[1].querySelector('[data-artslot] .tabplayer, [data-artslot] .metro') && !document.querySelector('#transport.show'), 'closing a lesson stops its player');
+    rows[2].querySelector('.lr-head').click(); await sleep(5);
+    ok(!view().querySelector('.lesson-row.open'), 'tapping the open row closes it');
+    ok(view().querySelector('[data-r="bio"]'), 'the artist page has a place for the bio');
+  }
   const titles = [...view().querySelectorAll('.artist-lesson b')].map(b => b.textContent).join(' | ');
   ok(/Rolling 5s/.test(titles) && /Spread triads/.test(titles) && /sixes/i.test(titles), 'EJ lessons: ' + titles.slice(0, 300));
   // add a riff to My songs

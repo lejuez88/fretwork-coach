@@ -69,7 +69,7 @@ export function mountSettings(root, { navigate, applySettings }) {
     ${p ? `<section class="card"><h3>Audio input & output</h3><p class="muted small">Used by the tuner and playing evaluations. Pick your audio interface (e.g. a Focusrite Scarlett), amp/pedal USB, or microphone.</p><div data-r="audio"></div></section>` : ''}
     ${p ? `<section class="card">
       <h3>Display</h3>
-      <label class="switch"><input type="checkbox" data-r="wiki" ${p.settings.wikiImages ? 'checked' : ''}> Load artist, song and genre photos from Wikipedia</label>
+      <label class="switch"><input type="checkbox" data-r="wiki" ${p.settings.wikiImages ? 'checked' : ''}> Load artist, song and genre photos (and artist introductions) from Wikipedia</label>
     </section>` : ''}
     <section class="card">
       <h3>Your data</h3>

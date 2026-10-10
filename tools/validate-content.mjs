@@ -198,8 +198,11 @@ for (const f of artistFiles) {
   // lessons outside paths only in the closing unit
   units.slice(0, -1).filter(u => !u.path).forEach(u => report(w, `unit "${u.title}" has its own lessons: a signature technique belongs in a complete path (draw it with PU); only the closing "put it together" unit holds the artist's own studies`));
   if (!Array.isArray(a.sources) || a.sources.filter(x => /^https?:\/\//.test(x)).length < 3) report(w, 'list the research behind the artist in "sources" (3+ URLs: interviews, lessons, analyses)');
+  const bioWords = typeof a.bio === 'string' ? a.bio.trim().split(/\s+/).filter(Boolean).length : 0;
+  if (!bioWords) report(w, 'no "bio": write a 120–200 word bio from your research (CONTENT.md, "The bio")');
+  else if (bioWords < 80 || bioWords > 260) warn(w, `bio is ${bioWords} words (aim for 120–200)`);
   const ids = [...new Set(techs.map(t => t.id).filter(Boolean).concat(pathUnits.map(u => u.path)))];
-  readiness.push({ id: a.id, legacy, done: ids.filter(id => STD[id] && STD[id].standard), todo: ids.filter(id => !(STD[id] && STD[id].standard)), missing: techs.filter(t => !t.id).map(t => t.name), sources: hasSources(a) });
+  readiness.push({ id: a.id, legacy, done: ids.filter(id => STD[id] && STD[id].standard), todo: ids.filter(id => !(STD[id] && STD[id].standard)), missing: techs.filter(t => !t.id).map(t => t.name), sources: hasSources(a), bio: !!bioWords });
 }
 
 /* ------------------------------- Report ------------------------------- */
@@ -211,7 +214,7 @@ coverage.sort((a, b) => b.cells.filter(c => c && c.full).length - a.cells.filter
 const complete = coverage.filter(r => r.cells.every(c => c && c.full)).length;
 console.log(`${complete} of ${coverage.length} paths complete; ${coverage.filter(r => r.standard).length} meet the reference standard; ${coverage.length - complete} need more stages or lessons. ${artistFiles.length} artists.\n`);
 console.log('Artist readiness (technique-first: every signature technique a complete path):');
-readiness.forEach(r => console.log(`${(r.id + (r.legacy ? ' (built before the rule)' : '')).padEnd(38)}${r.todo.length || r.missing.length || !r.sources ? `paths to bring to the standard: ${r.todo.join(', ') || '—'}${r.missing.length ? `; techniques with no path yet: ${r.missing.join(', ')}` : ''}${r.sources ? '' : '; artist sources missing'}` : 'ready'}`));
+readiness.forEach(r => console.log(`${(r.id + (r.legacy ? ' (built before the rule)' : '')).padEnd(38)}${r.todo.length || r.missing.length || !r.sources || !r.bio ? `paths to bring to the standard: ${r.todo.join(', ') || '—'}${r.missing.length ? `; techniques with no path yet: ${r.missing.join(', ')}` : ''}${r.sources ? '' : '; artist sources missing'}${r.bio ? '' : '; bio missing'}` : 'ready'}`));
 console.log('');
 console.log(`Checked ${kbFiles.length} knowledge-base entries and ${artistFiles.length} artists.`);
 warnings.forEach(x => console.log('WARN  ' + x));

@@ -25,7 +25,14 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: whammy-bar and pick-stroke marks, a higher standard for every learning path
+## Latest: artist bios and a cleaner lesson list
+
+| Area | Included |
+|---|---|
+| Artist bios | Each artist page opens with "About <artist>": a 120–200 word bio written by the content runs from their research (who they are, what defines their playing, how the course approaches it), shortened with "Read more". Until an artist has one, the page shows Wikipedia's introduction with credit. CONTENT.md sets the rules and the validator requires a bio for new artists. |
+| Lesson rows | On artist and technique pages every lesson is one row: its name and a one-line summary, with "Mastered" or your best tempo. Tapping a row opens the full lesson (tempo, instructions, chord boxes, Practice / Try it here / Add / Save); opening another closes it, and closing a lesson stops its player. "Show it in the list" opens the recommended lesson. |
+
+## Earlier: whammy-bar and pick-stroke marks, a higher standard for every learning path
 
 | Area | Included |
 |---|---|
