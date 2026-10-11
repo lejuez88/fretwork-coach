@@ -6,6 +6,7 @@ import chromaticPassing, { vampChords, place, vampLine, sideStep } from '../kb/c
 import slides from '../kb/slides.js';
 import alternatePicking from '../kb/alternatePicking.js';
 import arpMelodies from '../kb/arpMelodies.js';
+import legato from '../kb/legato.js';
 
 const pitch = (s, f) => OPEN[s] + f;
 /** Chord-tone pitches of a chord between lo and hi. */
@@ -70,6 +71,7 @@ This course starts with slides, then hybrid picking, alternate and economy picki
     PU(alternatePicking, { title: 'Alternate picking at speed', summary: 'Strict alternate picking for his fast chromatic and Dorian lines: bursts, accents, skips and performance tempo.', tiers: ['advanced', 'mastery'] }),
     PU(economyPicking, { title: 'Economy picking', summary: 'One stroke through string changes: the fluid three-note-per-string runs.' }),
     PU(chromaticPassing, { title: 'Chromatic and outside notes', summary: 'Approach notes, enclosures and side-stepping: the bebop-meets-rock vocabulary.' }),
+    PU(legato, { title: 'Legato', summary: 'Hammer-ons, pull-offs and slides for his smooth three-note-per-string lines.', tiers: ['intermediate', 'advanced', 'mastery'] }),
     PU(arpMelodies, { title: 'Arpeggio melodies', summary: 'Tunes made of chord tones: arpeggio 3rds, wide leaps and octave displacement, voice-led and joined by slides.' }),
     U('Putting it together', 'Studies in his style over a Dorian vamp: an arpeggio melody and a fusion study that uses everything.', [
       S('gg-arpeggios', 'An arpeggio melody in his style', 'improv', 'Chord tones in wide leaps, joined by slides.', [c => ggArpMelody(c)]),
