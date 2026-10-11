@@ -4,6 +4,7 @@
 import { OPEN, N, nameOf, minorKey, make, mod12, S, U, PU, M, artist, targetGuide } from '../lib.js';
 import alternatePicking from '../kb/alternatePicking.js';
 import pgSix, { cell } from '../kb/pgSix.js';
+import pgLick from '../kb/pgLick.js';
 import pent6s, { grouped, shapeOf } from '../kb/pent6s.js';
 import stretchPent, { fullShape } from '../kb/stretchPent.js';
 import skipArps, { skipCell } from '../kb/skipArps.js';
@@ -37,18 +38,19 @@ export function pgStudy(c) {
 }
 
 export default artist({ id: 'paul-gilbert', name: 'Paul Gilbert', wiki: ['Paul Gilbert'], genre: 'rock', re: /paul gilbert|\bgilbert\b|racer x/,
-    blurb: 'Machine-gun alternate picking, the six-note pentatonic lick, pentatonic sequences, wide stretches and string-skipped arpeggios.',
-    techniques: ['Strict alternate picking', 'Six-note pentatonic lick', 'Pentatonic in sixes', 'Stretched pentatonic', 'String-skipped arpeggios'],
+    blurb: 'Machine-gun alternate picking, the 3+1 Paul Gilbert lick, the six-note pentatonic cell, pentatonic sequences, wide stretches and string-skipped arpeggios.',
+    techniques: ['Strict alternate picking', { name: 'The Paul Gilbert lick (3+1)', path: 'pgLick' }, 'Six-note pentatonic lick', 'Pentatonic in sixes', 'Stretched pentatonic', 'String-skipped arpeggios'],
     sources: ['https://www.guitarworld.com/lessons/intense-rock-picking-a-brief-look-at-paul-gilberts-alternate-picking-technique', 'https://www.guitarplayer.com/lessons/paul-gilbert-gives-a-classic-lesson-in-shred', 'https://www.premierguitar.com/articles/23477-cram-session-alternate-picking', 'https://forum.troygrady.com/t/haha-paul-gilbert-admits-that-the-paul-gilbert-lick-is-too-hard-for-beginners/8197', 'https://www.guitarplayer.com/lessons/string-skipping-licks-four-phrases-to-get-your-fingers-flying', 'https://en.wikipedia.org/wiki/Paul_Gilbert'],
     bio: `Paul Gilbert (born 1966 in Carbondale, Illinois) was hired as an instructor at the Guitar Institute of Technology in Los Angeles while still a teenager, and formed the speed-metal band Racer X there in 1985. In 1988 he co-founded Mr. Big with bassist Billy Sheehan; the band's "To Be with You" reached number one in the United States in 1991. He has released solo albums since 1996 and still teaches widely.
 
-His playing is famous for strict, even alternate picking at very high speed, made of small repeated cells: the six-note pentatonic lick across two strings, pentatonic sequences in groups of three to six, stretched three-note-per-string pentatonic shapes, and wide arpeggios played with string skipping rather than sweeps, mixed with a strong blues and pop sense of melody.
+His playing is famous for strict, even alternate picking at very high speed, made of small repeated cells: the four-note loop of three notes on the B string and one on the high e, the six-note pentatonic cell across two strings, pentatonic sequences in groups of three to six, stretched three-note-per-string pentatonic shapes, and wide arpeggios played with string skipping rather than sweeps, mixed with a strong blues and pop sense of melody.
 
-This course follows that order: alternate picking first, then the six-note lick, pentatonic sequences, stretched shapes and string-skipped arpeggios, and a closing piece and solo that combine them.`,
+This course follows that order: alternate picking first, then the 3+1 lick and the six-note cell, pentatonic sequences, stretched shapes and string-skipped arpeggios, and a closing piece and solo that combine them.`,
     ctx: { key: 9, minor: true, prog: 'minorRock' },
     units: [
       PU(alternatePicking, { title: 'Alternate picking', summary: 'The foundation of everything he plays: small, even down-up strokes, inside and outside string changes, three-notes-per-string runs, bursts and accents.' }),
-      PU(pgSix, { title: 'The six-note lick', summary: 'His best-known speed drill: the two-string pentatonic cell that trains the inside string change.' }),
+      PU(pgLick, { title: 'The Paul Gilbert lick (3+1)', summary: 'Three notes on the B string, one on the high e, looped with strict alternate picking: three shapes, the mirror, the whole neck and every key.' }),
+      PU(pgSix, { title: 'The six-note pentatonic cell', summary: 'A related drill: the two-string pentatonic cell that trains the inside string change.' }),
       PU(pent6s, { title: 'Pentatonic sequences', summary: 'Groups of 3, 4, 5 and 6 through the pentatonic, the vocabulary of his fast runs.' }),
       PU(stretchPent, { title: 'Stretched pentatonic', summary: 'Three notes per string: the wide shapes behind his long, even pentatonic lines.' }),
       PU(skipArps, { title: 'String-skipped arpeggios', summary: 'Wide-interval arpeggios played with alternate picking instead of sweeps.' }),

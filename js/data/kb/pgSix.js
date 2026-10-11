@@ -1,6 +1,7 @@
-// The six-note picking lick: a two-string pentatonic cell, strict alternate picked, that drills the
-// inside string change. Paul Gilbert's best-known speed exercise, from the slow cell to performance
-// tempo through all five boxes, in every key and in licks.
+// The six-note pentatonic cell: a two-string pentatonic cell, strict alternate picked, that drills the
+// inside string change. A related drill from Paul Gilbert's picking vocabulary (not "the Paul Gilbert
+// lick", which is the 3+1 pattern in pgLick.js), from the slow cell to performance tempo through all
+// five boxes, in every key and in licks.
 //
 // Concept-first (CONTENT.md): the model is the cell itself as positions in a pentatonic box: on a
 // pair of strings with two box notes each (L0 < L1 on the lower string, H0 < H1 on the upper), the
@@ -191,7 +192,7 @@ export function pgSixNote(c, { across = false } = {}) {
   return make(c, {
     id: across ? 'pg-six-across' : 'pg-six-note', name: across ? `Six-note picking lick through all five boxes (${k} minor)` : `Six-note pentatonic picking lick on string pairs (${k} minor)`,
     domain: 'picking', method: across ? 'interleaving' : 'variable', unit: '16th-note sextuplets', goal: 92, minutes: 5, dl: across ? 2 : 1, picking: 'strict',
-    why: 'Paul Gilbert’s best-known speed drill is a six-note pentatonic cell on two strings, alternate picked: it trains the string change from the inside of the strings, where most picking breaks down.',
+    why: 'A six-note pentatonic cell on two strings, alternate picked, is a classic Paul Gilbert-style speed drill: it trains the string change from the inside of the strings, where most picking breaks down.',
     instr: across ? 'The cell on strings 1–2, twice per box, moving through boxes 1 to 5 and back. Shift on the first note of each beat. Pass: the whole journey clean at the goal tempo.' : 'The cell (two notes on the lower string, three on the upper, back to the lower) four times per bar, then down one string pair. Strict alternate picking starting with a downstroke; the pick has to jump between the strings on the string change. Pass: all four pairs clean at the goal tempo.',
     watch: 'Using hammer-ons to hide a missed pick stroke.', simplify: 'The cell in 16th notes (four per beat) at a slow tempo.', tab: { notes: fromSeq(seq, 1 / 6) }
   });
@@ -200,10 +201,10 @@ export function pgSixNote(c, { across = false } = {}) {
 /* --------------------------------- The path --------------------------------- */
 const W6 = 'Strict alternate picking, starting with a downstroke. The ascending cell has {changes} string changes; ';
 export default entry({
-  id: 'pgSix', kind: 'technique', title: 'The six-note picking lick', domain: 'picking',
-  re: /paul gilbert lick|gilbert lick|(six|6).?note (picking )?(lick|pattern|cell)/,
-  aliases: ['Paul Gilbert lick', 'six-note pentatonic lick'],
-  summary: 'Paul Gilbert’s two-string pentatonic cell, alternate picked: from the slow cell and the inside string change to performance tempo through all five boxes, every key and real licks.',
+  id: 'pgSix', kind: 'technique', title: 'The six-note pentatonic cell', domain: 'picking',
+  re: /(six|6).?note (pentatonic )?(picking )?(lick|pattern|cell)/,
+  aliases: ['six-note pentatonic lick', 'six-note picking cell'],
+  summary: 'A two-string pentatonic cell from Paul Gilbert’s picking vocabulary (a related drill; the Paul Gilbert lick itself is the 3+1 path), alternate picked: from the slow cell and the inside string change to performance tempo through all five boxes, every key and real licks.',
   prereqs: ['alternatePicking', 'pentatonic'],
   sources: ['https://www.guitarworld.com/lessons/intense-rock-picking-a-brief-look-at-paul-gilberts-alternate-picking-technique', 'https://forum.troygrady.com/t/haha-paul-gilbert-admits-that-the-paul-gilbert-lick-is-too-hard-for-beginners/8197', 'https://www.premierguitar.com/articles/23477-cram-session-alternate-picking', 'https://www.dummies.com/article/inside-and-outside-picking-on-the-guitar-143479'],
   ctx: { key: 9, minor: true, prog: 'minorRock' },
