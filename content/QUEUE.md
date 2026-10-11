@@ -13,11 +13,12 @@ Synced from the player's Google Drive file `Fretwork Coach research requests.jso
 
 ## Depth backlog
 
-Incomplete paths and paths below the reference standard, from the validator's coverage table (`node tools/validate-content.mjs`). As of 2026-10-10 (third run): **25 of 29 paths complete; all 25 meet the reference standard (★)**. Still one stage of 1–4 lessons, to rebuild concept-first: tapping, openPulls (Van Halen), sweepChanges, travis.
+Incomplete paths and paths below the reference standard, from the validator's coverage table (`node tools/validate-content.mjs`). As of 2026-10-11: **29 of 31 paths complete; all 29 meet the reference standard (★)**. Still one stage of 1–4 lessons, to rebuild concept-first: sweepChanges, travis. Every artist is "ready".
 
 Priority order:
-1. The last artist to finish: Van Halen (tapping, openPulls; new paths: palm-muted riffs, harmonics). Greg Howe after that.
-2. Fundamentals: legato, palm muting, chord changes and barre chords, strumming, fretboard knowledge; travis, sweepChanges.
+1. The next planned artist: Greg Howe (roster). Build his technique paths first (legato, tapping is done; see the roster).
+2. Fundamentals: legato, chord changes and barre chords, strumming, fretboard knowledge; travis, sweepChanges.
+3. Study notes for the older paths (the validator warns on every path built before 2026-10-11).
 
 ## Discovered
 
@@ -30,7 +31,7 @@ New topics to build, with a reason and a source. Seeded with the core curriculum
 | String bending | technique | Core expressive technique; blues, rock and country; needed by Gilmour, Hendrix and SRV | built 2026-10-09 as `bending` (complete, ★ reference standard) |
 | Vibrato | technique | Core expressive technique; pairs with bending | built 2026-10-10 as `vibrato` (complete, ★ reference standard) |
 | Sweep picking (fundamentals) | technique | The basic motion before sweeps through changes | planned |
-| Palm muting | technique | Rock and metal rhythm foundation | planned |
+| Palm muting | technique | Rock and metal rhythm foundation | built 2026-10-11 as `palmMuting` (complete, ★ reference standard) |
 | Chord changes and barre chords | technique | First hurdle for every beginner | planned |
 | Strumming and rhythm | technique | Rhythm-guitar foundation | planned |
 | Chicken picking | technique | Country lead technique; currently routed to hybrid picking | planned |
@@ -50,7 +51,7 @@ New topics to build, with a reason and a source. Seeded with the core curriculum
 | Odd note groupings against the beat (5s, 7s over 16ths) | subject | Considered for the Gilbert rebuild; the sources didn't single it out as his, and fives against 16ths are now in pent6s and alternatePicking. A general rhythm path (grouping 3, 5, 7 over any pulse) would still help fusion and prog players. Source: https://www.premierguitar.com/articles/23477-cram-session-alternate-picking | planned |
 | Whammy bar technique | technique | Dips, scoops, bar vibrato and flutter (Govan, Vai, Beck, EVH); needs a whammy tab mark (see REQUESTS). Source: https://guitarworld.com/lessons/using-your-vibrato-bar-creatively-and-tastefully | planned |
 | Double-stops (3rds, 4ths, 6ths; Chuck Berry, SRV and Hendrix fills) | technique | SRV's and Hendrix's signature; a technique chip on two artist pages with no path. Source: https://guitarworld.com/lessons/improve-your-double-stops | built 2026-10-10 as `doubleStops` (complete, ★ reference standard) |
-| Harmonics (natural, artificial/tapped, pinch) | technique | Van Halen's signature with no path; the app now has `nh`/`ah` marks. Source: https://www.musictheoryforguitar.com/naturalandartificialguitarharmonics.html | planned |
+| Harmonics (natural, artificial/tapped, pinch) | technique | Van Halen's signature with no path; the app now has `nh`/`ah` marks. Source: https://www.musictheoryforguitar.com/naturalandartificialguitarharmonics.html | built 2026-10-11 as `harmonics` (complete, ★ reference standard) |
 | Texas shuffle rhythm | style | SRV's signature rhythm (shuffle feel, boogie patterns, muted strums); no path yet. Source: https://www.premierguitar.com/articles/23142-beyond-blues-texas-rhythm-101 | built 2026-10-10 as `texasShuffle` (complete, ★ reference standard) |
 | Phrasing and space (motifs, call and response, rests, note choice) | subject | Gilmour's "Space"; every improvisation lesson assumes it. Source: https://www.premierguitar.com/articles/29793-how-to-craft-more-melodic-solos | built 2026-10-10 as `phrasing` (complete, ★ reference standard) |
 | Chord embellishments (Hendrix/Curtis Mayfield R&B rhythm: thumb-over grips, hammer-on and pull-off fills inside the chord, double-stop fills) | technique | Hendrix's first signature technique, with no path; the last thing besides sharp9/octaves keeping his page from "ready". Source: https://www.guitarplayer.com/lessons/jimi-hendrix-the-five-rules-of-his-powerful-rhythm-style | built 2026-10-10 as `chordEmbellish` (complete, ★ reference standard) |
@@ -64,3 +65,7 @@ New topics to build, with a reason and a source. Seeded with the core curriculum
 | Blues turnarounds, intros and endings | subject | Every 12-bar needs them; the double-stop and shuffle paths use only simple turnarounds. Chromatic 6ths, descending bass lines, the V-chord walk-up. Source: https://www.guitarplayer.com/lessons/20-blues-turnarounds-every-guitarist-should-know · https://blog.truefire.com/guitar-lessons/12-essential-blues-turnarounds | planned |
 | Slow blues (12/8 feel) | style | The other half of Texas blues (SRV, Albert King, Gary Moore): the triplet-based slow feel, comping and soloing with space; the texasShuffle path only covers the shuffle. Source: https://happybluesman.com/blues-swing-feel-essential-rhythm/ · https://truefire.com/c2941 | planned |
 | Mixing the major and minor pentatonic over a blues | subject | The core blues-lead skill (where to use the major 3rd and 6th vs the ♭3 and ♭7 over I, IV and V); assumed by the doubleStops and sharp9 lines. Source: https://www.premierguitar.com/articles/25911-blue-horizons-how-to-mix-major-and-minor-pentatonics · https://activemelody.com/microlesson/microlesson-ml107-the-blues-lead-sweet-spot-for-mixing-the-major-and-minor-pentatonic-scales | planned |
+| Tremolo picking | technique | Van Halen's speed bursts, surf, metal and folk (mandolin-style) melodies; the alternatePicking path stops short of sustained tremolo on one note and moving melodies under it. Source: https://hubguitar.com/technique/tremolo-picking-overview · https://guitarworld.com/lessons/6-guitar-tricks-you-can-learn-from-eddie-van-halen | planned |
+| Drop D tuning and riffs | technique | One of the most asked-for rock and metal topics (one-finger power chords, low-D pedal riffs; Van Halen's "Unchained"). The app's tabs already accept `tab.tuning`, so it can be tabbed. Source: https://www.fundamental-changes.com/drop-d-rock-riffs-video-guitar-lesson/ · https://www.guitarlessons.com/guitar-lessons/alternate-tunings-guitar-maintenance-and-jams/drop-d-guitar-tuning/ | planned |
+| Symmetrical patterns and the half-whole diminished scale | subject | Repeating fingerings (the "Van Halen scale"), outside tension that resolves; fusion and shred vocabulary (Greg Howe, Govan). Source: https://www.guitarplayer.com/lessons/eddie-van-halens-playing-secrets-how-to-solo-like-the-lead-guitar-legend · https://www.guitarplayer.com/lessons/avoid-melodic-monotony-and-predictability-using-the-half-whole-diminished-scale | planned |
+| Multi-finger tapping (two- and three-finger taps, tapped arpeggios across strings) | technique | The step after `tapping`'s mastery stage: more tapping fingers for wider arpeggios (Greg Howe, Vai, modern prog). Source: https://www.premierguitar.com/lessons/cram-session-two-hand-tapping · https://guitargearfinder.com/lessons/guitar-tapping-exercises/ | planned |
