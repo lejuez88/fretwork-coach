@@ -34,9 +34,11 @@ import { beatLabel } from '../core/tempo.js';
 import { Shell } from '../ui/shell.js';
 import { topicForExercise, topicForEntry } from '../core/master.js';
 import { libEntry, libraryEntries, levelFor, Queue, CATEGORY_BY_ID } from '../core/library.js';
-import { openMasterSheet, MC_ICON } from '../ui/mastersheet.js';
+import { openMasterSheet } from '../ui/mastersheet.js';
 import { DOMAIN_BY_KEY } from '../assessment/engine.js';
 import { methodOf } from '../core/methods.js';
+import { icon } from '../ui/icons.js';
+import { menuButtonHTML } from '../ui/drawer.js';
 
 const PLAY_KEY = 'fretworkCoach.play';
 const PANEL_KEY = 'fretworkCoach.playPanel';
@@ -139,6 +141,7 @@ export function mountPlay(root, { navigate, ctx = null }) {
     const dark = (p.settings.tabTheme || 'dark') !== 'light';
     root.innerHTML = `<div class="play ${panel.open ? 'panel-open' : ''}">
       <header class="play-bar">
+        ${menuButtonHTML()}
         <a class="kbtn pb-back" href="${esc(C.back || '#/practice')}" title="Back to ${esc(C.backLabel || 'the list')}">←<span class="pb-backtxt"> ${esc(C.backLabel || 'Back')}</span></a>
         <div class="pb-title"><div class="label">${esc(C.title || 'Practice')}${n > 1 ? ` · ${C.idx + 1} of ${n}` : ''}${it.unit ? ` · ${esc(it.unit)}` : ''}</div><b>${esc(it.ex.name)}</b></div>
         <div class="pb-nav">
@@ -151,12 +154,12 @@ export function mountPlay(root, { navigate, ctx = null }) {
         <div class="stage-tool" data-r="tool"></div>
       </div>
       <nav class="play-rail" aria-label="Lesson panel">
-        <button class="rail-btn ${panel.open && panel.tab === 'study' ? 'on' : ''}" data-rail="study" title="Study the lesson"><span>📖</span><b>Study</b></button>
-        <button class="rail-btn ${panel.open && panel.tab === 'custom' ? 'on' : ''}" data-rail="custom" title="Variations, key and display"><span>⚙</span><b>Customize</b></button>
-        <button class="rail-btn ${panel.open && panel.tab === 'log' ? 'on' : ''}" data-rail="log" title="Log the tempo you reached"><span>✓</span><b>Log tempo</b></button>
-        <button class="rail-btn" data-rail="eval" title="Evaluate this take"><span>🎤</span><b>Evaluate</b></button>
-        <button class="rail-btn" data-rail="master" title="Build a master class on this"><span>${MC_ICON}</span><b>Master class</b></button>
-        <button class="rail-btn" data-rail="theme" title="${dark ? 'Light' : 'Dark'} tab"><span>${dark ? '☀' : '☾'}</span><b>${dark ? 'Light tab' : 'Dark tab'}</b></button>
+        <button class="rail-btn ${panel.open && panel.tab === 'study' ? 'on' : ''}" data-rail="study" title="Study the lesson"><span>${icon('book-open')}</span><b>Study</b></button>
+        <button class="rail-btn ${panel.open && panel.tab === 'custom' ? 'on' : ''}" data-rail="custom" title="Variations, key and display"><span>${icon('sliders-horizontal')}</span><b>Customize</b></button>
+        <button class="rail-btn ${panel.open && panel.tab === 'log' ? 'on' : ''}" data-rail="log" title="Log the tempo you reached"><span>${icon('circle-check')}</span><b>Log tempo</b></button>
+        <button class="rail-btn" data-rail="eval" title="Evaluate this take"><span>${icon('mic')}</span><b>Evaluate</b></button>
+        <button class="rail-btn" data-rail="master" title="Build a master class on this"><span>${icon('graduation-cap')}</span><b>Master class</b></button>
+        <button class="rail-btn" data-rail="theme" title="${dark ? 'Light' : 'Dark'} tab"><span>${icon(dark ? 'sun' : 'moon')}</span><b>${dark ? 'Light tab' : 'Dark tab'}</b></button>
       </nav>
       <aside class="play-panel" data-r="panel" ${panel.open ? '' : 'hidden'}>
         <div class="pp-head"><div class="segtabs three pp-tabs">${[['study', 'Study'], ['custom', 'Customize'], ['log', 'Log tempo']].map(([k, l]) => `<a href="javascript:void 0" data-ptab="${k}" class="${panel.tab === k ? 'on' : ''}">${l}</a>`).join('')}</div>
@@ -324,7 +327,7 @@ export function mountPlay(root, { navigate, ctx = null }) {
     if (tool && tool.setTheme) tool.setTheme(p.settings.tabTheme);
     root.querySelector('.play').classList.toggle('tab-light', p.settings.tabTheme === 'light');
     const t = root.querySelector('[data-rail="theme"]'); const dark = p.settings.tabTheme !== 'light';
-    if (t) t.innerHTML = `<span>${dark ? '☀' : '☾'}</span><b>${dark ? 'Light tab' : 'Dark tab'}</b>`;
+    if (t) t.innerHTML = `<span>${icon(dark ? 'sun' : 'moon')}</span><b>${dark ? 'Light tab' : 'Dark tab'}</b>`;
     drawPanel();
   }
   const onChange = e => {

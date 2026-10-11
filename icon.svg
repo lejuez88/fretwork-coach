@@ -1,15 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#1c1a1f"/>
-  <g stroke="#3a343f" stroke-width="10">
-    <line x1="96" y1="140" x2="416" y2="140"/><line x1="96" y1="196" x2="416" y2="196"/><line x1="96" y1="252" x2="416" y2="252"/>
-    <line x1="96" y1="308" x2="416" y2="308"/><line x1="96" y1="364" x2="416" y2="364"/>
+  <!-- SONYX pick mark (Scheme 1 · Amber Stage). The in-app favicon recolors with the chosen scheme. -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffbd45"/><stop offset=".6" stop-color="#d48a10"/></linearGradient>
+    <clipPath id="t"><path d="M-5 -5H105V22L-5 60Z"/></clipPath>
+    <clipPath id="l"><path d="M-5 60L105 22V120H-5Z"/></clipPath>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#0f0d12"/>
+  <g transform="translate(106 92) scale(3)">
+    <path d="M50 105Q45 105 41 99C26 78 6 52 6 33C6 13 27 4 50 4C73 4 94 13 94 33C94 52 74 78 59 99Q55 105 50 105Z" fill="none" stroke="#f5a524" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M50 105Q45 105 41 99C26 78 6 52 6 33C6 13 27 4 50 4C73 4 94 13 94 33C94 52 74 78 59 99Q55 105 50 105Z" clip-path="url(#l)" transform="translate(50 47) scale(.62) translate(-50 -47)" fill="none" stroke="#f5a524" stroke-width="7.5" stroke-linejoin="round"/>
+    <path d="M50 105Q45 105 41 99C26 78 6 52 6 33C6 13 27 4 50 4C73 4 94 13 94 33C94 52 74 78 59 99Q55 105 50 105Z" clip-path="url(#t)" fill="url(#g)" stroke="#f5a524" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M-5 60L105 22" stroke="#0f0d12" stroke-width="5" clip-path="url(#t)"/>
   </g>
-  <g stroke="#ece6da" stroke-width="6" opacity=".55">
-    <line x1="150" y1="110" x2="150" y2="400"/><line x1="200" y1="110" x2="200" y2="400"/><line x1="250" y1="110" x2="250" y2="400"/>
-    <line x1="300" y1="110" x2="300" y2="400"/><line x1="350" y1="110" x2="350" y2="400"/><line x1="400" y1="110" x2="400" y2="400"/>
-  </g>
-  <circle cx="250" cy="224" r="34" fill="#f5a524"/>
-  <circle cx="350" cy="280" r="34" fill="#f5a524"/>
-  <circle cx="150" cy="336" r="34" fill="#f5a524"/>
-  <circle cx="420" cy="92" r="20" fill="#e2483d"/>
 </svg>

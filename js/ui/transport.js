@@ -11,6 +11,7 @@
 //    unit, goal, toggles() → [{k, label, on}], flip(k), status() → {pct, text}, rampText?()}
 import { esc } from '../core/util.js';
 import { clickSoundSelectHTML } from './clicksound.js';
+import { icon } from './icons.js';
 
 const OPEN_KEY = 'fretworkCoach.dockOpen';
 const stack = [];
@@ -42,10 +43,10 @@ function render() {
   b.innerHTML = `
     <div class="tr-prog"><i data-tr="prog"></i></div>
     <div class="inner">
-      <div class="tr-status"><b>${esc(c.name || 'Now playing')}</b><span data-tr="status"></span></div>
+      <div class="tr-status"><b class="tr-name">${esc(c.name || 'Now playing')}</b><span class="tr-sep"> · </span><span data-tr="status"></span></div>
       <div class="tr-main">
-        ${c.restart ? '<button class="kbtn tr-restart" data-tr="restart" aria-label="Back to the start" title="Back to the start">⏮</button>' : ''}
-        <button class="btn ${playing ? 'pause' : 'primary'} tr-play" data-tr="play" aria-label="${playing ? 'Pause' : 'Play'}">${playing ? '❚❚' : '▶'}<span class="tr-pl"> ${playing ? 'Pause' : 'Play'}</span></button>
+        ${c.restart ? `<button class="kbtn tr-restart" data-tr="restart" aria-label="Back to the start" title="Back to the start">${icon('skip-back')}</button>` : ''}
+        <button class="btn ${playing ? 'pause' : 'primary'} tr-play" data-tr="play" aria-label="${playing ? 'Pause' : 'Play'}">${icon(playing ? 'pause' : 'play', 'fill')}<span class="tr-pl"> ${playing ? 'Pause' : 'Play'}</span></button>
         <div class="tr-tempo">
           <button class="kbtn wide-only" data-tr-d="-5">−5</button><button class="kbtn" data-tr-d="-1" aria-label="Slower">−</button>
           <div class="tr-bpm ${goalHit ? 'goal-hit' : ''}" title="${c.goal ? `Goal: ${c.goal} BPM` : ''}"><b data-tr="bpm">${bpm}</b><span>BPM${c.unit ? ' · ' + esc(c.unit) : ''}</span></div>
@@ -53,7 +54,7 @@ function render() {
         </div>
         <input class="tr-range wide-only" type="range" min="${c.min || 30}" max="${c.max || 240}" value="${bpm}" data-tr="range" aria-label="Tempo">
         <button class="kbtn tr-tap wide-only" data-tr="tap">Tap</button>
-        <button class="kbtn tr-more ${optsOpen ? 'on' : ''}" data-tr="more" aria-expanded="${optsOpen}" aria-label="More playback options" title="More options">⋯</button>
+        <button class="kbtn tr-more ${optsOpen ? 'on' : ''}" data-tr="more" aria-expanded="${optsOpen}" aria-label="More playback options" title="More options">${icon('ellipsis')}</button>
       </div>
       <div class="tr-opts" ${optsOpen ? '' : 'hidden'}>
         <input class="tr-range narrow-only" type="range" min="${c.min || 30}" max="${c.max || 240}" value="${bpm}" data-tr="range" aria-label="Tempo">
@@ -76,8 +77,13 @@ function paintStatus() {
   if (!active || !bar) return;
   const s = active.status ? active.status() : null;
   const st = bar.querySelector('[data-tr="status"]'), pr = bar.querySelector('[data-tr="prog"]');
-  if (st) st.textContent = s && s.text ? ' · ' + s.text : '';
+  // When nothing is playing, say how playback is set up (UX fix 6) instead of leaving the line empty.
+  if (st) st.textContent = s && s.text ? s.text : idleText();
   if (pr) pr.style.width = (s && s.pct != null ? s.pct : 0) + '%';
+}
+function idleText() {
+  const on = (active.toggles ? active.toggles() : []).filter(t => t.on).map(t => t.label);
+  return ['Ready', ...on].join(' · ');
 }
 function loop() {
   cancelAnimationFrame(raf);

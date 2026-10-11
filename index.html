@@ -3,22 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#141216">
+<meta name="theme-color" content="#0f0d12">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Fretwork Coach</title>
+<title>SONYX · Guitar Coach</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/theme.css">
+<script>try{var s=localStorage.getItem('fretworkCoach.scheme');if(s&&s!=='1')document.documentElement.setAttribute('data-scheme',s)}catch(e){}</script>
 </head>
 <body>
   <div class="wrap">
     <header class="top">
-      <a class="logo" href="#/"><span class="jewel"></span>Fretwork Coach</a>
-      <a class="top-settings" href="#/settings" aria-label="Settings">⚙</a>
+      <span data-slot="menu"></span>
+      <a class="logo" href="#/" aria-label="SONYX home" data-slot="logo">SONYX</a>
+      <div class="top-actions"><a class="top-settings" href="#/settings" aria-label="Settings" title="Settings" data-slot="settings">⚙</a></div>
     </header>
     <main id="view"></main>
   </div>
@@ -33,7 +36,7 @@
     </div>
   </nav>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <noscript><p style="padding:20px">Fretwork Coach needs JavaScript.</p></noscript>
+  <noscript><p style="padding:20px">SONYX needs JavaScript.</p></noscript>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-# Fretwork Coach
+# SONYX (Fretwork Coach)
 
 An adaptive guitar coach that runs in the browser: onboarding with genre and guitarist pickers, a skill assessment, auto-named courses, a practice dashboard, an accurate tuner, a metronome and a scrolling tab player.
 
@@ -25,7 +25,18 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: a practice page, Trainers, a scales glossary, study notes, color codes and skill trees
+## Latest: Design v2 and the SONYX logo
+
+The look approved in the App Cosmetics thread (decision log in the project doc COSMETICS.md):
+
+- **SONYX logo** (`js/ui/logo.js`): a slanted wordmark with a solid top half and hollow lower half, and a split guitar-pick mark. Both are inline SVG that take the active color scheme; the favicon is repainted to match. Internal names (local storage keys, the Drive file "Fretwork Coach profile.json") are unchanged, so existing profiles and Drive sync keep working.
+- **Color schemes** (`js/ui/scheme.js`, `css/theme.css`): Amber Stage (default), Lime Graphite, Cobalt Night and Studio Mono, all dark. Pick one in Settings → Display; it is saved in the profile and syncs with Drive.
+- **Frosted-glass panels, Space Grotesk + Inter, compact spacing, outline icons** (`css/theme.css`, `js/ui/icons.js`, Lucide, ISC license).
+- **Side drawer** (`js/ui/drawer.js`) replaces the bottom tab bar: the menu button at the top left (also in the practice page's top bar).
+- **Practice page**: the tab is drawn larger (CSS `--tab-zoom`, handled by the tab player so tapping still lands on the right note) and the neck no longer stretches into empty space; on phones the tempo line stays on one line and the side rail shows icons only.
+- **Tune** sits in the header next to Settings; the "This week" strip shows empty days as a baseline and today with a dot; the playback bar says how playback is set up ("Ready · Click · Loop · Count-in") instead of repeating the lesson title.
+
+## Earlier: a practice page, Trainers, a scales glossary, study notes, color codes and skill trees
 
 - **Practice page (`#/play`).** Every "Practice" button opens the lesson on its own page: the tab and player stay fixed on screen and never scroll away. A rail on the right opens a slide-out panel: Study (the concept, why it matters, the theory), Customize (variations, key, tempo, display, light or dark tab), Log tempo, Evaluate this take and Build a master class. Previous / next lesson and "back to the course tree" sit in the top bar. No timer here: timers are only for routines (Build practice routine, or "Timed session" on a course).
 - **Study before you play.** Lessons carry study notes (content files: `S(..., study)`), with facts worked out from the exercise itself and an optional deeper explanation from Claude.

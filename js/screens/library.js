@@ -4,6 +4,7 @@
 // variations, play it with the tab player or metronome, log a result, or queue
 // several into a timed session. Today's guided lesson is on Home.
 import { esc, toast, fmtMinutes } from '../core/util.js';
+import { icon } from '../ui/icons.js';
 import { Store } from '../core/store.js';
 import { DOMAIN_BY_KEY } from '../assessment/engine.js';
 import { CATEGORIES, CATEGORY_BY_ID, libraryEntries, libEntry, libVariations, libSummary, libState, libTarget, edgeVariation, recordLib, Queue, queueItems, levelFor, getLibParams, setLibParams, instanceOf } from '../core/library.js';
@@ -84,8 +85,8 @@ export function mountLibrary(root, { navigate }) {
       </div>
       <aside class="px-side">
         <div class="learn-links">
-          <a class="lib-more-card" href="#/techniques"><span class="lm-ic" aria-hidden="true">🎯</span><span><b>Technique library</b><span class="small muted">Step-by-step paths from beginner to mastery.</span></span><span class="mc-go">›</span></a>
-          <a class="lib-more-card" href="#/artist"><span class="lm-ic" aria-hidden="true">🎸</span><span><b>Artist series</b><span class="small muted">Signature techniques of great players.</span></span><span class="mc-go">›</span></a>
+          <a class="lib-more-card" href="#/techniques"><span class="lm-ic" aria-hidden="true">${icon('target')}</span><span><b>Technique library</b><span class="small muted">Step-by-step paths from beginner to mastery.</span></span><span class="mc-go">›</span></a>
+          <a class="lib-more-card" href="#/artist"><span class="lm-ic" aria-hidden="true">${icon('guitar')}</span><span><b>Artist series</b><span class="small muted">Signature techniques of great players.</span></span><span class="mc-go">›</span></a>
         </div>
         ${masterCardHTML(p)}
       </aside>

@@ -6,6 +6,7 @@
 // The track and the lesson card are mounted once, so re-rendering the rest never
 // stops the music or resets a time you picked.
 import { esc, fmtMinutes, fmtClock, toast } from '../core/util.js';
+import { icon } from '../ui/icons.js';
 import { Store, Practice } from '../core/store.js';
 import { wikiTile, hydrateImages } from '../core/wiki.js';
 import { GENRES, GENRE_BY_ID } from '../data/catalog.js';
@@ -79,8 +80,8 @@ export function mountDashboard(root, { navigate, courseId = null, skillId = null
     return `<section class="card explore">
       <div class="sec-head"><h3>Explore</h3><a class="link small" href="#/practice">Practice →</a></div>
       ${fy ? `<button class="ex-row" data-mc="${esc(fy.topic.id)}">${topicArtHTML(fy.topic.cat, 'sm')}<span class="ex-txt"><span class="label">Master class for you</span><b>${esc(fy.topic.title)}</b></span><span class="mc-go">›</span></button>` : ''}
-      <a class="ex-row" href="#/techniques"><span class="ex-ic" aria-hidden="true">🎯</span><span class="ex-txt"><b>Technique library</b><span class="small muted">Beginner to mastery paths</span></span><span class="mc-go">›</span></a>
-      <a class="ex-row" href="#/artist"><span class="ex-ic" aria-hidden="true">🎸</span><span class="ex-txt"><b>Artist series</b><span class="small muted">Signature techniques of great players</span></span><span class="mc-go">›</span></a>
+      <a class="ex-row" href="#/techniques"><span class="ex-ic" aria-hidden="true">${icon('target')}</span><span class="ex-txt"><b>Technique library</b><span class="small muted">Beginner to mastery paths</span></span><span class="mc-go">›</span></a>
+      <a class="ex-row" href="#/artist"><span class="ex-ic" aria-hidden="true">${icon('guitar')}</span><span class="ex-txt"><b>Artist series</b><span class="small muted">Signature techniques of great players</span></span><span class="mc-go">›</span></a>
     </section>`;
   }
 

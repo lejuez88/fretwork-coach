@@ -1,5 +1,5 @@
-// Quick tuner: a tuning-fork button on every screen. Tapping it pops a small
-// curved meter up above the button (it starts listening right away); tapping
+// Quick tuner: a tuning-fork button in the header. Tapping it pops a small
+// curved meter just below the button (it starts listening right away); tapping
 // the fork again folds it away and stops the mic. Nothing else on the screen
 // is covered or paused, so you can tune and carry on. The button hides on the
 // full tuner in Tools, where it would be redundant.
@@ -50,7 +50,9 @@ export function initTunerFab() {
   fab.setAttribute('aria-controls', 'tunepop'); fab.setAttribute('aria-expanded', 'false');
   fab.innerHTML = `${FORK}<span>Tune</span>`;
   fab.addEventListener('click', () => (pop ? closeQuickTuner() : openQuickTuner()));
-  document.body.appendChild(fab);
+  // Lives in the header next to Settings (UX fix 4), so it never covers content.
+  const actions = document.querySelector('header.top .top-actions');
+  if (actions) actions.insertBefore(fab, actions.firstChild); else document.body.appendChild(fab);
   window.addEventListener('hashchange', syncVisibility);
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && pop) closeQuickTuner(); });
   syncVisibility();
