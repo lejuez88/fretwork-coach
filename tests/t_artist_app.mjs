@@ -100,7 +100,7 @@ console.error = (...a) => { errors.push(a.join(' ')); };
   view().querySelector('[data-band="all"]').click(); await sleep(10);
   const { KB_INDEX } = await import('../js/data/kb.js');
   ok(view().querySelectorAll('.tech-bubble').length === KB_INDEX.length, `all entries listed as bubbles (${view().querySelectorAll('.tech-bubble').length}/${KB_INDEX.length})`);
-  ok([...view().querySelectorAll('.tech-bubble')].every(b => b.querySelector('.tb-dom') && b.querySelector('.lvl-dots i.on.cur') && /kind-(technique|subject|style)/.test(b.className) && /dom-/.test(b.className) && !b.querySelector('.tb-body')), 'bubbles show the area, your level pills (color-coded) and the kind outline, details hidden');
+  ok([...view().querySelectorAll('.tech-bubble')].every(b => b.querySelector('.tb-dom') && b.querySelector('.lvl-dots[class*="lvl-"] i.on') && /kind-(technique|subject|style)/.test(b.className) && /dom-/.test(b.className) && !b.querySelector('.tb-body')), 'bubbles show the area, your level pills (color-coded) and the kind outline, details hidden');
   view().querySelector('.tech-bubble [data-tbopen]').click(); await sleep(10);
   ok(view().querySelectorAll('.tech-bubble.open').length === 1 && view().querySelector('.tech-bubble.open .tb-body a[href^="#/techniques/"]') && view().querySelector('.tech-bubble.open .stage-dots'), 'tapping a bubble shows its details and the path link');
   view().querySelectorAll('.tech-bubble [data-tbopen]')[1].click(); await sleep(10);

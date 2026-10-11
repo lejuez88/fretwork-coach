@@ -173,7 +173,7 @@ pre.tab{background:#0b0a0d;border:1px solid var(--line);border-radius:10px;paddi
 .song .top{display:flex;gap:8px}.song .top input{flex:1}
 
 /* Levels and profile */
-.lv{display:grid;grid-template-columns:96px 1fr 28px;align-items:center;gap:10px;margin:9px 0;font-size:14px}
+.lv{display:grid;grid-template-columns:96px 1fr auto;align-items:center;gap:10px;margin:9px 0;font-size:14px}
 .lv b{font:600 18px var(--head);text-align:right}
 .bar{height:10px;background:#0d0b0f;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--amber-d),var(--amber))}
@@ -1403,7 +1403,7 @@ body.playmode .tunefab{display:none}
 .lv[class*="dom-"] .bar i{background:var(--dc)}
 .lv .lvl-pill{margin-left:8px}
 .lvl-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px}
-.lvl-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--lc);margin-right:5px;vertical-align:-1px}
+.lvl-legend i{display:inline-block;width:14px;height:6px;border-radius:3px;background:var(--lc);margin-right:5px;vertical-align:2px}
 .edgelist .e[class*="dom-"] .e-name{color:var(--dc);font-weight:600}
 /* Technique library: bubbles (area + name; tap for details) */
 .tech-legend{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;margin-top:4px}
@@ -1477,9 +1477,11 @@ body.playmode .tunefab{display:none}
 /* Technique library: the four small level pills, colored by band */
 .lvl-dots{display:inline-flex;gap:3px;align-items:center}
 .lvl-dots i{width:14px;height:6px;border-radius:3px;background:rgba(255,255,255,.12)}
-.lvl-dots i.on{background:var(--lc)}
-.lvl-dots i.cur{box-shadow:0 0 6px var(--lc)}
+.lvl-dots i.on{background:var(--lc);box-shadow:0 0 5px color-mix(in srgb,var(--lc) 55%,transparent)}
+.lvl-num{margin-left:5px;font:700 13px var(--head);color:var(--lc);min-width:14px;text-align:right}
 .tb-head .lvl-dots{grid-row:1;grid-column:2;align-self:center}
 .lvl-key{display:inline-flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
 .lvl-key>span{display:inline-flex;align-items:center;gap:5px}
 .lvl-sw{display:inline-block;width:14px;height:6px;border-radius:3px;background:var(--lc)}
+.lv .lvl-dots{margin-left:8px}
+.edges .lvl-dots,.e .h .lvl-dots{flex:none}

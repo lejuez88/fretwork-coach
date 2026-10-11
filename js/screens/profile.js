@@ -8,7 +8,7 @@ import { wikiTile, hydrateImages } from '../core/wiki.js';
 import { GENRE_BY_ID } from '../data/catalog.js';
 import { domainStatus } from './reassess.js';
 import { mountPracticeHistory } from '../ui/practicehistory.js';
-import { levelPill, KIND_COLORS } from '../ui/colors.js';
+import { levelDots, KIND_COLORS } from '../ui/colors.js';
 
 export function exportProfile(p) {
   const blob = new Blob([JSON.stringify(p, null, 2)], { type: 'application/json' });
@@ -50,7 +50,7 @@ export function mountProfile(root, { navigate, firstRun = false }) {
     <section class="card history" id="history" data-r="history"></section>
     ${q.players.length ? `<section class="card"><h3>Players you’re learning from</h3><div class="pcards">${q.players.map(pl => `<div class="pcard">${wikiTile(pl.wikiTitle || pl.name, pl.name, 'round sm')}<div class="pbody"><b>${esc(pl.name)}</b><div class="muted small">${esc((pl.genres || []).map(g => GENRE_BY_ID[g] ? GENRE_BY_ID[g].name : g).join(' · '))}</div><div class="small">${esc(pl.style || '')}</div></div></div>`).join('')}</div></section>` : ''}
     <section class="card edgelist"><h3>Current edges</h3>
-      ${DOMAINS.map(x => { const dm = d[x.key] || {}; return `<div class="e dom-${x.key}"><div class="h"><span><span class="e-name">${x.name}</span><span class="tag">${esc(dm.basis || '')}</span></span>${levelPill(lv[x.key])}</div>
+      ${DOMAINS.map(x => { const dm = d[x.key] || {}; return `<div class="e dom-${x.key}"><div class="h"><span><span class="e-name">${x.name}</span><span class="tag">${esc(dm.basis || '')}</span></span>${levelDots(lv[x.key], '', { num: true })}</div>
         <div class="muted small">${esc(dm.edge || '')}</div>
         ${dm.lessonNote ? `<div class="small lesson">📈 ${esc(dm.lessonNote)}${dm.assessedLevel != null && dm.assessedLevel !== dm.level ? ` Assessed ${dm.assessedLevel}, now ${dm.level} from lessons.` : ''}</div>` : ''}
         ${x.key !== 'repertoire' && ds[x.key].status !== 'placed' ? `<a class="link small" href="#/reassess/${x.key}">${ds[x.key].status === 'estimated' ? 'Test this area →' : 'Test further →'}</a>` : ''}</div>`; }).join('')}</section>

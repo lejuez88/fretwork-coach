@@ -14,8 +14,8 @@ export const levelBand = lvl => LEVEL_BANDS.find(b => lvl >= b.lo && lvl <= b.hi
 export const domainColor = k => DOMAIN_COLORS[k] || '#a39d93';
 /** A small level pill, colored by band. */
 export const levelPill = (lvl, title = '') => `<span class="lvl-pill lvl-${levelBand(lvl).id}" title="${title || `Level ${lvl}: ${levelBand(lvl).name}`}">${lvl}</span>`;
-/** Four small level pills (one per band: foundations, intermediate, advanced, mastery), filled in band colors up to the player's level. */
-export const levelDots = (lvl, title = '') => {
-  const cur = levelBand(lvl).id;
-  return `<span class="lvl-dots" title="${title || `Level ${lvl}: ${levelBand(lvl).name}`}" aria-label="${title || `Level ${lvl}`}">${LEVEL_BANDS.map(b => `<i class="lvl-${b.id}${lvl >= b.lo ? ' on' : ''}${b.id === cur ? ' cur' : ''}"></i>`).join('')}</span>`;
+/** Four small level pills (one per band: foundations, intermediate, advanced, mastery). Pills up to the player's band light in that band's color; with num, the level number follows. */
+export const levelDots = (lvl, title = '', { num = false } = {}) => {
+  const b = levelBand(lvl), t = title || `Level ${lvl}: ${b.name}`;
+  return `<span class="lvl-dots lvl-${b.id}" title="${t}" aria-label="${t}">${LEVEL_BANDS.map(x => `<i class="${lvl >= x.lo ? 'on' : ''}"></i>`).join('')}${num ? `<b class="lvl-num">${lvl}</b>` : ''}</span>`;
 };

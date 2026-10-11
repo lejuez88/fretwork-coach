@@ -4,7 +4,7 @@
 import { Audio as AudioEngine } from '../core/audio.js';
 import { esc, clamp, shuffle, pick, rand, today, addDays, uid } from '../core/util.js';
 import { GENRE_BY_ID } from '../data/catalog.js';
-import { DOMAIN_COLORS, LEVEL_BANDS, levelBand, levelPill } from '../ui/colors.js';
+import { DOMAIN_COLORS, LEVEL_BANDS, levelBand, levelDots } from '../ui/colors.js';
 
 const U = { esc, clamp, shuffle, pick, rand, today, addDays, uid, pct: s => Math.round(s * 100) + '%' };
 const DOMAINS = [
@@ -640,7 +640,7 @@ const Charts = {
     return s+'</svg>';
   },
   bars(levels){
-    return `<div>${DOMAINS.map(d=>`<div class="lv dom-${d.key}"><span class="lv-name">${d.short}</span><div class="bar"><i style="width:${levels[d.key]*10}%"></i></div>${levelPill(levels[d.key])}</div>`).join('')}</div>
+    return `<div>${DOMAINS.map(d=>`<div class="lv dom-${d.key}"><span class="lv-name">${d.short}</span><div class="bar"><i style="width:${levels[d.key]*10}%"></i></div>${levelDots(levels[d.key], '', { num: true })}</div>`).join('')}</div>
       <div class="lvl-legend small muted">${LEVEL_BANDS.map(b=>`<span><i class="lvl-${b.id}"></i>${b.name} ${b.lo}–${b.hi}</span>`).join('')}</div>`;
   }
 };
