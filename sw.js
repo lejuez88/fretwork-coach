@@ -1,8 +1,8 @@
 // Offline cache for the app shell. Network-first for app files so updates show
 // up on the next load; images from Wikipedia are cached as they are viewed.
-const CACHE = 'fretwork-v2k-23';
+const CACHE = 'fretwork-v2k-24';
 const SHELL = [
-  './', 'index.html', 'css/app.css', 'manifest.json', 'icon.svg',
+  './', 'index.html', 'css/app.css', 'css/theme.css', 'manifest.json', 'icon.svg',
   'js/app.js', 'js/core/util.js', 'js/core/store.js', 'js/core/claude.js', 'js/core/wiki.js', 'js/core/audio.js',
   'js/core/courses.js', 'js/core/track.js', 'js/core/youtube.js', 'js/data/tracks.js', 'js/ui/trackcard.js', 'js/core/importer.js', 'js/ui/importui.js', 'js/core/variations.js', 'js/core/library.js', 'js/screens/library.js', 'js/ui/variationpicker.js', 'js/ui/routinebuilder.js', 'js/ui/tunerfab.js', 'js/ui/topicart.js', 'js/core/usage.js', 'js/data/catalog.js', 'js/assessment/engine.js',
   'js/tools/metronome.js', 'js/tools/pitch.js', 'js/tools/tuner.js', 'js/tools/tabplayer.js', 'js/tools/exercises.js',
@@ -19,7 +19,8 @@ const SHELL = [
   'js/data/kb.js', 'js/data/lib.js', 'js/data/index.js', 'js/core/kbrequests.js', 'js/ui/kbrequest.js', 'js/core/lessoncache.js', 'js/screens/artist.js', 'js/screens/techniques.js', 'js/ui/lessoncards.js', 'js/core/coach.js',
   'js/core/methods.js', 'js/ui/clicksound.js', 'js/ui/practicehistory.js', 'js/ui/transport.js',
   'js/screens/notefinder.js', 'js/screens/scales.js', 'js/data/scaleinfo.js',
-  'js/screens/play.js', 'js/core/record.js', 'js/core/study.js', 'js/ui/colors.js'
+  'js/screens/play.js', 'js/core/record.js', 'js/core/study.js', 'js/ui/colors.js',
+  'js/ui/icons.js', 'js/ui/logo.js', 'js/ui/scheme.js', 'js/ui/drawer.js'
 ];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {

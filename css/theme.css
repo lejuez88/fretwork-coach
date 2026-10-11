@@ -1,0 +1,187 @@
+/* SONYX design layer (approved in the App Cosmetics thread, see COSMETICS.md, "Design v2").
+   Loaded after app.css. Holds: the four dark color schemes, Panel B frosted-glass surfaces,
+   Type B (Space Grotesk + Inter), Spacing S1 (compact, 8-pt grid), the side drawer, the
+   SONYX logo, and UX fixes 1, 3, 4, 5, 6. Every color here is a token, so a scheme change
+   recolors the whole app (and the logo) at once. */
+
+/* ------------------------------------------------------------------ schemes */
+/* Scheme 1 · Amber Stage is the default and lives in app.css :root. */
+:root{--glow1:rgba(245,165,36,.16);--glow2:rgba(140,70,160,.18);--glow3:rgba(194,65,12,.10)}
+:root[data-scheme="2"]{ /* Lime Graphite */
+  --bg:#0d0f10; --panel:#16191b; --panel2:#1d2124; --inset:#090b0c; --line:#2a2f33; --text:#eef1ec; --muted:#98a19b;
+  --accent:#c6f432; --accent-d:#a4d414; --accent-text:#d4ff5a; --btn-top:#d4ff4f; --btn-bot:#b2e61e; --btn-ink:#0f1400;
+  --success:#34d399; --warning:#fbbf24; --danger:#fb6b5b; --meta:#a7e3c9;
+  --glow1:rgba(198,244,50,.16); --glow2:rgba(45,212,191,.18); --glow3:rgba(59,130,246,.10)}
+:root[data-scheme="3"]{ /* Cobalt Night */
+  --bg:#0a0e1a; --panel:#111829; --panel2:#172036; --inset:#070a13; --line:#24304a; --text:#e8eefc; --muted:#94a0bb;
+  --accent:#5b8cff; --accent-d:#3b6cf0; --accent-text:#a3bfff; --btn-top:#6f9bff; --btn-bot:#5585fa; --btn-ink:#050d24;
+  --success:#3ecf8e; --warning:#f5b544; --danger:#ff6b6b; --meta:#b7c5ff;
+  --glow1:rgba(59,108,240,.16); --glow2:rgba(139,92,246,.18); --glow3:rgba(6,182,212,.10)}
+:root[data-scheme="4"]{ /* Studio Mono */
+  --bg:#0b0b0c; --panel:#151516; --panel2:#1c1c1e; --inset:#080809; --line:#2a2a2d; --text:#f4f4f5; --muted:#9b9ba1;
+  --accent:#ff4d3d; --accent-d:#e0342a; --accent-text:#ff8a7d; --btn-top:#f4f4f5; --btn-bot:#dcdce0; --btn-ink:#0b0b0c;
+  --success:#3ddc84; --warning:#ffb020; --danger:#ff3b6b; --meta:#c8c8ce;
+  --glow1:rgba(255,77,61,.16); --glow2:rgba(107,107,120,.18); --glow3:rgba(42,42,48,.10)}
+
+/* ------------------------------------------------- Panel B · frosted glass */
+:root{
+  --glass-bg:linear-gradient(180deg,rgba(255,255,255,.085),rgba(255,255,255,.035)),color-mix(in srgb,var(--panel) 35%,transparent);
+  --glass-border:1px solid rgba(255,255,255,.12);
+  --glass-filter:blur(24px) saturate(160%);
+  --glass-shadow:0 12px 40px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.10);
+  --chrome-bg:color-mix(in srgb,var(--panel) 55%,transparent);
+  --chrome-filter:blur(28px) saturate(170%);
+  --chrome-line:rgba(255,255,255,.10);
+  --inset-bg:color-mix(in srgb,var(--inset) 45%,transparent);
+  --ctl-bg:rgba(255,255,255,.05);
+  --scrim:rgba(0,0,0,.45);
+}
+html,body{background-color:var(--bg)}
+body{background-image:radial-gradient(1100px 760px at 6% -10%,var(--glow1),transparent 62%),radial-gradient(900px 760px at 102% 22%,var(--glow2),transparent 60%),radial-gradient(1100px 820px at 40% 118%,var(--glow3),transparent 62%);background-attachment:fixed}
+.card,.topic,.lib-more-card,.streak-badge,.slimnote{background:var(--glass-bg);border:var(--glass-border);box-shadow:var(--glass-shadow);-webkit-backdrop-filter:var(--glass-filter);backdrop-filter:var(--glass-filter)}
+.card,.topic,.lib-more-card{border-radius:var(--radius)}
+.slimnote{border-radius:14px}
+.askcard,.mc-foryou{box-shadow:var(--glass-shadow),0 0 0 1px var(--accent-soft)}
+.mc-foryou{background:linear-gradient(135deg,var(--accent-soft),transparent 70%);border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.explore .ex-row,.course,.mc-rec,.askbox,.topic-body .librow,.pcard,.routine-cta .also,.wk-col,.pblock,.segtabs{background:var(--inset-bg);border-color:color-mix(in srgb,var(--line) 70%,transparent)}
+input[type=text],input[type=number],input[type=password],input[type=date],textarea,select,input[type=search].libsearch{background:var(--inset-bg);border-color:var(--line);color:var(--text)}
+.askbox textarea{background:transparent}
+.btn,.kbtn,.tgl,.chip,.seg button,.askchev{background:var(--ctl-bg);border-color:var(--line)}
+.btn.ghost{background:transparent}
+.chip.on,.tgl.on,.seg button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-text)}
+.btn.primary,.playbig{background:linear-gradient(180deg,var(--btn-top),var(--btn-bot));color:var(--btn-ink);border-color:var(--accent-d);box-shadow:0 6px 18px color-mix(in srgb,var(--btn-bot) 30%,transparent),inset 0 1px 0 rgba(255,255,255,.35)}
+.segtabs a.on{background:var(--ctl-bg)}
+#actionbar,#transport,.play-bar,.play-rail,.play-panel,.sheet,.tunepop{background:var(--chrome-bg);-webkit-backdrop-filter:var(--chrome-filter);backdrop-filter:var(--chrome-filter);border-color:var(--chrome-line)}
+.rail-btn.on{color:var(--accent-text);background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 60%,transparent)}
+.wk-col i.done{background:var(--accent)}
+.topic-meta{color:var(--meta)}
+.label,.pp-body h4,.hl,.link,.mc-go,.plan-full summary,button.linkbtn.small,a.linkbtn.small,.routine-cta .linkbtn,.slimnote .go{color:var(--accent-text)}
+.tags span{background:var(--inset-bg);color:var(--muted)}
+
+/* ----------------------------------------- Type B · Space Grotesk + Inter */
+h1,h2,h3,.sechead,.topic-txt b,.pb-title b,.tr-bpm b,.tempo-row b,.wk-sum b,.streak-badge b,.cprog span,.bpm b{font-family:var(--head);font-weight:600;letter-spacing:-.015em}
+.label,.pp-body h4,.plan-sum .ps,.pblock{font-family:var(--head);letter-spacing:.06em;font-weight:500;font-size:11.5px}
+
+/* -------------------------------------------- Spacing S1 · compact, 8-pt */
+body{font-size:15px;line-height:1.45}
+.card{padding:14px 16px;margin-bottom:12px}
+.dash-cols,.practice-cols{gap:0 14px}
+h1{font-size:26px}
+.dash-head{margin-bottom:8px}
+.btn{min-height:44px;padding:9px 14px}
+.btn.sm{min-height:40px}
+.chip{min-height:40px;padding:8px 13px}
+.explore .ex-row{padding:8px;margin-top:6px}
+header.top{padding-bottom:6px}
+
+/* ----------------------------------------------------------- outline icons */
+.ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.25em;flex:none}
+.rail-btn span{display:flex;align-items:center;justify-content:center;height:28px;color:var(--text)}
+.rail-btn span .ic{width:24px;height:24px}
+.rail-btn.on span{color:var(--accent-text)}
+.ex-ic,.lm-ic{display:flex;align-items:center;justify-content:center;color:var(--accent-text)}
+.ex-ic .ic,.lm-ic .ic{width:24px;height:24px}
+.lm-ic{width:44px;height:44px;border-radius:12px;background:var(--inset-bg);flex:none}
+
+/* ------------------------------------------------------------------ header */
+header.top{gap:10px}
+.top-actions{display:flex;align-items:center;gap:6px;margin-left:auto}
+.top-settings{display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border-radius:12px;color:var(--muted)}
+.top-settings:hover{color:var(--text);background:var(--ctl-bg)}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text)}
+
+/* ------------------------------------------------------------- SONYX logo */
+.sx-pick{width:26px;height:29px;flex:none;overflow:visible}
+.sx-word{height:20px;width:auto;flex:none;overflow:visible}
+.sx-word.lg{height:26px}
+
+/* ------------------------------------------------------ Menu A · side drawer */
+#tabbar{display:none!important}
+body.has-tabs .wrap{padding-bottom:40px}
+.menu-btn{flex:none;width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--text);background:var(--chrome-bg);border:1px solid var(--chrome-line);-webkit-backdrop-filter:var(--chrome-filter);backdrop-filter:var(--chrome-filter);cursor:pointer;padding:0}
+.menu-btn .ic{width:22px;height:22px}
+body.playmode .menu-btn.in-header{display:none}
+.play-bar .menu-btn{width:42px;height:42px;border-radius:12px}
+.drawer-scrim{position:fixed;inset:0;z-index:80;background:var(--scrim);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);opacity:0;transition:opacity .2s}
+.drawer{position:fixed;z-index:81;top:0;bottom:0;left:0;width:340px;max-width:86vw;display:flex;flex-direction:column;gap:12px;padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+  color:var(--text);background:var(--chrome-bg);border-right:1px solid var(--chrome-line);border-radius:0 24px 24px 0;-webkit-backdrop-filter:var(--chrome-filter);backdrop-filter:var(--chrome-filter);
+  box-shadow:0 30px 80px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.08);transform:translateX(-104%);transition:transform .22s ease;overflow-y:auto}
+.drawer-open .drawer{transform:none}
+.drawer-open .drawer-scrim{opacity:1}
+.dw-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.dw-head .logo{gap:10px}
+.dw-x{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--ctl-bg);color:var(--text);cursor:pointer;padding:0}
+.dw-search{display:flex;align-items:center;gap:8px;height:42px;padding:0 12px;border-radius:12px;background:var(--inset-bg);border:1px solid var(--line);color:var(--muted)}
+.dw-search input{flex:1;min-width:0;background:transparent!important;border:0!important;padding:0;font:15px var(--body);color:var(--text);outline:none}
+.dw-list{display:flex;flex-direction:column;gap:2px}
+.dw-sec{display:flex;align-items:center;gap:12px;width:100%;padding:8px;border-radius:14px;background:none;border:0;color:var(--text);font:inherit;text-align:left;cursor:pointer;min-height:56px}
+.dw-sec:hover{background:var(--ctl-bg)}
+.dw-sec.on{background:var(--accent-soft)}
+.dw-ico{flex:none;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--inset-bg);border:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
+.dw-ico .ic{width:20px;height:20px}
+.dw-sec.on .dw-ico{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 55%,transparent);color:var(--accent-text)}
+.dw-t{font-weight:600;font-size:15px;line-height:1.2;display:block}
+.dw-d{font-size:12.5px;color:var(--muted);line-height:1.3;margin-top:2px;display:block}
+.dw-chev{margin-left:auto;color:var(--muted);transition:transform .15s}
+.dw-chev .ic{width:18px;height:18px}
+.dw-sec.open .dw-chev{transform:rotate(90deg)}
+.dw-subs{display:none;flex-direction:column;margin:2px 0 6px 56px;border-left:1px solid var(--line)}
+.dw-sec.open+.dw-subs{display:flex}
+.dw-subs a{padding:10px 12px;font-size:14px;color:var(--muted);text-decoration:none;min-height:40px;display:flex;align-items:center}
+.dw-subs a:hover{color:var(--text)}
+.dw-subs a.on{color:var(--accent-text);font-weight:600;border-left:2px solid var(--accent);margin-left:-1px}
+.dw-foot{margin-top:auto;display:flex;gap:8px}
+.dw-foot>*{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--ctl-bg);font:600 14px var(--body);color:var(--text);text-decoration:none;cursor:pointer}
+.dw-foot .ic{width:18px;height:18px}
+.dw-empty{color:var(--muted);font-size:14px;padding:8px}
+
+/* ---------------------------------------- Fix 4 · Tune lives in the header */
+.tunefab{position:static;height:40px;padding:0 14px 0 11px;border-radius:999px;border:1px solid var(--line);background:var(--ctl-bg);color:var(--text);font:600 14px var(--body);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+.tunefab svg{color:var(--accent)}
+body.has-tabs .tunefab,body.has-actions .tunefab,body.has-transport .tunefab{bottom:auto}
+body.tuning .tunefab{border-color:var(--accent);background:var(--accent-soft)}
+.tunepop{top:calc(64px + env(safe-area-inset-top));bottom:auto!important;right:max(16px,calc(50% - 380px + 60px))}
+.tunepop::after{top:-7px;bottom:auto;right:70px;transform:rotate(225deg)}
+@media(max-width:560px){.tunefab{width:40px;padding:0;justify-content:center}.tunefab span{display:none}.tunepop{right:12px}.tunepop::after{right:58px}}
+
+/* ----------------------------------- Fix 5 · "This week" strip baseline */
+.wk-col{background:transparent;border:0;border-bottom:2px solid var(--line);border-radius:6px 6px 2px 2px}
+.wk-day.today .wk-col{border:0;border-bottom:2px solid var(--accent)}
+.wk-day.today span{color:var(--accent-text)}
+.wk-day.today span::after{content:'';display:block;width:5px;height:5px;border-radius:50%;background:var(--accent);margin:3px auto 0}
+
+/* ----------------------------------- Fix 1 · more tab, less empty wood */
+.play-stage .tabplayer .tpneck{flex:none;overflow-x:auto}
+.play-stage .stage-tool>.tabplayer{justify-content:center;gap:6px}
+.play-stage .tp-view{--tab-zoom:1.4}
+
+/* ----------------------------------- Fix 6 · useful playback status line */
+body.playmode .tr-status .tr-name{display:none}
+body.playmode .tr-status [data-tr="status"]{color:var(--muted)}
+.tr-status .tr-idle b{color:var(--text)}
+
+/* ------------------------------------ Fix 3 · phone practice page */
+@media(max-width:560px){
+  .play{--rail-w:58px}
+  .rail-btn b{display:none}
+  .rail-btn{padding:14px 0}
+  .play-stage .stage-meta .tempo-row{flex-wrap:nowrap;gap:6px;font-size:13px;white-space:nowrap}
+  .play-stage .stage-meta .tempo-row b{font-size:17px}
+  .play-stage .stage-tool>.tabplayer{justify-content:flex-start;gap:10px}
+  .play-stage .tp-view{--tab-zoom:1.4}
+  .logo .sx-word{height:17px}
+}
+body:not(.has-tabs) .menu-btn.in-header{display:none}
+.ic.fill{fill:currentColor}
+.tr-main .kbtn .ic,.tr-play .ic{width:20px;height:20px}
+.tr-play{gap:6px}
+body.playmode .tr-status .tr-sep{display:none}
+
+/* ---------------------------------------------- Settings · scheme picker */
+.scheme-pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin:6px 0 12px}
+.sp-opt{display:flex;align-items:center;gap:12px;padding:10px 12px;min-height:56px;border-radius:14px;border:1px solid var(--line);background:var(--inset-bg);color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.sp-opt.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.sp-sw{display:grid;grid-template-columns:repeat(2,14px);gap:3px;flex:none}
+.sp-sw i{width:14px;height:14px;border-radius:4px;border:1px solid rgba(255,255,255,.18)}
+.sp-txt{display:flex;flex-direction:column;gap:1px;min-width:0}
+.sp-txt b{font-size:14.5px}

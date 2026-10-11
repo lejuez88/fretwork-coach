@@ -31,6 +31,10 @@ import { mountTechnique, mountTechniqueIndex } from './screens/techniques.js';
 import { Recorder } from './eval/recorder.js';
 import { Audio as AudioEngine } from './core/audio.js';
 import { applyAudioPrefs } from './ui/audiosetup.js';
+import { applyScheme } from './ui/scheme.js';
+import { initDrawer, menuButtonHTML } from './ui/drawer.js';
+import { logoHTML } from './ui/logo.js';
+import { icon } from './ui/icons.js';
 
 const view = () => $('#view');
 let cleanup = null;
@@ -94,6 +98,15 @@ function applySettings() {
   Claude.model = p.settings.model || Claude.model;
   Wiki.enabled = p.settings.wikiImages !== false;
   applyAudioPrefs(p);
+  applyScheme();
+}
+
+/** Header chrome: menu button, SONYX logo, settings icon (Tune is added by the tuner button). */
+function initHeader() {
+  const slot = (k, html, outer) => { const el = document.querySelector(`[data-slot="${k}"]`); if (!el) return; if (outer) el.outerHTML = html; else el.innerHTML = html; };
+  slot('menu', menuButtonHTML('in-header'), true);
+  slot('logo', logoHTML());
+  slot('settings', icon('settings'));
 }
 
 const LIB_FOR_TAB = { 'spider-1234': 'spider', 'penta-box1': 'penta', 'penta-16ths': 'penta', 'gcd-changes': 'open-changes', 'legato-3nps': 'legato', 'blues-shuffle-a': 'shuffle', 'string-skip': 'string-cross', 'sweep-am': 'sweep' };
@@ -190,6 +203,9 @@ function boot() {
     Store.save();
   }
   window.addEventListener('hashchange', route);
+  applyScheme();
+  initHeader();
+  initDrawer();
   initTunerFab();
   route();
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});

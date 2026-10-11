@@ -1,6 +1,7 @@
 // Settings: Claude API key + model, optional YouTube key, audio, images,
 // data import/export, reset. Keys live only in this browser, never in exports.
 import { esc, toast } from '../core/util.js';
+import { schemePickerHTML, setScheme } from '../ui/scheme.js';
 import { Store, BUILD } from '../core/store.js';
 import { Claude, MODELS } from '../core/claude.js';
 import { Wiki } from '../core/wiki.js';
@@ -69,6 +70,8 @@ export function mountSettings(root, { navigate, applySettings }) {
     ${p ? `<section class="card"><h3>Audio input & output</h3><p class="muted small">Used by the tuner and playing evaluations. Pick your audio interface (e.g. a Focusrite Scarlett), amp/pedal USB, or microphone.</p><div data-r="audio"></div></section>` : ''}
     ${p ? `<section class="card">
       <h3>Display</h3>
+      <p class="muted small">Color scheme. It recolors the whole app and the SONYX logo.</p>
+      ${schemePickerHTML()}
       <label class="switch"><input type="checkbox" data-r="wiki" ${p.settings.wikiImages ? 'checked' : ''}> Load artist, song and genre photos (and artist introductions) from Wikipedia</label>
     </section>` : ''}
     <section class="card">
@@ -223,6 +226,11 @@ export function mountSettings(root, { navigate, applySettings }) {
         break;
     }
   };
+  root.addEventListener('click', e => {
+    const b = e.target.closest('[data-scheme]'); if (!b || !b.closest('.scheme-pick')) return;
+    setScheme(+b.dataset.scheme);
+    root.querySelectorAll('.scheme-pick .sp-opt').forEach(o => { const on = o === b; o.classList.toggle('on', on); o.setAttribute('aria-checked', on); });
+  });
   const onChange = e => {
     if (e.target.dataset.r === 'billday') { setBillingDay(e.target.value); renderSpend(); return; }
     if (e.target.dataset.r === 'wiki') { p.settings.wikiImages = e.target.checked; Wiki.enabled = e.target.checked; Store.save(); }

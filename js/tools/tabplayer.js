@@ -155,6 +155,9 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
   let noteEls = [], pickEls = [];
   let lastAct = null, lastChord = -2;
   const xOf = (sys, beat) => PAD + (beat - sys.start) * pxBeat + NOTE_DX;
+  // Display scale for the tab, set from CSS (--tab-zoom on .tp-view; the practice page uses it
+  // to give the tab more room). Drawing stays in tab units; hit-testing and scrolling divide/multiply by it.
+  let Z = 1;
 
   function render() {
     const view = r('view'), track = r('track');
@@ -163,14 +166,15 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
     const TOP = S.picks ? TOP_PICKS : TOP_PLAIN;
     const picks = S.picks ? computePicks(notes, S.pickMode) : null;
     const PICK_Y = TOP - 31;
-    const width = view.clientWidth || 340;
+    Z = parseFloat(getComputedStyle(view).getPropertyValue('--tab-zoom')) || 1;
+    const width = (view.clientWidth || 340) / Z;
     const barPx = pxBeat * beatsPerBar;
     const barsPerLine = S.scroll ? total / beatsPerBar : Math.max(1, Math.floor((width - PAD - 20) / barPx));
     const beatsPerLine = barsPerLine * beatsPerBar;
     for (let start = 0; start < total; start += beatsPerLine) {
       const end = Math.min(total, start + beatsPerLine);
       const w = PAD + (end - start) * pxBeat + 10, h = TOP + ROW * 5 + BOTTOM;
-      let s = `<svg class="tabsvg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Tab">`;
+      let s = `<svg class="tabsvg" width="${Math.round(w * Z)}" height="${Math.round(h * Z)}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Tab">`;
       s += `<rect class="tab-selrect" x="0" y="${TOP - 13}" width="0" height="${ROW * 5 + 22}" rx="6" style="display:none"/>`;
       names.forEach((name, i) => {
         const y = TOP + i * ROW;
@@ -443,7 +447,7 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
     if (!force && performance.now() < S.followUntil) return;
     const view = r('view'), sys = systems[0];
     const { real } = now();
-    const x = sys.el.offsetLeft + 6 + xOf(sys, unsw(real));
+    const x = sys.el.offsetLeft + 6 + xOf(sys, unsw(real)) * Z;
     const target = Math.max(0, x - (view.clientWidth || 340) * 0.3);
     if (Math.abs(view.scrollLeft - target) > 0.5) view.scrollLeft = target;
   }
@@ -546,7 +550,7 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
       if (dy === 0 || (near && dy < bd)) { bd = dy; best = { sys, rc }; if (dy === 0) break; }
     }
     if (!best) return null;
-    const x = cx - best.rc.left;
+    const x = (cx - best.rc.left) / Z;
     return clamp(best.sys.start + (x - PAD - NOTE_DX) / pxBeat, best.sys.start, best.sys.end - EPS);
   }
   function beatOnRuler(cx) {
