@@ -1412,7 +1412,7 @@ body.playmode .tunefab{display:none}
 .chip.dom-chip.on{border-color:var(--dc);color:var(--dc);background:transparent}
 .chip.kind-chip.on{border-color:var(--kc);color:var(--kc);background:transparent}
 .tech-bubbles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin:14px 0 18px;align-items:start;grid-auto-flow:row dense}
-.tech-bubble{border:2px solid var(--kc);border-radius:18px;background:var(--panel);transition:transform .12s,box-shadow .12s}
+.tech-bubble{border:1px solid var(--kc);border-radius:18px;background:var(--panel);transition:transform .12s,box-shadow .12s}
 .tech-bubble:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,.35)}
 .tech-bubble.open{grid-column:span 2;box-shadow:0 8px 26px rgba(0,0,0,.4)}
 .tb-head{appearance:none;display:grid;grid-template-columns:1fr auto;gap:4px 8px;width:100%;padding:12px 14px;background:none;border:0;text-align:left;color:var(--text);font:inherit;cursor:pointer}
