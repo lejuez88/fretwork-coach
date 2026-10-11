@@ -1412,16 +1412,24 @@ body.playmode .tunefab{display:none}
 .chip.dom-chip.on{border-color:var(--dc);color:var(--dc);background:transparent}
 .chip.kind-chip.on{border-color:var(--kc);color:var(--kc);background:transparent}
 .tech-bubbles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin:14px 0 18px;align-items:start;grid-auto-flow:row dense}
-.tech-bubble{border:1px solid var(--kc);border-radius:18px;background:var(--panel);transition:transform .12s,box-shadow .12s}
+.tech-bubble{border:1px solid color-mix(in srgb,var(--kc) 70%,transparent);border-radius:18px;background:var(--panel);transition:transform .12s,box-shadow .12s}
 .tech-bubble:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,.35)}
-.tech-bubble.open{grid-column:span 2;box-shadow:0 8px 26px rgba(0,0,0,.4)}
-.tb-head{appearance:none;display:grid;grid-template-columns:1fr auto;gap:4px 8px;width:100%;padding:12px 14px;background:none;border:0;text-align:left;color:var(--text);font:inherit;cursor:pointer}
+.tech-bubble.open{background:color-mix(in srgb,var(--kc) 12%,var(--panel));border-color:var(--kc);box-shadow:0 8px 26px rgba(0,0,0,.4)}
+.tb-detail{grid-column:1 / -1;position:relative;border:1px solid color-mix(in srgb,var(--kc) 70%,transparent);border-radius:16px;background:var(--panel2);padding:14px 16px;animation:tbIn .15s ease-out}
+.tb-detail::before{content:'';position:absolute;top:-7px;left:var(--notch,24px);width:12px;height:12px;background:var(--panel2);border-left:1px solid color-mix(in srgb,var(--kc) 70%,transparent);border-top:1px solid color-mix(in srgb,var(--kc) 70%,transparent);transform:rotate(45deg)}
+.tb-dhead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.tb-dhead .tb-dom{font:700 11px var(--head);text-transform:uppercase;letter-spacing:.12em;color:var(--dc)}
+.tb-dhead b{font:600 18px var(--head);flex:1}
+.tb-detail .tb-body{padding:0}
+@keyframes tbIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.tb-head{appearance:none;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto 1fr;align-content:start;gap:4px 8px;width:100%;height:86px;box-sizing:border-box;padding:12px 14px;background:none;border:0;text-align:left;color:var(--text);font:inherit;cursor:pointer}
 .tb-head .tb-dom{font:700 11px var(--head);text-transform:uppercase;letter-spacing:.12em;color:var(--dc)}
 .tb-head .lvl-pill{grid-row:1;grid-column:2}
-.tb-head b{grid-column:1 / -1;font:600 16px var(--head);line-height:1.25}
+.tb-head b{grid-column:1 / -1;font:600 16px var(--head);line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@media(min-resolution:2dppx){.tech-bubble{border-width:.5px;border-color:var(--kc)}}
 .tb-body{padding:0 14px 14px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
 .tb-body .btn{margin-top:4px}
-@media(max-width:560px){.tech-bubbles{grid-template-columns:repeat(2,minmax(0,1fr))}.tech-bubble.open{grid-column:1 / -1}.tb-head b{font-size:14px}}
+@media(max-width:560px){.tech-bubbles{grid-template-columns:repeat(2,minmax(0,1fr))}.tb-head{height:80px;padding:11px 12px}.tb-head b{font-size:14px}}
 /* Practice hub: exercise library main, learning shortcuts and master classes in a narrow right column */
 .practice-cols{display:flex;flex-direction:column}
 @media(min-width:1000px){
@@ -1485,3 +1493,4 @@ body.playmode .tunefab{display:none}
 .lvl-sw{display:inline-block;width:14px;height:6px;border-radius:3px;background:var(--lc)}
 .lv .lvl-dots{margin-left:8px}
 .edges .lvl-dots,.e .h .lvl-dots{flex:none}
+.tb-stages{display:flex;align-items:center;gap:8px}

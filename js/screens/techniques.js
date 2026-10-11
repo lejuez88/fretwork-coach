@@ -63,25 +63,44 @@ export function mountTechniqueIndex(root, { navigate }) {
       </div>
       ${list.length ? '' : `<section class="card"><p class="muted">Nothing matches${ui.band === 'foryou' ? ' your current levels with these filters' : ''}. Try another level or area.</p></section>`}
       <div class="tech-bubbles">${list.map(t => {
-        const you = yourLevel(p, t), st = stageFor(t, you), arts = artistsUsing(t.id), open = ui.open === t.id;
+        const you = yourLevel(p, t), open = ui.open === t.id;
         return `<div class="tech-bubble kind-${t.kind || 'technique'} dom-${t.domain} ${open ? 'open' : ''}" data-tb="${t.id}">
           <button class="tb-head" data-tbopen="${t.id}" aria-expanded="${open}">
             <span class="tb-dom">${esc(domName(t.domain))}</span>${levelDots(you, `Your ${domName(t.domain).toLowerCase()} level: ${you} (${levelBandName(you)})`)}
             <b>${esc(t.title)}</b>
           </button>
-          ${open ? `<div class="tb-body">
+        </div>`;
+      }).join('')}${detailHTML(list.find(t => t.id === ui.open))}</div>
+      <section class="card" data-r="req">${requestBoxHTML({ title: 'Don’t see it?', hint: 'Name a technique, subject, style or guitarist and it goes into the research queue. New lessons are researched and added every day.' })}</section>`;
+    if (offReq) offReq();
+    offReq = wireRequestBox(root.querySelector('[data-r="req"]'), { navigate });
+    placeDetail();
+  }
+  /** The open bubble's details: a panel across the whole row, under the row that holds the bubble (bubbles stay one size). */
+  function detailHTML(t) {
+    if (!t) return '';
+    const you = yourLevel(p, t), st = stageFor(t, you), arts = artistsUsing(t.id);
+    return `<div class="tb-detail kind-${t.kind || 'technique'} dom-${t.domain}" data-tbdetail="${t.id}">
+      <div class="tb-dhead"><span class="tb-dom">${esc(domName(t.domain))}</span><b>${esc(t.title)}</b><button class="linkbtn small" data-tbopen="${t.id}" aria-label="Close">Close ✕</button></div>
+      <div class="tb-body">
             <p class="small muted">${esc(t.summary)}</p>
-            ${stageDots(t)}
+            <div class="small muted tb-stages">Stages ready ${stageDots(t)}</div>
             <div class="small">${t.complete ? '<span class="ok">Full path</span> · ' : ''}${t.lessons} lesson${t.lessons === 1 ? '' : 's'} · levels ${t.level[0]}–${t.level[1]}${t.kind && t.kind !== 'technique' ? ` · ${esc(t.kind)}` : ''}</div>
             ${st ? `<div class="small fit">Start at: ${esc(TIER_BY_ID[st.tier].name)} (you're at ${you})</div>` : ''}
             ${arts.length ? `<div class="small muted">Used by ${arts.map(a => esc(a.name)).join(', ')}</div>` : ''}
             <a class="btn sm primary" href="#/techniques/${t.id}">Open the path ›</a>
-          </div>` : ''}
-        </div>`;
-      }).join('')}</div>
-      <section class="card" data-r="req">${requestBoxHTML({ title: 'Don’t see it?', hint: 'Name a technique, subject, style or guitarist and it goes into the research queue. New lessons are researched and added every day.' })}</section>`;
-    if (offReq) offReq();
-    offReq = wireRequestBox(root.querySelector('[data-r="req"]'), { navigate });
+      </div>
+    </div>`;
+  }
+  /** Moves the details panel to just after the last bubble in the open bubble's row; again on resize. */
+  function placeDetail() {
+    const grid = root.querySelector('.tech-bubbles'), det = grid && grid.querySelector('.tb-detail'); if (!det) return;
+    const openB = grid.querySelector('.tech-bubble.open'); if (!openB) return;
+    const all = [...grid.querySelectorAll('.tech-bubble')], top = openB.offsetTop;
+    let last = openB; for (const b of all.slice(all.indexOf(openB) + 1)) { if (b.offsetTop !== top) break; last = b; }
+    if (last.nextSibling !== det) last.after(det);
+    const r = openB.getBoundingClientRect(), g = grid.getBoundingClientRect();
+    det.style.setProperty('--notch', `${Math.max(18, r.left - g.left + r.width / 2 - 8)}px`);
   }
   const onClick = e => {
     const tb = e.target.closest('[data-tbopen]');
@@ -91,8 +110,10 @@ export function mountTechniqueIndex(root, { navigate }) {
     setUI(ui); render();
   };
   root.addEventListener('click', onClick);
+  const onResize = () => placeDetail();
+  window.addEventListener('resize', onResize);
   render();
-  return () => { if (offReq) offReq(); root.removeEventListener('click', onClick); };
+  return () => { if (offReq) offReq(); root.removeEventListener('click', onClick); window.removeEventListener('resize', onResize); };
 }
 
 /** #/techniques/<id>: one learning path. */
