@@ -131,10 +131,10 @@ export function mountArtist(root, { navigate, id }) {
   /** The artist's most popular YouTube video: a thumbnail row that plays inline when tapped. */
   let topVid = null, vidPlaying = false, embed = null;
   function videoHTML() {
-    if (!topVid) return `<a class="topvid link-only" href="${esc(popularSearchUrl(a.ytQuery || a.name))}" target="_blank" rel="noopener"><span class="tv-ic" aria-hidden="true">▶</span><span class="tv-txt"><span class="label">Most popular on YouTube</span><span class="small">See ${esc(a.name)}’s most-viewed videos ↗</span></span></a>`;
+    if (!topVid) return `<a class="topvid link-only" href="${esc(popularSearchUrl(a.ytQuery || a.name))}" target="_blank" rel="noopener"><span class="tv-ic" aria-hidden="true">▶</span><span class="tv-txt"><span class="small">See ${esc(a.name)}’s most-viewed videos ↗</span></span></a>`;
     if (vidPlaying) return `<div class="topvid-player" data-r="vidhost"></div><div class="small muted tv-under">${esc(topVid.title)}${topVid.views ? ` · ${esc(fmtViews(topVid.views))}` : ''} · <a class="link" href="${esc(watchUrl(topVid.id))}" target="_blank" rel="noopener">YouTube ↗</a></div>`;
     return `<button class="topvid" data-vid="play"><span class="tv-thumb"><img src="${esc(thumbUrl(topVid.id))}" alt="" loading="lazy" referrerpolicy="no-referrer"><span class="tv-play" aria-hidden="true">▶</span></span>
-      <span class="tv-txt"><span class="label">Most popular on YouTube</span><b>${esc(topVid.title)}</b><span class="small muted">${esc([topVid.channel, fmtViews(topVid.views)].filter(Boolean).join(' · '))}</span></span></button>`;
+      <span class="tv-txt"><b>${esc(topVid.title)}</b><span class="small muted">${esc([topVid.channel, fmtViews(topVid.views)].filter(Boolean).join(' · '))}</span></span></button>`;
   }
   function refreshVideo() {
     const el = root.querySelector('[data-r="video"]'); if (!el) return;
