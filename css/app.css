@@ -1395,7 +1395,7 @@ body.playmode .tunefab{display:none}
   .page-cols{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:0 24px;align-items:start}
   .page-cols .pc-side,.page-cols .pc-main{order:0}
 }
-@media(max-width:999px){.v-artist .page-cols .pc-main{display:contents}.v-artist .page-cols .artist-head{order:0}.v-artist .page-cols .pc-side{order:1}.v-artist .page-cols .songs-card{order:2}}
+@media(max-width:999px){.v-artist .page-cols .pc-main,.v-artist .page-cols .pc-side{display:contents}.v-artist .page-cols .artist-head{order:0}.v-artist .page-cols .nextlesson{order:1}.v-artist .page-cols .side-course{order:2}.v-artist .page-cols .artist-lessons{order:3}.v-artist .page-cols .songs-card{order:4}}
 
 /* Color language: skill areas (.dom-*), kinds of topic (.kind-*), level bands (.lvl-*) */
 .dom-fretting{--dc:#ff8a7a}.dom-picking{--dc:#f5c044}.dom-rhythm{--dc:#6fd3a0}.dom-fretboard{--dc:#7aa7ff}.dom-theory{--dc:#b593ec}.dom-ear{--dc:#5cc4e0}.dom-improv{--dc:#ff9f4a}.dom-repertoire{--dc:#e47ad8}

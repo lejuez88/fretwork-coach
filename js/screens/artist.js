@@ -102,17 +102,17 @@ export function mountArtist(root, { navigate, id }) {
               <div data-r="video">${videoHTML()}</div>
               <div class="chips ah-chips">${chips}</div>
             </div></div>
+          <div class="artist-lessons"><h2 class="sechead">Lessons</h2>${groups.map((g, gi) => lessonGroupHTML(p, lessons, targets, { title: g.unit.title, items: g.items }, gi, { note: unitNoteHTML(g.unit), side: g.unit.path && TIER_BY_ID[g.unit.tier] ? `<span class="chip sm">${esc(TIER_BY_ID[g.unit.tier].name)}</span>` : '' })).join('')}</div>
+        </div>
+        <aside class="pc-side">
+          ${nextArtistHTML()}
+          <section class="card side-course"><h3>${MC_ICON} The whole style as a course</h3><p class="small muted">${lessons.length} lessons at your level, in order, as a master class with progress and reviews.</p>${masterBtn}</section>
           <details class="card songs-card" ${narrow() ? '' : 'open'}><summary><h3>Famous songs</h3><span class="small muted">${a.riffs.length} songs</span><span class="lr-chev" aria-hidden="true">›</span></summary>
             <p class="small muted">Linked, not copied: open the tab on Songsterr, or add the song to My songs, where you can paste a tab and get section-by-section lessons.</p>
             <div class="riffs">${a.riffs.map((r, i) => `<div class="riff"><div><b>${esc(r.title)}</b>${r.artist ? ` <span class="small muted">(${esc(r.artist)})</span>` : ''}<div class="small muted">${esc(r.note)}</div></div>
               <div class="riff-act"><a class="btn sm ghost" href="${esc(bestMatchUrl(r.title, r.artist || a.name))}" target="_blank" rel="noopener">Tab ↗</a>
               <button class="btn sm" data-riff="${i}" ${hasSong(r) ? 'disabled' : ''}>${hasSong(r) ? '✓ In My songs' : '+ My songs'}</button></div></div>`).join('')}</div>
             <p class="small muted">${esc(ARTIST_NOTE)}</p></details>
-        </div>
-        <aside class="pc-side">
-          ${nextArtistHTML()}
-          <section class="card side-course"><h3>${MC_ICON} The whole style as a course</h3><p class="small muted">${lessons.length} lessons at your level, in order, as a master class with progress and reviews.</p>${masterBtn}</section>
-          <div class="artist-lessons"><h2 class="sechead">Lessons</h2>${groups.map((g, gi) => lessonGroupHTML(p, lessons, targets, { title: g.unit.title, items: g.items }, gi, { note: unitNoteHTML(g.unit), side: g.unit.path && TIER_BY_ID[g.unit.tier] ? `<span class="chip sm">${esc(TIER_BY_ID[g.unit.tier].name)}</span>` : '' })).join('')}</div>
         </aside>
       </div>`;
     hydrateImages(root);
@@ -153,7 +153,7 @@ export function mountArtist(root, { navigate, id }) {
   /** The artist lesson the app picks next (easiest unmastered, stalled first), with the reason. */
   function nextArtistHTML() {
     const nx = nextLesson(p, lessons, { label: `the ${a.name} lessons` });
-    if (!nx) return `<section class="card nextlesson"><div class="label">All mastered</div><b>Every ${esc(a.name)} lesson is mastered.</b><p class="small">Keep them fresh in your daily lessons, or learn one of the famous songs below.</p></section>`;
+    if (!nx) return `<section class="card nextlesson"><div class="label">All mastered</div><b>Every ${esc(a.name)} lesson is mastered.</b><p class="small">Keep them fresh in your daily lessons, or learn one of the famous songs.</p></section>`;
     const l = lessons[nx.index];
     return `<section class="card nextlesson"><div class="label">Your next lesson · chosen for you</div>
       <b>${esc(l.ex.name)}</b><p class="small">${esc(l.unit ? l.unit.title + ': ' : '')}${esc(nx.reason)}</p>
