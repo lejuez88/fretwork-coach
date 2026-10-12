@@ -42,19 +42,20 @@ A stage is **full** when it has **3 or more skills and 6 or more lessons**. A pa
 
 Every path should be as thorough as `js/data/kb/pentatonic.js`, the reference. "Complete" is not the goal; this is:
 
-| Stage | Skills | Lessons | Learning methods (distinct) |
-|---|---|---|---|
-| Foundations | 4+ | 8+ | 4+ |
-| Intermediate | 4+ | 10+ | 4+, including retrieval, interleaving or variable practice |
-| Advanced | 4+ | 8+ | 4+, including retrieval, interleaving or variable practice |
-| Mastery | 3+ | 6+ | 3+, including retrieval, interleaving or variable practice |
+| Stage | Skills | Lessons |
+|---|---|---|
+| Foundations | 4+ | 8+ |
+| Intermediate | 4+ | 10+ |
+| Advanced | 4+ | 8+ |
+| Mastery | 3+ | 6+ |
 
 Also, for every path:
+- **Taught the way it's taught:** a `pedagogy` record (see "Teaching method first") with the standard teaching sequence from 3+ recognized sources, and every skill mapped to a step of it. **This comes first.** Depth without it doesn't count.
 - **Use it in music in every stage:** at least one `transfer` lesson per stage (over a groove or progression, call and response, a study), ending in the capstone study in Mastery.
 - **Research on record:** `sources: ['https://…', …]` on the entry, 3+ URLs (reputable lessons, method books' publishers, teachers' articles, analyses) that the model and sequence come from. The log lists them too.
-- **Concept-first:** a concept model and a composer, every lesson tagged with its method, every generator checked in all 12 keys (see "Concept-first lessons").
+- **Correct in every key:** a concept model as code, every generator checked in all 12 keys (see "Teaching method first", step 4).
 
-The validator checks all of this. Its coverage table marks paths that meet the standard (★), warns about complete paths that fall short (with what's missing), and its Artist readiness table counts only paths that meet the standard. **A new artist can't ship until every path it draws from meets the reference standard.**
+The validator checks all of this. Its coverage table marks paths that meet the standard (★: depth, sources and an audited pedagogy), warns about complete paths that fall short (with what's missing), and its Artist readiness table counts only paths that meet the standard. **A new artist can't ship until every path it draws from meets the reference standard.**
 
 Paths that are complete but below the standard (everything built before 2026-10-09, including Paul Gilbert's five) get deepened to it, with priority for the paths artists use. When deepening, add skills that are distinct ideas (new patterns, string sets, rhythms, contexts or combinations), never the same exercise at another tempo.
 
@@ -103,8 +104,8 @@ export default entry({
 An artist course is only as good as the technique courses under it, so an artist is always built in this order. Don't skip or reorder steps, and don't publish the artist early.
 
 1. **Research the artist.** Interviews, the artist's own lessons and instructional material, transcription-based analyses from reputable publications, and teachers who specialize in the style. Identify their **signature techniques** (usually 3–6) and their **style**: the scales, harmony, rhythm feel, tone and phrasing habits that make them recognizable. Record what you found and the URLs in the log, and the URLs in the artist's `sources`.
-2. **Research each technique until it can be generated.** For each signature technique, follow "Concept-first lessons" below: understand the technique well enough to write its concept model and composer, and pick each lesson's learning method from the evidence table. If the technique already has a path, review it against your research and improve it rather than starting over.
-3. **Build a complete course for each technique.** Each technique becomes (or already is) its own knowledge-base path built to **the reference standard** (all four stages at the pentatonic path's depth, varied learning methods, music in every stage, sources on record), with every generator pitch-checked in all 12 keys. These paths are useful on their own: a player can learn the technique without the artist.
+2. **Research each technique until it can be generated.** For each signature technique, follow "Teaching method first" below: research how it is taught (including the artist's own instructional material), record the pedagogy, then write the concept model. If the technique already has a path, review it against your research and improve it rather than starting over.
+3. **Build a complete course for each technique.** Each technique becomes (or already is) its own knowledge-base path built to **the reference standard** (an audited pedagogy, all four stages at the pentatonic path's depth, music in every stage, sources on record), with every generator pitch-checked in all 12 keys. These paths are useful on their own: a player can learn the technique without the artist.
 4. **Only then add the artist.** When every signature technique has a complete path, write the artist file. Its units draw from those paths with `PU` (choose the `tiers` that fit the style), in the order a player should learn them. The only lessons the artist file writes itself are in the closing **"put it together"** unit: original studies in the artist's style that combine the techniques, and improvising over their kind of progression.
 
 The validator enforces this: for any new artist it is an **error** if a signature technique has no path (link it with `{name, path}` when the name alone doesn't find it), if a path it uses doesn't meet the reference standard, if a signature technique isn't taught by a `PU` unit, if a unit other than the last has its own lessons, if `sources` has fewer than 3 URLs, or if it has no `bio`. It also prints an **Artist readiness** table: which paths each artist still needs.
@@ -160,42 +161,79 @@ S('pent-boxes', 'The five boxes', 'fretboard', 'Each box two strings at a time.'
 - The app adds what it can work out itself (the notes the exercise uses and the scale they form, the chord tones, the rhythm, the learning method), so don't repeat those mechanically.
 - The validator warns about skills without study notes. Add them to every new skill, and to the existing paths over the next runs, starting with the paths artists use.
 
-## Concept-first lessons (how every topic is built)
+## Teaching method first (how every topic is built)
 
-Don't write a list of fixed tabs. **Understand the topic well enough to generate its exercises**, then let the code produce them at any key, level and variation. `js/data/kb/pentatonic.js` is the reference implementation: read it before building or deepening any path.
+**Understanding a topic means understanding how it is taught.** Before writing a single lesson, find out how recognized teachers and method books actually teach this topic, and build the path from that. Lessons are the standard drills those sources use, in the order they use them. They are never new inventions made by combining a technique with unrelated tasks.
 
-1. **Research the concept, not just the exercises.** Before writing code, work out:
-   - the facts: the notes, intervals, shapes and fingerings;
-   - how good teachers sequence it, from first contact to mastery;
-   - the common mistakes and the prerequisites;
-   - where it is used in real music.
-   Use several reputable sources and record them in the log.
-2. **Write the concept model as code.** Encode the facts once as data and functions: degrees and labels, shapes or positions (as functions of the key), the techniques it involves, and which notes are chord tones, tensions or bend points. Exercises are derived from the model, never typed in by hand, so they are correct in every key.
-3. **Write a composer with independent dimensions.** For a scale these are shape × sequence × rhythm × key plan × technique × musical context; a chord topic might use voicing × string set × inversion × progression × rhythm. One exercise is one choice along each dimension (`compose(c, spec)` in pentatonic.js). New lessons are new specs, not new code, and every lesson scales with `c.lvl`.
-4. **Choose each lesson for a learning method and tag it.** Set `method` on the exercise (generators), or wrap atoms and reused generators with `M('method', entry)` from `js/data/lib.js`. The app shows the method on the lesson card and explains it, with its evidence, on the path page.
+### 1. Research the pedagogy
 
-| `method` | Use it for | Evidence (honest strength) |
+Use **3 or more recognized sources** that teach this exact topic. Pick them by reputation, and prefer sources that show the actual teaching sequence:
+- established method books and their publishers (Hal Leonard, Berklee Press, Mel Bay, Alfred);
+- recognized teachers' courses and lesson series (for example JustinGuitar, Troy Grady's *Cracking the Code* for picking mechanics, Fender Play, TrueFire and Guitar World lessons by named instructors);
+- the artist's own instructional material for a signature technique (Paul Gilbert's *Intense Rock*, Guthrie Govan's *Creative Guitar*, Eric Johnson's *Total Electric Guitar*, and so on).
+
+From them, write down:
+- **the sequence:** the order the topic is taught in, from first contact to mastery, as the sources agree on it. Where they disagree, follow the majority and note the difference.
+- **the drills:** the standard exercise formats for each step. For vibrato: the supported-finger wrist motion on one note, slowly, then measured vibrato against a click (quarters, 8ths, triplets), then matching a pitch target, then vibrato on bent notes. For alternate picking: tremolo on one string, then string changes, then scale fragments and sequences.
+- **the common mistakes** and the prerequisites.
+
+### 2. Record it as the entry's `pedagogy`
+
+```js
+pedagogy: {
+  date: '2026-10-13',          // the day it was researched; change it whenever the path is rebuilt
+  summary: 'How the topic is usually taught, in one or two sentences.',
+  sequence: [                  // the standard teaching order, from the sources
+    { id: 'motion', tier: 'foundations', step: 'The wrist-rotation motion on one supported note',
+      how: 'Third finger on the G string, first and second fingers behind it; rotate from the wrist, slowly.', skills: ['vib-motion'], source: 0 },
+    { id: 'measured', tier: 'intermediate', step: 'Measured vibrato against a click', how: '…', skills: ['vib-measured'], source: 1 },
+    …
+  ],
+  drills: ['Measured vibrato in quarters, 8ths and triplets', 'Pitch-target vibrato (bend to the note above, back)', …],
+  mistakes: ['Vibrato from the finger instead of the wrist', '…'],
+  sources: [{ title: 'Vibrato lessons', author: 'Justin Sandercoe (JustinGuitar)', url: 'https://…' }, …]   // 3+; a book needs title and author, a web page a url
+}
+```
+
+Rules the validator enforces (errors for new and rebuilt paths, warnings for paths still waiting for their audit):
+- 3+ steps in `sequence`, each with `id`, `tier`, `step`, `how` and the `skills` that teach it;
+- **every skill of every stage is listed under a step**, and every listed skill exists;
+- 3+ `drills` and 3+ `sources`.
+
+### 3. Build the skills from the sequence
+
+- Each skill teaches one step, with the drill formats the sources use for it. A skill name says what is practiced ("Measured vibrato against a click"), not a learning method.
+- **Don't combine tasks the sources don't combine.** No singing, naming degrees or recalling shapes inside a technique drill unless a source teaches it that way. Ear training and theory belong in their own paths (or a clearly separate skill in a subject path), not bolted onto a technique.
+- Keep keys, positions and contexts conventional for the topic: what the sources use first (often the key and position most teachers start in), then move to other keys and positions at the point the sources do.
+- Every stage still ends with musical use: playing it over a groove or progression, or in an original study, the way the sources apply it.
+
+### 4. Make it correct in every key
+
+Write the facts once as code (notes, intervals, shapes and fingerings as functions of the key; see `js/data/kb/pentatonic.js` for a concept model), derive every exercise from it, and build every generator in all 12 keys at every level of its stage, checking every pitch. Combine dimensions (shape × rhythm × key × context) only into formats your sources name.
+
+### 5. Practice methods are optional tags, not a quota
+
+Research on practice (below) is about **how to practice** a drill: tempo ladders, clean repetitions, spaced review, mixing keys in later stages. You may tag a lesson with the one that fits (`method` on the exercise, or `M('method', entry)`), and the app shows it, but **no stage needs a set number of methods**, and a method is never a reason to invent a drill.
+
+| `method` | What it means in practice | Evidence |
 |---|---|---|
-| `edge` | Climbing toward a goal at 70–85% clean | Deliberate practice (Ericsson et al. 1993); the % is a rule of thumb |
-| `accurate-reps` | Clean repetitions counted, not minutes | Duke, Simmons & Cash 2009 (music, correlational) |
+| `edge` | Climbing toward a goal at 70–85% clean | Deliberate practice (Ericsson et al. 1993) |
+| `accurate-reps` | Clean repetitions counted, not minutes | Duke, Simmons & Cash 2009 |
 | `chunking` | Small pieces joined; isolating the hard spot | Duke et al. 2009 |
-| `retrieval` | Recalling from memory: roots, degrees, shapes, keys named on the spot | Roediger & Karpicke 2006 (strong, mostly outside music) |
-| `interleaving` | Mixing keys, positions or patterns instead of repeating one | Carter & Grahn 2016 (music, small); contextual interference (motor learning, strong) |
-| `variable` | The same idea in many sequences, rhythms and positions | Schema theory and motor-learning research |
-| `spacing` | Spaced review (the app schedules it; tag review-style lessons) | Cepeda et al. 2006 (very strong) |
-| `external-focus` | Instructions about the sound (pitch, evenness, tone), not the fingers | Duke, Cash & Allen 2011 (music); Wulf 2013 review |
-| `audiation` | Sing or hear it before playing; echo by ear | Gordon's Music Learning Theory (teaching approach, less experimental evidence) |
-| `transfer` | The skill inside real music: grooves, progressions, call and response, original études | Practice-specificity principle |
+| `interleaving` | Mixing keys or positions once the drill is secure | Carter & Grahn 2016; contextual interference |
+| `spacing` | Spaced review (the app schedules it) | Cepeda et al. 2006 |
+| `external-focus` | Instructions about the sound, not the fingers | Wulf 2013 review |
+| `transfer` | The skill inside real music | Practice-specificity principle |
 
-5. **Build every stage from a mix of methods.**
-   - Foundations: chunking, accurate repetitions, retrieval and hearing it first, plus first music.
-   - Intermediate: variable practice and interleaving, with focus on the sound for expressive technique.
-   - Advanced: interleaving across the neck and all keys, retrieval under time, phrasing.
-   - Mastery: unpredictable interleaving (random access), performance tempo (edge), and a capstone: an original study that uses the whole skill, which the player then rewrites as their own.
-   - Every stage's last skill is musical use (`transfer`).
-6. **Verify the model.** Build every generator in all 12 keys (or every relevant key) at every level of its stage, and check every note's pitch against the concept model. The pentatonic check built 924 exercises with 0 out-of-key notes; aim for the same. The validator warns about untagged lessons.
+### The pedagogy audit (every existing path and artist)
 
-When deepening an older path, rebuild it this way rather than adding more one-off tabs.
+Every path and artist built before 2026-10-13 was built to an older rule that required a mix of learning methods in every stage, and some of its lessons don't match how the topic is taught. Each one gets audited:
+1. Research the pedagogy (steps 1–2) and add the `pedagogy` record.
+2. Compare every skill and lesson to it. **Keep** what matches a standard drill, **rewrite** what is a standard drill done oddly, and **remove** what no source teaches (method-driven combinations such as vibrato plus degree recall, or singing inside a picking drill).
+3. Fill the gaps the sequence shows, keeping the depth standard.
+4. Set `pedagogy.date` to the day of the rebuild. Courses built from the path then offer the player a rebuild.
+
+The validator's **Pedagogy audit** table lists the paths still waiting. Audit order: paths used by artists (Artist series pages show them first), then fundamentals (alternate picking, vibrato, bending, legato, pentatonic, slides), then the rest. An artist's own "put it together" unit gets the same audit against the artist's own instructional material and transcription-based analyses.
 
 ## Writing a generator
 
@@ -273,20 +311,21 @@ The queue has three sections. Every run keeps them up to date.
 2. **Player requests first.** For each new request:
    - **Technique, subject or style:** create its knowledge-base entry with at least the foundations and intermediate stages full, and the rest started.
    - **Guitarist:** add them to `content/ROSTER.md` as high priority and start "Building an artist: technique-first": research the artist, then build their technique paths. Add the artist page only when every one of their techniques has a complete path; until then, record progress on the roster.
-   - **Artist rebuild** (a request to build an artist's course on researched paths): build or complete each of the artist's technique paths concept-first, then rewrite the artist file so its units draw from those paths with `PU`. Then check every other artist for the same techniques and switch them to `PU` as well.
-3. **Depth.** Bring paths up to the reference standard. Each run must leave **at least two more paths meeting the standard** (★ in the coverage table) than before. Priority order:
+   - **Artist rebuild** (a request to build an artist's course on researched paths): build or complete each of the artist's technique paths teaching-method-first, then rewrite the artist file so its units draw from those paths with `PU`. Then check every other artist for the same techniques and switch them to `PU` as well.
+3. **Pedagogy audit first.** Until the validator's Pedagogy audit table is empty, audit **at least two paths per run** (or one path and one artist's own unit), in the audit order, before any other depth work. A run that only adds new topics while audits are waiting is incomplete.
+4. **Depth.** Bring paths up to the reference standard. Each run must leave **at least two more paths meeting the standard** (★ in the coverage table) than before. Priority order:
    - paths players requested;
    - paths that artists need (see the validator's **Artist readiness** table): first the paths of the artist being built, then the paths the older artists are missing;
    - fundamentals every guitarist needs: alternate picking, legato, bending, vibrato, chord changes, barre chords, strumming, palm muting, fretboard knowledge, timing.
-4. **Artists, technique-first.** Every other run, work on the next `planned` artist in `content/ROSTER.md` following "Building an artist: technique-first": research the artist, then build or complete their technique paths (as many as the run allows, each one complete). Add the artist file only in the run where the last of their paths is complete. In the runs between, also bring one of the older artists up to the rule when its paths are ready (switch its units to `PU`, add `sources`).
-5. **Discovery.** Research 3–5 topics the library doesn't cover yet and add them to the Discovered section of the queue with a one-line reason and a source. Look at:
+5. **Artists, technique-first.** Every other run, work on the next `planned` artist in `content/ROSTER.md` following "Building an artist: technique-first": research the artist, then build or complete their technique paths (as many as the run allows, each one complete). Add the artist file only in the run where the last of their paths is complete. In the runs between, also bring one of the older artists up to the rule when its paths are ready (switch its units to `PU`, add `sources`).
+6. **Discovery.** Research 3–5 topics the library doesn't cover yet and add them to the Discovered section of the queue with a one-line reason and a source. Look at:
    - the curricula of reputable teaching programs and methods;
    - what learners commonly ask to learn;
    - techniques that the existing artists or paths assume;
    - styles and subjects as well as techniques (for example sight reading, ear training, jazz comping, bossa nova, slide, chicken picking, flamenco rasgueado).
    Build the most valuable discovered topic when time allows.
-6. Run the checks below, update `content/ROSTER.md` and `content/QUEUE.md`, and write a `content/LOG.md` entry (date, what was added and completed, sources, the coverage summary line, validator result).
-7. Commit and push (see below). Finish with a short summary.
+7. Run the checks below, update `content/ROSTER.md` and `content/QUEUE.md`, and write a `content/LOG.md` entry (date, what was added and completed, sources, the coverage summary line, validator result).
+8. Commit and push (see below). Finish with a short summary.
 
 ## Checking your work
 

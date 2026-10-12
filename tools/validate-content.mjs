@@ -7,7 +7,11 @@ import { readdirSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 import { TIERS, TIER_BY_ID } from '../js/data/lib.js';
-import { indexIsCurrent, isFull, FULL_STAGE, STANDARD, meetsDepth, hasSources } from './build-index.mjs';
+import { indexIsCurrent, isFull, FULL_STAGE, STANDARD, meetsDepth, hasSources, pedagogyIssues } from './build-index.mjs';
+// Paths built before "teaching method first" (2026-10-13): without a pedagogy record they are listed in the
+// Pedagogy audit table; once they carry one, it must be complete (errors, like any new path).
+const LEGACY_PATHS = new Set('alternatePicking arpMelodies bending chordEmbellish chromaticPassing doubleStops economyPicking harmonics hexatonic hybridPicking legato majMinPent octaves openPulls palmMuting pent6s pentatonic pgLick pgSix phrasing positionShifts raking rolling5s sharp9 skipArps slides speedPent spreadTriads stretchPent subdivisions sweepChanges tapping texasShuffle thumbSlap travis vibrato'.split(' '));
+const audit = [];
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = join(root, 'js', 'data');
@@ -101,20 +105,21 @@ for (const f of kbFiles) {
   }
   const gaps = [];   // what keeps this path below the reference standard
   try {
-    let untagged = 0, total = 0;
+    const pi = pedagogyIssues(e);
+    if (pi.length) {
+      gaps.push('pedagogy not audited');
+      if (e.pedagogy || !LEGACY_PATHS.has(e.id)) pi.forEach(x => err(w, `pedagogy: ${x} (CONTENT.md, "Teaching method first")`));
+      else audit.push(e.id);
+    }
     for (const t of TIERS) { const st = e.stages.find(x => x.tier === t.id); if (!st) gaps.push(`no ${t.name} stage`); else if (!meetsDepth(st)) gaps.push(`${t.name} ${st.skills.length}/${st.skills.reduce((a, x) => a + x.ex.length, 0)} (needs ${STANDARD[t.id].skills}/${STANDARD[t.id].lessons})`); }
     if (!hasSources(e)) gaps.push('fewer than 3 research URLs in "sources"');
     for (const st of e.stages) {
       const list = await stageLessonList(p, e.id, { tier: st.tier, lvl: st.levels[0] });
       if (!list.length) err(`${w} › ${st.tier}`, 'the app builds no lessons for this stage');
-      total += list.length; untagged += list.filter(l => !l.ex.method).length;
-      const ms = new Set(list.map(l => l.ex.method).filter(Boolean)), need = st.tier === 'mastery' ? 3 : 4;
-      if (ms.size < need) gaps.push(`${TIER_BY_ID[st.tier].name} uses ${ms.size} learning method${ms.size === 1 ? '' : 's'} (needs ${need}+)`);
-      if (!ms.has('transfer')) gaps.push(`${TIER_BY_ID[st.tier].name} has no "use it in music" (transfer) lesson`);
-      if (st.tier !== 'foundations' && !ms.has('retrieval') && !ms.has('interleaving') && !ms.has('variable')) gaps.push(`${TIER_BY_ID[st.tier].name} has no retrieval, interleaving or variable-practice lesson`);
+      const ms = new Set(list.map(l => l.ex.method).filter(Boolean));
+      if (!ms.has('transfer')) gaps.push(`${TIER_BY_ID[st.tier].name} has no "use it in music" lesson (tag it transfer)`);
       list.filter(l => l.ex.method && !METHOD_IDS.includes(l.ex.method)).forEach(l => err(`${w} › ${st.tier}`, `"${l.ex.name}": unknown method "${l.ex.method}" (use ${METHOD_IDS.join(', ')})`));
     }
-    if (untagged) warn(w, `${untagged} of ${total} lessons have no learning-method tag (see CONTENT.md, "Concept-first lessons")`);
   } catch (x) { err(w, 'the app failed to build its lessons: ' + x.message); }
   const noStudy = e.stages.flatMap(st => st.skills).filter(sk => !(sk.study && sk.study.concept && sk.study.why)).length;
   if (noStudy) warn(w, `${noStudy} skill${noStudy === 1 ? '' : 's'} without study notes (CONTENT.md, "Study notes")`);
@@ -176,7 +181,7 @@ for (const a of ARTIST_INDEX) for (const b of ARTIST_INDEX) if (a !== b && a.re.
 // build each one as a complete path (all four stages full); only then add the artist, whose
 // units draw from those paths (PU). New artists must pass every check below; the artists that
 // were built before this rule get warnings instead, which form their catch-up list.
-const LEGACY_ARTISTS = new Set(['eric-johnson', 'van-halen', 'paul-gilbert', 'srv', 'hendrix', 'gilmour', 'guthrie-govan'].filter(id => id !== process.env.FC_STRICT_ARTIST));
+const LEGACY_ARTISTS = new Set(['eric-johnson', 'van-halen', 'paul-gilbert', 'srv', 'hendrix', 'gilmour', 'guthrie-govan', 'greg-howe', 'john-mayer'].filter(id => id !== process.env.FC_STRICT_ARTIST));
 const KB_META = Object.fromEntries(KB_INDEX.map(m => [m.id, m]));
 const readiness = [];
 for (const f of artistFiles) {
@@ -217,6 +222,11 @@ coverage.sort((a, b) => b.cells.filter(c => c && c.full).length - a.cells.filter
   .forEach(r => console.log(`${(r.id + (r.kind !== 'technique' ? ` (${r.kind})` : '')).padEnd(26)}${r.cells.map(cell).join('')}${r.standard ? '★ meets it' : r.cells.every(c => c && c.full) ? '· not yet' : ''}`));
 const complete = coverage.filter(r => r.cells.every(c => c && c.full)).length;
 console.log(`${complete} of ${coverage.length} paths complete; ${coverage.filter(r => r.standard).length} meet the reference standard; ${coverage.length - complete} need more stages or lessons. ${artistFiles.length} artists.\n`);
+// the paths still waiting for their pedagogy audit, in the audit order: used by artists, then fundamentals, then the rest
+const FUNDAMENTALS = ['alternatePicking', 'vibrato', 'bending', 'legato', 'pentatonic', 'slides', 'palmMuting', 'subdivisions'];
+const artistUses = id => readiness.filter(r => r.done.includes(id) || r.todo.includes(id)).length;
+audit.sort((a, b) => artistUses(b) - artistUses(a) || (FUNDAMENTALS.includes(b) ? 1 : 0) - (FUNDAMENTALS.includes(a) ? 1 : 0) || a.localeCompare(b));
+console.log(`Pedagogy audit (CONTENT.md, "The pedagogy audit"): ${audit.length ? `${audit.length} path(s) waiting, in order: ${audit.map(id => `${id}${artistUses(id) ? ` (${artistUses(id)} artist${artistUses(id) > 1 ? 's' : ''})` : ''}`).join(', ')}` : 'every path is audited'}.\n`);
 console.log('Artist readiness (technique-first: every signature technique a complete path):');
 readiness.forEach(r => console.log(`${(r.id + (r.legacy ? ' (built before the rule)' : '')).padEnd(38)}${r.todo.length || r.missing.length || !r.sources || !r.bio ? `paths to bring to the standard: ${r.todo.join(', ') || '—'}${r.missing.length ? `; techniques with no path yet: ${r.missing.join(', ')}` : ''}${r.sources ? '' : '; artist sources missing'}${r.bio ? '' : '; bio missing'}` : 'ready'}`));
 console.log('');

@@ -25,7 +25,15 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: scale positions you can play straight through, and a music-theory test suite
+## Latest: teaching method first (no made-up drills)
+
+- **Content standard (CONTENT.md, "Teaching method first").** Every path records how its topic is actually taught: the standard sequence and drill formats from 3+ recognized method books or teachers (`pedagogy` on the entry), with every skill mapped to a step. Lessons must be those standard drills. The old rule that every stage mix 4+ learning-science methods is gone (it produced drills such as vibrato plus degree recall); practice methods are optional tags now.
+- **Validator.** Checks the pedagogy record (errors for new and rebuilt paths), counts it toward the reference standard (★), and prints a **Pedagogy audit** list of the 36 existing paths, artist-used first. The daily content run audits at least two per run until the list is empty. The index carries `taught` and `taughtOn`.
+- **Path page.** "How it's taught" (the teaching steps for the tier on screen, plus sources) replaces the learning-method list; unaudited paths say they're being checked.
+- **Research first.** The ask box offers researched paths and the theory engine's standard formats only; anything else goes to the research queue with the closest paths shown. "Not what you were looking for?" asks Claude only which topic was meant. Master classes are built only from artists, paths or built-in plans: no Claude-invented plans.
+- **Rebuild offer.** Master classes remember the paths they came from (`kbTaught`); when a path is rebuilt from its pedagogy, the course offers a one-tap rebuild (`rebuiltPaths`).
+
+## Earlier: scale positions you can play straight through, and a music-theory test suite
 
 - **Fix:** the scales tool's positions were 4-fret windows, so playing a position straight up often skipped a degree (A Lydian position 4 skipped the 3rd; 879 of 1,263 positions across all scales and keys skipped something). Positions are now real fingerings: three notes per string for seven-note and eight-note scales, the five boxes for pentatonics, the box plus the blue note for the blues scales, two per string for the whole-tone scale, one finger per fret plus a stretch for chromatic (`scalePositions` in js/core/theory.js).
 - **Fix:** scales are spelled from their degrees, one letter per degree (F♯ Lydian has B♯, not C; the altered scale is C D♭ E♭ F♭ G♭ A♭ B♭) (`spellScale`).

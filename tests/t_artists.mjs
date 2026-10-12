@@ -81,37 +81,16 @@ const pitch = n => STD_LOW[6 - n.s] + n.f;
     ok(t3.kind === 'artist' && t3.units.some(u => u.title === 'Sweep picking'), 'artist + extra topic: ' + t3.units.map(u => u.title).join());
   }
   ok(requestPhrases('covering speed pentatonics, rolling 5s and spread triads').join('|') === 'speed pentatonics|rolling 5s|spread triads', 'phrases');
-  // --- Claude two-phase + cache
+  // --- teaching method first: master classes never ask Claude to invent a plan
   {
     const p = normalize(emptyProfile()); p.domains = { picking: { level: 5 } };
-    const text = 'Yngwie Malmsteen style: sweep arpeggios and harmonic minor runs';
-    const course = createMasterClass(p, { title: text });
-    const calls = []; const orig = Claude.json, ks = Claude.hasKey; Claude.hasKey = () => true;
-    Claude.json = async o => {
-      calls.push(o.maxTokens);
-      if (/OUTLINE/.test(o.content)) return { name: 'Neoclassical Fire', tagline: 'Sweeps and harmonic minor', summary: 'x', required: ['sweep arpeggios', 'harmonic minor runs'],
-        units: [1, 2, 3, 4, 5].map(i => ({ title: 'U' + i, summary: 's', skills: [{ id: 'sk' + i + 'a', title: i === 1 ? 'Sweep arpeggios' : 'Skill ' + i, domain: 'picking', covers: i === 1 ? 'sweep arpeggios' : '', plan: 'p' }, { id: 'sk' + i + 'b', title: 'Harmonic minor runs ' + i, domain: 'fretboard', covers: 'harmonic minor runs', plan: 'p' }] })) };
-      if (/unit 3 of/.test(o.content)) { const { ClaudeError } = await import('../js/core/claude.js'); throw new ClaudeError('cut_off', 'cut'); }
-      const ids = [...o.content.matchAll(/"id":"(sk\d[ab])"/g)].map(m => m[1]);
-      return { skills: ids.map(id => ({ id, exercises: [{ name: 'Ex ' + id, domain: 'picking', startBpm: 60, goalBpm: 120, tab: { step: 0.25, notes: [[1, 5], [1, 8], [2, 5], [2, 8]] } }] })) };
-    };
-    const prog = [];
-    const r = await buildMasterTree(p, course, { onProgress: x => prog.push(x) });
-    ok(r.source === 'claude' && r.tree.units.length === 5, 'two-phase build');
-    ok(calls[0] === 4000 && calls.slice(1).every(m => m <= 7000), 'outline small, units ≤7000 tokens: ' + calls.join());
-    ok(calls.filter(m => m === 6000).length === 1, 'cut-off unit retried short');
-    const u3 = r.tree.units[2].skills; ok(u3.every(s => s.exercises.length), 'cut-off unit filled (from the local lessons)');
-    ok(course.name === 'Neoclassical Fire', 'name from outline');
-    ok(prog[0].step === 'outline' && Math.max(...prog.map(x => x.done || 0)) === 5, 'progress reported ' + JSON.stringify(prog));
-    ok(p.lessonCache.masters.length === 1, 'saved to the lesson cache');
-    // same request again, different wording → no API calls
-    const before = calls.length;
-    const course2 = createMasterClass(p, { title: 'harmonic minor runs and sweep arpeggios, Yngwie Malmsteen style' });
-    const r2 = await buildMasterTree(p, course2);
-    ok(calls.length === before && r2.source === 'cache' && r2.tree.units.length === 5, 'reused from the cache with no API call');
-    // rebuild skips the cache
-    const r3 = await buildMasterTree(p, course2, { fresh: true });
-    ok(calls.length > before && r3.source === 'claude', 'rebuild asks Claude again');
+    let calls = 0; const orig = Claude.json, ks = Claude.hasKey; Claude.hasKey = () => true; Claude.json = async () => { calls++; return {}; };
+    const known = createMasterClass(p, { title: 'Yngwie Malmsteen style: sweep arpeggios and harmonic minor runs' });
+    let r = null, err = null; try { r = await buildMasterTree(p, known); } catch (e) { err = e; }
+    ok(calls === 0 && (r ? r.source !== 'claude' : /research/.test(err.message)), 'a master class is built from researched lessons or not at all, never by Claude: ' + (r ? r.source : err.message));
+    const unknown = createMasterClass(p, { title: 'banjo rolls' });
+    let e2 = null; try { await buildMasterTree(p, unknown); } catch (e) { e2 = e; }
+    ok(calls === 0 && e2 && /research queue/.test(e2.message), 'an unresearched topic: no plan, the research queue instead');
     Claude.json = orig; Claude.hasKey = ks;
   }
   // --- knowledge base: paths, stages, the index

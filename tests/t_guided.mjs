@@ -120,7 +120,7 @@ console.error = (...a) => { errors.push(a.join(' ')); };
   await go('#/techniques/pentatonic'); await sleep(200);
   ok(view().querySelectorAll('.path-stage.missing').length === 0, 'pentatonic path has all four stages');
   ok(true, 'lesson methods show on the practice page');
-  ok(/How this stage teaches/.test(view().textContent) && view().querySelector('.methods details.method'), 'path page explains the methods with evidence');
+  ok(view().querySelector('.how-taught') && !view().querySelector('.methods'), 'path page: “How it’s taught” replaces the learning-method list');
   {
     const { createMasterClass, buildMasterTree, MASTER_BY_ID } = await import('../js/core/master.js');
     const { Claude } = await import('../js/core/claude.js');
@@ -131,6 +131,15 @@ console.error = (...a) => { errors.push(a.join(' ')); };
     Claude.hasKey = ks; Claude.json = js;
     ok(calls === 0 && r.source === 'path' && r.tree.units.length >= 2, `the Pentatonic master class is built from the path, no API (${r.source}, ${r.tree.units.map(u => u.title).join(' | ')})`);
     ok(r.tree.units.flatMap(u => u.skills.flatMap(s => s.exercises)).every(e => e.method), 'every lesson in the class keeps its method');
+    const { rebuiltPaths } = await import('../js/core/master.js');
+    const { KB_BY_ID } = await import('../js/data/kb.js');
+    ok(course.kbTaught && 'pentatonic' in course.kbTaught && rebuiltPaths(course).length === 0, 'the class remembers which path it came from');
+    const was = KB_BY_ID.pentatonic.taughtOn; KB_BY_ID.pentatonic.taughtOn = '2099-01-01';
+    ok(rebuiltPaths(course).map(x => x.id).join() === 'pentatonic', 'when the path is rebuilt from its teaching method, the class offers a rebuild');
+    KB_BY_ID.pentatonic.taughtOn = was;
+    // no improvised master classes: an unresearched topic can't be built
+    const { canBuild } = await import('../js/core/master.js');
+    ok(!canBuild({ title: 'banjo rolls', text: 'banjo rolls' }), 'an unresearched topic can’t be built into a master class (it goes to the research queue)');
     p.courses = p.courses.filter(c => c !== course);
   }
   // --- metronome sound chooser

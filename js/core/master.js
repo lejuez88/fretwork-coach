@@ -1,9 +1,9 @@
 // Master classes: a whole course built around one topic (the modes, playing
 // over changes, sight reading, bends…), for when you know what you want to get
-// better at but not where to start or how to practice it. Claude designs the
-// course when a key is set; otherwise a built-in curriculum is used for the
-// common topics, and any other topic the request parser understands gets a
-// five-step plan (foundations → building → new keys → in music → mastery).
+// better at but not where to start or how to practice it. Built only from what
+// the app has researched: an artist, a learning path, or a built-in curriculum
+// (teaching method first: no improvised plans; other topics go to the research
+// queue). Plans Claude designed before this rule stay in the courses that use them.
 // Also: rotating topic recommendations and a "For you" pick from your weakest
 // areas and the struggles you named.
 import { Claude } from './claude.js';
@@ -698,45 +698,33 @@ export async function buildMasterTree(p, course, { fresh = false, onProgress = (
   const t = (course.topic && course.topic.topicId && MASTER_BY_ID[course.topic.topicId]) || topicFor(text);
   const taken = new Set(p.courses.filter(c => c.id !== course.id).map(c => c.name.toLowerCase()));
   const rename = (name, tagline) => { if (!course.autoName) return; if (name && !taken.has(name.toLowerCase())) course.name = name; if (tagline) course.tagline = tagline; };
+  // which researched paths the plan comes from, and the date each was last rebuilt (courses offer a rebuild when a path is re-researched)
+  const stamp = ids => { course.kbTaught = Object.fromEntries(ids.filter(id => KB_BY_ID[id]).map(id => [id, KB_BY_ID[id].taughtOn || null])); };
   const done = (tree, extra) => { course.tree = tree; course.state = null; return { tree, usedClaude: false, ...extra }; };
 
   // Artists: the built-in Artist Series lessons, no API call
   if (t && t.artist) {
     const tree = await generateMasterLocal(p, course);
-    if (tree) { const a = ARTIST_META_BY_ID[t.artist]; rename(`${a.name} Master Class`, a.blurb); if (course.topic) course.topic.cat = 'artist'; return done(tree, { source: 'artist' }); }
+    if (tree) { const a = ARTIST_META_BY_ID[t.artist]; rename(`${a.name} Master Class`, a.blurb); if (course.topic) course.topic.cat = 'artist'; stamp((ARTIST_INDEX.find(x => x.id === t.artist) || {}).uses || []); return done(tree, { source: 'artist' }); }
   }
   // One topic with a complete learning path in the knowledge base: the path itself, no API call
   const techs = matchTechniques(text);
   if (techs.length === 1 && techs[0].complete && !fresh) {
     const tree = await generateMasterLocal(p, course);
-    if (tree) { rename(`${techs[0].title} Master Class`, techs[0].summary); return done(tree, { source: 'path' }); }
+    if (tree) { rename(`${techs[0].title} Master Class`, techs[0].summary); stamp([techs[0].id]); return done(tree, { source: 'path' }); }
   }
-  // A plan Claude already designed for this request (same or similar words, same level): no API call
-  if (!fresh) {
-    const hit = getMaster(p, text, course.difficulty);
-    if (hit) { hit.tree.generatedAt = Date.now(); hit.tree.fromCache = true; rename(hit.name, hit.tagline); return done(hit.tree, { source: 'cache', cached: true }); }
-  }
-  let tree = null, error = null, usedClaude = false;
-  if (Claude.hasKey()) {
-    try {
-      const r = await generateMasterWithClaude(p, course, { onProgress });
-      tree = r.tree; usedClaude = true;
-      rename(r.name, r.tagline);
-      putMaster(p, text, course.difficulty, { tree: r.tree, name: r.name, tagline: r.tagline });
-    } catch (e) { error = e.message || String(e); }
-  }
-  if (!tree) {
-    tree = await generateMasterLocal(p, course);
-    if (tree) { const n = techniqueName(course, matchTechniques(text)); if (n) rename(n, null); }
-  }
-  if (!tree) throw new Error(error ? `Claude couldn’t build it (${error}), and the built-in plans don’t cover “${course.topic.title}”.` : `The built-in plans don’t cover “${course.topic.title}” yet. Connect Claude in Settings and any topic works, or pick one of the suggested topics.`);
+  // Teaching method first: no improvised plans. A topic without a researched path, an artist or a
+  // built-in plan goes to the research queue instead (the master-class sheet offers that).
+  const tree = await generateMasterLocal(p, course);
+  if (tree) { const n = techniqueName(course, matchTechniques(text)); if (n) rename(n, null); }
+  if (!tree) throw new Error(`“${course.topic ? course.topic.title : text}” hasn’t been researched yet. Add it to the research queue and it will be built from how teachers teach it.`);
+  const usedClaude = false, error = null;
   course.tree = tree; course.state = null;
   return { tree, usedClaude, error, source: usedClaude ? 'claude' : tree.kind === 'path' ? 'path' : 'local' };
 }
 
-/** Can this topic be built right now (Claude connected, or a built-in plan exists)? */
+/** Can this topic be built now: an artist, a researched path or a built-in plan (never an improvised one)? */
 export function canBuild(topic) {
-  if (Claude.hasKey()) return true;
   if (topic.topicId || matchTopic(topic.text || topic.title) || matchTechniques(topic.text || topic.title).length) return true;
   return parseRequest(topic.text || topic.title).topics.length > 0;
 }
@@ -959,4 +947,18 @@ export function pathProgress(p, meta, lessonKeysByTier) {
     const states = keys.map(k => vs[`${k}~base`]).filter(Boolean);
     return [st.tier, { total: st.lessons, practiced: states.filter(x => x.history && x.history.length).length, mastered: states.filter(x => x.mastered).length }];
   }));
+}
+
+/** Researched paths behind a course that have been rebuilt since the course was made: [{id, title}]. */
+export function rebuiltPaths(course) {
+  if (!course) return [];
+  let k = course.kbTaught;
+  if (!k) {
+    // courses made before paths were dated: work out which paths they came from
+    const t = course.topic || {}, art = t.topicId && MASTER_BY_ID[t.topicId] && MASTER_BY_ID[t.topicId].artist;
+    const m = matchTechniques(t.text || t.title || course.style || '');
+    const ids = t.kbId ? [t.kbId] : art ? ((ARTIST_INDEX.find(x => x.id === art) || {}).uses || []) : m.length === 1 ? [m[0].id] : [];
+    k = Object.fromEntries(ids.map(id => [id, null]));
+  }
+  return Object.keys(k).filter(id => KB_BY_ID[id] && KB_BY_ID[id].taughtOn && (!k[id] || KB_BY_ID[id].taughtOn > k[id])).map(id => ({ id, title: KB_BY_ID[id].title }));
 }

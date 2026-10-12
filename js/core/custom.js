@@ -1,9 +1,8 @@
-// "What do you want to work on?" — turns a request in the student's own words
-// into 1–4 measurable exercises at the edge of their ability. The request is
-// parsed first (chord types, voicings, scales, keys, progressions, techniques);
-// Claude writes exercises for it with that reading as a guide, and without a
-// key (or if Claude fails) the theory engine builds them. Generated exercises
-// can be practiced right away, saved, or added to the daily routines.
+// "What do you want to work on?" — turns a request in the student's own words into exercises
+// from what the app has researched: the learning path for that technique (taught the way teachers
+// teach it), or the theory engine's standard formats for scales, chords and progressions. It never
+// improvises drills: a topic that hasn't been researched goes to the research queue, with the
+// closest researched paths offered meanwhile. Claude only helps work out which topic was meant.
 import { Claude } from './claude.js';
 import { uid, today } from './util.js';
 import { DOMAINS, CHORD_SHAPES } from '../assessment/engine.js';
@@ -11,12 +10,10 @@ import { CHORD_MIDI } from './audio.js';
 import { GENRE_BY_ID } from '../data/catalog.js';
 import { EXERCISES } from '../tools/exercises.js';
 import { normalizeExercise } from './coursegen.js';
-import { matchDrills, drillLibrary } from './drills.js';
 import { parseRequest, exercisesForRequest } from './topics.js';
 import { calibratedTarget, newExerciseState, applyResult } from './progression.js';
-import { matchTechniques, matchArtist, loadEntries, stageFor } from '../data/kb.js';
+import { matchTechniques, matchArtist, loadEntries, stageFor, KB_INDEX, KB_BY_ID, ARTIST_INDEX } from '../data/kb.js';
 import { runAtom } from './styles.js';
-import { getRequest, putRequest } from './lessoncache.js';
 
 export const ASK_EXAMPLES = [
   'My bends sound out of tune', 'Faster alternate picking', 'Switching between F and C', 'Funk 16th-note strumming',
@@ -26,52 +23,36 @@ const DOMAIN_KEYS = DOMAINS.map(d => d.key);
 const ROLE_BLOCK = { drill: 'warmup', main: 'stretch', apply: 'music' };
 export const roleBlock = r => ROLE_BLOCK[r] || 'stretch';
 
-function brief(p) {
-  const q = p.questionnaire;
-  const recent = (p.exerciseLog || []).slice(-8).map(e => ({ name: e.name, tempo: e.tempo, goal: e.goalBpm, clean: e.clean }));
-  return {
-    levels: Object.fromEntries(Object.entries(p.domains || {}).map(([k, v]) => [k, { level: v.level, edge: v.edge }])),
-    goals: q.goals, struggles: q.struggles, genres: q.genres.map(g => (GENRE_BY_ID[g] ? GENRE_BY_ID[g].name : g)), players: q.players.map(x => x.name),
-    guitar: q.equipment.guitar, recent
-  };
-}
 const levelFor = (p, domain) => (p.domains && p.domains[domain] ? p.domains[domain].level : 4);
-function tempoInText(text) { const m = String(text).match(/(\d{2,3})\s*bpm/i); return m ? Math.max(30, Math.min(260, +m[1])) : null; }
 
-/** Claude version. Returns {summary, items:[{role, ex}]} */
-async function withClaude(p, text, rejected = null) {
-  const lib = EXERCISES.map(e => ({ libId: e.id, name: e.name, domain: e.domain, level: e.level, goalBpm: e.goalBpm }));
-  const req = parseRequest(text);
-  const hint = { topics: req.topics, chordTypes: req.chordTypes, chords: req.chords, key: req.key ? `${(req.key.minor ? 'minor ' : '')}pc${req.key.pc}` : null, scale: req.scale, progression: req.progression, genre: req.genre };
+/**
+ * Claude works out which topic the player meant (never designs drills): a researched path id when
+ * one fits, else the precise topic name for the research queue. Returns {path, topic, kind, why}.
+ */
+async function identifyWithClaude(p, text, rejected = null) {
+  const paths = KB_INDEX.map(m => ({ id: m.id, title: m.title, aliases: m.aliases, summary: m.summary }));
   const raw = await Claude.json({ feature: 'request',
-    system: 'You are a world-class guitar teacher who designs deliberate-practice exercises at the edge of a student\'s ability (70–85% success). You give exactly what was asked for, never a generic substitute.',
-    content: `The student typed what they want to work on: "${String(text).slice(0, 600)}"
-STUDENT: ${JSON.stringify(brief(p))}
-The app's reading of the request (a hint; correct it if it's wrong): ${JSON.stringify(hint)}${rejected ? `
-The app first offered this from its built-in library, and the student said it was NOT what they meant: "${String(rejected).slice(0, 300)}". Work out what they actually want and design for that.` : ''}
-Design 2–4 exercises that address EXACTLY this request and nothing generic, in order: a focused drill that isolates the core skill ("drill"), the main exercise(s) ("main"), and a musical application ("apply"). Example: "7th chords and inversions" → the four 7th-chord qualities on one root, the inversions of a 7th chord on one string set up the neck, then a ii–V–I using the nearest inversions. Never answer a chord-type or voicing request with basic open-chord changes.
-Rules:
-- Calibrate to the student's level in the relevant domain. startBpm = a tempo they can play cleanly today; goalBpm = mastery tempo.${tempoInText(text) ? ` They mentioned ${tempoInText(text)} BPM: use it as the goal if realistic.` : ''}
-- Original material only (no copyrighted songs or solos). If they name a song, write original drills for its techniques and suggest using the Songs tab for the song itself.
-- Tabs: string 1 = high e, 6 = low E. notes are [string, fret, technique (h|p|/|\\\\|b|~|pm|t or null), beats (note length; default = step)]. Use [0, 0, null, beats] for a rest. Max 48 notes. Use "tuning" (6 MIDI numbers, high string first) only if not standard.
-- Chords: any chord symbol is allowed (Cmaj7, Dm7♭5, G7♯9, C/E, Fadd9…). For voicing-specific work give exact grips in "voicings": [{"name":"Cmaj7/E","frets":"xx2413"}] (frets from low E to high e, x = muted, two-digit frets in parentheses, e.g. "x(10)(10)9(12)x"), in the order they're played. "backing" may use any chord symbols.
-- You may reuse a built-in exercise with "libId" (then omit tab): ${JSON.stringify(lib)}
-- If the request is vague, pick the most likely meaning and say what you assumed in the summary.
-Return JSON: {"summary": "1-2 sentences: what these exercises fix and how they'll know it's working", "exercises":[{"role":"drill|main|apply","name":string,"domain": one of ${JSON.stringify(DOMAIN_KEYS)},"why":string,"instr":string (clear steps),"watch":string,"simplify":string,"unit":string,"level":int 1-10,"startBpm":int,"goalBpm":int,"minutes":int 3-10,"metroMode":"all|backbeat|gap","picking":"alternate|strict|economy|down|fingers|hybrid" (picking-hand approach),"libId": optional,"tab": optional {"step":0.25|0.333|0.5|1,"swing":bool,"tuning": optional,"notes":[...]},"voicings": optional [{"name":string,"frets":string}],"chords": optional [symbols],"backing": optional [symbols],"beatsPerBar": optional int}]}`,
-    maxTokens: 3500
+    system: 'You are an experienced guitar teacher helping a practice app understand what a student wants to learn. You never invent exercises; you only identify the topic.',
+    content: `The student typed: "${String(text).slice(0, 400)}"${rejected ? `
+The app offered "${String(rejected).slice(0, 200)}" and the student said that's NOT what they meant.` : ''}
+The app's researched learning paths: ${JSON.stringify(paths)}
+Its artists: ${JSON.stringify(ARTIST_INDEX.map(a => a.name))}
+If one path teaches exactly what they asked for, return its id. Otherwise return null and name the topic precisely, the way a guitar teacher would title a lesson series on it (e.g. "Diminished scale (half–whole)", "Chicken picking", "Sight reading").
+Return JSON: {"path": id or null, "topic": string, "kind": "technique"|"subject"|"style"|"guitarist", "why": "one short sentence"}`,
+    maxTokens: 400
   });
-  const used = new Set();
-  const items = (raw.exercises || []).slice(0, 4).map(r => {
-    const ex = normalizeExercise({ ...r, id: 'ask-' + (r.name || 'exercise') }, used);
-    if (!ex) return null;
-    if (['all', 'backbeat', 'gap'].includes(r.metroMode)) ex.metroMode = r.metroMode;
-    return { role: ['drill', 'main', 'apply'].includes(r.role) ? r.role : 'main', ex };
-  }).filter(Boolean);
-  if (!items.length) throw new Error('Claude returned no exercises.');
-  return { summary: String(raw.summary || '').slice(0, 400), items };
+  const path = raw && raw.path && KB_BY_ID[raw.path] ? raw.path : null;
+  return { path, topic: String((raw && raw.topic) || text).slice(0, 80), kind: raw && raw.kind ? raw.kind : null, why: raw && raw.why ? String(raw.why).slice(0, 200) : '' };
 }
 
-/** Exercises from the knowledge-base paths (rolling 5s, travis picking…) a request names, from the stage at your level. */
+/** Researched paths whose words overlap the request most (for "the closest the app has"). */
+export function closestPaths(text, n = 3) {
+  const words = String(text).toLowerCase().split(/[^a-z0-9#♯♭]+/).filter(w => w.length > 2 && !['the', 'and', 'for', 'with', 'how', 'want', 'learn', 'play', 'practice', 'better', 'guitar', 'my'].includes(w));
+  if (!words.length) return [];
+  return KB_INDEX.map(m => { const hay = `${m.title} ${(m.aliases || []).join(' ')} ${m.summary}`.toLowerCase(); return { m, score: words.reduce((a, w) => a + (hay.includes(w) ? (m.title.toLowerCase().includes(w) ? 3 : 1) : 0), 0) }; })
+    .filter(x => x.score > 0).sort((a, b) => b.score - a.score).slice(0, n).map(x => x.m.id);
+}
+
 async function techniqueExercises(p, text) {
   const metas = matchTechniques(text);
   if (!metas.length) return null;
@@ -104,28 +85,8 @@ export async function localExercises(p, text) {
     built.items.forEach(it => { it.ex.level = Math.max(1, Math.min(10, it.ex.level || levelFor(p, it.ex.domain))); });
     return { summary, items: built.items, understood: built.understood, matched: true };
   }
-  const genre = p.questionnaire.genres[0] || 'rock';
-  const avg = Math.round(Object.values(p.domains || {}).reduce((a, d) => a + d.level, 0) / Math.max(1, Object.keys(p.domains || {}).length)) || 4;
-  let { label, picks } = matchDrills(text, { level: avg, genre });
-  let summary, matched = picks.length > 0;
-  if (!picks.length) {
-    // Nothing matched: work on their current focus area
-    const focus = (p.focus && p.focus.domain) || 'picking';
-    const D = drillLibrary(levelFor(p, focus), genre);
-    const byDomain = { fretting: D.warm, picking: D.burst, rhythm: D.subdiv, fretboard: D.notes, theory: D.triads, ear: D.ear, improv: D.targets, repertoire: D.strum };
-    picks = [{ role: 'main', raw: byDomain[focus] || D.warm }];
-    summary = `I couldn’t match that to a specific technique, so here’s an exercise for your current focus (${focus}). Add your Claude API key for exercises written for your exact words.`;
-  } else summary = `Exercises for ${label}, set to your level. ${Claude.hasKey() ? '' : 'Add your Claude API key for exercises written for your exact request.'}`.trim();
-  const used = new Set(), goal = tempoInText(text);
-  const items = picks.map(({ role, raw }) => {
-    const ex = normalizeExercise({ ...raw, id: 'ask-' + (raw.id || raw.name) }, used);
-    if (!ex) return null;
-    if (raw.metroMode) ex.metroMode = raw.metroMode;
-    ex.level = Math.max(1, Math.min(10, ex.level || levelFor(p, ex.domain)));
-    if (goal && role === 'main') { ex.goalBpm = goal; ex.startBpm = Math.min(ex.startBpm, goal); }
-    return { role, ex };
-  }).filter(Boolean);
-  return { summary, items, matched };
+  // Nothing researched matches: no improvised drills (teaching method first)
+  return { summary: '', items: [], matched: false };
 }
 
 /**
@@ -136,20 +97,25 @@ export async function generateExercises(p, text, { mode = 'auto', rejected = nul
   text = String(text || '').trim();
   if (!text) return { summary: '', items: [], source: 'none' };
   let out = null, error = null, source = 'local';
-  if (mode === 'claude') {
-    // "Not what you were looking for?": Claude designs for the exact words (and is told what missed)
-    if (!Claude.hasKey()) throw new Error('Add your Claude API key in Settings so Claude can design exercises for exactly what you asked.');
-    out = await withClaude(p, text, rejected); source = 'claude'; putRequest(p, text, out);
-  } else {
-    // 1) the same request answered by Claude before; 2) the app's own library and theory engine when it
-    // recognizes the request (shown with "Not what you were looking for?"); 3) Claude; 4) the closest drills
-    const hit = Claude.hasKey() ? getRequest(p, text) : null;
-    if (hit) { out = { summary: hit.summary, items: hit.items }; source = 'cache'; }
-    else {
-      const local = await localExercises(p, text);
-      if (local.matched || !Claude.hasKey()) out = local;
-      else { try { out = await withClaude(p, text); source = 'claude'; putRequest(p, text, out); } catch (e) { error = e.message; out = local; } }
-    }
+  const local = mode === 'claude' ? { items: [], matched: false } : await localExercises(p, text);
+  if (local.matched) out = local;
+  else if (Claude.hasKey()) {
+    // Claude names the topic: a researched path → its lessons; otherwise → the research queue
+    try {
+      const id = await identifyWithClaude(p, text, rejected);
+      if (id.path) {
+        const tech = await techniqueExercises(p, KB_BY_ID[id.path].title);
+        if (tech) { out = { ...tech, summary: `${id.why ? id.why + ' ' : ''}${tech.summary}` }; source = 'claude'; }
+      }
+      if (!out) out = { summary: '', items: [], matched: false, queue: { text: id.topic, kind: id.kind } };
+    } catch (e) { error = e.message; }
+  }
+  if (!out) out = { summary: '', items: [], matched: false };
+  if (!out.items.length) {
+    out.paths = closestPaths(text);
+    out.queue = out.queue || { text, kind: null };
+    out.summary = `The app teaches only what it has researched, so it won’t make up drills for “${out.queue.text}”.`;
+    source = 'none';
   }
   out.items.forEach(it => {
     it.ex.request = text.slice(0, 200); it.ex.source = 'request';

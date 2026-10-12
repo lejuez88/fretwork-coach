@@ -7,7 +7,7 @@
 import { esc, toast } from '../core/util.js';
 import { Store } from '../core/store.js';
 import { DOMAINS, DOMAIN_BY_KEY } from '../assessment/engine.js';
-import { KB_INDEX, KB_BY_ID, KINDS, TIERS, TIER_BY_ID, artistsUsing, stageFor } from '../data/kb.js';
+import { KB_INDEX, KB_BY_ID, KINDS, TIERS, TIER_BY_ID, artistsUsing, stageFor, loadEntry } from '../data/kb.js';
 import { stageLessonList, techniqueLevelFor, createMasterClass, buildMasterTree, isMaster } from '../core/master.js';
 import { calibratedTarget } from '../core/progression.js';
 import { tierName } from '../core/courses.js';
@@ -128,7 +128,7 @@ export function mountTechnique(root, { navigate, id }) {
   let startStage = stageFor(t, techniqueLevelFor(p, id)) || t.stages[0], startReason = '', chosenByHand = false;
   let tier = startStage.tier, level = Math.min(Math.max(techniqueLevelFor(p, id), startStage.levels[0]), startStage.levels[1]);
   const fitLevel = s => Math.min(Math.max(you, s.levels[0]), s.levels[1]);
-  let lessons = [], targets = [], keysByTier = {}, ready = false, gone = false, building = false;
+  let lessons = [], targets = [], keysByTier = {}, ready = false, gone = false, building = false, full = null;
   const acts = lessonActions(root, { get: () => ({ lessons, targets }), reason: () => `${t.title} path: ${TIER_BY_ID[tier].name}`, title: l => `${t.title}: ${l.ex.name}`, navigate, listTitle: () => t.title });
   const masterFor = () => p.courses.find(c => isMaster(c) && c.status !== 'archived' && c.topic && c.topic.kbId === id) || null;
 
@@ -137,6 +137,7 @@ export function mountTechnique(root, { navigate, id }) {
     return { total: keys.length, mastered: sts.filter(x => x.mastered).length, practiced: sts.filter(x => x.history && x.history.length).length };
   };
   async function load() {
+    try { full = await loadEntry(id); } catch { full = null; }
     // lesson keys for every stage (to show progress), then the selected stage's lessons
     for (const st of t.stages) keysByTier[st.tier] = (await stageLessonList(p, id, { tier: st.tier, lvl: st.levels[0] })).map(l => l.key);
     const ps = pathStage(p, t, progressOf);
@@ -163,12 +164,15 @@ export function mountTechnique(root, { navigate, id }) {
       <b>${esc(l.ex.name)}</b><p class="small">${esc(nx.reason)}</p>
       <div class="row"><button class="btn primary" data-al="practice" data-i="${nx.index}">▶ Start this lesson</button><button class="btn" data-jump="${nx.index}">Show it in the list</button></div></section>`;
   }
-  /** How this stage teaches: the learning methods its lessons use, with the evidence behind each. */
-  function methodsHTML() {
-    const ids = [...new Set(lessons.map(l => l.ex.method).filter(m => methodOf(m)))];
-    if (!ids.length) return '';
-    return `<section class="card methods"><h3>How this stage teaches</h3><p class="small muted">Each lesson uses a practice method with research behind it. Tap one for the evidence.</p>
-      ${ids.map(id => { const m = methodOf(id); return `<details class="method"><summary><b>${esc(m.name)}</b> <span class="small muted">${esc(m.short)}</span></summary><p class="small">${esc(m.detail)}</p><p class="small muted">${esc(m.source)} <i>${esc(m.strength)}</i></p></details>`; }).join('')}</section>`;
+  /** How this topic is taught: the standard teaching steps for this tier, from the sources on record. */
+  function pedagogyHTML() {
+    const pd = full && full.pedagogy;
+    if (!t.taught || !pd) return `<section class="card how-taught pending"><h3>How it’s taught</h3><p class="small muted">This path is being checked against how guitar teachers and method books teach ${esc(t.title.toLowerCase())}. Lessons that don’t match a standard method will be rewritten.</p></section>`;
+    const steps = (pd.sequence || []).filter(x => x.tier === tier);
+    const src = (pd.sources || []).map(x => (typeof x === 'string' ? { url: x, title: x.replace(/^https?:\/\/(www\.)?/, '').split('/')[0] } : x));
+    return `<section class="card how-taught"><h3>How it’s taught</h3><p class="small">${esc(pd.summary || '')}</p>
+      ${steps.length ? `<ol class="ht-steps">${steps.map(x => `<li><b>${esc(x.step)}</b><span class="small muted">${esc(x.how)}</span></li>`).join('')}</ol>` : ''}
+      <details class="small ht-src"><summary>Sources</summary><ul>${src.map(x => `<li>${x.url ? `<a class="link" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title || x.url)}</a>` : `<i>${esc(x.title)}</i>`}${x.author ? `, ${esc(x.author)}` : ''}</li>`).join('')}</ul></details></section>`;
   }
   function render() {
     acts.stop();
@@ -193,7 +197,7 @@ export function mountTechnique(root, { navigate, id }) {
             <h3>${esc(TIER_BY_ID[tier].name)}: ${esc(st.title)}</h3>
             <p class="small"><b>Goal:</b> ${esc(st.goal)}</p>
           </section>` : ''}
-          ${methodsHTML()}
+          ${pedagogyHTML()}
           ${missing.length ? `<section class="card"><h3>Still to come</h3><p class="small muted">${missing.map(x => esc(x.name)).join(', ')} ${missing.length === 1 ? 'stage is' : 'stages are'} being researched and added to this path. The daily research runs fill incomplete paths first.</p></section>` : ''}
           ${arts.length ? `<section class="card"><h3>Players who use it</h3><div class="riffs">${arts.map(a => `<div class="riff"><a class="link" href="#/artist/${a.id}"><b>${esc(a.name)}</b></a><div class="small muted">${esc(a.blurb)}</div></div>`).join('')}</div></section>` : ''}
         </div>

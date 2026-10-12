@@ -22,6 +22,7 @@ import { matchTopic } from '../core/master.js';
 import { gapPromptHTML, onGapClick, saveAndSync } from './kbrequest.js';
 import { openPractice } from '../screens/play.js';
 import { knowledgeGap, addRequest, hasRequest, removeRequest } from '../core/kbrequests.js';
+import { KB_BY_ID } from '../data/kb.js';
 
 const ROLE = { drill: 'Drill', main: 'Main exercise', apply: 'Apply it' };
 const DRAFT_KEY = 'fretworkCoach.askDraft';
@@ -79,7 +80,6 @@ export function mountAskBox(el, { start, courseId = null }) {
       <div class="ask-more">
       <button class="btn ghost sm askmc" data-ask="master">${MC_ICON} Or build a whole master class on it</button>
       ${!result && !busy ? `<div class="chips askchips">${ASK_EXAMPLES.slice(0, 6).map(x => `<button class="chip sm" data-ex="${esc(x)}">${esc(x)}</button>`).join('')}</div>` : ''}
-      ${!Claude.hasKey() ? '<p class="small muted">Without a Claude key, exercises come from the built-in drill library. <a class="link small" href="#/settings">Add key</a></p>' : ''}
       <div data-r="out">${result ? resultHTML() : ''}</div>
       ${saved.length ? `<div class="savedhead"><button class="btn ghost sm" data-ask="toggleSaved">${showSaved ? '▾' : '▸'} Your exercises (${saved.length})</button></div>
         ${showSaved ? `<div class="savedlist">${saved.map((c, i) => exerciseCardHTML(c.ex, { i: 's' + i, target: c.state.target, saved: c, actions: ['practice', 'add', 'remove'] }) + (c.request ? `<p class="small muted askreq">You asked: “${esc(c.request)}”</p>` : '')).join('')}</div>` : ''}` : ''}
@@ -100,11 +100,11 @@ export function mountAskBox(el, { start, courseId = null }) {
     return `<div class="askresult">
       ${result.summary ? `<p class="coach">${result.source === 'claude' || result.source === 'cache' ? '🎯 ' : ''}${esc(result.summary)}</p>` : ''}
       ${result.queued ? `<div class="kbgap done"><b>“${esc(result.queued.text)}”</b> isn’t in the knowledge base yet, so it’s been added to the research queue: it will be researched and built into the app. <button class="linkbtn small" data-ask="unqueue">Undo</button></div>` : ''}
-      ${(result.source === 'local' || result.source === 'cache') && result.items.length ? `<div class="notwhat"><button class="btn sm" data-ask="claude" ${busy ? 'disabled' : ''}>${busy ? '<span class="spinner sm"></span>Asking Claude…' : 'Not what you were looking for?'}</button><span class="small muted">${Claude.hasKey() ? 'Claude will design exercises for exactly what you typed.' : 'Add a Claude key in Settings and Claude will design exercises for exactly what you typed.'}</span></div>` : ''}
-      ${result.source === 'cache' ? '<p class="small muted">♻ Claude designed these for the same request earlier, so they were reused from your saved lessons (no API cost).</p>' : ''}
-      ${result.error ? `<p class="small muted">Claude couldn’t answer (${esc(result.error)}), so these come from the drill library.</p>` : ''}
+      ${result.source === 'local' && result.items.length ? `<div class="notwhat"><button class="btn sm" data-ask="claude" ${busy ? 'disabled' : ''}>${busy ? '<span class="spinner sm"></span>Asking Claude…' : 'Not what you were looking for?'}</button><span class="small muted">${Claude.hasKey() ? 'Claude will work out which topic you meant: a researched path if there is one, otherwise it goes to the research queue.' : 'It goes to the research queue, and it will be built from how teachers teach it.'}</span></div>` : ''}
+      ${result.error ? `<p class="small muted">Claude couldn’t answer (${esc(result.error)}).</p>` : ''}
+      ${(result.paths || []).length ? `<div class="closest"><span class="small muted">Closest paths:</span>${result.paths.map(id => { const m = KB_BY_ID[id]; return m ? `<a class="chip sm" href="#/techniques/${id}">${esc(m.title)} ›</a>` : ''; }).join('')}</div>` : ''}
       ${result.items.map((it, i) => exerciseCardHTML(it.ex, { i, role: it.role, target: it.targetBpm })).join('')}
-      <div class="row"><button class="btn primary" data-ask="practice">▶ Practice ${result.items.length > 1 ? 'these' : 'this'}</button><button class="btn ghost" data-ask="clear">Clear</button></div>
+      <div class="row">${result.items.length ? `<button class="btn primary" data-ask="practice">▶ Practice ${result.items.length > 1 ? 'these' : 'this'}</button>` : ''}<button class="btn ghost" data-ask="clear">Clear</button></div>
     </div>`;
   }
 
@@ -117,7 +117,7 @@ export function mountAskBox(el, { start, courseId = null }) {
     const ta = el.querySelector('[data-r="ask"]'); request = (ta.value || '').trim();
     if (request.length < 3) return toast('Tell me what you’d like to work on.');
     expanded = true; busy = true; result = null; render();
-    try { result = await generateExercises(p, request); if (result) queueIfMissing(result, knowledgeGap(request)); }
+    try { result = await generateExercises(p, request); if (result) queueIfMissing(result, result.queue || knowledgeGap(request)); }
     catch (e) { toast(e.message || 'Could not create exercises.'); }
     busy = false; keep(); render();
     const out = el.querySelector('.askresult'); if (out && out.scrollIntoView) out.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -129,14 +129,14 @@ export function mountAskBox(el, { start, courseId = null }) {
     const r = addRequest(p, { text: gap.text, kind: gap.kind, source: 'ask', note });
     if (r) { res.queued = { id: r.id, text: r.text }; saveAndSync(p); }
   }
-  /** "Not what you were looking for?": Claude designs for the exact words, and the topic is queued for research. */
+  /** "Not what you were looking for?": Claude works out the topic (a researched path, or the research queue). */
   async function askClaude() {
-    if (!Claude.hasKey()) { toast('Add your Claude API key in Settings so Claude can design exercises for exactly what you asked.', 4500); queueIfMissing(result, { text: request, kind: null }, 'The built-in match was not what the player wanted.'); keep(); render(); return; }
+    if (!Claude.hasKey()) { queueIfMissing(result, { text: request, kind: null }, 'The built-in match was not what the player wanted.'); result.summary = `“${request}” is in the research queue: it will be built from how teachers teach it.`; keep(); render(); return; }
     const rejected = result && result.summary;
     busy = true; render();
     try {
       const next = await generateExercises(p, request, { mode: 'claude', rejected });
-      queueIfMissing(next, { text: request, kind: null }, `The built-in match was not what the player wanted: ${String(rejected || '').slice(0, 140)}`);
+      if (!next.items.length) queueIfMissing(next, next.queue || { text: request, kind: null }, `The built-in match was not what the player wanted: ${String(rejected || '').slice(0, 140)}`);
       result = next;
     } catch (e) { toast(e.message || 'Claude couldn’t answer.'); }
     busy = false; keep(); render();

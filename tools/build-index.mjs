@@ -18,11 +18,38 @@ export const FULL_STAGE = { skills: 3, lessons: 6 };
 export const isFull = st => st.skills.length >= FULL_STAGE.skills && lessonsIn(st.skills) >= FULL_STAGE.lessons;
 /**
  * The reference standard (CONTENT.md, "The reference standard"): the depth of the pentatonic path,
- * per stage, plus 3+ research sources on the entry. Methods and musical use are checked by the validator.
+ * per stage, 3+ research sources and an audited pedagogy (pedagogyIssues). Musical use is checked by the validator.
  */
 export const STANDARD = { foundations: { skills: 4, lessons: 8 }, intermediate: { skills: 4, lessons: 10 }, advanced: { skills: 4, lessons: 8 }, mastery: { skills: 3, lessons: 6 } };
 export const meetsDepth = st => { const t = STANDARD[st.tier]; return !!t && st.skills.length >= t.skills && lessonsIn(st.skills) >= t.lessons; };
 export const hasSources = e => Array.isArray(e.sources) && e.sources.filter(x => /^https?:\/\//.test(x)).length >= 3;
+/**
+ * Teaching method first (CONTENT.md): what's wrong with an entry's pedagogy record, [] when it's
+ * complete — the standard teaching sequence (3+ steps, each with the skills that teach it), every
+ * skill mapped to a step, 3+ standard drills and 3+ recognized sources.
+ */
+export function pedagogyIssues(e) {
+  const p = e.pedagogy, out = [];
+  if (!p || typeof p !== 'object') return ['no "pedagogy" record: research how this topic is taught first'];
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(p.date || '')) out.push('pedagogy.date must be YYYY-MM-DD');
+  if (!p.summary) out.push('pedagogy.summary is missing');
+  const seq = Array.isArray(p.sequence) ? p.sequence : [];
+  if (seq.length < 3) out.push(`pedagogy.sequence has ${seq.length} step(s) (needs 3+)`);
+  const tiers = new Set(TIERS.map(t => t.id)), all = new Set(e.stages.flatMap(st => st.skills.map(sk => sk.id))), mapped = new Set();
+  seq.forEach((x, i) => {
+    if (!x || !x.id || !x.step || !x.how) out.push(`pedagogy.sequence[${i}] needs id, step and how`);
+    if (x && !tiers.has(x.tier)) out.push(`pedagogy.sequence[${i}] tier "${x && x.tier}" isn't foundations, intermediate, advanced or mastery`);
+    (x && Array.isArray(x.skills) ? x.skills : []).forEach(id => { if (!all.has(id)) out.push(`pedagogy step "${x.id}" lists unknown skill "${id}"`); mapped.add(id); });
+    if (x && !(Array.isArray(x.skills) && x.skills.length)) out.push(`pedagogy step "${x.id}" lists no skills`);
+  });
+  const loose = [...all].filter(id => !mapped.has(id));
+  if (seq.length && loose.length) out.push(`${loose.length} skill(s) not mapped to a teaching step: ${loose.slice(0, 6).join(', ')}${loose.length > 6 ? '…' : ''}`);
+  if (!Array.isArray(p.drills) || p.drills.length < 3) out.push('pedagogy.drills needs 3+ standard drill formats');
+  const src = Array.isArray(p.sources) ? p.sources.filter(x => (typeof x === 'string' && /^https?:\/\//.test(x)) || (x && ((x.url && /^https?:\/\//.test(x.url)) || (x.title && x.author)))) : [];
+  if (src.length < 3) out.push(`pedagogy.sources has ${src.length} usable source(s) (needs 3+: a url, or a book's title and author)`);
+  return out;
+}
+export const isTaught = e => pedagogyIssues(e).length === 0;
 const reSrc = re => (re instanceof RegExp ? re.toString() : '/(?!)/');
 
 export async function buildIndex() {
@@ -44,8 +71,9 @@ export async function buildIndex() {
   const kbLines = kb.map(({ e }) => {
     const stages = TIERS.map(t => { const st = e.stages.find(s => s.tier === t.id); return st ? { tier: t.id, title: st.title, goal: st.goal, levels: st.levels, skills: st.skills.length, lessons: lessonsIn(st.skills), full: isFull(st) } : null; }).filter(Boolean);
     const complete = TIERS.every(t => { const st = stages.find(s => s.tier === t.id); return st && st.full; });
-    const deep = complete && TIERS.every(t => { const st = e.stages.find(s => s.tier === t.id); return st && meetsDepth(st); }) && hasSources(e);
-    const meta = { id: e.id, kind: e.kind || 'technique', title: e.title, domain: e.domain, level: e.level, summary: e.summary, aliases: e.aliases || [], prereqs: e.prereqs || [], stages, lessons: stages.reduce((a, s) => a + s.lessons, 0), complete, deep };
+    const taught = isTaught(e);
+    const deep = complete && TIERS.every(t => { const st = e.stages.find(s => s.tier === t.id); return st && meetsDepth(st); }) && hasSources(e) && taught;
+    const meta = { id: e.id, kind: e.kind || 'technique', title: e.title, domain: e.domain, level: e.level, summary: e.summary, aliases: e.aliases || [], prereqs: e.prereqs || [], stages, lessons: stages.reduce((a, s) => a + s.lessons, 0), complete, deep, taught, taughtOn: taught ? e.pedagogy.date : null };
     return `  { ...${JSON.stringify(meta)}, re: ${reSrc(e.re)} }`;
   });
   const artistLines = artists.map(({ a }) => {

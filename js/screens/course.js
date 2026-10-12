@@ -10,7 +10,7 @@ import { buildCourseTree, isGenericPlan, generateTreeLocal } from '../core/cours
 import { ensureState, progressPct } from '../core/progression.js';
 import { DOMAIN_BY_KEY } from '../assessment/engine.js';
 import { suggestedDifficulty, tierName } from '../core/courses.js';
-import { isMaster, masterDifficulty } from '../core/master.js';
+import { isMaster, masterDifficulty, rebuiltPaths, buildMasterTree } from '../core/master.js';
 import { topicArtHTML, MC_ICON } from '../ui/mastersheet.js';
 import { Shell } from '../ui/shell.js';
 import { nextInCourse, recommendSession } from '../core/coach.js';
@@ -55,6 +55,9 @@ export function mountCourse(root, { id, navigate }) {
       ${isGenericPlan(c) ? `<section class="card levelup"><div class="label">New: a plan built for ${esc(c.style)}</div>
         <p>This course still uses the old standard plan, which was the same for every style. Rebuild it to get exercises in ${esc(c.style)}’s own keys, rhythms and techniques. Progress on the old exercises resets; your practice time and skill levels are kept.</p>
         <div class="row"><button class="btn primary" data-c="restyle">Rebuild for ${esc(c.style)}</button>${Claude.hasKey() ? '<button class="btn" data-c="rebuild">Have Claude design it</button>' : ''}</div></section>` : ''}
+      ${master && c.tree && rebuiltPaths(c).length ? `<section class="card levelup"><div class="label">New teaching plan</div>
+        <p>${rebuiltPaths(c).map(x => esc(x.title)).join(', ')} ${rebuiltPaths(c).length > 1 ? 'have' : 'has'} been rebuilt from how guitar teachers teach ${rebuiltPaths(c).length > 1 ? 'them' : 'it'}. Rebuild this course to use the new lessons? Your practice time and skill levels are kept; progress on this course’s old exercises starts over.</p>
+        <button class="btn primary block" data-c="kbrebuild">Rebuild with the new lessons</button></section>` : ''}
       ${c.tree ? treeHTML() : `<section class="card"><h3>Progress tree</h3>
         <p class="muted">Build the full lesson plan for this course. ${Claude.hasKey() ? 'Claude designs it around your levels, goals and players (30–60 seconds).' : `Without an API key the built-in ${esc(c.style)} plan is used; add a key in Settings for one designed around you.`}</p>
         <button class="btn primary block" data-c="build" ${building ? 'disabled' : ''}>${building ? 'Building your course plan…' : 'Build course plan'}</button></section>`}
@@ -173,6 +176,7 @@ export function mountCourse(root, { id, navigate }) {
     const a = b.dataset.c;
     if (a === 'startnext') return startNext();
     if (a === 'timed') return startTimed();
+    if (a === 'kbrebuild') { if (!confirm(`Rebuild “${c.name}” with the new lessons? Your practice time and skill levels are kept.`)) return; building = true; render(); buildMasterTree(p, c, { fresh: false }).then(() => { building = false; Store.save(); toast('Rebuilt with the new lessons.'); render(); }).catch(err => { building = false; toast(err.message || 'Couldn’t rebuild it.'); render(); }); return; }
     if (a === 'build') build(false);
     if (a === 'rebuild') build(true);
     if (a === 'restyle') { if (!confirm(`Rebuild “${c.name}” with the ${c.style} plan? Progress on the old exercises resets.`)) return; c.tree = generateTreeLocal(c); c.state = null; Store.save(); toast(`New ${c.style} plan ready.`); render(); }

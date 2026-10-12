@@ -56,12 +56,11 @@ export function openMasterSheet(topic = {}, { navigate = null, onBuilt = null } 
       ${gapPromptHTML(gap)}
       <p class="small ${buildable ? 'muted' : 'bad'}">${cur && cur.artist ? `Built from the Artist Series lessons on ${esc(cur.title.replace(/ style$/, ''))}’s signature techniques, at your level. No API cost.${details ? ' Techniques you name that aren’t in the series are added as extra units.' : ''}`
         : kbPath && kbPath.complete ? `Built from the knowledge base’s full ${esc(kbPath.title.toLowerCase())} path, from the stage at your level to mastery. No API cost.`
-        : Claude.hasKey() ? 'Claude designs the course around your levels, genres and what you wrote: an outline first, with every technique you name as its own skill, then the exercises unit by unit (about 1–2 minutes). It’s saved, so asking for the same thing again costs nothing.'
-        : buildable ? (cur ? 'Built-in plan. With Claude connected in Settings, the course is designed around you.' : 'A five-step plan from the built-in exercises. With Claude connected in Settings, any topic gets a course designed around you.')
-        : title.length < 3 ? 'Name a topic to build a course around.' : 'The built-in plans don’t cover this topic. Connect Claude in Settings and any topic works, or try one of the suggestions on the dashboard.'}</p>
+        : buildable ? 'Built from the app’s own lessons for this topic. No API cost.'
+        : title.length < 3 ? 'Name a topic to build a course around.' : 'This topic hasn’t been researched yet, so there’s no course for it. Add it to the research queue: it will be built from how teachers actually teach it.'}</p>
       ${have.length ? `<p class="small">You already have <a class="link" href="#/course/${have[0].id}" data-r="mcopen">${esc(have[0].name)}</a>. Building another gives you a fresh plan alongside it.</p>` : ''}
       ${error ? `<p class="small bad">${esc(error)}</p>` : ''}
-      <button class="btn primary block" data-r="mcbuild" ${busy || !buildable ? 'disabled' : ''}>${busy ? `<span class="spinner sm"></span>${esc(progress || (Claude.hasKey() && !(cur && cur.artist) ? 'Claude is designing your master class…' : 'Building your master class…'))}` : `${MC_ICON} Build master class`}</button>`;
+      <button class="btn primary block" data-r="mcbuild" ${busy || !buildable ? 'disabled' : ''}>${busy ? `<span class="spinner sm"></span>${esc(progress || 'Building your master class…')}` : `${MC_ICON} Build master class`}</button>`;
   }
   async function build() {
     const { t } = current();
