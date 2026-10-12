@@ -8,17 +8,17 @@
 /* Scheme 1 · Amber Stage is the default and lives in app.css :root. */
 :root{--glow1:rgba(245,165,36,.08);--glow2:rgba(140,70,160,.09);--glow3:rgba(194,65,12,.05)}
 :root[data-scheme="2"]{ /* Acid Green (matches the SONYX sheet's #39FF14) */
-  --bg:#040604; --panel:#141a14; --panel2:#1b231b; --inset:#080b08; --line:#283328; --text:#eef5ec; --muted:#97a595;
+  --bg:#080b08; --panel:#141a14; --panel2:#1b231b; --inset:#080b08; --line:#283328; --text:#eef5ec; --muted:#97a595;
   --accent:#39ff14; --accent-d:#2bc80e; --accent-text:#7dff5c; --btn-top:#6bff4a; --btn-bot:#2fd40f; --btn-ink:#041400;
   --success:#34d399; --warning:#fbbf24; --danger:#fb6b5b; --meta:#b6f0a8;
   --glow1:rgba(57,255,20,.08); --glow2:rgba(20,184,166,.09); --glow3:rgba(132,204,22,.05)}
 :root[data-scheme="3"]{ /* Electric Blue (matches the SONYX sheet's #0088FF) */
-  --bg:#03060b; --panel:#111a26; --panel2:#172334; --inset:#070b11; --line:#233246; --text:#e8f1fb; --muted:#93a3b8;
+  --bg:#070b11; --panel:#111a26; --panel2:#172334; --inset:#070b11; --line:#233246; --text:#e8f1fb; --muted:#93a3b8;
   --accent:#0088ff; --accent-d:#006ad1; --accent-text:#6cbcff; --btn-top:#36a3ff; --btn-bot:#1a86f0; --btn-ink:#000a14;
   --success:#3ecf8e; --warning:#f5b544; --danger:#ff6b6b; --meta:#a8d3ff;
   --glow1:rgba(0,136,255,.08); --glow2:rgba(34,211,238,.09); --glow3:rgba(99,102,241,.05)}
 :root[data-scheme="4"]{ /* Studio Mono */
-  --bg:#050506; --panel:#151516; --panel2:#1c1c1e; --inset:#080809; --line:#2a2a2d; --text:#f4f4f5; --muted:#9b9ba1;
+  --bg:#080809; --panel:#151516; --panel2:#1c1c1e; --inset:#080809; --line:#2a2a2d; --text:#f4f4f5; --muted:#9b9ba1;
   --accent:#ff4d3d; --accent-d:#e0342a; --accent-text:#ff8a7d; --btn-top:#f4f4f5; --btn-bot:#dcdce0; --btn-ink:#0b0b0c;
   --success:#3ddc84; --warning:#ffb020; --danger:#ff3b6b; --meta:#c8c8ce;
   --glow1:rgba(255,77,61,.08); --glow2:rgba(107,107,120,.09); --glow3:rgba(42,42,48,.05)}

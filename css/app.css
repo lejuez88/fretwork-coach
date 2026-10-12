@@ -1,7 +1,7 @@
 /* SONYX (Fretwork Coach) — base styles, mobile first. Colors come from the tokens below; css/theme.css adds the schemes, frosted-glass surfaces, type and spacing. */
 :root{
   /* Scheme 1 · Amber Stage (default). Schemes 2–4 override these in css/theme.css ([data-scheme]). */
-  --bg:#060508; --panel:#1a1720; --panel2:#221e29; --inset:#0b0a0e; --line:#2f2a36; --text:#f2ede4; --muted:#a8a1ae;
+  --bg:#0b090d; --panel:#1a1720; --panel2:#221e29; --inset:#0b0a0e; --line:#2f2a36; --text:#f2ede4; --muted:#a8a1ae;
   --accent:#f5a524; --accent-d:#d48a10; --accent-text:#ffc55c; --accent-soft:color-mix(in srgb,var(--accent) 16%,transparent);
   --btn-top:#ffbd45; --btn-bot:#e08f12; --btn-ink:#1a1206; --success:#4fd18b; --warning:#ff7a45; --danger:#ff5a52; --meta:#c9b8f0;
   --amber:var(--accent); --amber-d:var(--accent-d); --amber-soft:var(--accent-soft); --red:var(--danger); --green:var(--success); --radius:18px;

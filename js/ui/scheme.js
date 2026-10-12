@@ -7,10 +7,10 @@ import { paintFavicon } from './logo.js';
 
 const KEY = 'fretworkCoach.scheme';
 export const SCHEMES = [
-  { id: 1, name: 'Amber Stage', note: 'Warm stage amber on near-black plum', sw: ['#060508', '#221e29', '#f5a524', '#f2ede4'] },
-  { id: 2, name: 'Acid Green', note: 'Graphite with the SONYX acid green', sw: ['#040604', '#1b231b', '#39ff14', '#eef5ec'] },
-  { id: 3, name: 'Electric Blue', note: 'Deep navy with the SONYX electric blue', sw: ['#03060b', '#172334', '#0088ff', '#e8f1fb'] },
-  { id: 4, name: 'Studio Mono', note: 'Black and white, one red signal', sw: ['#050506', '#1c1c1e', '#ff4d3d', '#f4f4f5'] }
+  { id: 1, name: 'Amber Stage', note: 'Warm stage amber on near-black plum', sw: ['#0b090d', '#221e29', '#f5a524', '#f2ede4'] },
+  { id: 2, name: 'Acid Green', note: 'Graphite with the SONYX acid green', sw: ['#080b08', '#1b231b', '#39ff14', '#eef5ec'] },
+  { id: 3, name: 'Electric Blue', note: 'Deep navy with the SONYX electric blue', sw: ['#070b11', '#172334', '#0088ff', '#e8f1fb'] },
+  { id: 4, name: 'Studio Mono', note: 'Black and white, one red signal', sw: ['#080809', '#1c1c1e', '#ff4d3d', '#f4f4f5'] }
 ];
 const valid = v => SCHEMES.some(s => s.id === +v);
 
