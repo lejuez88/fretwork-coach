@@ -92,8 +92,14 @@ header.top{gap:10px}
 
 /* ------------------------------------------------------------- SONYX logo */
 /* Chris's artwork as a stencil, filled with the active scheme (see js/ui/logo.js). */
-.sx-pick,.sx-word{display:inline-block;flex:none;background:linear-gradient(180deg,var(--btn-top),var(--accent) 55%,var(--accent-d));
-  -webkit-mask:var(--sx-art) center/contain no-repeat;mask:var(--sx-art) center/contain no-repeat}
+.sx-pick,.sx-word{display:inline-block;flex:none;-webkit-mask:var(--sx-art) center/contain no-repeat;mask:var(--sx-art) center/contain no-repeat}
+/* Metallic finish from the branding sheet, in the scheme's colors: a sheen from darker left to brighter right,
+   over a vertical ramp (bright highlight at the top → accent → dark at the split → deeper tone on the hollow outlines). */
+.sx-word{background:linear-gradient(90deg,rgba(0,0,0,.22),rgba(0,0,0,0) 42%,rgba(255,255,255,.24)),
+  linear-gradient(180deg,color-mix(in srgb,var(--btn-top) 45%,#fff) 0%,var(--btn-top) 16%,var(--accent) 36%,color-mix(in srgb,var(--accent-d) 80%,#000) 49.5%,var(--accent) 50.5%,color-mix(in srgb,var(--accent-d) 78%,#000) 100%)}
+.sx-pick{background:linear-gradient(105deg,rgba(0,0,0,.22),rgba(0,0,0,0) 45%,rgba(255,255,255,.22)),
+  linear-gradient(180deg,color-mix(in srgb,var(--btn-top) 45%,#fff) 0%,var(--btn-top) 14%,var(--accent) 34%,var(--accent-d) 52%,var(--accent) 60%,color-mix(in srgb,var(--accent-d) 75%,#000) 100%)}
+.logo{filter:drop-shadow(0 2px 4px rgba(0,0,0,.55)) drop-shadow(0 0 12px color-mix(in srgb,var(--accent) 25%,transparent))}
 .sx-pick{--sx-art:url(../img/sonyx-pick.png);height:30px;aspect-ratio:154/163}
 .sx-word{--sx-art:url(../img/sonyx-wordmark.png);height:22px;aspect-ratio:597/102}
 .sx-pick.lg{height:34px}.sx-word.lg{height:26px}
