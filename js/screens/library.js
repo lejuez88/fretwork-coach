@@ -81,7 +81,7 @@ export function mountLibrary(root, { navigate }) {
     <section class="card askcard" data-r="askslot"></section>
     <div class="practice-cols">
       <div class="px-main">
-        <div class="libhead"><h2 class="sechead">Exercise library</h2><span class="muted small">${entries.length} exercises in ${CATEGORIES.length} topics, each with variations from easier to harder</span></div>
+        <div class="libhead"><h2 class="sechead">Exercise library</h2><span class="muted small">${entries.length} exercises in ${CATEGORIES.length} topics, each in four tiers, foundations to mastery</span></div>
         <input type="search" class="libsearch" data-r="q" placeholder="Search: bends, F chord, funk, spider…" value="${esc(ui.q)}" autocomplete="off">
         <div class="topics" data-r="list"></div>
       </div>
@@ -115,7 +115,7 @@ export function mountLibrary(root, { navigate }) {
     const ps = paramSummary(e.ex);
     return `<a class="librow" href="#/practice/ex/${e.id}">
       <div class="lrmain"><b>${esc(e.title || e.ex.name)}</b>
-        <div class="small muted">${esc(dom ? dom.short || dom.name : e.ex.domain)} · <span data-vc="${e.id}">variations</span>${ps ? ` · ${esc(ps)}` : ''}</div>
+        <div class="small muted">${esc(dom ? dom.short || dom.name : e.ex.domain)}${ps ? ` · ${esc(ps)}` : ''}</div>
         ${pr.practiced ? `<div class="small"><span class="ok">${pr.mastered} mastered</span> · ${pr.practiced} practiced</div>` : ''}</div>
       ${queued ? '<span class="badge">In session</span>' : '<span class="chev">›</span>'}</a>`;
   }
@@ -127,7 +127,7 @@ export function mountLibrary(root, { navigate }) {
       <button class="topic-btn" data-tg="${cat}" aria-expanded="${open}" aria-controls="tb-${cat}">
         <span class="topic-img">${TOPIC_ART[cat] || ''}</span>
         <span class="topic-txt"><b>${esc(c.name)}</b><span class="small muted">${esc(c.blurb)}</span>
-          <span class="small topic-meta">${searching ? `${list.length} match${list.length === 1 ? '' : 'es'}` : `${all.length} exercises`} · your level ${levelFor(p, cat)}${mastered ? ` · <span class="ok">${mastered} mastered</span>` : ''}</span></span>
+          <span class="small topic-meta">${searching ? `${list.length} match${list.length === 1 ? '' : 'es'}` : `${all.length} exercises`}${mastered ? ` · <span class="ok">${mastered} mastered</span>` : ''}</span></span>
         <span class="topic-chev" aria-hidden="true">›</span>
       </button>
       <div class="topic-body" id="tb-${cat}" ${open ? '' : 'hidden'}>${open ? `<div class="liblist">${list.map(row).join('')}</div>` : ''}</div>

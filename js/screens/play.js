@@ -18,7 +18,8 @@ import { Claude } from '../core/claude.js';
 import { toPlayerExercise } from '../core/coursegen.js';
 import { calibratedTarget, ensureState, tempoLadder } from '../core/progression.js';
 import { variationsFor, findVariation, pickVariation } from '../core/variations.js';
-import { variationChipsHTML, variationNoteHTML, levelRange } from '../ui/variationpicker.js';
+import { tierPickerHTML } from '../ui/tierpicker.js';
+import { tierIdFor, variationForTier, TIER_BY_ID } from '../core/tiers.js';
 import { paramDims, resolveParams, withParams, describeParams } from '../core/params.js';
 import { paramControlsHTML } from '../ui/paramcontrols.js';
 import { recordItemResult, itemState, varKeyOf, usesVarState } from '../core/record.js';
@@ -64,11 +65,11 @@ export function libraryContext(p, id, vid = null) {
   return { kind: 'library', title: 'Exercise library', back: '#/practice', backLabel: 'Exercise library', idx, items };
 }
 /** A practice context for a course: every exercise of the plan in order, starting at a skill (or an exercise). */
-export function courseContext(p, course, { skillId = null, exId = null } = {}) {
+export function courseContext(p, course, { skillId = null, exId = null, tier = null } = {}) {
   if (!course || !course.tree) return null;
   ensureState(course);
   const items = [];
-  course.tree.units.forEach(u => u.skills.forEach(s => s.exercises.forEach(ex => items.push({ ex, exId: ex.id, skillId: s.id, fromTree: true, courseId: course.id, skill: { title: s.title, summary: s.summary, study: s.study || null }, unit: u.title }))));
+  course.tree.units.forEach(u => u.skills.forEach(s => s.exercises.forEach(ex => items.push({ ex, exId: ex.id, skillId: s.id, fromTree: true, courseId: course.id, ...(tier ? { tier } : {}), skill: { title: s.title, summary: s.summary, study: s.study || null }, unit: u.title }))));
   let idx = exId ? items.findIndex(x => x.exId === exId) : skillId ? items.findIndex(x => x.skillId === skillId) : 0;
   if (skillId && !exId) {
     // the first exercise of the skill that isn't mastered yet
@@ -104,8 +105,10 @@ export function mountPlay(root, { navigate, ctx = null }) {
       const list = varsOf(it);
       const want = it.wantVid && findVariation(list, it.wantVid);
       const v = want || pickVariation(list, { want: 'edge', level: levelFor(p, it.cat), isMastered: vid => !!((p.varState || {})[`lib:${it.libId}~${vid}`] || {}).mastered });
-      if (v) { it.vid = v.vid; it.ex = JSON.parse(JSON.stringify(v.ex)); it.recVid = v.vid; }
+      if (v) { it.vid = v.vid; it.ex = JSON.parse(JSON.stringify(v.ex)); it.recVid = v.vid; it.recTier = tierIdFor(v.level); }
     }
+    // a course played in a tier other than its recommended one: the app picks the variation in that tier
+    if (it.tier && !it.vid) setTier(it, it.tier, { quiet: true });
     it.goalBpm = it.ex.goalBpm;
     retarget(it);
     it.prepared = true;
@@ -116,12 +119,28 @@ export function mountPlay(root, { navigate, ctx = null }) {
     const lad = tempoLadder(it.targetBpm, Math.max(it.goalBpm || it.targetBpm, it.targetBpm));
     it.ramp = { enabled: false, step: lad.step, max: lad.max, rungs: lad.rungs };
   }
+  /** The tier on screen for an item: the one you picked, else the tier of the variation playing. */
+  const tierOfItem = it => it.tierPick || it.tier || (() => { const v = it.vid && findVariation(varsOf(it), it.vid); return v ? tierIdFor(v.level) : tierIdFor((it.baseEx || it.ex).level || 4); })();
+  /** Play the current exercise in a tier: the app picks the variation (the start of the tier unless it's the recommended one). */
+  function setTier(it, tid, { quiet = false } = {}) {
+    const list = varsOf(it);
+    const r = variationForTier(list, tid, { recVid: tid === it.recTier ? it.recVid : null, isMastered: vid => !!((p.varState || {})[varKeyOf({ ...it, vid })] || {}).mastered });
+    it.tierPick = tid;
+    if (!r) return;
+    it.vid = r.v.vid; it.ex = JSON.parse(JSON.stringify(r.v.ex)); it.goalBpm = r.v.ex.goalBpm;
+    if (r.level !== r.v.level) it.ex.level = r.level;   // no variation written for this tier: same exercise at the tier's tempo
+    if (it.params && Object.keys(it.params).length) applyParams(it);
+    if (it.prepared || quiet) retarget(it);
+    if (quiet) return;
+    saveCtx(C); peak = 0; render();
+    toast(`${TIER_BY_ID[tid].name}: ${r.v.base ? 'the exercise as written' : r.v.label.toLowerCase()}.`);
+  }
   function chooseVariation(vid) {
     const it = cur(), v = findVariation(varsOf(it), vid); if (!v) return;
     it.vid = v.vid; it.ex = JSON.parse(JSON.stringify(v.ex)); it.goalBpm = v.ex.goalBpm;
     if (it.params && Object.keys(it.params).length) applyParams(it);
     retarget(it); saveCtx(C); peak = 0; render();
-    toast(v.base ? 'The exercise as written.' : `Variation: ${v.label} (level ${v.level}).`);
+    toast(v.base ? 'The exercise as written.' : `Variation: ${v.label}.`);
   }
   function applyParams(it) {
     const pre = preParamsEx(it), dims = paramDims(pre);
@@ -179,7 +198,7 @@ export function mountPlay(root, { navigate, ctx = null }) {
   function studyHTML(it) {
     const s = lessonStudy(it, (p.lessonCache && p.lessonCache.study) || null), ex = it.ex, dom = DOMAIN_BY_KEY[ex.domain];
     return `<div class="study">
-      <div class="small muted">${dom ? esc(dom.name) : esc(ex.domain || '')}${ex.level ? ` · level ${ex.level}` : ''} · ${esc(ex.unit || '')}${ex.minutes ? ` · about ${ex.minutes} min` : ''}</div>
+      <div class="small muted">${dom ? esc(dom.name) : esc(ex.domain || '')} · ${esc(ex.unit || '')}${ex.minutes ? ` · about ${ex.minutes} min` : ''}</div>
       ${it.skill && it.skill.title && it.skill.title !== ex.name ? `<div class="label st-skill">${esc(it.skill.title)}</div>` : ''}
       ${s.concept ? `<h4>The concept</h4><p>${esc(s.concept)}</p>` : ''}
       ${s.why ? `<h4>Why it matters</h4><p>${esc(s.why)}</p>` : ''}
@@ -193,15 +212,14 @@ export function mountPlay(root, { navigate, ctx = null }) {
       ${s.fromClaude ? '<p class="small muted">Study notes written by Claude for this exercise.</p>' : ''}
     </div>`;
   }
+  /** Tiers show for lessons that don't come from a tiered list (paths, artists and courses pick the tier on their own page). */
+  const tiersHere = it => !it.kbKey && !it.fromTree && !it.unit;
   function customHTML(it) {
     const list = varsOf(it), dims = paramDims(preParamsEx(it)), v = list.length ? findVariation(list, it.vid) : null;
     const d = tool && tool.display ? tool.display() : { scroll: p.settings.tabScroll !== false, picks: p.settings.tabPicks !== false, neck: p.settings.tabNeck !== false, pickMode: null };
     const tg = (k, l, on) => `<button class="tgl ${on ? 'on' : ''}" data-dtg="${k}" aria-pressed="${on}">${l}</button>`;
     return `<div class="custom">
-      ${list.length > 1 ? `<h4>Variations <span class="small muted">${list.length} · ${levelRange(list)}</span></h4>
-        ${it.recVid && it.vid !== it.recVid ? `<p class="small muted">Recommended for you: ${esc((findVariation(list, it.recVid) || {}).label || '')} <button class="linkbtn small" data-vid="${it.recVid}">← back to it</button></p>` : it.recVid ? '<p class="small muted">This is the variation recommended for your level.</p>' : ''}
-        ${variationChipsHTML(list, { current: v ? v.vid : 'base', stateOf: x => (x === 'base' && !usesVarState({ ...it, vid: null }) ? itemState(p, { ...it, vid: null }, course) : (p.varState || {})[varKeyOf({ ...it, vid: x }, course)] || null) })}
-        ${v && !v.base ? variationNoteHTML(v) : ''}` : ''}
+      ${list.length > 1 && tiersHere(it) ? `<h4>Level</h4>${tierPickerHTML({ current: tierOfItem(it), recommended: isGuest(p) ? null : it.recTier || null, attr: 'data-ptier', compact: true })}` : ''}
       ${dims.length ? `<h4>Key, strings and chords</h4>${paramControlsHTML(dims, it.params || {})}${it.resolved && Object.keys(it.resolved).length ? `<p class="small muted">${esc(describeParams(dims, it.resolved))}</p>` : ''}` : ''}
       ${tool && tool.display ? `<h4>Display</h4><div class="toggles">${tg('scroll', 'Scrolling tab', d.scroll)}${tg('picks', 'Pick strokes', d.picks)}${tg('neck', 'Fretboard', d.neck)}${tg('theme', 'Light tab', (p.settings.tabTheme || 'dark') === 'light')}</div>
         <label class="mini" style="margin-top:10px">Picking<select data-r="pickmode">${PICK_MODES.map(([k, l]) => `<option value="${k}" ${d.pickMode === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>` : ''}
@@ -313,6 +331,7 @@ export function mountPlay(root, { navigate, ctx = null }) {
       return setPanel(!(panel.open && panel.tab === k), k);
     }
     const pt = e.target.closest('[data-ptab]'); if (pt) return setPanel(true, pt.dataset.ptab);
+    const ptr = e.target.closest('[data-ptier]'); if (ptr) return setTier(cur(), ptr.dataset.ptier);
     const chip = e.target.closest('[data-vid]'); if (chip && root.querySelector('[data-r="panel"]').contains(chip)) return chooseVariation(chip.dataset.vid);
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.pl === 'prev') return go(-1);

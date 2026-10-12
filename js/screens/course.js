@@ -18,7 +18,9 @@ import { buildRoutine, coachBriefing } from '../core/routine.js';
 import { startRoutine, attachBriefing } from './routine.js';
 import { openPractice, courseContext } from './play.js';
 import { variationsFor } from '../core/variations.js';
-import { levelRange } from '../ui/variationpicker.js';
+import { tierPickerHTML } from '../ui/tierpicker.js';
+import { tierIdFor } from '../core/tiers.js';
+import { isGuest } from '../ui/guest.js';
 
 const STATUS = { locked: ['🔒', 'Locked'], available: ['●', 'Ready'], in_progress: ['◐', 'In progress'], mastered: ['✓', 'Mastered'] };
 
@@ -30,6 +32,11 @@ export function mountCourse(root, { id, navigate }) {
   const master = isMaster(c);
   // where your levels say this course should be now (master classes: the topic's skill area)
   const levelNow = () => (master ? masterDifficulty(p, c.topic || { title: c.style }) : suggestedDifficulty(p, c.genre));
+  // the four tiers: recommended from your level now; the one you tap is kept with the course
+  const recTier = () => (isGuest(p) ? null : tierIdFor(levelNow()));
+  const curTier = () => c.tierPick || recTier() || tierIdFor(c.difficulty);
+  /** The tier to play the exercises in, when it isn't the one the plan was written for (the app picks variations). */
+  const playTier = () => (curTier() !== tierIdFor(c.difficulty) ? curTier() : null);
 
   function render() {
     if (c.tree) { ensureState(c); c.progress = progressPct(c); }
@@ -37,19 +44,17 @@ export function mountCourse(root, { id, navigate }) {
     root.innerHTML = `
       <a class="link" href="#/home">← Dashboard</a>
       <section class="card course-hero ${master ? 'master' : ''}">${master ? `<div class="mc-banner">${topicArtHTML(c.topic && c.topic.cat)}</div>` : wikiTile(g ? g.wiki : c.genre, g ? g.name : c.genre, 'banner')}
-        <div class="label">${master ? `${MC_ICON} Master class · ${esc(c.topic ? c.topic.title : c.style)}` : `${esc(g ? g.name : c.genre)} · ${esc(c.style)}`} · level ${c.difficulty} (${esc(c.levelLabel)})</div>
+        <div class="label">${master ? `${MC_ICON} Master class · ${esc(c.topic ? c.topic.title : c.style)}` : `${esc(g ? g.name : c.genre)} · ${esc(c.style)}`}</div>
         <h1>${esc(c.name)}</h1><p>${esc(c.tree && c.tree.summary || c.tagline)}</p>
         ${c.players.length ? `<p class="muted small">Inspired by ${c.players.map(esc).join(', ')}</p>` : ''}
         <div class="cprog big"><div class="bar"><i style="width:${c.progress || 0}%"></i></div><span>${c.progress || 0}%</span></div>
         <p class="small muted">${sessions.length} session${sessions.length === 1 ? '' : 's'} · ${fmtMinutes(mins)} practiced</p>
+        ${c.tree ? tierPickerHTML({ current: curTier(), recommended: recTier(), attr: 'data-ctier' }) : ''}
         ${nextHTML()}
       </section>
       ${isGenericPlan(c) ? `<section class="card levelup"><div class="label">New: a plan built for ${esc(c.style)}</div>
         <p>This course still uses the old standard plan, which was the same for every style. Rebuild it to get exercises in ${esc(c.style)}’s own keys, rhythms and techniques. Progress on the old exercises resets; your practice time and skill levels are kept.</p>
         <div class="row"><button class="btn primary" data-c="restyle">Rebuild for ${esc(c.style)}</button>${Claude.hasKey() ? '<button class="btn" data-c="rebuild">Have Claude design it</button>' : ''}</div></section>` : ''}
-      ${c.tree && levelNow() > c.difficulty + 1 ? `<section class="card levelup"><div class="label">You’ve outgrown this plan</div>
-        <p>Your skill levels for this ${master ? 'topic' : 'style'} are now about <b>${levelNow()}</b>, and this plan was built at level ${c.difficulty}. Untouched exercises already start at faster tempos; rebuilding gives you harder material.</p>
-        <button class="btn primary block" data-c="levelup">Rebuild at level ${levelNow()}</button></section>` : ''}
       ${c.tree ? treeHTML() : `<section class="card"><h3>Progress tree</h3>
         <p class="muted">Build the full lesson plan for this course. ${Claude.hasKey() ? 'Claude designs it around your levels, goals and players (30–60 seconds).' : `Without an API key the built-in ${esc(c.style)} plan is used; add a key in Settings for one designed around you.`}</p>
         <button class="btn primary block" data-c="build" ${building ? 'disabled' : ''}>${building ? 'Building your course plan…' : 'Build course plan'}</button></section>`}
@@ -72,13 +77,14 @@ export function mountCourse(root, { id, navigate }) {
   /** Practice the next lesson on the practice page (no timer), with the whole course to step through. */
   function startNext() {
     const nx = nextInCourse(p, c); if (!nx) return;
-    openPractice(courseContext(p, c, { skillId: nx.skill.id }), navigate);
+    openPractice(courseContext(p, c, { skillId: nx.skill.id, tier: playTier() }), navigate);
   }
   /** The timed version: a routine built around the next lesson. */
   function startTimed() {
     const nx = nextInCourse(p, c); if (!nx) return;
     const mins = lessonMinutes();
     const plan = buildRoutine(p, c, { budget: mins, focusSkillId: nx.skill.id });
+    const tt = playTier(), rt = recTier(); if (tt) plan.items.forEach(it => { if (it.fromTree) { it.tier = tt; it.recTier = rt; } });
     startRoutine(plan, { mode: 'duration', minutes: mins, deadline: Date.now() + mins * 60000 }, navigate);
     if (Claude.hasKey()) coachBriefing(p, plan).then(bf => { if (bf) attachBriefing(bf); });
   }
@@ -129,14 +135,6 @@ export function mountCourse(root, { id, navigate }) {
     svg.innerHTML = d;
   }
 
-  /** The exercise's variations, with marks for the ones practiced or mastered. */
-  function varsLine(e) {
-    let list = []; try { list = variationsFor(e, { course: c, level: e.level || c.difficulty }); } catch { /* none */ }
-    const others = list.filter(v => !v.base); if (!others.length) return '';
-    const vs = p.varState || {};
-    return `<div class="varmini">↻ ${others.length} variations · ${levelRange(list)}: ${others.map(v => { const st = vs[`${c.id}:${e.id}~${v.vid}`]; return `<span class="${st && st.mastered ? 'ok' : ''}">${esc(v.label)}${st && st.mastered ? ' ✓' : ''}</span>`; }).join(' · ')}<div class="small muted">Pick any of them in the routine runner.</div></div>`;
-  }
-
   function skillSheet(skillId) {
     const s = c.tree.units.flatMap(u => u.skills).find(x => x.id === skillId), ss = c.state.skills[s.id];
     const sheet = Shell.sheet(`
@@ -147,13 +145,12 @@ export function mountCourse(root, { id, navigate }) {
         <div class="small muted">${esc(e.unit)} · ${esc(beatLabel(e))} at ${es.target} BPM → goal ${e.goalBpm} BPM${es.best ? ` · best ${es.best}` : ''} · ${es.passes.length}/2 passes</div>
         <div class="bar thin"><i style="width:${es.mastered ? 100 : Math.max(0, pct)}%"></i></div>
         ${e.why ? `<p class="small">${esc(e.why)}</p>` : ''}
-        ${varsLine(e)}
         ${es.history.length ? `<div class="spark">${es.history.slice(-12).map(h => `<i class="${h.clean ? 'c' : ''}" style="height:${Math.max(8, Math.round(h.tempo / e.goalBpm * 100))}%" title="${h.date}: ${h.tempo} BPM"></i>`).join('')}</div>` : ''}</div>`; }).join('')}
       ${ss.status === 'locked' ? `<p class="muted small">Unlocks after: ${esc(s.prereqs.map(pid => (c.tree.units.flatMap(u => u.skills).find(x => x.id === pid) || {}).title).filter(Boolean).join(', '))}</p>` : ''}
       <div class="row"><button class="btn primary" data-sk="practice">▶ Practice this skill</button><a class="btn" href="#/home/routine/${c.id}/${s.id}">⏱ Timed session</a></div>`);
     sheet.el.addEventListener('click', e => {
       if (e.target.closest('a')) sheet.close();
-      if (e.target.closest('[data-sk="practice"]')) { sheet.close(); openPractice(courseContext(p, c, { skillId: s.id }), navigate); }
+      if (e.target.closest('[data-sk="practice"]')) { sheet.close(); openPractice(courseContext(p, c, { skillId: s.id, tier: playTier() }), navigate); }
     });
   }
 
@@ -169,6 +166,8 @@ export function mountCourse(root, { id, navigate }) {
   }
 
   const onClick = e => {
+    const ct = e.target.closest('[data-ctier]');
+    if (ct) { const tid = ct.dataset.ctier; if (tid === recTier()) delete c.tierPick; else c.tierPick = tid; Store.save(); render(); return; }
     const b = e.target.closest('[data-c],[data-skill]'); if (!b) return;
     if (b.dataset.skill) return skillSheet(b.dataset.skill);
     const a = b.dataset.c;

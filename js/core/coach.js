@@ -27,7 +27,7 @@ export function averageLevel(p) {
 export function domainNeed(p, d) {
   const l = levelOf(p, d), avg = averageLevel(p), why = [];
   let score = 0;
-  if (l != null && avg - l >= 0.5) { score += (avg - l) * 1.2; why.push(`your ${domName(d)} (level ${l}) trails your other skills`); }
+  if (l != null && avg - l >= 0.5) { score += (avg - l) * 1.2; why.push(`your ${domName(d)} trails your other skills`); }
   const struggles = (p.questionnaire && p.questionnaire.struggles) || [], goals = (p.questionnaire && p.questionnaire.goals) || [];
   const s = struggles.find(x => NEED_DOMAIN[x] === d); if (s) { score += 1.5; why.push(`you said ${NEED_LABEL[s] || s} is a struggle`); }
   const g = goals.find(x => NEED_DOMAIN[x] === d); if (g && !s) { score += 0.8; why.push(`${NEED_LABEL[g] || g} is one of your goals`); }

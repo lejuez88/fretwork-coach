@@ -15,7 +15,7 @@ import { ROOT_BY_PC, mod12, parseNote } from './theory.js';
 import { runAtom } from './styles.js';
 import { stringNotesDrill } from './drills.js';
 import { normalizeTree, normalizeExercise, profileBrief, TAB_RULES, EXERCISE_SCHEMA, LOCAL_TREE_VERSION } from './coursegen.js';
-import { KB_BY_ID, ARTIST_INDEX, ARTIST_META_BY_ID, matchArtist, matchTechniques, loadEntry, loadEntries, loadArtist, stageFor, TIERS, TIER_BY_ID } from '../data/kb.js';
+import { KB_BY_ID, ARTIST_INDEX, ARTIST_META_BY_ID, matchArtist, matchTechniques, loadEntry, loadEntries, loadArtist, stageFor, TIERS, TIER_BY_ID, tierOf } from '../data/kb.js';
 import { getMaster, putMaster } from './lessoncache.js';
 import { parseRequest, buildForRequest } from './topics.js';
 import { tierName } from './courses.js';
@@ -799,7 +799,7 @@ export function forYou(p) {
     const gap = avg - l;
     if (gap < 0.5) continue;
     const name = DOMAIN_BY_KEY[k].name;
-    (DOMAIN_TOPICS[k] || []).forEach((id, i) => add(id, gap * 2 - i * 0.4 + (genreFav.has(id) ? 0.5 : 0), `your ${name.toLowerCase()} is level ${l}, ${Math.round(gap * 10) / 10 >= 1.5 ? `${Math.round(gap)} levels` : 'a level'} below your average`));
+    (DOMAIN_TOPICS[k] || []).forEach((id, i) => add(id, gap * 2 - i * 0.4 + (genreFav.has(id) ? 0.5 : 0), `your ${name.toLowerCase()} trails your other skills`));
   }
   for (const s of p.questionnaire.struggles || []) if (STRUGGLE_TOPIC[s]) add(STRUGGLE_TOPIC[s], 2.2, `you said ${STRUGGLE_LABEL[s]} is a struggle`);
   if (p.focus && p.focus.domain && DOMAIN_TOPICS[p.focus.domain]) add(DOMAIN_TOPICS[p.focus.domain][0], 1, `${DOMAIN_BY_KEY[p.focus.domain].name.toLowerCase()} is your current focus area`);
@@ -856,19 +856,31 @@ function buildLessons(skills, c, lvl, idPrefix, keyPrefix, used = new Set()) {
  * with the path's own lessons and keys, so progress is shared with the Technique Library and with
  * every other artist that uses the same path.
  */
-export async function artistLessonList(p, artistId) {
+/** The level the app would teach an artist's style at (from your skill levels). */
+export function artistLevel(p, artistId) {
+  const t = MASTER_BY_ID['artist-' + artistId];
+  return t ? masterDifficulty(p, { title: t.title, text: t.title, topicId: t.id }) : 4;
+}
+/**
+ * An artist's lessons. With a tier (foundations … mastery) every unit is drawn in that tier: path
+ * units from that stage of their path, the artist's own units at that tier's levels. Without one,
+ * each path unit uses the stage the app picks for it.
+ */
+export async function artistLessonList(p, artistId, { tier = null } = {}) {
   const meta = ARTIST_META_BY_ID[artistId]; if (!meta) return [];
-  const a = await loadArtist(artistId), t = MASTER_BY_ID['artist-' + artistId];
-  const lvl = masterDifficulty(p, { title: t.title, text: t.title, topicId: t.id });
+  const a = await loadArtist(artistId);
+  const lvl = artistLevel(p, artistId), recTier = tierOf(lvl).id, T = tier && TIER_BY_ID[tier];
   const used = new Set(), out = [];
   for (let ui = 0; ui < a.units.length; ui++) {
     const u = a.units[ui];
     if (u.path && KB_BY_ID[u.path]) {
-      const r = await pathUnitLessons(p, u);
+      const r = await pathUnitLessons(p, u, { tier, recTier });
       out.push(...r.lessons.map(l => ({ ...l, unit: r.unit })));
       continue;
     }
-    const ulvl = clamp(lvl - 1 + Math.round(ui * 3 / Math.max(1, a.units.length - 1)), 1, 10);
+    const spread = Math.round(ui * 3 / Math.max(1, a.units.length - 1));
+    const ulvl = T && tier !== recTier ? clamp(T.levels[0] + Math.round(ui * (T.levels[1] - T.levels[0]) / Math.max(1, a.units.length - 1)), T.levels[0], T.levels[1])
+      : T ? clamp(lvl - 1 + spread, T.levels[0], T.levels[1]) : clamp(lvl - 1 + spread, 1, 10);
     const c = { key: a.ctx.key, minor: !!a.ctx.minor, lvl: ulvl, genre: a.genre, prog: a.ctx.prog };
     out.push(...buildLessons(u.skills, c, ulvl, artistId, `artist:${artistId}`, used).map(l => ({ ...l, unit: u })));
   }
@@ -892,10 +904,17 @@ export async function pathStageFor(p, pathId, tiers = null) {
   return { ...ps, keysByTier, progressOf };
 }
 /** One path unit's lessons for the player: {unit (with tier, stage title and reason), lessons}. */
-export async function pathUnitLessons(p, u) {
+export async function pathUnitLessons(p, u, { tier = null, recTier = null } = {}) {
   const ps = await pathStageFor(p, u.path, u.tiers);
-  const st = ps.stage;
-  const lvl = clamp(techniqueLevelFor(p, u.path), st.levels[0], st.levels[1]);
+  let st = ps.stage;
+  if (tier) {
+    // the stage in that tier, or the nearest one this unit has
+    const e = await loadEntry(u.path), order = ['foundations', 'intermediate', 'advanced', 'mastery'];
+    const stages = e.stages.filter(x => !u.tiers || u.tiers.includes(x.tier));
+    const want = order.indexOf(tier);
+    st = stages.slice().sort((x, y) => Math.abs(order.indexOf(x.tier) - want) - Math.abs(order.indexOf(y.tier) - want))[0] || st;
+  }
+  const lvl = tier && tier !== recTier ? st.levels[0] : clamp(techniqueLevelFor(p, u.path), st.levels[0], st.levels[1]);
   const lessons = await stageLessonList(p, u.path, { tier: st.tier, lvl });
   const pr = ps.progressOf(st.tier);
   return { unit: { ...u, tier: st.tier, stageTitle: st.title, reason: ps.reason, mastered: pr.mastered, total: pr.total }, lessons };

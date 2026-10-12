@@ -1504,3 +1504,19 @@ body.playmode .tunefab{display:none}
 .guest-note p{margin:4px 0 10px}
 .guest-line{padding:8px 10px;border-radius:10px;background:var(--inset);border:1px dashed var(--line)}
 .guest-offer h3{margin-top:0}
+/* The four-tier control (Foundations · Intermediate · Advanced · Mastery) */
+.tier4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 14px}
+.t4{appearance:none;position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-height:52px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:600 15px var(--head);text-align:left;cursor:pointer}
+.t4:hover{border-color:var(--amber)}
+.t4.on{background:color-mix(in srgb,var(--amber) 16%,var(--panel));border-color:var(--amber);color:var(--text)}
+.t4.rec:not(.on){border-color:color-mix(in srgb,var(--amber) 55%,var(--line))}
+.t4-rec{font:700 10px var(--head);letter-spacing:.1em;text-transform:uppercase;color:var(--amber)}
+.t4-rec.soon{color:var(--muted)}
+.t4.missing{opacity:.5;cursor:default}
+.t4-sub{font:400 12px var(--body);color:var(--muted)}
+.tier4.compact{gap:6px;margin:0 0 10px}
+.tier4.compact .t4{min-height:40px;padding:7px 9px;font-size:13px}
+@media(max-width:560px){.tier4{grid-template-columns:repeat(2,minmax(0,1fr))}.tier4.compact{grid-template-columns:repeat(4,minmax(0,1fr))}.tier4.compact .t4{font-size:12px;padding:7px 6px}.tier4.compact .t4-rec{font-size:8.5px;letter-spacing:.04em}}
+.custom .tier4,.pp-body .tier4{grid-template-columns:repeat(2,minmax(0,1fr))}
+.custom .tier4.compact .t4,.pp-body .tier4.compact .t4{font-size:14px;padding:8px 10px}
+.custom .tier4.compact .t4-rec,.pp-body .tier4.compact .t4-rec{font-size:9.5px;letter-spacing:.08em}

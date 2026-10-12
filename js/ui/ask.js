@@ -32,7 +32,7 @@ export function exerciseCardHTML(ex, { i, role = null, target = null, saved = nu
   const tab = ex.tab && ex.tab.notes && ex.tab.notes.length ? notesToText(ex.tab.notes, { tuning: ex.tab.tuning || undefined, maxBars: 2 }) : '';
   return `<div class="askex b-${role ? roleBlock(role) : 'stretch'}">
     <div class="askex-h">${role ? `<span class="pblock">${ROLE[role] || role}</span>` : ''}<b>${esc(ex.name)}</b></div>
-    <div class="small muted">${dom ? esc(dom.short || dom.name) : esc(ex.domain)}${ex.level ? ` · level ${ex.level}` : ''} · ${esc(tempoShort(ex, target || ex.startBpm, ex.goalBpm))} · ${ex.minutes || 5} min${ex.unit ? ' · ' + esc(ex.unit) : ''}</div>
+    <div class="small muted">${dom ? esc(dom.short || dom.name) : esc(ex.domain)} · ${esc(tempoShort(ex, target || ex.startBpm, ex.goalBpm))} · ${ex.minutes || 5} min${ex.unit ? ' · ' + esc(ex.unit) : ''}</div>
     ${ex.why ? `<p class="why">${esc(ex.why)}</p>` : ''}
     ${ex.instr ? `<div class="instr small">${esc(ex.instr)}</div>` : ''}
     ${ex.watch ? `<div class="watch">⚠ ${esc(ex.watch)}</div>` : ''}

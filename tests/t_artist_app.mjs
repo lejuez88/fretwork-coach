@@ -105,7 +105,7 @@ console.error = (...a) => { errors.push(a.join(' ')); };
   ok(view().querySelectorAll('.tech-bubble.open').length === 1 && view().querySelector('.tb-detail .tb-body a[href^="#/techniques/"]') && view().querySelector('.tb-detail .stage-dots'), 'tapping a bubble shows its details and the path link');
   view().querySelectorAll('.tech-bubble [data-tbopen]')[1].click(); await sleep(10);
   ok(view().querySelectorAll('.tech-bubble.open').length === 1, 'one bubble open at a time');
-  view().querySelector('[data-band="beginner"]').click(); await sleep(10);
+  view().querySelector('[data-band="foundations"]').click(); await sleep(10);
   ok([...view().querySelectorAll('.tech-bubble')].length === KB_INDEX.filter(t => t.stages.some(s => s.tier === 'foundations')).length, 'beginner filter = entries with a foundations stage');
   view().querySelector('[data-band="all"]').click(); await sleep(10);
   for (const t of KB_INDEX) {

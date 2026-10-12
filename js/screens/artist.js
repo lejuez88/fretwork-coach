@@ -7,7 +7,9 @@ import { icon } from '../ui/icons.js';
 import { Store } from '../core/store.js';
 import { wikiTile, hydrateImages, wikiSummary } from '../core/wiki.js';
 import { ARTIST_INDEX as ARTISTS, ARTIST_META_BY_ID, ARTIST_NOTE, KB_INDEX, KB_BY_ID, TIER_BY_ID, loadArtist } from '../data/kb.js';
-import { artistLessonList, createMasterClass, buildMasterTree, isMaster } from '../core/master.js';
+import { artistLessonList, artistLevel, createMasterClass, buildMasterTree, isMaster } from '../core/master.js';
+import { tierIdFor } from '../core/tiers.js';
+import { tierPickerHTML } from '../ui/tierpicker.js';
 import { calibratedTarget } from '../core/progression.js';
 import { addSong } from '../core/songs.js';
 import { bestMatchUrl } from '../core/songsterr.js';
@@ -79,7 +81,11 @@ export function mountArtistIndex(root, { navigate }) {
 export function mountArtist(root, { navigate, id }) {
   const p = Store.profile, meta = ARTIST_META_BY_ID[id];
   if (!meta) { navigate('#/artist'); return () => {}; }
-  let a = meta, lessons = [], targets = [], building = false, ready = false, gone = false;
+  let a = meta, lessons = [], targets = [], building = false, ready = false, gone = false, loadingTier = false;
+  // the four tiers: the app recommends one from your levels; the one you tap is kept for this visit
+  const recTier = isGuest(p) ? null : tierIdFor(artistLevel(p, id));
+  const TKEY = 'fretworkCoach.artistTier.' + id;
+  let tier = (() => { try { return sessionStorage.getItem(TKEY); } catch { return null; } })() || recTier || 'foundations';
   const acts = lessonActions(root, { get: () => ({ lessons, targets }), reason: l => `${a.name} lesson: ${l.skill.title}`, title: l => `${a.name}: ${l.ex.name}`, genre: a.genre, navigate, listTitle: () => a.name });
 
   const hasSong = r => p.songs.some(s => norm(s.title) === norm(r.title));
@@ -103,7 +109,7 @@ export function mountArtist(root, { navigate, id }) {
               <div data-r="video">${videoHTML()}</div>
               <div class="chips ah-chips">${chips}</div>
             </div></div>
-          <div class="artist-lessons"><h2 class="sechead">Lessons</h2>${groups.map((g, gi) => lessonGroupHTML(p, lessons, targets, { title: g.unit.title, items: g.items }, gi, { note: unitNoteHTML(g.unit), side: g.unit.path && TIER_BY_ID[g.unit.tier] ? `<span class="chip sm">${esc(TIER_BY_ID[g.unit.tier].name)}</span>` : '' })).join('')}</div>
+          <div class="artist-lessons"><h2 class="sechead">Lessons</h2>${tierPickerHTML({ current: tier, recommended: recTier, attr: 'data-atier' })}${loadingTier ? '<p class="muted"><span class="spinner sm"></span> Loading lessons…</p>' : groups.map((g, gi) => lessonGroupHTML(p, lessons, targets, { title: g.unit.title, items: g.items }, gi, { note: unitNoteHTML(g.unit) })).join('')}</div>
         </div>
         <aside class="pc-side">
           ${nextArtistHTML()}
@@ -149,7 +155,7 @@ export function mountArtist(root, { navigate, id }) {
   function unitNoteHTML(u) {
     if (!u.path) return `<p class="small muted lg-note">${esc(u.summary)}</p>`;
     return `<p class="small muted lg-note">${esc(u.summary)}</p>
-      <p class="small pathnote">${esc(TIER_BY_ID[u.tier] ? TIER_BY_ID[u.tier].name : u.tier)} stage: ${esc(u.reason || '')} <span class="muted">Progress is shared with the <a class="link" href="#/techniques/${esc(u.path)}">${esc(String((KB_BY_ID[u.path] || {}).title || 'technique').replace(/^the /i, ''))} path</a> and every artist who uses it.</span></p>`;
+      <p class="small pathnote"><span class="muted">Progress is shared with the <a class="link" href="#/techniques/${esc(u.path)}">${esc(String((KB_BY_ID[u.path] || {}).title || 'technique').replace(/^the /i, ''))} path</a> and every artist who uses it.</span></p>`;
   }
   /** The artist lesson the app picks next (easiest unmastered, stalled first), with the reason. */
   function nextArtistHTML() {
@@ -157,7 +163,7 @@ export function mountArtist(root, { navigate, id }) {
     const nx = nextLesson(p, lessons, { label: `the ${a.name} lessons` });
     if (!nx) return `<section class="card nextlesson"><div class="label">All mastered</div><b>Every ${esc(a.name)} lesson is mastered.</b><p class="small">Keep them fresh in your daily lessons, or learn one of the famous songs.</p></section>`;
     const l = lessons[nx.index];
-    return `<section class="card nextlesson"><div class="label">Your next lesson · chosen for you</div>
+    return `<section class="card nextlesson"><div class="label">${tier === recTier ? 'Your next lesson · chosen for you' : `Next lesson · ${esc(TIER_BY_ID[tier].name)}`}</div>
       <b>${esc(l.ex.name)}</b><p class="small">${esc(l.unit ? l.unit.title + ': ' : '')}${esc(nx.reason)}</p>
       <div class="row"><button class="btn primary" data-al="practice" data-i="${nx.index}">▶ Start this lesson</button><button class="btn" data-jump="${nx.index}">Show it in the list</button></div></section>`;
   }
@@ -181,6 +187,8 @@ export function mountArtist(root, { navigate, id }) {
       if (song) { Store.save(); toast(`Added “${song.title}” to My songs.`); r.disabled = true; r.textContent = '✓ In My songs'; }
       return;
     }
+    const at = e.target.closest('[data-atier]');
+    if (at) { tier = at.dataset.atier; try { sessionStorage.setItem(TKEY, tier); } catch { /* ignore */ } loadTier(); return; }
     if (e.target.closest('[data-al="master"]')) { startMaster(); return; }
     if (e.target.closest('[data-bio="toggle"]')) { bioOpen = !bioOpen; refreshBio(); return; }
     if (e.target.closest('[data-vid="play"]')) { vidPlaying = true; refreshVideo(); return; }
@@ -190,9 +198,16 @@ export function mountArtist(root, { navigate, id }) {
   };
   root.addEventListener('click', onClick);
   render();
-  Promise.all([loadArtist(id), artistLessonList(p, id)]).then(([full, list]) => {
+  const setLessons = list => { lessons = list; targets = lessons.map(l => lessonTarget(p, l, calibratedTarget(l.ex, l.ex.level || 4, p))); };
+  /** Redraw the lessons in the tier just tapped (the start of the tier, unless it's the recommended one). */
+  function loadTier() {
+    loadingTier = true; render();
+    artistLessonList(p, id, { tier }).then(list => { if (gone) return; setLessons(list); loadingTier = false; render(); })
+      .catch(err => { loadingTier = false; toast(err.message || 'Couldn’t load the lessons.'); render(); });
+  }
+  Promise.all([loadArtist(id), artistLessonList(p, id, { tier })]).then(([full, list]) => {
     if (gone) return;
-    a = full; lessons = list; targets = lessons.map(l => lessonTarget(p, l, calibratedTarget(l.ex, l.ex.level || 4, p))); ready = true; render();
+    a = full; setLessons(list); ready = true; render();
     if (!a.bio && p.settings.wikiImages !== false) wikiSummary(a.wiki).then(v => { if (v && !gone) { wikiBio = v; refreshBio(); } });
     artistTopVideo(a).then(v => { if (v && !gone) { topVid = v; refreshVideo(); } });
   }).catch(e => { if (!gone) root.innerHTML = `<a class="link" href="#/artist">← Artist series</a><p class="bad">Couldn’t load the lessons (${esc(e.message)}). Check the connection and reload.</p>`; });

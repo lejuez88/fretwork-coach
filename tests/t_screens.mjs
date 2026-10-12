@@ -74,9 +74,9 @@ const origErr = console.error; console.error = (...a) => { errors.push(a.join(' 
   ok(!view().querySelector('[data-r="panel"]').hidden && /The concept|Why it matters/.test(view().querySelector('.pp-body').textContent) && /How to practice it/.test(view().querySelector('.pp-body').textContent), 'study: concept, why and how');
   ok(/The theory/.test(view().querySelector('.pp-body').textContent), 'study: the theory');
   rail('custom').click(); await sleep(5);
-  ok(view().querySelector('.pp-body .varchip') && view().querySelector('.pp-body [data-dtg="scroll"]'), 'customize: variations and display');
-  const other = [...view().querySelectorAll('.pp-body .varchip')].find(b => !b.classList.contains('on'));
-  if (other) { other.click(); await sleep(10); ok(/Variation|as written/.test(document.getElementById('toast').textContent), 'choosing a variation'); }
+  ok(view().querySelector('.pp-body .tier4 .t4') && !view().querySelector('.pp-body .varchip') && view().querySelector('.pp-body [data-dtg="scroll"]'), 'customize: the four tiers and display');
+  const other = [...view().querySelectorAll('.pp-body .t4[data-ptier]')].find(b => !b.classList.contains('on'));
+  if (other) { other.click(); await sleep(10); ok(/Foundations|Intermediate|Advanced|Mastery/.test(document.getElementById('toast').textContent), 'choosing a tier'); }
   rail('log').click(); await sleep(5);
   const elog0 = Store.profile.exerciseLog.length;
   view().querySelector('.pp-body [data-clean="1"]').click(); await sleep(5);

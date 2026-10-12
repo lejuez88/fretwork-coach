@@ -25,7 +25,15 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: guest mode (use the app without a profile)
+## Latest: one way to pick a level, everywhere (four tiers)
+
+- Every lesson, course and path offers the same four tiers: **Foundations, Intermediate, Advanced, Mastery** (js/ui/tierpicker.js, js/core/tiers.js). The recommended tier carries a small "Recommended" mark; any tier is one tap, with no warnings. Guests see all four with none marked.
+- Where: technique paths (the stage tabs), artist pages (above Lessons; every unit is drawn in the tier), course pages (kept with the course as `tierPick`; the practice page and timed sessions play the exercises in that tier), the library's practice page (Customize → Level) and the timed-session runner. New course and Build a master class pick a tier instead of a 1–10 slider.
+- Inside a tier the app picks the variation itself (`variationForTier`): the recommended variation in the recommended tier, else the first unmastered one of the tier, so dropping a tier starts at its beginning. A tier with no variation of its own uses the nearest one at the tier's tempo.
+- Removed: the "Customize: build these lessons at another level" panel and Level chips, "← Back to my recommended stage", the variation chip lists (practice page, runner, course skill sheet), the course "Rebuild at level N" prompt, and the five-name course scale (Builder/Workshop/Virtuoso). Numbers 1–10 are gone outside the Player Profile, assessment and results; levels still drive progress, reviews and tempo targets underneath.
+- An easier tier never lowers your level: only lesson results at or above your assessed level can bring it down (js/core/skills.js).
+
+## Earlier: guest mode (use the app without a profile)
 
 - The welcome screen has **"Skip for now: use the app as a guest"**. A guest can use every lesson, path, artist course, song tool, trainer and the practice page.
 - A guest gets **no suggestions**: no "next lesson chosen for you", no "For you" filter or level pills in the technique library, no "For you" master class, no song recommendations. Lessons are drawn at foundations level (`GUEST_LEVEL` in js/core/store.js); Customize changes the variation.

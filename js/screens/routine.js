@@ -11,7 +11,9 @@ import { recordCustom } from '../core/custom.js';
 import { toPlayerExercise } from '../core/coursegen.js';
 import { recordResult, recordPrescription, applyResult, newExerciseState, markReviewed, progressPct, ensureState, calibratedTarget, tempoLadder } from '../core/progression.js';
 import { variationsFor, findVariation } from '../core/variations.js';
-import { variationChipsHTML } from '../ui/variationpicker.js';
+import { tierPickerHTML } from '../ui/tierpicker.js';
+import { tierIdFor, variationForTier, TIER_BY_ID } from '../core/tiers.js';
+import { isGuest } from '../ui/guest.js';
 import { paramDims, resolveParams, withParams, describeParams } from '../core/params.js';
 import { paramControlsHTML } from '../ui/paramcontrols.js';
 import { recomputeLevels } from '../core/skills.js';
@@ -151,6 +153,7 @@ export function mountRoutineRunner(root, { navigate }) {
 
   function render() {
     teardownTool();
+    { const c0 = cur(); if (c0.tier && !c0.tierApplied) { c0.tierApplied = true; chooseTier(c0.tier, { quiet: true }); } }
     const it = cur(), ex = it.ex, B = BLOCKS[it.block];
     const es = stateOf(it);
     const tip = A.routine.coach && A.routine.coach.tips && A.routine.coach.tips[ex.name];
@@ -203,15 +206,40 @@ export function mountRoutineRunner(root, { navigate }) {
     return it.baseEx || it.ex;
   };
   const dimsOf = it => (it.songId ? [] : paramDims(preParamsEx(it)));
+  /** The tier on screen: the one tapped, else the tier of what's playing. The recommended tier is what the session started with. */
+  const varOf = it => (it.vid ? findVariation(varsOf(it), it.vid) : null);
+  const tierNow = it => it.tierPick || it.tier || tierIdFor((varOf(it) || {}).level || (it.ex && it.ex.level) || 4);
   function varRowHTML(it) {
     const list = varsOf(it), dims = dimsOf(it);
-    if (list.length < 2 && !dims.length) return it.variation ? `<div class="note">↻ ${esc(it.variation)}</div>` : '';
-    const v = list.length ? findVariation(list, it.vid) : null;
+    if (!it.recTier) it.recTier = it.tier || tierIdFor((varOf(it) || {}).level || ((it.baseEx || it.ex).level) || 4);
+    const tiers = list.length > 1 ? tierPickerHTML({ current: tierNow(it), recommended: isGuest(p) ? null : it.recTier, attr: 'data-rtier', compact: true }) : '';
     const pdesc = it.resolved && Object.keys(it.resolved).length ? describeParams(dims, it.resolved) : '';
-    return `<div class="varrow"><span class="vtxt">↻ <b>${esc(v ? v.label : 'Standard')}</b>${v ? ` · L${v.level}` : ''}${v && !v.base ? ` · ${esc(v.change)}` : ''}${pdesc ? `<br><span class="small">${esc(pdesc)}</span>` : ''}</span>
-        <button class="btn sm ghost" data-r="vartoggle">${varOpen ? 'Close' : list.length > 1 ? `Variations (${list.length})` : 'Key & strings'}</button></div>
-      ${varOpen && list.length > 1 ? variationChipsHTML(list, { current: v.vid, attr: 'data-rvid', stateOf: vid => { const k = `${scopeOf(it)}~${vid}`; return vid === 'base' && !it.libId ? stateOfBase(it) : (p.varState || {})[k] || null; } }) : ''}
+    return `${tiers}${dims.length ? `<div class="varrow"><span class="vtxt">${pdesc ? esc(pdesc) : 'Key, strings and chords'}</span><button class="btn sm ghost" data-r="vartoggle">${varOpen ? 'Close' : 'Change'}</button></div>` : ''}
       ${varOpen && dims.length ? paramControlsHTML(dims, it.params || {}) : ''}`;
+  }
+  /** Play the current exercise in a tier; the app picks the variation (the start of the tier unless it's the recommended one). */
+  function chooseTier(tid, { quiet = false } = {}) {
+    const it = cur(), list = varsOf(it);
+    const r = variationForTier(list, tid, { recVid: tid === it.recTier ? (it.recVid || it.vid || 'base') : null, isMastered: vid => !!((p.varState || {})[`${scopeOf(it)}~${vid}`] || {}).mastered });
+    if (!r) return;
+    it.tierPick = tid;
+    if (!quiet) teardownTool();
+    if (!it.baseEx) { it.baseEx = it.ex; it.baseTarget = it.targetBpm; it.baseVariation = it.variation || null; }
+    if (!it.recVid) it.recVid = it.vid || 'base';
+    const v = r.v;
+    it.vid = v.vid; it.ex = JSON.parse(JSON.stringify(v.ex)); it.goalBpm = v.ex.goalBpm;
+    if (r.level !== v.level) it.ex.level = r.level;
+    if (it.params && Object.keys(it.params).length) applyItemParams(it);
+    const st = usesVarState(it) ? (p.varState || {})[varKeyOf(it)] : null;
+    it.targetBpm = v.base && !it.libId && r.level === v.level ? (it.baseTarget || it.targetBpm) : st ? st.target : calibratedTarget(it.ex, r.level, p);
+    const lad = tempoLadder(it.targetBpm, Math.max(it.goalBpm, it.targetBpm));
+    it.ramp = { ...(it.ramp || {}), step: lad.step, max: lad.max, rungs: lad.rungs };
+    it.variation = v.base ? it.baseVariation : `${v.label}: ${v.change}`;
+    A.lastToolBpm = null; A.peakBpm = 0; peak = 0;
+    saveActive(A);
+    if (quiet) return;
+    render();
+    toast(`${TIER_BY_ID[tid].name}: ${v.base ? 'the exercise as written' : v.label.toLowerCase()}.`);
   }
   /** Apply key / strings / chords to the current exercise. */
   function applyItemParams(it) {
@@ -236,7 +264,7 @@ export function mountRoutineRunner(root, { navigate }) {
     it.variation = v.base ? it.baseVariation : `${v.label}: ${v.change}`;
     A.lastToolBpm = null; A.peakBpm = 0; peak = 0; varOpen = false;
     saveActive(A); render();
-    toast(v.base ? 'Back to the standard version.' : `Variation: ${v.label} (level ${v.level}).`);
+    toast(v.base ? 'Back to the standard version.' : `Variation: ${v.label}.`);
   }
 
   function mountTool() {
@@ -357,7 +385,7 @@ export function mountRoutineRunner(root, { navigate }) {
     const b = e.target.closest('button'); if (!b) return;
     const d = b.dataset;
     if (d.r === 'master') return openMasterSheet(itemTopic(cur())); // builds alongside; the session keeps going
-    if (d.rvid) return chooseVariation(d.rvid);
+    if (d.rtier) return chooseTier(d.rtier);
     if (d.r === 'vartoggle') { varOpen = !varOpen; const box = root.querySelector('[data-r="varbox"]'); if (box) box.innerHTML = varRowHTML(cur()); return; }
     if (d.r === 'pause') return togglePause();
     if (d.r === 'time') return changeTime();

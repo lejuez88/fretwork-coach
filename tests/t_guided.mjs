@@ -89,14 +89,14 @@ console.error = (...a) => { errors.push(a.join(' ')); };
   await go('#/techniques/travis'); await sleep(120);
   const tn = view().querySelector('.nextlesson [data-al="practice"]');
   ok(tn, 'path page shows the next lesson with a start button');
-  const det = view().querySelector('.tech-level details.customize');
-  ok(det && !det.open && det.querySelector('[data-lv]'), 'level choice is under Customize, closed');
+  ok(!view().querySelector('.tech-level details.customize') && !view().querySelector('[data-lv]'), 'no level panel or level chips');
+  ok(view().querySelectorAll('.path .path-stage').length === 4 && view().querySelector('.path-stage.rec .ps-here'), 'four tiers, the recommended one marked');
   tn.click(); await sleep(80);
   ok(location.hash === '#/play', 'start this lesson opens the practice page');
   clearActive();
   await go('#/techniques/travis'); await sleep(120);
   const other = [...view().querySelectorAll('.path-stage[data-tier]')].find(b => !b.classList.contains('on'));
-  if (other) { other.click(); await sleep(120); ok(/Back to my recommended stage/.test(view().textContent), 'choosing another stage offers the way back'); }
+  if (other) { const tid = other.dataset.tier; other.click(); await sleep(150); ok(!/Back to my recommended/.test(view().textContent) && view().querySelector(`.path-stage.on[data-tier="${tid}"]`) && view().querySelector('.path-stage.rec'), 'another tier is one tap: no hurdle, the recommended mark stays'); }
 
   // --- artist page
   await go('#/artist/eric-johnson'); await sleep(120);
@@ -109,12 +109,13 @@ console.error = (...a) => { errors.push(a.join(' ')); };
   const rail = k => view().querySelector(`[data-rail="${k}"]`);
   if (view().querySelector('[data-r="panel"]').hidden || !rail('custom').classList.contains('on')) rail('custom').click();
   await sleep(10);
-  ok(/recommended for your level/.test(view().querySelector('.pp-body').textContent), 'library exercise starts on the recommended variation');
-  const otherChip = [...view().querySelectorAll('.pp-body .varchip')].find(b => !b.classList.contains('on'));
-  otherChip.click(); await sleep(20);
-  ok(/Recommended for you/.test(view().querySelector('.pp-body').textContent) && view().querySelector('.pp-body .linkbtn[data-vid]'), 'picking another offers the way back');
-  view().querySelector('.pp-body .linkbtn[data-vid]').click(); await sleep(20);
-  ok(/recommended for your level/.test(view().querySelector('.pp-body').textContent), 'back to the recommended one');
+  const t4 = view().querySelector('.pp-body .tier4');
+  ok(t4 && t4.querySelectorAll('.t4').length === 4 && t4.querySelector('.t4.rec.on') && !view().querySelector('.pp-body .varchip'), 'library exercise: four tiers, the recommended one on, no variation list');
+  const lower = [...t4.querySelectorAll('.t4[data-ptier]')].find(b => !b.classList.contains('on'));
+  const tid = lower.dataset.ptier; lower.click(); await sleep(20);
+  ok(view().querySelector(`.pp-body .t4.on[data-ptier="${tid}"]`) && view().querySelector('.pp-body .t4.rec'), 'another tier is one tap; the app picks the variation');
+  const ctx = JSON.parse(sessionStorage.getItem('fretworkCoach.play'));
+  ok(ctx.items[ctx.idx].tierPick === tid, 'the tier is kept for the lesson');
   // --- pentatonic mastery path
   await go('#/techniques/pentatonic'); await sleep(200);
   ok(view().querySelectorAll('.path-stage.missing').length === 0, 'pentatonic path has all four stages');
@@ -141,5 +142,46 @@ console.error = (...a) => { errors.push(a.join(' ')); };
   ok(A2.sound === 'woodblock' && p.settings.clickSound === 'woodblock', 'choice applies and is saved');
   await go('#/settings');
   ok(view().querySelector('[data-clicksound]').value === 'woodblock', 'settings shows the same choice');
+  // --- four tiers everywhere
+  const { variationForTier, tierIdFor } = await import('../js/core/tiers.js');
+  {
+    const L = [{ vid: 'base', base: true, level: 5 }, { vid: 'a', level: 3 }, { vid: 'b', level: 4 }, { vid: 'c', level: 6 }, { vid: 'd', level: 7 }];
+    ok(variationForTier(L, 'intermediate', { recVid: 'c' }).v.vid === 'c', 'recommended tier keeps the recommended variation');
+    ok(variationForTier(L, 'intermediate').v.vid === 'b', 'another tier starts at its first variation');
+    ok(variationForTier(L, 'foundations').v.vid === 'a', 'dropping a tier starts at its beginning');
+    const m = variationForTier(L, 'mastery'); ok(m.v.vid === 'd' && m.level === 9, 'a tier with no variation of its own: the nearest, at the tier’s tempo');
+    ok(tierIdFor(2) === 'foundations' && tierIdFor(6) === 'intermediate' && tierIdFor(8) === 'advanced' && tierIdFor(10) === 'mastery', 'level → tier');
+    // easier tiers never lower your level
+    const { recomputeLevels } = await import('../js/core/skills.js');
+    const keepEv = JSON.stringify(p.skillEvidence || {}), dm = p.domains.picking, keepLv = dm.level, keepA = dm.assessedLevel;
+    dm.assessedLevel = 6; p.skillEvidence = {};
+    for (let i = 0; i < 4; i++) p.skillEvidence['easy' + i] = { domain: 'picking', level: 2, value: 2.5, label: 'x', tempo: 60, goal: 100 };
+    recomputeLevels(p);
+    ok(p.domains.picking.level === 6, 'four easy-tier results don’t lower the level (' + p.domains.picking.level + ')');
+    p.skillEvidence = JSON.parse(keepEv); dm.assessedLevel = keepA; dm.level = keepLv; recomputeLevels(p);
+  }
+  {
+    const c2 = p.courses.find(c => c.tree);
+    await go('#/course/' + c2.id);
+    const ct = view().querySelector('.course-hero .tier4');
+    ok(ct && ct.querySelectorAll('.t4').length === 4 && ct.querySelector('.t4.rec') && !/level \d/i.test(view().querySelector('.course-hero .label').textContent), 'course: four tiers, recommended marked, no level number');
+    const low = [...ct.querySelectorAll('.t4')].find(b => !b.classList.contains('rec'));
+    low.click(); await sleep(60);
+    ok(c2.tierPick === low.dataset.ctier && view().querySelector(`.course-hero .t4.on[data-ctier="${low.dataset.ctier}"]`), 'course: tapping a tier keeps it with the course');
+    view().querySelector('.nextlesson [data-c="startnext"]').click(); await sleep(80);
+    const pc2 = JSON.parse(sessionStorage.getItem('fretworkCoach.play'));
+    const want = low.dataset.ctier === tierIdFor(c2.difficulty) ? undefined : low.dataset.ctier;
+    ok(pc2.items[pc2.idx].tier === want, 'course: the practice page plays the exercises in that tier');
+    delete c2.tierPick;
+  }
+  await go('#/artist/eric-johnson'); await sleep(200);
+  {
+    const at = view().querySelector('.artist-lessons .tier4');
+    ok(at && at.querySelectorAll('.t4').length === 4 && at.querySelector('.t4.rec.on'), 'artist: four tiers, the recommended one on');
+    const other = [...at.querySelectorAll('.t4')].find(b => !b.classList.contains('on'));
+    const tid = other.dataset.atier; other.click(); await sleep(400);
+    ok(view().querySelector(`.artist-lessons .t4.on[data-atier="${tid}"]`) && view().querySelectorAll('.artist-lessons .lgroup, .artist-lessons .lesson-group, .artist-lessons details, .artist-lessons .lg').length, 'artist: another tier redraws the lessons');
+    try { sessionStorage.removeItem('fretworkCoach.artistTier.eric-johnson'); } catch { /* ignore */ }
+  }
   window.__finish();
 })().catch(e => { console.log('THROW', e.stack); window.__finish(); });

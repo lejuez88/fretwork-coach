@@ -3,7 +3,8 @@
 // exercise of difficulty E at X% of its goal tempo". Each domain's live level
 // blends the assessed level with the best evidence, gaining confidence as more
 // distinct exercises are proven. Levels move up freely and down by at most one
-// level below the assessment.
+// level below the assessment, and only from lessons at or above that level (an
+// easier tier never lowers it).
 import { today } from './util.js';
 import { DOMAINS, ProfileBuilder } from '../assessment/engine.js';
 
@@ -52,7 +53,14 @@ export function recomputeLevels(profile) {
       const w = Math.min(0.8, 0.25 + 0.15 * n);      // confidence grows with distinct exercises
       const blended = A * (1 - w) + E * w;
       if (E > A) level = Math.max(A, Math.round(blended));
-      else if (n >= 3 && E < A - 1) level = Math.max(A - 1, Math.round(blended));
+      else {
+        // only lessons at or above your assessed level can lower it: practicing an easier tier never does
+        const atLevel = mine.filter(e => (e.level || 0) >= A), m = atLevel.length;
+        if (m >= 3) {
+          const E2 = atLevel.slice(0, 3).reduce((a, e) => a + e.value, 0) / 3;
+          if (E2 < A - 1) level = Math.max(A - 1, Math.round(A * (1 - w) + E2 * w));
+        }
+      }
     }
     level = Math.max(1, Math.min(10, level));
     if (level !== dm.level) changes.push({ domain: d.key, name: d.name, from: dm.level, to: level });

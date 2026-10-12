@@ -42,7 +42,7 @@ export function lessonCardHTML(p, l, i, target) {
       <span class="lr-side">${badge}<span class="lr-chev" aria-hidden="true">›</span></span>
     </button>
     <div class="lr-body" id="lr-body-${i}" hidden>
-      <div class="small muted lr-meta">${dom ? esc(dom.short || dom.name) : esc(ex.domain)}${ex.level ? ` · level ${ex.level}` : ''} · ${esc(tempoShort(ex, target, ex.goalBpm))} · ${ex.minutes || 5} min${m ? ` · <span class="method-chip" title="${esc(m.short)}">${esc(m.name)}</span>` : ''}</div>
+      <div class="small muted lr-meta">${dom ? esc(dom.short || dom.name) : esc(ex.domain)} · ${esc(tempoShort(ex, target, ex.goalBpm))} · ${ex.minutes || 5} min${m ? ` · <span class="method-chip" title="${esc(m.short)}">${esc(m.name)}</span>` : ''}</div>
       ${ex.why ? `<p class="why">${esc(ex.why)}</p>` : ''}
       ${ex.instr ? `<div class="instr small">${esc(ex.instr)}</div>` : ''}
       ${ex.watch ? `<div class="watch">⚠ ${esc(ex.watch)}</div>` : ''}

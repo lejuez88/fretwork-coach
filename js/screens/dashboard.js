@@ -19,6 +19,8 @@ import { mountRoutineBuilder } from '../ui/routinebuilder.js';
 import { forYou, isMaster, MASTER_BY_ID } from '../core/master.js';
 import { openMasterSheet, topicArtHTML, MC_ICON } from '../ui/mastersheet.js';
 import { weekStripHTML, openManualLog } from '../ui/practicehistory.js';
+import { tierIdFor, levelInTier } from '../core/tiers.js';
+import { tierPickerHTML } from '../ui/tierpicker.js';
 
 export function mountDashboard(root, { navigate, courseId = null, skillId = null }) {
   const p = Store.profile;
@@ -90,7 +92,7 @@ export function mountDashboard(root, { navigate, courseId = null, skillId = null
     if (c.tree) c.progress = progressPct(c);
     const g = !isMaster(c) && GENRE_BY_ID[c.genre];
     const art = isMaster(c) ? topicArtHTML(c.topic && c.topic.cat, 'thumb') : wikiTile(g ? g.wiki : c.genre, g ? g.name : c.genre, 'thumb');
-    const sub = isMaster(c) ? `${MC_ICON} Master class · level ${c.difficulty}` : `${esc(g ? g.name : c.genre)} · level ${c.difficulty}`;
+    const sub = isMaster(c) ? `${MC_ICON} Master class · ${tierName(c.difficulty)}` : `${esc(g ? g.name : c.genre)} · ${tierName(c.difficulty)}`;
     return `<a class="course ${isMaster(c) ? 'master' : ''}" href="#/course/${c.id}">${art}
       <div class="cbody"><b>${esc(c.name)}</b><div class="muted small">${sub}</div>
         <div class="cprog"><div class="bar"><i style="width:${c.progress || 0}%"></i></div><span>${c.progress || 0}%</span></div></div></a>`;
@@ -99,7 +101,8 @@ export function mountDashboard(root, { navigate, courseId = null, skillId = null
   function newCourseSheet() {
     const q = p.questionnaire;
     const order = [...q.genres, ...GENRES.map(g => g.id).filter(id => !q.genres.includes(id))];
-    let genreId = order[0], style = null, difficulty = suggestedDifficulty(p, genreId), busy = false;
+    let genreId = order[0], style = null, tier = tierIdFor(suggestedDifficulty(p, genreId)), busy = false;
+    const difficultyNow = () => levelInTier(tier, suggestedDifficulty(p, genreId));
     const sheet = Shell.sheet('<div data-r="body"></div>');
     const draw = () => {
       const g = GENRE_BY_ID[genreId]; style = style && g.styles.includes(style) ? style : g.styles[0];
@@ -108,25 +111,23 @@ export function mountDashboard(root, { navigate, courseId = null, skillId = null
         <h2>New course</h2>
         <div class="field"><label>Genre</label><div class="tiles small">${order.map(id => { const x = GENRE_BY_ID[id]; return `<button class="tile ${id === genreId ? 'on' : ''}" data-g="${id}">${wikiTile(x.wiki, x.name)}<span class="tile-name">${esc(x.name)}</span><span class="tick">✓</span></button>`; }).join('')}</div></div>
         <div class="field"><label>Style focus</label><div class="chips">${g.styles.map(s => `<button class="chip ${s === style ? 'on' : ''}" data-st="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>
-        <div class="field"><label>Difficulty: <b>${difficulty}/10 · ${tierName(difficulty)}</b></label>
-          <input type="range" min="1" max="10" value="${difficulty}" data-r="diff" aria-label="Difficulty">
-          <p class="muted small">Suggested from your ${g.name} skill levels: ${suggestedDifficulty(p, genreId)}.</p></div>
+        <div class="field"><label>Level</label>${tierPickerHTML({ current: tier, recommended: tierIdFor(suggestedDifficulty(p, genreId)), attr: 'data-ntier' })}</div>
         ${players.length ? `<p class="small">Inspired by: ${players.map(x => esc(x.name)).join(', ')}</p>` : ''}
         <button class="btn primary block" data-r="create" ${busy ? 'disabled' : ''}>${busy ? 'Naming your course…' : 'Create course'}</button>`;
       hydrateImages(sheet.el);
     };
     sheet.el.addEventListener('click', async e => {
       const b = e.target.closest('button'); if (!b) return;
-      if (b.dataset.g) { genreId = b.dataset.g; difficulty = suggestedDifficulty(p, genreId); draw(); }
+      if (b.dataset.g) { genreId = b.dataset.g; tier = tierIdFor(suggestedDifficulty(p, genreId)); draw(); }
+      else if (b.dataset.ntier) { tier = b.dataset.ntier; draw(); }
       else if (b.dataset.st) { style = b.dataset.st; draw(); }
       else if (b.dataset.r === 'create' && !busy) {
         busy = true; draw();
         const players = q.players.filter(pl => (pl.genres || []).includes(genreId)).map(x => x.name).slice(0, 3);
-        const c = await createCourse(p, { genreId, style, difficulty, players });
+        const c = await createCourse(p, { genreId, style, difficulty: difficultyNow(), players });
         Store.save(); sheet.close(); toast(`Created “${c.name}”.`); render();
       }
     });
-    sheet.el.addEventListener('input', e => { if (e.target.dataset.r === 'diff') { difficulty = +e.target.value; draw(); } });
     draw();
   }
 

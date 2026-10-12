@@ -13,6 +13,8 @@ import { matchTechniques, TIERS } from '../data/kb.js';
 import { knowledgeGap } from '../core/kbrequests.js';
 import { gapPromptHTML, onGapClick } from './kbrequest.js';
 import { TOPIC_ART, TOPIC_HUE } from './topicart.js';
+import { tierIdFor, levelInTier } from '../core/tiers.js';
+import { tierPickerHTML } from '../ui/tierpicker.js';
 
 export const MC_ICON = '🎓';
 export const topicArtHTML = (cat, cls = '') => `<span class="topic-img ${cls}" style="--h:${TOPIC_HUE[cat] || 225}">${TOPIC_ART[cat] || TOPIC_ART.theory}</span>`;
@@ -25,7 +27,7 @@ export const topicArtHTML = (cat, cls = '') => `<span class="topic-img ${cls}" s
 export function openMasterSheet(topic = {}, { navigate = null, onBuilt = null } = {}) {
   const p = Store.profile; if (!p) return null;
   let title = String(topic.title || '').trim(), details = topic.text && topic.text !== topic.title ? String(topic.text) : '';
-  let level = null, busy = false, error = '', progress = '';
+  let tier = null, busy = false, error = '', progress = '';
   const sheet = Shell.sheet('<div data-r="mc"></div>', { onClose: () => { closed = true; } });
   let closed = false;
   sheet.el.classList.add('mcsheet');
@@ -37,7 +39,7 @@ export function openMasterSheet(topic = {}, { navigate = null, onBuilt = null } 
   };
   function draw() {
     const { t, cur } = current();
-    const dom = topicDomain(t), suggested = masterDifficulty(p, t), lv = level || suggested;
+    const suggested = masterDifficulty(p, t), recT = tierIdFor(suggested);
     const have = p.courses.filter(c => isMaster(c) && c.status !== 'archived' && c.topic && ((t.topicId && c.topic.topicId === t.topicId) || c.topic.title.toLowerCase() === title.toLowerCase()));
     const buildable = title.length >= 3 && canBuild(t);
     const kbm = matchTechniques(title), kbPath = !(cur && cur.artist) && kbm.length === 1 ? kbm[0] : null;
@@ -47,9 +49,7 @@ export function openMasterSheet(topic = {}, { navigate = null, onBuilt = null } 
         <p class="small muted">${esc(cur ? cur.blurb : 'A whole course on this topic: where to start, how to practice it, and how to use it in music.')}</p></div></div>
       <div class="field"><label>Topic</label><input type="text" data-r="mctitle" maxlength="80" value="${esc(title)}" placeholder="e.g. sight reading, the modes, playing over changes" ${busy ? 'disabled' : ''}></div>
       <div class="field"><label>Anything specific? <span class="muted">(optional)</span></label><textarea data-r="mcdetails" rows="2" maxlength="300" placeholder="e.g. “Dorian for funk solos”, “jazz standards”, “I keep losing time on 16ths”" ${busy ? 'disabled' : ''}>${esc(details)}</textarea></div>
-      <div class="field"><label>Starting level: <b>${lv}/10 · ${tierName(lv)}</b></label>
-        <input type="range" min="1" max="10" value="${lv}" data-r="mclevel" aria-label="Starting level" ${busy ? 'disabled' : ''}>
-        <p class="muted small">Suggested from your ${esc(DOMAIN_BY_KEY[dom] ? DOMAIN_BY_KEY[dom].name : dom)} level: ${suggested}. The course climbs about three levels from here.</p></div>
+      <div class="field"><label>Level</label>${tierPickerHTML({ current: tier || recT, recommended: p.guest ? null : recT, attr: 'data-mtier' })}</div>
       ${kbPath ? `<div class="mc-outline"><div class="label">The ${esc(kbPath.title)} path</div><ol>${TIERS.map(x => { const s = kbPath.stages.find(y => y.tier === x.id); return `<li><b>${esc(x.name)}</b> <span class="muted small">${s ? esc(s.goal) : 'coming soon: being researched'}</span></li>`; }).join('')}</ol></div>`
         : cur && cur.artist ? `<div class="mc-outline"><div class="label">What it covers</div><ol>${(cur.techniques || []).map(x => `<li><b>${esc(x)}</b></li>`).join('')}</ol></div>`
         : cur && cur.units && !Claude.hasKey() ? `<div class="mc-outline"><div class="label">What it covers</div><ol>${cur.units.map(u => `<li><b>${esc(u.title)}</b> <span class="muted small">${esc(u.summary)}</span></li>`).join('')}</ol></div>` : ''}
@@ -67,7 +67,7 @@ export function openMasterSheet(topic = {}, { navigate = null, onBuilt = null } 
     const { t } = current();
     if (title.length < 3) return;
     busy = true; error = ''; draw();
-    const course = createMasterClass(p, { ...t, title, text: t.text, difficulty: level || masterDifficulty(p, t) });
+    const course = createMasterClass(p, { ...t, title, text: t.text, difficulty: levelInTier(tier || tierIdFor(masterDifficulty(p, t)), masterDifficulty(p, t)) });
     try {
       const r = await buildMasterTree(p, course, { onProgress: x => {
         progress = x.step === 'outline' ? 'Claude is outlining the course…' : `Claude is writing the exercises: ${x.done} of ${x.total} units done…`;
@@ -95,12 +95,12 @@ export function openMasterSheet(topic = {}, { navigate = null, onBuilt = null } 
   }
   sheet.el.addEventListener('click', e => {
     if (onGapClick(e)) return;
+    const mt = e.target.closest('[data-mtier]'); if (mt && !busy) { tier = mt.dataset.mtier; draw(); return; }
     if (e.target.closest('[data-r="mcbuild"]') && !busy) build();
     if (e.target.closest('[data-r="mcopen"]')) sheet.close();
   });
   sheet.el.addEventListener('input', e => {
     const r = e.target.dataset.r;
-    if (r === 'mclevel') { level = +e.target.value; draw(); }
   });
   sheet.el.addEventListener('change', e => {
     const r = e.target.dataset.r;

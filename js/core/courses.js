@@ -5,11 +5,13 @@ import { uid, today, pick } from './util.js';
 import { Claude } from './claude.js';
 import { GENRE_BY_ID } from '../data/catalog.js';
 import { DOMAINS } from '../assessment/engine.js';
+import { tierFor } from './tiers.js';
 
 export const LEVEL_TIERS = [
   [2, 'Foundations'], [4, 'Builder'], [6, 'Workshop'], [8, 'Mastery'], [10, 'Virtuoso']
 ];
-export const tierName = lvl => LEVEL_TIERS.find(([max]) => lvl <= max)[1];
+/** The tier name for a level (Foundations, Intermediate, Advanced, Mastery). */
+export const tierName = lvl => tierFor(lvl).name;
 
 /** Average level of the domains a genre emphasizes (falls back to overall). */
 export function suggestedDifficulty(profile, genreId) {
