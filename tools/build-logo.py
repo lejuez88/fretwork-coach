@@ -17,8 +17,13 @@ from PIL import Image
 from scipy.ndimage import gaussian_filter
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# Scheme accents (css/app.css :root and css/theme.css). Mono = chrome.
-SCHEMES = {1: '#f5a524', 2: '#c6f432', 3: '#5b8cff', 4: None}
+# Scheme accents (css/app.css :root and css/theme.css). Mono = chrome; 2 and 3 = the sheet's tones.
+SCHEMES = {1: '#f5a524', 2: 'sheet-green', 3: 'sheet-blue', 4: None}
+# Schemes 2 and 3 use the tones sampled from the branding sheet's Acid Green and Electric Blue logos.
+SHEET = {
+    'sheet-green': ('#1a4a0c', '#3fa81c', '#5fe032', '#8ef55b', '#d8ffc4'),
+    'sheet-blue': ('#123552', '#1f5f8e', '#3f92c8', '#62b6e0', '#b4e3f8'),
+}
 
 
 def hx(h):
@@ -27,6 +32,8 @@ def hx(h):
 
 def palette(accent):
     """Tones from deep to highlight, shaped like the sheet's orange/blue/green variations."""
+    if accent in SHEET:
+        return [hx(c) for c in SHEET[accent]]
     if accent is None:  # chrome (the sheet's monochrome pick)
         return [np.array(c) / 255 for c in ((58, 60, 64), (128, 131, 136), (196, 199, 204), (236, 238, 241), (255, 255, 255))]
     r, g, b = hx(accent); h, l, s = colorsys.rgb_to_hls(r, g, b)

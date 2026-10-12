@@ -8,8 +8,8 @@ import { paintFavicon } from './logo.js';
 const KEY = 'fretworkCoach.scheme';
 export const SCHEMES = [
   { id: 1, name: 'Amber Stage', note: 'Warm stage amber on near-black plum', sw: ['#0f0d12', '#221e29', '#f5a524', '#f2ede4'] },
-  { id: 2, name: 'Lime Graphite', note: 'Neutral graphite, electric lime', sw: ['#0d0f10', '#1d2124', '#c6f432', '#eef1ec'] },
-  { id: 3, name: 'Cobalt Night', note: 'Deep navy, cobalt blue', sw: ['#0a0e1a', '#172036', '#5b8cff', '#e8eefc'] },
+  { id: 2, name: 'Acid Green', note: 'Graphite with the SONYX acid green', sw: ['#0b0f0b', '#1b231b', '#39ff14', '#eef5ec'] },
+  { id: 3, name: 'Electric Blue', note: 'Deep navy with the SONYX electric blue', sw: ['#0a0f17', '#172334', '#0088ff', '#e8f1fb'] },
   { id: 4, name: 'Studio Mono', note: 'Black and white, one red signal', sw: ['#0b0b0c', '#1c1c1e', '#ff4d3d', '#f4f4f5'] }
 ];
 const valid = v => SCHEMES.some(s => s.id === +v);

@@ -30,7 +30,7 @@ Without a key, everything still works with built-in data: catalog guitarists and
 The look approved in the App Cosmetics thread (decision log in the project doc COSMETICS.md):
 
 - **SONYX logo** (`img/sonyx-pick.png`, `img/sonyx-wordmark.png`, `js/ui/logo.js`): Chris's artwork with the finish from his branding sheet (beveled glass, reflection streaks, deep-to-bright color, see-through outlines; chrome for Studio Mono), rendered for each scheme into `img/logo/` by `python3 tools/build-logo.py` (rerun it after changing a scheme's accent). The favicon follows the scheme. Internal names (local storage keys, the Drive file "Fretwork Coach profile.json") are unchanged, so existing profiles and Drive sync keep working.
-- **Color schemes** (`js/ui/scheme.js`, `css/theme.css`): Amber Stage (default), Lime Graphite, Cobalt Night and Studio Mono, all dark. Pick one in Settings → Display; it is saved in the profile and syncs with Drive.
+- **Color schemes** (`js/ui/scheme.js`, `css/theme.css`): Amber Stage (default), Acid Green, Electric Blue and Studio Mono, all dark (Acid Green and Electric Blue match the SONYX branding sheet). Pick one in Settings → Display; it is saved in the profile and syncs with Drive.
 - **Frosted-glass panels, Space Grotesk + Inter, compact spacing, outline icons** (`css/theme.css`, `js/ui/icons.js`, Lucide, ISC license).
 - **Side drawer** (`js/ui/drawer.js`) replaces the bottom tab bar: the menu button at the top left (also in the practice page's top bar).
 - **Practice page**: the tab is drawn larger (CSS `--tab-zoom`, handled by the tab player so tapping still lands on the right note) and the neck no longer stretches into empty space; on phones the tempo line stays on one line and the side rail shows icons only.

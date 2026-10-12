@@ -7,16 +7,16 @@
 /* ------------------------------------------------------------------ schemes */
 /* Scheme 1 · Amber Stage is the default and lives in app.css :root. */
 :root{--glow1:rgba(245,165,36,.16);--glow2:rgba(140,70,160,.18);--glow3:rgba(194,65,12,.10)}
-:root[data-scheme="2"]{ /* Lime Graphite */
-  --bg:#0d0f10; --panel:#16191b; --panel2:#1d2124; --inset:#090b0c; --line:#2a2f33; --text:#eef1ec; --muted:#98a19b;
-  --accent:#c6f432; --accent-d:#a4d414; --accent-text:#d4ff5a; --btn-top:#d4ff4f; --btn-bot:#b2e61e; --btn-ink:#0f1400;
-  --success:#34d399; --warning:#fbbf24; --danger:#fb6b5b; --meta:#a7e3c9;
-  --glow1:rgba(198,244,50,.16); --glow2:rgba(45,212,191,.18); --glow3:rgba(59,130,246,.10)}
-:root[data-scheme="3"]{ /* Cobalt Night */
-  --bg:#0a0e1a; --panel:#111829; --panel2:#172036; --inset:#070a13; --line:#24304a; --text:#e8eefc; --muted:#94a0bb;
-  --accent:#5b8cff; --accent-d:#3b6cf0; --accent-text:#a3bfff; --btn-top:#6f9bff; --btn-bot:#5585fa; --btn-ink:#050d24;
-  --success:#3ecf8e; --warning:#f5b544; --danger:#ff6b6b; --meta:#b7c5ff;
-  --glow1:rgba(59,108,240,.16); --glow2:rgba(139,92,246,.18); --glow3:rgba(6,182,212,.10)}
+:root[data-scheme="2"]{ /* Acid Green (matches the SONYX sheet's #39FF14) */
+  --bg:#0b0f0b; --panel:#141a14; --panel2:#1b231b; --inset:#080b08; --line:#283328; --text:#eef5ec; --muted:#97a595;
+  --accent:#39ff14; --accent-d:#2bc80e; --accent-text:#7dff5c; --btn-top:#6bff4a; --btn-bot:#2fd40f; --btn-ink:#041400;
+  --success:#34d399; --warning:#fbbf24; --danger:#fb6b5b; --meta:#b6f0a8;
+  --glow1:rgba(57,255,20,.14); --glow2:rgba(20,184,166,.16); --glow3:rgba(132,204,22,.10)}
+:root[data-scheme="3"]{ /* Electric Blue (matches the SONYX sheet's #0088FF) */
+  --bg:#0a0f17; --panel:#111a26; --panel2:#172334; --inset:#070b11; --line:#233246; --text:#e8f1fb; --muted:#93a3b8;
+  --accent:#0088ff; --accent-d:#006ad1; --accent-text:#6cbcff; --btn-top:#36a3ff; --btn-bot:#1a86f0; --btn-ink:#000a14;
+  --success:#3ecf8e; --warning:#f5b544; --danger:#ff6b6b; --meta:#a8d3ff;
+  --glow1:rgba(0,136,255,.17); --glow2:rgba(34,211,238,.14); --glow3:rgba(99,102,241,.10)}
 :root[data-scheme="4"]{ /* Studio Mono */
   --bg:#0b0b0c; --panel:#151516; --panel2:#1c1c1e; --inset:#080809; --line:#2a2a2d; --text:#f4f4f5; --muted:#9b9ba1;
   --accent:#ff4d3d; --accent-d:#e0342a; --accent-text:#ff8a7d; --btn-top:#f4f4f5; --btn-bot:#dcdce0; --btn-ink:#0b0b0c;
