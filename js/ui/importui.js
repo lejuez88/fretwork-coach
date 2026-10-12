@@ -34,7 +34,7 @@ export function wireImport(root, { onDone } = {}) {
     try {
       const data = parseProfileText(await getText());
       const cur = Store.profile;
-      if (cur && Object.keys(cur.domains || {}).length) {
+      if (cur && !cur.guest && Object.keys(cur.domains || {}).length) {
         const msg = `Replace the profile in this browser?\n\nNow: ${describeProfile(cur)}\nImport: ${describeProfile(data)}\n\nExport a backup first if you want to keep the current one.`;
         if (!confirm(msg)) { status('Import cancelled. Nothing changed.'); return; }
       }

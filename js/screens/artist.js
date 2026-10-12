@@ -15,6 +15,7 @@ import { openMasterSheet, MC_ICON } from '../ui/mastersheet.js';
 import { lessonGroupHTML, lessonActions, lessonTarget } from '../ui/lessoncards.js';
 import { artistTopVideo, popularSearchUrl, fmtViews, thumbUrl, watchUrl, mountEmbed } from '../core/youtube.js';
 import { nextLesson } from '../core/coach.js';
+import { guestNoteHTML, isGuest } from '../ui/guest.js';
 
 const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 const narrow = () => typeof matchMedia === 'function' && matchMedia('(max-width: 999px)').matches;
@@ -91,7 +92,7 @@ export function mountArtist(root, { navigate, id }) {
     const groups = [];
     lessons.forEach((l, i) => { let g = groups[groups.length - 1]; if (!g || g.unit !== l.unit) groups.push(g = { unit: l.unit, items: [] }); g.items.push(i); });
     const chips = a.techniques.map((t, i) => { const tech = (a.techPaths && a.techPaths[i] && KB_BY_ID[a.techPaths[i]]) || techniqueByName(t); return tech ? `<a class="chip sm" href="#/techniques/${tech.id}">${esc(t)}</a>` : `<span class="chip sm">${esc(t)}</span>`; }).join('');
-    const masterBtn = mc ? `<a class="btn primary block" href="#/course/${mc.id}">${MC_ICON} Open your ${esc(a.name)} master class</a>` : `<button class="btn primary block" data-al="master" ${building ? 'disabled' : ''}>${building ? '<span class="spinner sm"></span>Building…' : `${MC_ICON} Start the ${esc(a.name)} master class`}</button>`;
+    const masterBtn = isGuest(p) ? `<a class="btn block" href="#/welcome">Create a profile to take it as a course</a>` : mc ? `<a class="btn primary block" href="#/course/${mc.id}">${MC_ICON} Open your ${esc(a.name)} master class</a>` : `<button class="btn primary block" data-al="master" ${building ? 'disabled' : ''}>${building ? '<span class="spinner sm"></span>Building…' : `${MC_ICON} Start the ${esc(a.name)} master class`}</button>`;
     root.innerHTML = `<a class="link" href="#/artist">← Artist series</a>
       <div class="page-cols">
         <div class="pc-main">
@@ -106,7 +107,7 @@ export function mountArtist(root, { navigate, id }) {
         </div>
         <aside class="pc-side">
           ${nextArtistHTML()}
-          <section class="card side-course"><h3>${MC_ICON} The whole style as a course</h3><p class="small muted">${lessons.length} lessons at your level, in order, as a master class with progress and reviews.</p>${masterBtn}</section>
+          <section class="card side-course"><h3>${MC_ICON} The whole style as a course</h3><p class="small muted">${isGuest(p) ? 'Every lesson in order, as a master class with progress and reviews. Courses follow your level and keep your progress, so they need a player profile.' : `${lessons.length} lessons at your level, in order, as a master class with progress and reviews.`}</p>${masterBtn}</section>
           <details class="card songs-card" ${narrow() ? '' : 'open'}><summary><h3>Famous songs</h3><span class="small muted">${a.riffs.length} songs</span><span class="lr-chev" aria-hidden="true">›</span></summary>
             <p class="small muted">Linked, not copied: open the tab on Songsterr, or add the song to My songs, where you can paste a tab and get section-by-section lessons.</p>
             <div class="riffs">${a.riffs.map((r, i) => `<div class="riff"><div><b>${esc(r.title)}</b>${r.artist ? ` <span class="small muted">(${esc(r.artist)})</span>` : ''}<div class="small muted">${esc(r.note)}</div></div>
@@ -152,6 +153,7 @@ export function mountArtist(root, { navigate, id }) {
   }
   /** The artist lesson the app picks next (easiest unmastered, stalled first), with the reason. */
   function nextArtistHTML() {
+    if (isGuest(p)) return guestNoteHTML(`Pick any ${a.name} lesson. With a player profile, the app chooses your next lesson and keeps your progress.`);
     const nx = nextLesson(p, lessons, { label: `the ${a.name} lessons` });
     if (!nx) return `<section class="card nextlesson"><div class="label">All mastered</div><b>Every ${esc(a.name)} lesson is mastered.</b><p class="small">Keep them fresh in your daily lessons, or learn one of the famous songs.</p></section>`;
     const l = lessons[nx.index];

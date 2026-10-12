@@ -18,6 +18,7 @@ import { levelDots, levelBand, LEVEL_BANDS as COLOR_BANDS } from '../ui/colors.j
 const levelBandName = l => levelBand(l).name;
 import { methodOf } from '../core/methods.js';
 import { requestBoxHTML, wireRequestBox } from '../ui/kbrequest.js';
+import { guestNoteHTML, isGuest } from '../ui/guest.js';
 
 const UI_KEY = 'fretworkCoach.techUI';
 const getUI = () => { try { return JSON.parse(localStorage.getItem(UI_KEY) || '{}') || {}; } catch { return {}; } };
@@ -45,8 +46,9 @@ const stageDots = t => `<span class="stage-dots" title="${TIERS.map(x => `${x.na
 /** #/techniques: the whole library with kind, level and skill-area filters. */
 export function mountTechniqueIndex(root, { navigate }) {
   const p = Store.profile;
-  const ui = Object.assign({ band: 'foryou', domain: 'all', kind: 'all' }, getUI());
-  if (!LEVEL_BANDS.some(b => b.id === ui.band)) ui.band = 'foryou';
+  const guest = isGuest(p);
+  const ui = Object.assign({ band: guest ? 'all' : 'foryou', domain: 'all', kind: 'all' }, getUI());
+  if (!LEVEL_BANDS.some(b => b.id === ui.band) || (guest && ui.band === 'foryou')) ui.band = guest ? 'all' : 'foryou';
   const domains = DOMAINS.filter(d => KB_INDEX.some(t => t.domain === d.key));
   const kinds = KINDS.filter(([k]) => KB_INDEX.some(t => (t.kind || 'technique') === k));
   let offReq = null;
@@ -57,16 +59,16 @@ export function mountTechniqueIndex(root, { navigate }) {
         <p class="why">${KB_INDEX.length} techniques${kinds.length > 1 ? ', subjects and styles' : ''}, each a path in four stages: foundations, intermediate, advanced and mastery. ${full ? `${full} ${full === 1 ? 'path is' : 'paths are'} complete; the` : 'The'} rest are filling in as new lessons are researched and added.</p></div>
       <div class="tech-filters">
         ${kinds.length > 1 ? `<div class="chips" role="group" aria-label="Kind"><button class="chip ${ui.kind === 'all' ? 'on' : ''}" data-kind="all">Everything</button>${kinds.map(([k, n]) => `<button class="chip kind-chip kind-${k} ${ui.kind === k ? 'on' : ''}" data-kind="${k}">${esc(n)}</button>`).join('')}</div>` : ''}
-        <div class="chips" role="group" aria-label="Level">${LEVEL_BANDS.map(b => `<button class="chip ${ui.band === b.id ? 'on' : ''}" data-band="${b.id}">${esc(b.name)}</button>`).join('')}</div>
+        <div class="chips" role="group" aria-label="Level">${LEVEL_BANDS.filter(b => !(guest && b.id === 'foryou')).map(b => `<button class="chip ${ui.band === b.id ? 'on' : ''}" data-band="${b.id}">${esc(b.name)}</button>`).join('')}</div>
         <div class="chips" role="group" aria-label="Skill area"><button class="chip ${ui.domain === 'all' ? 'on' : ''}" data-dom="all">All areas</button>${domains.map(d => `<button class="chip dom-chip dom-${d.key} ${ui.domain === d.key ? 'on' : ''}" data-dom="${d.key}">${esc(d.short || d.name)}</button>`).join('')}</div>
-        <div class="tech-legend small muted"><span>Outline: ${kinds.map(([k, n]) => `<i class="kdot kind-${k}"></i>${esc(n.replace(/s$/, ''))}`).join(' ')}</span><span class="lvl-key">Pills: your level ${COLOR_BANDS.map(b => `<span><i class="lvl-sw lvl-${b.id}"></i>${esc(b.name)} ${b.lo}–${b.hi}</span>`).join('')}</span></div>
+        <div class="tech-legend small muted"><span>Outline: ${kinds.map(([k, n]) => `<i class="kdot kind-${k}"></i>${esc(n.replace(/s$/, ''))}`).join(' ')}</span>${guest ? '' : `<span class="lvl-key">Pills: your level ${COLOR_BANDS.map(b => `<span><i class="lvl-sw lvl-${b.id}"></i>${esc(b.name)} ${b.lo}–${b.hi}</span>`).join('')}</span>`}</div>
       </div>
       ${list.length ? '' : `<section class="card"><p class="muted">Nothing matches${ui.band === 'foryou' ? ' your current levels with these filters' : ''}. Try another level or area.</p></section>`}
       <div class="tech-bubbles">${list.map(t => {
         const you = yourLevel(p, t), open = ui.open === t.id;
         return `<div class="tech-bubble kind-${t.kind || 'technique'} dom-${t.domain} ${open ? 'open' : ''}" data-tb="${t.id}">
           <button class="tb-head" data-tbopen="${t.id}" aria-expanded="${open}">
-            <span class="tb-dom">${esc(domName(t.domain))}</span>${levelDots(you, `Your ${domName(t.domain).toLowerCase()} level: ${you} (${levelBandName(you)})`)}
+            <span class="tb-dom">${esc(domName(t.domain))}</span>${guest ? '' : levelDots(you, `Your ${domName(t.domain).toLowerCase()} level: ${you} (${levelBandName(you)})`)}
             <b>${esc(t.title)}</b>
           </button>
         </div>`;
@@ -86,7 +88,7 @@ export function mountTechniqueIndex(root, { navigate }) {
             <p class="small muted">${esc(t.summary)}</p>
             <div class="small muted tb-stages">Stages ready ${stageDots(t)}</div>
             <div class="small">${t.complete ? '<span class="ok">Full path</span> · ' : ''}${t.lessons} lesson${t.lessons === 1 ? '' : 's'} · levels ${t.level[0]}–${t.level[1]}${t.kind && t.kind !== 'technique' ? ` · ${esc(t.kind)}` : ''}</div>
-            ${st ? `<div class="small fit">Start at: ${esc(TIER_BY_ID[st.tier].name)} (you're at ${you})</div>` : ''}
+            ${st && !guest ? `<div class="small fit">Start at: ${esc(TIER_BY_ID[st.tier].name)} (you're at ${you})</div>` : ''}
             ${arts.length ? `<div class="small muted">Used by ${arts.map(a => esc(a.name)).join(', ')}</div>` : ''}
             <a class="btn sm primary" href="#/techniques/${t.id}">Open the path ›</a>
       </div>
@@ -147,6 +149,7 @@ export function mountTechnique(root, { navigate, id }) {
   }
   /** The lesson the app picks next on this path (on the recommended stage), or how to get back to it. */
   function nextHTML() {
+    if (isGuest(p)) return guestNoteHTML('Pick any stage and lesson. With a player profile, the app starts you at your level, chooses your next lesson and keeps your progress.');
     const rs = TIER_BY_ID[startStage.tier];
     if (tier !== startStage.tier) return `<section class="card nextlesson muted-card"><p class="small">You’re looking at the ${esc(TIER_BY_ID[tier].name)} stage. The app recommends <b>${esc(rs.name)}</b> for you right now${startReason ? `: ${esc(startReason.charAt(0).toLowerCase() + startReason.slice(1))}` : '.'}</p>
       <button class="btn sm" data-tier="${startStage.tier}">← Back to my recommended stage</button></section>`;
@@ -189,7 +192,7 @@ export function mountTechnique(root, { navigate, id }) {
       <div class="page-cols">
         <div class="pc-main">
           ${st ? `<section class="card tech-level">
-            <div class="sec-head"><h3>${esc(TIER_BY_ID[tier].name)}: ${esc(st.title)}</h3><span class="small muted">Level ${level} · your ${esc(domName(t.domain)).toLowerCase()} level: ${you}</span></div>
+            <div class="sec-head"><h3>${esc(TIER_BY_ID[tier].name)}: ${esc(st.title)}</h3><span class="small muted">Level ${level}${isGuest(p) ? '' : ` · your ${esc(domName(t.domain)).toLowerCase()} level: ${you}`}</span></div>
             <p class="small"><b>Goal:</b> ${esc(st.goal)}</p>
             ${st.levels[1] > st.levels[0] ? `<details class="customize" ${levelOpen ? 'open' : ''}><summary>Customize: build these lessons at another level</summary>
               <div class="chips">${Array.from({ length: st.levels[1] - st.levels[0] + 1 }, (_, i) => st.levels[0] + i).map(l => `<button class="chip ${l === level ? 'on' : ''}" data-lv="${l}">Level ${l}${l === you ? ' · you' : ''}</button>`).join('')}</div>
@@ -202,8 +205,8 @@ export function mountTechnique(root, { navigate, id }) {
         <aside class="pc-side">
           ${ready ? nextHTML() : ''}
           <section class="card side-course"><h3>${MC_ICON} The whole path as a course</h3>
-            <p class="small muted">Every stage from ${esc(TIER_BY_ID[startStage.tier].name.toLowerCase())} up, in order, as a master class with progress and reviews. Built from these lessons (no API cost).</p>
-            ${mc ? `<a class="btn primary block" href="#/course/${mc.id}">${MC_ICON} Open your ${esc(t.title)} course</a>` : `<button class="btn primary block" data-tm="master" ${building ? 'disabled' : ''}>${building ? '<span class="spinner sm"></span>Building…' : `${MC_ICON} Start the ${esc(t.title)} path`}</button>`}</section>
+            <p class="small muted">${isGuest(p) ? 'Every stage in order, as a master class with progress and reviews. Courses follow your level and keep your progress, so they need a player profile.' : `Every stage from ${esc(TIER_BY_ID[startStage.tier].name.toLowerCase())} up, in order, as a master class with progress and reviews. Built from these lessons (no API cost).`}</p>
+            ${isGuest(p) ? '<a class="btn block" href="#/welcome">Create a profile to take it as a course</a>' : mc ? `<a class="btn primary block" href="#/course/${mc.id}">${MC_ICON} Open your ${esc(t.title)} course</a>` : `<button class="btn primary block" data-tm="master" ${building ? 'disabled' : ''}>${building ? '<span class="spinner sm"></span>Building…' : `${MC_ICON} Start the ${esc(t.title)} path`}</button>`}</section>
           <div class="artist-lessons"><h2 class="sechead">Lessons${st ? ` · ${esc(TIER_BY_ID[tier].name)}` : ''}</h2>
           ${!ready ? '<p class="muted"><span class="spinner sm"></span> Loading lessons…</p>' : groups.map((g, gi) => lessonGroupHTML(p, lessons, targets, { title: g.skill.title, items: g.items }, gi, { note: g.skill.summary ? `<p class="small muted lg-note">${esc(g.skill.summary)}</p>` : '' })).join('')}</div>
         </aside>

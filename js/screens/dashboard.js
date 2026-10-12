@@ -22,6 +22,7 @@ import { weekStripHTML, openManualLog } from '../ui/practicehistory.js';
 
 export function mountDashboard(root, { navigate, courseId = null, skillId = null }) {
   const p = Store.profile;
+  if (p && p.guest) return mountGuestHome(root, { navigate });
   let tick = null;
   // Two columns on wide screens (main: lesson and courses; side: this week, explore,
   // track); one column, in the same order, on phones.
@@ -162,4 +163,32 @@ export function mountDashboard(root, { navigate, courseId = null, skillId = null
   render();
   const offTrack = mountTrackCard(root.querySelector('[data-r="track"]'));
   return () => { clearInterval(tick); offTrack(); builder.destroy(); root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); };
+}
+
+/** Home for a guest: everything open, nothing chosen for you, and the way to a profile. */
+function mountGuestHome(root, { navigate }) {
+  const go = (href, ic, title, sub) => `<a class="ex-row" href="${href}"><span class="ex-ic" aria-hidden="true">${icon(ic)}</span><span class="ex-txt"><b>${title}</b><span class="small muted">${sub}</span></span><span class="mc-go">›</span></a>`;
+  root.innerHTML = `<div class="dash-head"><div><div class="label">${new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div><h1>Pick anything and play.</h1></div></div>
+    <div class="dash-cols">
+      <div class="dash-main">
+        <section class="card guest-card">
+          <div class="label">Guest mode</div>
+          <h3>Everything is open</h3>
+          <p class="small">Every lesson, path, artist course, song tool and trainer works as a guest. Two things need a player profile: <b>saving your progress</b> (tempos, mastered lessons, streaks) and <b>lessons chosen for your level</b>. Anything you log as a guest is gone when you close the app.</p>
+          <div class="row"><a class="btn primary" href="#/welcome" data-g="create">Create my player profile</a><a class="btn ghost" href="#/settings">Load a saved profile</a></div>
+        </section>
+        <section class="card explore">
+          <div class="sec-head"><h3>Start here</h3></div>
+          ${go('#/practice', 'library-big', 'Exercise library', 'Warm-ups, picking, fretting, chords, rhythm, scales')}
+          ${go('#/techniques', 'target', 'Technique library', 'Step-by-step paths from beginner to mastery')}
+          ${go('#/artist', 'guitar', 'Artist series', 'Signature techniques of great players')}
+          ${go('#/songs', 'music', 'Songs', 'Paste or import a tab and learn it section by section')}
+          ${go('#/tools', 'gauge', 'Tools', 'Tuner, metronome, trainers, chords and scales')}
+        </section>
+      </div>
+      <div class="dash-side"><section class="card track" data-r="track"></section></div>
+    </div>`;
+  let offTrack = () => {};
+  try { offTrack = mountTrackCard(root.querySelector('[data-r="track"]')) || (() => {}); } catch { root.querySelector('[data-r="track"]').remove(); }
+  return () => offTrack();
 }

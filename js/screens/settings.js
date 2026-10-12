@@ -21,7 +21,7 @@ import { periodFor, summarize, billingDay, setBillingDay, clearUsage, priceFor, 
 const KEY_ATTRS = 'autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" data-1p-ignore data-lpignore="true" data-form-type="other"';
 
 export function mountSettings(root, { navigate, applySettings }) {
-  const p = Store.profile;
+  const p = Store.profile, guest = !!(p && p.guest), real = !!p && !guest;
   const key = Claude.getKey();
   const ytKey = ytGetKey();
   const site = location.origin && location.origin !== 'null' ? location.origin + '/*' : 'https://lejuez88.github.io/*';
@@ -76,11 +76,11 @@ export function mountSettings(root, { navigate, applySettings }) {
     </section>` : ''}
     <section class="card">
       <h3>Your data</h3>
-      <p class="muted small">Everything is saved in this browser. Export a backup now and then, and to move to another device.</p>
+      ${guest ? '' : '<p class="muted small">Everything is saved in this browser. Export a backup now and then, and to move to another device.</p>'}
       <div class="drivebox">
         <div class="label">Google Drive</div>
         <p class="muted small">Save your profile straight to your own Google Drive, then load it on your phone (or any device) with the same Google account. Each Google account keeps its own profile; the app can only see the file it saves there.</p>
-        <div class="row">${p ? '<button class="btn primary" data-s="drivesave">Save to Google Drive</button>' : ''}<button class="btn" data-s="driveload">Load from Google Drive</button></div>
+        <div class="row">${real ? '<button class="btn primary" data-s="drivesave">Save to Google Drive</button>' : ''}<button class="btn" data-s="driveload">Load from Google Drive</button></div>
         <p class="small" data-r="drivestatus">${driveStatusHTML()}</p>
         <button class="textbtn small" data-s="driveacct">Use a different Google account</button>
         <details class="small drivesetup" ${driveReady() ? '' : 'open'}><summary>Google sign-in setup ${driveReady() ? '(done)' : '(needed once)'}</summary>
@@ -88,9 +88,10 @@ export function mountSettings(root, { navigate, applySettings }) {
           <div class="row nowrap"><input type="text" data-r="clientid" placeholder="…apps.googleusercontent.com" value="${esc(getClientId())}" ${KEY_ATTRS}><button class="btn" data-s="clientsave">Save</button></div>
         </details>
       </div>
-      ${p ? '<button class="btn block" data-s="export">Export profile (JSON file)</button>' : ''}
+      ${real ? '<button class="btn block" data-s="export">Export profile (JSON file)</button>' : ''}
       ${importBlockHTML({ label: 'Import profile (JSON)', btnClass: 'btn block' })}
-      ${p ? '<button class="btn ghost block danger" data-s="reset">Delete profile from this browser</button>' : ''}
+      ${real ? '<button class="btn ghost block danger" data-s="reset">Delete profile from this browser</button>' : ''}
+      ${guest ? '<p class="small muted">You’re using the app as a guest, so there’s no profile to save yet. Load or import one above, or create one.</p><a class="btn block primary" href="#/welcome">Create my player profile</a><button class="btn ghost block" data-s="endguest">Leave guest mode</button>' : ''}
     </section>
     <section class="card">
       <h3>About this version</h3>
@@ -113,7 +114,7 @@ export function mountSettings(root, { navigate, applySettings }) {
     try {
       const { data, file } = await loadFromDrive({ chooseAccount });
       const when = new Date(file.modifiedTime).toLocaleString();
-      if (Store.profile && !confirm(`Replace the profile in this browser with the one saved in Google Drive (${when})?\n\n${describeProfile(data.questionnaire ? data : (data.profile || data))}`)) { driveSay('Kept the profile in this browser.'); return; }
+      if (Store.profile && !Store.profile.guest && !confirm(`Replace the profile in this browser with the one saved in Google Drive (${when})?\n\n${describeProfile(data.questionnaire ? data : (data.profile || data))}`)) { driveSay('Kept the profile in this browser.'); return; }
       const res = saveImported(data.questionnaire ? data : (data.profile || data));
       driveSay(res.saved ? `Loaded your profile from Google Drive (saved ${esc(when)}).` : 'Loaded, but this browser couldn’t store it permanently.', res.saved ? 'ok' : 'bad');
       if (applySettings) applySettings();
@@ -219,7 +220,8 @@ export function mountSettings(root, { navigate, applySettings }) {
       case 'export': exportProfile(p); break;
       case 'drivesave': driveSave(false); break;
       case 'driveload': driveLoad(false); break;
-      case 'driveacct': (p ? driveSave : driveLoad)(true); break;
+      case 'driveacct': (real ? driveSave : driveLoad)(true); break;
+      case 'endguest': Store.endGuest(); navigate('#/welcome'); break;
       case 'clientsave': { setClientId(r('clientid').value); if (driveReady()) { loadGoogle().catch(() => {}); driveSay('Google sign-in is set up. Tap Save or Load.', 'ok'); } else driveSay('Client ID removed.'); break; }
       case 'reset':
         if (confirm('Delete your profile, courses and practice history from this browser? Export a backup first if you want to keep it.')) { Store.reset(); navigate('#/welcome'); }

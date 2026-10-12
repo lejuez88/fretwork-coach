@@ -1,6 +1,6 @@
 // App entry: boot, hash router, welcome screen.
 import { $, esc } from './core/util.js';
-import { Store, emptyProfile, normalize } from './core/store.js';
+import { Store, emptyProfile, normalize, isGuest } from './core/store.js';
 import { Claude } from './core/claude.js';
 import { Wiki } from './core/wiki.js';
 import { chooseTrack } from './core/track.js';
@@ -60,7 +60,7 @@ async function finishAssessment(p) {
 }
 
 function welcome(root) {
-  const d = Store.draft.get();
+  const d = Store.draft.get(), guest = isGuest(Store.profile);
   root.innerHTML = `
     <section class="card grille hero">
       <div class="label">Your adaptive guitar coach</div>
@@ -75,6 +75,11 @@ function welcome(root) {
       ${d ? `<button class="btn block" data-w="resume">Resume setup${d.profile && d.profile.questionnaire.name ? ' (' + esc(d.profile.questionnaire.name) + ')' : ''}</button>` : ''}
       ${importBlockHTML({ label: 'Import a saved profile (JSON)', btnClass: 'btn block ghost' })}
     </section>
+    <section class="card guest-offer">
+      <h3>${guest ? 'You’re using the app as a guest' : 'Just want to play?'}</h3>
+      <p class="muted small">${guest ? 'Everything is open, but your progress isn’t saved and lessons aren’t chosen for you. Create your player profile above whenever you’re ready.' : 'Skip the profile and use everything right away: lessons, paths, the Artist series, songs and tools. As a guest your progress isn’t saved and lessons aren’t chosen for you; you can create your profile any time.'}</p>
+      <button class="btn block" data-w="guest">${guest ? 'Keep going as a guest' : 'Skip for now: use the app as a guest'}</button>
+    </section>
     <section class="card">
       <h3>Connect Claude ${Claude.hasKey() ? '<span class="badge ok">Connected</span>' : ''}</h3>
       <p class="muted small">Add your Anthropic API key first so Claude can identify the guitarists you type in and name your courses. You can also add it later.</p>
@@ -84,6 +89,7 @@ function welcome(root) {
   const onClick = e => {
     const b = e.target.closest('[data-w]'); if (!b) return;
     if (b.dataset.w === 'start') { Store.draft.clear(); working = emptyProfile(); Store.draft.set({ profile: working, phase: 'onboarding', step: 0 }); navigate('#/onboarding'); }
+    if (b.dataset.w === 'guest') { if (!isGuest(Store.profile)) Store.startGuest(); applySettings(); navigate('#/home'); }
     if (b.dataset.w === 'resume') { working = null; const dr = Store.draft.get(); navigate(dr.phase === 'assessment' ? '#/assessment' : '#/onboarding'); }
   };
   const offImport = wireImport(root, {
@@ -196,7 +202,8 @@ function route() {
 function boot() {
   if (window.__FC_TEST__) window.__fc = { Recorder, Store, Audio: AudioEngine };
   Store.load();
-  if (Store.profile) {
+  if (Store.profile && Store.profile.guest) applySettings();
+  else if (Store.profile) {
     applySettings();
     // Upgrades older profiles: assessment fields, levels, style-specific plans, today's track
     prepareProfile(Store.profile);

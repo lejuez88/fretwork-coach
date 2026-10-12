@@ -25,7 +25,15 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: Design v2 and the SONYX logo
+## Latest: guest mode (use the app without a profile)
+
+- The welcome screen has **"Skip for now: use the app as a guest"**. A guest can use every lesson, path, artist course, song tool, trainer and the practice page.
+- A guest gets **no suggestions**: no "next lesson chosen for you", no "For you" filter or level pills in the technique library, no "For you" master class, no song recommendations. Lessons are drawn at foundations level (`GUEST_LEVEL` in js/core/store.js); Customize changes the variation.
+- A guest's **progress isn't kept**: logging works during the visit (the Log panel says so), but `Store.save()` only stores settings under `fretworkCoach.guest`, so the app reopens as a guest with the same scheme and sounds. Courses and master classes need a profile.
+- Home, Profile and Settings show the way to a profile (create, load from Drive, import). Creating or loading one ends guest mode (`Store.replace`); Settings → "Leave guest mode" goes back to the welcome screen. A guest is never saved or exported to Drive, so it can't overwrite a real profile there.
+- Code: js/ui/guest.js (notes), `guestProfile`/`isGuest`/`startGuest`/`endGuest` in js/core/store.js; tests in tests/t_guest.mjs.
+
+## Earlier: Design v2 and the SONYX logo
 
 The look approved in the App Cosmetics thread (decision log in the project doc COSMETICS.md):
 

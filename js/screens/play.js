@@ -39,6 +39,7 @@ import { DOMAIN_BY_KEY } from '../assessment/engine.js';
 import { methodOf } from '../core/methods.js';
 import { icon } from '../ui/icons.js';
 import { menuButtonHTML } from '../ui/drawer.js';
+import { isGuest, GUEST_SAVE_LINE } from '../ui/guest.js';
 
 const PLAY_KEY = 'fretworkCoach.play';
 const PANEL_KEY = 'fretworkCoach.playPanel';
@@ -211,6 +212,7 @@ export function mountPlay(root, { navigate, ctx = null }) {
   function logHTML(it) {
     const st = itemState(p, it, course), bpm = Math.max(peak, curBpm() || 0) || it.targetBpm;
     return `<div class="logpane">
+      ${isGuest(p) ? `<p class="small guest-line">${esc(GUEST_SAVE_LINE)} <a class="link" href="#/welcome">Create a profile</a></p>` : ''}
       ${lastDecision ? `<div class="note">${esc(lastDecision)}</div>${C.idx < C.items.length - 1 ? '<button class="btn primary block" data-pl="next">Next lesson ›</button>' : ''}` : ''}
       <label class="mini">Highest tempo you played cleanly (or where you stopped)</label>
       <div class="stepper"><button data-rs="-5">−5</button><button data-rs="-1">−1</button><input type="number" inputmode="numeric" data-r="rtempo" value="${bpm}"><button data-rs="1">+1</button><button data-rs="5">+5</button></div>

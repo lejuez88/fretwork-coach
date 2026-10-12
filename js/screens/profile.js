@@ -9,6 +9,7 @@ import { GENRE_BY_ID } from '../data/catalog.js';
 import { domainStatus } from './reassess.js';
 import { mountPracticeHistory } from '../ui/practicehistory.js';
 import { levelDots, KIND_COLORS } from '../ui/colors.js';
+import { isGuest } from '../ui/guest.js';
 
 export function exportProfile(p) {
   const blob = new Blob([JSON.stringify(p, null, 2)], { type: 'application/json' });
@@ -23,6 +24,16 @@ export function copyText(text) {
 
 export function mountProfile(root, { navigate, firstRun = false }) {
   const p = Store.profile, d = p.domains;
+  if (isGuest(p)) {
+    root.innerHTML = `<h1>Player Profile</h1>
+      <section class="card guest-card"><div class="label">Guest mode</div><h3>You haven’t made a player profile yet</h3>
+        <p>As a guest, everything in the app is open. A player profile adds:</p>
+        <ul class="small"><li><b>Your levels</b> in 8 skill areas, from a short assessment with your guitar in hand.</li><li><b>Lessons chosen for you</b>, at the edge of your ability, with a next lesson on every course, path and artist page.</li><li><b>Saved progress:</b> tempos, mastered lessons, reviews, practice time and streaks, and master classes built for you.</li><li><b>Backup and sync</b> to Google Drive or a file, so it follows you to other devices.</li></ul>
+        <p class="small muted">Setup takes about 20 minutes.</p>
+        <a class="btn primary block" href="#/welcome">Create my player profile</a>
+        <a class="btn block ghost" href="#/settings">Load a saved profile</a></section>`;
+    return () => {};
+  }
   if (!Object.keys(d).length) {
     root.innerHTML = `<h1>Player Profile</h1><section class="card"><p>No assessment yet.</p><a class="btn primary block" href="#/assessment">Take the assessment</a></section>`;
     return () => {};

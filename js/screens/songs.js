@@ -23,6 +23,7 @@ import { exerciseCardHTML } from '../ui/ask.js';
 import { timeInputHTML, wireTimeInput, readTime, startRoutine, hasActiveRoutine } from './routine.js';
 import { Shell } from '../ui/shell.js';
 import { searchSongsterr, findSong as findOnSongsterr, linkInfo, partsSummary, songUrl, trackUrl, bestMatchUrl, siteSearchUrl, searchBlocked } from '../core/songsterr.js';
+import { guestNoteHTML, isGuest } from '../ui/guest.js';
 
 const STATUS_LABEL = Object.fromEntries(STATUSES);
 const statusIcon = { want: '☆', learning: '◐', solid: '●', mastered: '★' };
@@ -57,17 +58,18 @@ export function mountSongsHub(root, { navigate }) {
         <button class="btn primary block" data-s="add">+ Add song</button>
         <p class="small muted">${Claude.hasKey() ? 'Claude looks up the key, tuning, tempo and what the song asks of your hands.' : 'Songs from the built-in list get their techniques filled in. Add your Claude key to look up any song.'}</p>
       </section>
-      <section class="card"><div class="label">My songs · repertoire level ${p.domains.repertoire ? p.domains.repertoire.level : 1}/10</div>
+      <section class="card"><div class="label">My songs${isGuest(p) ? '' : ` · repertoire level ${p.domains.repertoire ? p.domains.repertoire.level : 1}/10`}</div>
         ${songs.length ? `<div class="chips small">${[['all', 'All', songs.length], ...STATUSES.map(([k, l]) => [k, l, counts[k]])].filter(([k, , n]) => k === 'all' || n).map(([k, l, n]) => `<button class="chip sm ${filter === k ? 'on' : ''}" data-filter="${k}">${l} · ${n}</button>`).join('')}</div>` : ''}
-        ${shown.length ? `<div class="songlist">${shown.map(songRow).join('')}</div>` : `<p class="muted small">${songs.length ? 'No songs with this status.' : 'No songs yet. Add one above or pick from the recommendations below.'}</p>`}
+        ${shown.length ? `<div class="songlist">${shown.map(songRow).join('')}</div>` : `<p class="muted small">${songs.length ? 'No songs with this status.' : 'No songs yet. Add one above or pick from the recommendations below.'}</p>
+        ${isGuest(p) && songs.length ? `<p class="small guest-line">You’re using the app as a guest, so songs you add here last only until you close the app.</p>` : ''}`}
       </section>
-      <section class="card"><div class="sec-head"><div class="label">Recommended for you</div>${Claude.hasKey() ? `<button class="btn sm ghost" data-s="refresh" ${recBusy ? 'disabled' : ''}>${recBusy ? '<span class="spinner sm"></span>Picking…' : '↻ New picks'}</button>` : ''}</div>
+      ${isGuest(p) ? guestNoteHTML('Song recommendations are matched to your song level, so they need a player profile. You can still add any song above.') : `      <section class="card"><div class="sec-head"><div class="label">Recommended for you</div>${Claude.hasKey() ? `<button class="btn sm ghost" data-s="refresh" ${recBusy ? 'disabled' : ''}>${recBusy ? '<span class="spinner sm"></span>Picking…' : '↻ New picks'}</button>` : ''}</div>
         <div class="chips small">${[[null, 'For you'], ...myGenres.map(g => [g, GENRE_BY_ID[g].name])].map(([g, l]) => `<button class="chip sm ${recGenre === g ? 'on' : ''}" data-rgenre="${g || ''}">${esc(l)}</button>`).join('')}
           <select data-r="moregenre" class="chipselect"><option value="">More genres…</option>${GENRES.filter(g => !myGenres.includes(g.id)).map(g => `<option value="${g.id}" ${recGenre === g.id ? 'selected' : ''}>${esc(g.name)}</option>`).join('')}</select></div>
         <p class="small muted">Matched to your song level (${songLevelFor(p)}/10): one comfortable pick, mostly stretch songs, one reach.${recs && recs.source === 'claude' ? ' Picked by Claude.' : ''}</p>
         ${recError ? `<p class="small muted">Claude couldn’t pick songs (${esc(recError)}); showing the built-in list.</p>` : ''}
         <div class="reclist">${(recs ? recs.items : []).map(recCard).join('') || (recBusy ? '' : '<p class="muted small">No more songs in the built-in list for this genre.</p>')}</div>
-      </section>`;
+      </section>`}`;
     hydrateImages(root);
   }
   function songRow(s) {

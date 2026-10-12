@@ -27,6 +27,7 @@ import { Metronome, mountMetronome } from '../tools/metronome.js';
 import { Shell } from '../ui/shell.js';
 import { TOPIC_ART, TOPIC_HUE } from '../ui/topicart.js';
 import { startRoutine } from './routine.js';
+import { isGuest } from '../ui/guest.js';
 
 const UI_KEY = 'fretworkCoach.libUI';
 const getUI = () => { try { return JSON.parse(sessionStorage.getItem(UI_KEY) || '{}') || {}; } catch { return {}; } };
@@ -49,6 +50,7 @@ function startQueue(navigate) {
 
 /** Master classes: a "For you" pick, topics that change every time, and any topic you type. */
 function masterCardHTML(p) {
+  if (isGuest(p)) return `<section class="card mastercard compact"><div class="sec-head"><h3>${MC_ICON} Master classes</h3></div><p class="small muted mc-intro">A whole course on one topic, built for your level, with progress and reviews. Master classes need a player profile, because they follow your level and keep your progress.</p><a class="btn block" href="#/welcome">Create my player profile</a></section>`;
   const fy = forYou(p), top1 = fy[0] || null;
   const recs = recommendedTopics(p, 3, top1 ? [top1.topic.id] : []);
   return `<section class="card mastercard compact">

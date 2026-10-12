@@ -4,11 +4,14 @@ import { today, daysBetween, addDays, parseDay } from './util.js';
 
 export const APP_VERSION = 2;
 /** Shown in Settings → About, to tell which version a device is running. Bump with each release. */
-export const BUILD = '2026-10-12.1';
+export const BUILD = '2026-10-12.2';
 const PROFILE_KEY = 'fretworkCoach.profile.v2';
 const LEGACY_KEY = 'fretworkCoach.profile.v1';
 const DRAFT_KEY = 'fretworkCoach.draft.v2';
 const SESSION_KEY = 'fretworkCoach.activeSession';
+const GUEST_KEY = 'fretworkCoach.guest';
+/** The level a guest starts at in every area (no assessment): the top of foundations. */
+export const GUEST_LEVEL = 3;
 
 const safe = {
   get(k) { try { const s = localStorage.getItem(k); return s ? JSON.parse(s) : null; } catch { return null; } },
@@ -57,6 +60,22 @@ export function emptyProfile() {
   };
 }
 
+/**
+ * A guest uses the app without a player profile: everything is open, nothing is
+ * suggested, and progress lives only until the page is closed. Only settings
+ * (scheme, sounds) are kept, so the app opens as a guest again next time.
+ */
+export function guestProfile(settings = {}) {
+  const p = emptyProfile();
+  p.guest = true;
+  p.settings = Object.assign(p.settings, settings || {});
+  for (const k of ['fretting', 'picking', 'rhythm', 'fretboard', 'theory', 'ear', 'improv', 'repertoire'])
+    p.domains[k] = { level: GUEST_LEVEL, basis: 'guest', prior: GUEST_LEVEL, kind: 'guest', edge: '', lessonLevel: null, lessonCount: 0 };
+  return p;
+}
+/** True when the app is being used without a profile. */
+export const isGuest = p => !!(p && p.guest);
+
 /** Accepts a v1 or v2 profile (or junk) and returns a complete v2 profile. */
 export function normalize(p) {
   const b = emptyProfile();
@@ -94,14 +113,24 @@ export const Store = {
   load() {
     let p = safe.get(PROFILE_KEY);
     if (!p) { const legacy = safe.get(LEGACY_KEY); if (legacy) p = legacy; }
-    this.profile = p ? normalize(p) : null;
+    if (p) { const n = normalize(p); delete n.guest; this.profile = n; return n; }
+    const g = safe.get(GUEST_KEY);
+    this.profile = g ? guestProfile(g.settings) : null;
     return this.profile;
   },
-  /** Save to this browser. Returns false if the browser refused (storage full or blocked). */
-  save() { if (!this.profile) return false; this.profile.meta.updated = today(); return safe.set(PROFILE_KEY, this.profile); },
-  replace(p) { this.profile = normalize(p); return this.save(); },
+  /** Save to this browser. Returns false if the browser refused (storage full or blocked). A guest keeps only settings. */
+  save() {
+    if (!this.profile) return false;
+    if (this.profile.guest) return safe.set(GUEST_KEY, { settings: this.profile.settings, since: this.profile.meta.created });
+    this.profile.meta.updated = today(); return safe.set(PROFILE_KEY, this.profile);
+  },
+  replace(p) { this.profile = normalize(p); delete this.profile.guest; safe.del(GUEST_KEY); return this.save(); },
+  /** Use the app without a profile (keeps the settings of a guest from before). */
+  startGuest() { const g = safe.get(GUEST_KEY); this.profile = guestProfile(g && g.settings); this.save(); return this.profile; },
+  /** Leave guest mode (back to the welcome screen). */
+  endGuest() { safe.del(GUEST_KEY); if (this.profile && this.profile.guest) this.profile = null; },
   hasLegacy() { return !!safe.get(LEGACY_KEY) && !safe.get(PROFILE_KEY); },
-  reset() { safe.del(PROFILE_KEY); safe.del(DRAFT_KEY); safe.del(SESSION_KEY); this.profile = null; },
+  reset() { safe.del(PROFILE_KEY); safe.del(DRAFT_KEY); safe.del(SESSION_KEY); safe.del(GUEST_KEY); this.profile = null; },
   draft: {
     get: () => safe.get(DRAFT_KEY),
     set: v => safe.set(DRAFT_KEY, v),
