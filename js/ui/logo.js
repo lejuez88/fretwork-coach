@@ -14,7 +14,7 @@ let pickImg = null;
 export function paintFavicon() {
   if (typeof document === 'undefined' || typeof Image === 'undefined') return;
   const cs = getComputedStyle(document.documentElement);
-  const bg = (cs.getPropertyValue('--bg') || '#0f0d12').trim() || '#0f0d12';
+  const bg = (cs.getPropertyValue('--bg') || '#060508').trim() || '#060508';
   const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', bg);
   const n = document.documentElement.getAttribute('data-scheme') || '1';
   const draw = () => {
