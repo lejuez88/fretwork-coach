@@ -91,9 +91,12 @@ header.top{gap:10px}
 .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text)}
 
 /* ------------------------------------------------------------- SONYX logo */
-.sx-pick{width:26px;height:29px;flex:none;overflow:visible}
-.sx-word{height:20px;width:auto;flex:none;overflow:visible}
-.sx-word.lg{height:26px}
+/* Chris's artwork as a stencil, filled with the active scheme (see js/ui/logo.js). */
+.sx-pick,.sx-word{display:inline-block;flex:none;background:linear-gradient(180deg,var(--btn-top),var(--accent) 55%,var(--accent-d));
+  -webkit-mask:var(--sx-art) center/contain no-repeat;mask:var(--sx-art) center/contain no-repeat}
+.sx-pick{--sx-art:url(../img/sonyx-pick.png);height:30px;aspect-ratio:154/163}
+.sx-word{--sx-art:url(../img/sonyx-wordmark.png);height:22px;aspect-ratio:597/102}
+.sx-pick.lg{height:34px}.sx-word.lg{height:26px}
 
 /* ------------------------------------------------------ Menu A · side drawer */
 #tabbar{display:none!important}
@@ -169,7 +172,7 @@ body.playmode .tr-status [data-tr="status"]{color:var(--muted)}
   .play-stage .stage-meta .tempo-row b{font-size:17px}
   .play-stage .stage-tool>.tabplayer{justify-content:flex-start;gap:10px}
   .play-stage .tp-view{--tab-zoom:1.4}
-  .logo .sx-word{height:17px}
+  .logo .sx-word{height:18px}.logo .sx-pick{height:26px}
 }
 body:not(.has-tabs) .menu-btn.in-header{display:none}
 .ic.fill{fill:currentColor}

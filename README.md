@@ -29,7 +29,7 @@ Without a key, everything still works with built-in data: catalog guitarists and
 
 The look approved in the App Cosmetics thread (decision log in the project doc COSMETICS.md):
 
-- **SONYX logo** (`js/ui/logo.js`): a slanted wordmark with a solid top half and hollow lower half, and a split guitar-pick mark. Both are inline SVG that take the active color scheme; the favicon is repainted to match. Internal names (local storage keys, the Drive file "Fretwork Coach profile.json") are unchanged, so existing profiles and Drive sync keep working.
+- **SONYX logo** (`img/sonyx-pick.png`, `img/sonyx-wordmark.png`, `js/ui/logo.js`): Chris's artwork, white on transparent, used as a CSS mask and filled with the active scheme's colors, so it recolors with the scheme; the favicon is repainted to match. Internal names (local storage keys, the Drive file "Fretwork Coach profile.json") are unchanged, so existing profiles and Drive sync keep working.
 - **Color schemes** (`js/ui/scheme.js`, `css/theme.css`): Amber Stage (default), Lime Graphite, Cobalt Night and Studio Mono, all dark. Pick one in Settings → Display; it is saved in the profile and syncs with Drive.
 - **Frosted-glass panels, Space Grotesk + Inter, compact spacing, outline icons** (`css/theme.css`, `js/ui/icons.js`, Lucide, ISC license).
 - **Side drawer** (`js/ui/drawer.js`) replaces the bottom tab bar: the menu button at the top left (also in the practice page's top bar).
