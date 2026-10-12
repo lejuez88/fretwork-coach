@@ -1,6 +1,6 @@
-// The six-note pentatonic cell: a two-string pentatonic cell, strict alternate picked, that drills the
-// inside string change. A related drill from Paul Gilbert's picking vocabulary (not "the Paul Gilbert
-// lick", which is the 3+1 pattern in pgLick.js), from the slow cell to performance tempo through all
+// The two-string pentatonic cell: a six-note pentatonic cell on two strings, strict alternate picked,
+// that drills the inside string change. A related drill from Paul Gilbert's picking vocabulary (not "the
+// Paul Gilbert lick", which is the six-note B-string loop in pgLick.js), from the slow cell to performance tempo through all
 // five boxes, in every key and in licks.
 //
 // Concept-first (CONTENT.md): the model is the cell itself as positions in a pentatonic box: on a
@@ -61,7 +61,7 @@ export function sixParts(c) {
   for (let r = 0; r < 4; r++) seq.push(...cl);
   const notes = fromSeq(seq, step); notes.push(N(cl[0][0], cl[0][1], endOf(notes), 2));
   return make(c, {
-    id: 'pgsix-parts', name: `The six-note lick in two halves (${nameOf(k)} minor pentatonic, top strings)`, domain: 'picking', method: 'chunking',
+    id: 'pgsix-parts', name: `The two-string cell in two halves (${nameOf(k)} minor pentatonic, top strings)`, domain: 'picking', method: 'chunking',
     unit: unitName(step), goal: 96, minutes: 4, picking: 'strict',
     why: 'The lick is two three-note halves: up across the string change, then back. Looping each half alone lets you fix the hard moment (the pick hopping between the B and high e strings) before joining them.',
     instr: 'Loop the first half (two notes on the B string, one on the high e) four times, then the second half (high e, high e, back to the B) four times, then the whole lick four times. Strict alternate picking, starting with a downstroke. Pass: the whole lick 4 times in a row with no extra or missing strokes.',
@@ -77,7 +77,7 @@ export function insideHop(c) {
   return make(c, {
     id: 'pgsix-hop', name: `The inside hop: two notes, two strings (${nameOf(k)} minor pentatonic)`, domain: 'picking', method: 'chunking',
     unit: unitName(step), goal: 100, minutes: 3, picking: 'strict',
-    why: 'The heart of the six-note lick is one motion: an upstroke on the B string followed by a downstroke on the high e, with the pick hopping between the two strings. Isolating it on two notes is the fastest way to make it reliable.',
+    why: 'The heart of the two-string cell is one motion: an upstroke on the B string followed by a downstroke on the high e, with the pick hopping between the two strings. Isolating it on two notes is the fastest way to make it reliable.',
     instr: 'Upstroke on the B-string note, downstroke on the high-e note, over and over. The pick travels between the two strings each time: keep the hop as small as possible and listen for both notes being equally loud. Pass: 8 bars without catching a wrong string.',
     watch: 'A big, loopy motion: the hop only has to clear one string.', simplify: 'Start with a downstroke on the B string instead (an outside change), then switch back.', tab: { notes }
   });
@@ -115,7 +115,7 @@ export function sixLick(c, { fast = false } = {}) {
   }
   const chords = [nameOf(k) + 'm', nameOf(k + 8), nameOf(k + 10), nameOf(k) + 'm'];
   return make(c, {
-    id: fast ? 'pgsix-lick-fast' : 'pgsix-lick', name: `The six-note lick in a phrase${fast ? ', at speed' : ''} (${nameOf(k)} minor)`, domain: 'improv', method: 'transfer',
+    id: fast ? 'pgsix-lick-fast' : 'pgsix-lick', name: `The two-string cell in a phrase${fast ? ', at speed' : ''} (${nameOf(k)} minor)`, domain: 'improv', method: 'transfer',
     unit: unitName(step), goal: fast ? 88 : 96, minutes: 5, dl: fast ? 1 : 0, backing: chords, chords,
     why: 'A speed lick only becomes music when it leads somewhere: here two cells launch a bend into the 5th and a held note with vibrato. Speed, then space.',
     instr: 'Two cells on the top strings, then bend the G-string 4th up a whole step to the 5th, then land and hold with vibrato. Repeat over the second half of the progression. Then make your own answer after the two cells. Pass: four bars in time with the bend in tune, then four bars of your own.',
@@ -147,7 +147,7 @@ export function sixRandom(c) {
     notes.push(N(cl[5][0], cl[5][1], t + 3, 1)); t += 4;
   }
   return make(c, {
-    id: 'pgsix-random', name: 'Random access: the six-note lick in a new key, box and string pair every bar', domain: 'picking', method: 'interleaving',
+    id: 'pgsix-random', name: 'Random access: the two-string cell in a new key, box and string pair every bar', domain: 'picking', method: 'interleaving',
     unit: '16th-note sextuplets', goal: 92, minutes: 5, dl: 1, picking: 'strict',
     why: 'At mastery level the lick should be available anywhere instantly. Unpredictable changes of key, box and strings train exactly that.',
     instr: `${names.join(' → ')}. Three cells per bar, then a beat to find the next one. Read only the names, not the notes. Pass: all 8 bars from memory at the goal tempo.`,
@@ -170,7 +170,7 @@ export function sixEtude(c) {
   parts.push(N(6, B[6][0], 28, 4, '~'));
   const chords = [nameOf(k) + 'm', nameOf(k + 8), nameOf(k + 10), nameOf(k) + 'm'];
   return make(c, {
-    id: 'pgsix-capstone-etude', name: `Capstone study: an 8-bar piece on the six-note lick (${nameOf(k)} minor)`, domain: 'improv', method: 'transfer',
+    id: 'pgsix-capstone-etude', name: `Capstone study: an 8-bar piece on the two-string cell (${nameOf(k)} minor)`, domain: 'improv', method: 'transfer',
     unit: 'triplets, then sextuplets', goal: 92, minutes: 8, dl: 1, picking: 'strict', backing: [...chords, ...chords], chords,
     why: 'An original piece that builds the lick the way the path did: slow cells on two string pairs, the mirror, a move into boxes 2 and 3, then the lick at full speed and the cascading run to the low root.',
     instr: 'Bars 1–4 in triplets, bars 5–7 in sextuplets: the same tempo, double the speed. Learn it two bars at a time. Then write your own 8 bars on the same plan. Pass: the study at the goal tempo with no stops, then your own version played through once.',
@@ -190,7 +190,7 @@ export function pgSixNote(c, { across = false } = {}) {
   }
   const k = nameOf(key);
   return make(c, {
-    id: across ? 'pg-six-across' : 'pg-six-note', name: across ? `Six-note picking lick through all five boxes (${k} minor)` : `Six-note pentatonic picking lick on string pairs (${k} minor)`,
+    id: across ? 'pg-six-across' : 'pg-six-note', name: across ? `Two-string pentatonic cell through all five boxes (${k} minor)` : `Two-string pentatonic picking cell on string pairs (${k} minor)`,
     domain: 'picking', method: across ? 'interleaving' : 'variable', unit: '16th-note sextuplets', goal: 92, minutes: 5, dl: across ? 2 : 1, picking: 'strict',
     why: 'A six-note pentatonic cell on two strings, alternate picked, is a classic Paul Gilbert-style speed drill: it trains the string change from the inside of the strings, where most picking breaks down.',
     instr: across ? 'The cell on strings 1–2, twice per box, moving through boxes 1 to 5 and back. Shift on the first note of each beat. Pass: the whole journey clean at the goal tempo.' : 'The cell (two notes on the lower string, three on the upper, back to the lower) four times per bar, then down one string pair. Strict alternate picking starting with a downstroke; the pick has to jump between the strings on the string change. Pass: all four pairs clean at the goal tempo.',
@@ -201,10 +201,10 @@ export function pgSixNote(c, { across = false } = {}) {
 /* --------------------------------- The path --------------------------------- */
 const W6 = 'Strict alternate picking, starting with a downstroke. The ascending cell has {changes} string changes; ';
 export default entry({
-  id: 'pgSix', kind: 'technique', title: 'The six-note pentatonic cell', domain: 'picking',
-  re: /(six|6).?note (pentatonic )?(picking )?(lick|pattern|cell)/,
-  aliases: ['six-note pentatonic lick', 'six-note picking cell'],
-  summary: 'A two-string pentatonic cell from Paul Gilbert’s picking vocabulary (a related drill; the Paul Gilbert lick itself is the 3+1 path), alternate picked: from the slow cell and the inside string change to performance tempo through all five boxes, every key and real licks.',
+  id: 'pgSix', kind: 'technique', title: 'The two-string pentatonic cell', domain: 'picking',
+  re: /(two|2).?string pentatonic (cell|lick|pattern)|(six|6).?note pentatonic (picking )?(lick|pattern|cell)/,
+  aliases: ['two-string pentatonic cell', 'six-note pentatonic cell', 'six-note pentatonic lick'],
+  summary: 'A two-string pentatonic cell from Paul Gilbert’s picking vocabulary (a related drill; the Paul Gilbert lick itself is the six-note B-string loop, its own path), alternate picked: from the slow cell and the inside string change to performance tempo through all five boxes, every key and real licks.',
   prereqs: ['alternatePicking', 'pentatonic'],
   sources: ['https://www.guitarworld.com/lessons/intense-rock-picking-a-brief-look-at-paul-gilberts-alternate-picking-technique', 'https://forum.troygrady.com/t/haha-paul-gilbert-admits-that-the-paul-gilbert-lick-is-too-hard-for-beginners/8197', 'https://www.premierguitar.com/articles/23477-cram-session-alternate-picking', 'https://www.dummies.com/article/inside-and-outside-picking-on-the-guitar-143479'],
   ctx: { key: 9, minor: true, prog: 'minorRock' },
@@ -212,7 +212,7 @@ export default entry({
     stage('foundations', 'The cell, slowly',
       'Play the six-note cell on the top strings 4 times in a row in triplets at 80 BPM, loop the inside string change for 8 bars without a wrong string, name the string pair and direction of the lick by ear, find it on four string pairs from memory, and play it into a bend over a minor groove.', [
         S('pgsix-cell', 'The cell', 'picking', 'Two halves, then whole; then slow and even.', [c => sixParts(c),
-          X('pgsix-slow', 'The six-note lick, slow and even, on the top strings ({key})', 'accurate-reps', { pairs: [[2, 1]], reps: 8, step: 1 / 3, goal: 92, why: 'Clean repetitions at a slow tempo build the motion you will keep at speed. Two triplets per cell put a downstroke on every beat.', instr: W6 + 'two beats per cell as triplets. Count only the clean cells. Pass: 8 clean cells in a row.', watch: 'Uneven triplets at the string change.', simplify: '8th notes.' })]),
+          X('pgsix-slow', 'The two-string cell, slow and even, on the top strings ({key})', 'accurate-reps', { pairs: [[2, 1]], reps: 8, step: 1 / 3, goal: 92, why: 'Clean repetitions at a slow tempo build the motion you will keep at speed. Two triplets per cell put a downstroke on every beat.', instr: W6 + 'two beats per cell as triplets. Count only the clean cells. Pass: 8 clean cells in a row.', watch: 'Uneven triplets at the string change.', simplify: '8th notes.' })]),
         S('pgsix-inside', 'The inside change', 'picking', 'The motion the lick exists to train, and hearing it.', [c => insideHop(c), c => sixEcho(c)]),
         S('pgsix-know', 'Know where it lives', 'fretboard', 'Find the cell on any pair from memory; listen for an even sound.', [
           X('pgsix-find', 'From memory: the lick on each string pair of box 1 ({key})', 'retrieval', { pairs: [[2, 1], [4, 3], [3, 2], [5, 4]], reps: 2, step: 1 / 3, goal: 88, why: 'The cell is always the same four box notes: the two on the lower string, then the two on the upper. Finding it on a pair without reading it is what lets you use the lick anywhere later.', instr: 'Cover the tab. The order is strings 2–1, 4–3, 3–2, 5–4. Before each pair, say which two frets are on the lower string, then play the cell twice. Uncover only to check. ' + 'Pass: all four pairs found and played twice from memory.', watch: 'Peeking at the tab between pairs.', simplify: 'Two pairs only: 2–1 and 3–2.' }),
@@ -222,7 +222,7 @@ export default entry({
     stage('intermediate', 'Every string pair, both directions',
       'Play the cell on every string pair of box 1 in 16ths at 100 BPM, play its mirror (all outside changes) as triplets at 110, play it in boxes 2 to 5 (box 2 from memory), zig-zag between the cell and its mirror, and use it in a phrase over a minor progression.', [
         S('pgsix-pairs', 'Every pair, both ways', 'picking', 'Up (inside changes) and its mirror (outside changes).', [
-          X('pgsix-16ths', 'The six-note lick in 16ths on every string pair ({key})', 'variable', { pairs: ALL_PAIRS, reps: 2, step: 0.25, goal: 100, why: 'Played in 16ths the six-note cell crosses the beat: the accent falls on a different note each time, which makes it sound fast and unpredictable at a moderate tempo.', instr: W6 + 'four notes per beat, so the cell starts in a new place each time. Two cells per pair, low pair to high. Pass: all five pairs clean at the goal tempo.', watch: 'Accenting the first note of the cell instead of the beat.', simplify: 'Triplets.' }),
+          X('pgsix-16ths', 'The two-string cell in 16ths on every string pair ({key})', 'variable', { pairs: ALL_PAIRS, reps: 2, step: 0.25, goal: 100, why: 'Played in 16ths the six-note cell crosses the beat: the accent falls on a different note each time, which makes it sound fast and unpredictable at a moderate tempo.', instr: W6 + 'four notes per beat, so the cell starts in a new place each time. Two cells per pair, low pair to high. Pass: all five pairs clean at the goal tempo.', watch: 'Accenting the first note of the cell instead of the beat.', simplify: 'Triplets.' }),
           X('pgsix-mirror', 'The mirrored lick: down the cell, every change outside ({key})', 'variable', { dir: 'down', pairs: ALL_PAIRS.slice().reverse(), reps: 2, step: 1 / 3, goal: 110, why: 'Turning the cell around (high to low) makes every string change an outside one: the other half of the picking problem, and a great descending lick.', instr: 'Two notes down the upper string, two down the lower, back up one to each: strict alternate picking. Top pair first, moving down. Pass: all pairs clean at the goal tempo.', watch: 'Clipping the string you just left on the way around.', simplify: 'Top two pairs only.' })]),
         S('pgsix-boxes', 'Other boxes', 'picking', 'The same cell in boxes 2 and 3.', [
           X('pgsix-box12', 'The lick in boxes 1 and 2 on the top strings ({key})', 'interleaving', { boxes: [1, 2, 1, 2], pairs: [[2, 1]], reps: 2, step: 0.25, goal: 100, why: 'Switching boxes every two cells forces the fretting hand to find the new shape while the picking pattern stays identical.', instr: W6 + 'two cells in box 1, two in box 2, and back. Pass: 4 switches clean.', watch: 'The B-string shift in box 2.', simplify: 'Triplets.' }),

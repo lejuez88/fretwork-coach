@@ -4,11 +4,10 @@
 import { OPEN, N, nameOf, minorKey, make, mod12, S, U, PU, M, artist, targetGuide } from '../lib.js';
 import pentatonic from '../kb/pentatonic.js';
 import speedPent, { cellOf } from '../kb/speedPent.js';
-import rolling5s, { shape5 } from '../kb/rolling5s.js';
+import rolling5s, { shape5, fives } from '../kb/rolling5s.js';
 import hexatonic, { hexBox } from '../kb/hexatonic.js';
 import positionShifts, { boxNotes, fitRoute } from '../kb/positionShifts.js';
 import spreadTriads, { spread } from '../kb/spreadTriads.js';
-import { grouped } from '../kb/pent6s.js';
 
 const pitch = (s, f) => OPEN[s] + f;
 
@@ -20,7 +19,7 @@ export function ejStudy(c) {
   const b2 = shape5(k, 'box', 2), hx = hexBox(k, 1), fit = fitRoute(k, [2, 1]);
   if (!b2 || !hx || !fit) return null;
   put(cells([1, 2, 3, 4]), 1 / 6, 0, 4);                                                    // bar 1: the cascade down box 1
-  put(grouped(b2, 5, 'down'), 0.25, 4, 4);                                                  // bar 2: rolling fives in box 2
+  put(fives(b2, 'econ', 'down').flat(), 0.25, 4, 4);                                        // bar 2: rolling fives in box 2 (two notes per string, economy picked)
   put(hx.filter(([s]) => s <= 3), 0.25, 8, 4);                                              // bar 3: up the top strings with the 9th
   put([2, 3, 4].flatMap(b => boxNotes(k, fit[b - 1], [2, 1]) || []), 1 / 3, 12, 4);         // bar 4: climbing the top two strings, box 2 to 4
   put([1, 2, 3, 4, 5, 4, 3, 2].flatMap(b => cellOf(k, b, 1, 'down', true) || []), 1 / 6, 16, 8);   // bars 5–6: the cell through all five boxes
@@ -33,7 +32,7 @@ export function ejStudy(c) {
     id: 'ej-study', name: `A study in his style: cascades, fives, the 9th and a spread-triad colour (${nameOf(k)} minor)`, domain: 'improv', method: 'transfer',
     unit: 'sextuplets, 16ths and triplets', goal: 88, start: 50, minutes: 8, dl: 1, backing: chords, chords, voicings: [{ name: v.name, frets: v.frets }],
     why: 'His solos join very fast, very even runs to singing held notes and wide chord colours: slurred six-note cells cascading down the box, groups of five rolling against the beat, the bright added 9th, climbs up the neck on two strings, and a clean spread triad before the landing. This original study strings those ideas together.',
-    instr: 'Learn it two bars at a time, then join them. Bar 1: cells down box 1. Bar 2: rolling fives in box 2. Bar 3: the top strings with the 9th. Bar 4: a triplet climb up the top two strings. Bars 5–6: the cell through all five boxes and back. Bar 7: the ♭VII as a rolled spread triad. Bar 8: the root, held. Pass: the study at the goal tempo with no stops; then rewrite bars 5–8 as your own.',
+    instr: 'Learn it two bars at a time, then join them. Bar 1: cells down box 1. Bar 2: rolling fives in box 2 (2 + 2 + 1 groups, each a string lower, sweeping back between groups). Bar 3: the top strings with the 9th. Bar 4: a triplet climb up the top two strings. Bars 5–6: the cell through all five boxes and back. Bar 7: the ♭VII as a rolled spread triad. Bar 8: the root, held. Pass: the study at the goal tempo with no stops; then rewrite bars 5–8 as your own.',
     watch: 'Rushing the held notes after the runs: the space is part of the style.', simplify: 'Bars 1–4 only.', tab: { notes }
   });
 }
@@ -51,7 +50,7 @@ This course builds those habits in order: the pentatonic boxes, the six-note spe
     units: [
       PU(pentatonic, { title: 'The pentatonic boxes', summary: 'All five boxes, sequences and keys: the ground his speed pentatonics run on.', tiers: ['intermediate', 'advanced', 'mastery'] }),
       PU(speedPent, { title: 'Speed pentatonics', summary: 'The six-note cell that drives his fast runs, from one box to the whole neck.' }),
-      PU(rolling5s, { title: 'Rolling 5s', summary: 'Groups of five against a 16th-note pulse: the cascading, rolling sound.' }),
+      PU(rolling5s, { title: 'Rolling 5s', summary: 'His five-note pattern, two notes per string, economy picked or jump-back with strict alternate picking, rolling against a 16th-note pulse.' }),
       PU(spreadTriads, { title: 'Spread triads', summary: 'The wide, open chord sound of his clean playing.' }),
       PU(hexatonic, { title: 'Pentatonic plus the 9th', summary: 'The brighter scale of his runs, and the pentatonic of the 5th inside it.' }),
       PU(positionShifts, { title: 'Across the neck', summary: 'Shifting positions inside a line, so runs travel the whole neck.' }),
