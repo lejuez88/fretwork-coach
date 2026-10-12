@@ -41,8 +41,10 @@ export function nextPrompt(S, state) {
     for (let k = 0; k < w; k++) pool.push({ s, pc, frets });
   }
   if (!pool.length) return null;
-  let pick, tries = 0;
-  do { pick = pool[Math.floor(Math.random() * pool.length)]; } while (state.last && pick.s === state.last.s && pick.pc === state.last.pc && pool.length > 1 && ++tries < 12);
+  // Never the same prompt twice in a row (unless it is the only one).
+  const fresh = state.last ? pool.filter(x => !(x.s === state.last.s && x.pc === state.last.pc)) : pool;
+  const from = fresh.length ? fresh : pool;
+  const pick = from[Math.floor(Math.random() * from.length)];
   return { s: pick.s, pc: pick.pc, f: pick.frets[Math.floor(Math.random() * pick.frets.length)] };
 }
 
