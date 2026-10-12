@@ -20,7 +20,7 @@ const SHELL = [
   'js/core/methods.js', 'js/ui/clicksound.js', 'js/ui/practicehistory.js', 'js/ui/transport.js',
   'js/screens/notefinder.js', 'js/screens/scales.js', 'js/data/scaleinfo.js',
   'js/screens/play.js', 'js/core/record.js', 'js/core/study.js', 'js/ui/colors.js',
-  'js/ui/icons.js', 'js/ui/logo.js', 'img/sonyx-pick.png', 'img/sonyx-wordmark.png', 'js/ui/scheme.js', 'js/ui/drawer.js'
+  'js/ui/icons.js', 'js/ui/logo.js', 'img/logo/word-1.png', 'img/logo/pick-1.png', 'img/logo/word-2.png', 'img/logo/pick-2.png', 'img/logo/word-3.png', 'img/logo/pick-3.png', 'img/logo/word-4.png', 'img/logo/pick-4.png', 'js/ui/scheme.js', 'js/ui/drawer.js'
 ];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {

@@ -91,18 +91,16 @@ header.top{gap:10px}
 .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text)}
 
 /* ------------------------------------------------------------- SONYX logo */
-/* Chris's artwork as a stencil, filled with the active scheme (see js/ui/logo.js). */
-.sx-pick,.sx-word{display:inline-block;flex:none;-webkit-mask:var(--sx-art) center/contain no-repeat;mask:var(--sx-art) center/contain no-repeat}
-/* Metallic finish from the branding sheet, in the scheme's colors: a sheen from darker left to brighter right,
-   over a vertical ramp (bright highlight at the top → accent → dark at the split → deeper tone on the hollow outlines). */
-.sx-word{background:linear-gradient(90deg,rgba(0,0,0,.22),rgba(0,0,0,0) 42%,rgba(255,255,255,.24)),
-  linear-gradient(180deg,color-mix(in srgb,var(--btn-top) 45%,#fff) 0%,var(--btn-top) 16%,var(--accent) 36%,color-mix(in srgb,var(--accent-d) 80%,#000) 49.5%,var(--accent) 50.5%,color-mix(in srgb,var(--accent-d) 78%,#000) 100%)}
-.sx-pick{background:linear-gradient(105deg,rgba(0,0,0,.22),rgba(0,0,0,0) 45%,rgba(255,255,255,.22)),
-  linear-gradient(180deg,color-mix(in srgb,var(--btn-top) 45%,#fff) 0%,var(--btn-top) 14%,var(--accent) 34%,var(--accent-d) 52%,var(--accent) 60%,color-mix(in srgb,var(--accent-d) 75%,#000) 100%)}
-.logo{filter:drop-shadow(0 2px 4px rgba(0,0,0,.55)) drop-shadow(0 0 12px color-mix(in srgb,var(--accent) 25%,transparent))}
-.sx-pick{--sx-art:url(../img/sonyx-pick.png);height:30px;aspect-ratio:154/163}
-.sx-word{--sx-art:url(../img/sonyx-wordmark.png);height:22px;aspect-ratio:597/102}
+/* Chris's artwork with the finish from his branding sheet (beveled glass, reflection streaks,
+   deep-to-bright color, see-through outlines), rendered per scheme by tools/build-logo.py into img/logo/. */
+.sx-pick,.sx-word{display:inline-block;flex:none;background:center/contain no-repeat}
+.sx-pick{background-image:url(../img/logo/pick-1.png);height:30px;aspect-ratio:154/163}
+.sx-word{background-image:url(../img/logo/word-1.png);height:22px;aspect-ratio:597/102}
+:root[data-scheme="2"] .sx-pick{background-image:url(../img/logo/pick-2.png)}:root[data-scheme="2"] .sx-word{background-image:url(../img/logo/word-2.png)}
+:root[data-scheme="3"] .sx-pick{background-image:url(../img/logo/pick-3.png)}:root[data-scheme="3"] .sx-word{background-image:url(../img/logo/word-3.png)}
+:root[data-scheme="4"] .sx-pick{background-image:url(../img/logo/pick-4.png)}:root[data-scheme="4"] .sx-word{background-image:url(../img/logo/word-4.png)}
 .sx-pick.lg{height:34px}.sx-word.lg{height:26px}
+.logo{filter:drop-shadow(0 2px 3px rgba(0,0,0,.6)) drop-shadow(0 0 10px color-mix(in srgb,var(--accent) 22%,transparent))}
 
 /* ------------------------------------------------------ Menu A · side drawer */
 #tabbar{display:none!important}
