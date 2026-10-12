@@ -56,7 +56,7 @@ export function mountArtistIndex(root, { navigate }) {
     <div class="exhead"><div class="label">Artist series</div><h1>Learn from the players</h1>
       <p class="why">Pick a player to get lessons on their signature techniques at your level, links to their famous songs, and a master class built around their style.</p></div>
     <div class="artist-grid">${artistsForYou(p).map(a => `<a class="artist-big" href="#/artist/${a.id}">${wikiTile(a.wiki, a.name)}<div class="ab-body"><b>${esc(a.name)}</b><p class="small muted">${esc(a.blurb)}</p>
-      <div class="chips">${a.techniques.slice(0, 4).map(t => `<span class="chip sm">${esc(t)}</span>`).join('')}</div></div></a>`).join('')}</div>
+      <div class="chips">${a.techniques.slice(0, 2).map(t => `<span class="chip sm">${esc(t)}</span>`).join('')}${a.techniques.length > 2 ? `<span class="ab-more small muted">+${a.techniques.length - 2}</span>` : ''}</div></div></a>`).join('')}</div>
     <a class="lib-more-card" href="#/techniques"><span class="lm-ic" aria-hidden="true">${icon('target')}</span><span><b>Technique library</b><span class="small muted">Every technique these players use, and more, from beginner to advanced.</span></span><span class="mc-go">›</span></a>
     <section class="card"><h3>Another player</h3><p class="small muted">Not in the series yet? Claude designs a master class on their style (saved, so asking again costs nothing).</p>
       <form class="mc-ask" data-r="other"><input type="text" name="artist" maxlength="60" placeholder="e.g. Yngwie Malmsteen, John Mayer, Tosin Abasi" aria-label="Artist"><button class="btn" type="submit">${MC_ICON} Build</button></form>

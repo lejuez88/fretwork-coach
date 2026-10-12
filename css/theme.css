@@ -188,3 +188,46 @@ body.playmode .tr-status .tr-sep{display:none}
 .sp-sw i{width:14px;height:14px;border-radius:4px;border:1px solid rgba(255,255,255,.18)}
 .sp-txt{display:flex;flex-direction:column;gap:1px;min-width:0}
 .sp-txt b{font-size:14.5px}
+
+/* ------------------------------------------- Artist series A · Poster wall */
+/* Index: tall portrait posters, name and blurb over the photo (or the monogram when photos are off). */
+.v-artist .artist-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+@media(max-width:900px){.v-artist .artist-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.v-artist .artist-big{position:relative;flex-direction:column;gap:0;padding:0;border-radius:22px;overflow:hidden;background:var(--glass-bg);border:var(--glass-border);box-shadow:var(--glass-shadow);transition:transform .15s,border-color .15s}
+.v-artist .artist-big:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.v-artist .artist-big .wimg{width:100%;height:auto;aspect-ratio:4/5;border-radius:0}
+.v-artist .artist-big .wimg img{object-position:center 22%}
+.v-artist .artist-big .wimg::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(5,5,8,.55) 62%,rgba(5,5,8,.92))}
+.v-artist .artist-big .wimg-fallback{font-size:120px;font-weight:700;letter-spacing:-.02em;opacity:.22;transform:translateY(-36px)}
+.v-artist .artist-big .ab-body{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:16px}
+.v-artist .artist-big .ab-body b{font:700 22px/1.15 var(--head);letter-spacing:-.02em;display:block;color:#fff}
+.v-artist .artist-big .ab-body p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;color:rgba(255,255,255,.78);margin:6px 0 10px;font-size:13px}
+.v-artist .artist-big .chips{gap:6px;align-items:center}
+.v-artist .artist-big .chip{min-height:0;padding:4px 10px;font-size:11.5px;color:#fff;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.18);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.v-artist .ab-more{color:rgba(255,255,255,.7)}
+@media(max-width:560px){
+  .v-artist .artist-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .v-artist .artist-big{border-radius:18px}
+  .v-artist .artist-big .ab-body{padding:12px}
+  .v-artist .artist-big .ab-body b{font-size:16px}
+  .v-artist .artist-big .ab-body p,.v-artist .artist-big .ab-more,.v-artist .artist-big .chip:nth-child(n+2){display:none}
+  .v-artist .artist-big .wimg-fallback{font-size:70px}
+}
+/* Artist page: cinematic banner, photo (or monogram) behind the name and bio. */
+.v-artist .page-cols .artist-head{position:relative;display:block;min-height:320px;padding:0;margin:6px 0 14px;border-radius:24px;overflow:hidden;border:var(--glass-border);box-shadow:var(--glass-shadow)}
+.v-artist .artist-head .wimg.artist-photo{position:absolute;inset:0;width:auto;height:auto;border-radius:0;box-shadow:none}
+.v-artist .artist-head .wimg.artist-photo img{object-position:center 20%}
+.v-artist .artist-head .wimg.artist-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,5,8,.94),rgba(5,5,8,.74) 45%,rgba(5,5,8,.3)),linear-gradient(0deg,rgba(5,5,8,.6),transparent 50%)}
+.v-artist .artist-head .wimg-fallback{position:absolute;right:30px;top:20px;font-size:260px;font-weight:700;letter-spacing:-.02em;opacity:.16}
+.v-artist .artist-head .ah-title,.v-artist .artist-head .ah-body{position:relative;z-index:2;max-width:640px;padding:0 28px;margin:0}
+.v-artist .artist-head .ah-title{padding-top:28px}
+.v-artist .artist-head .ah-title h1{font:700 52px/1 var(--head);letter-spacing:-.035em;margin:6px 0 10px;color:#fff}
+.v-artist .artist-head .ah-body{padding-bottom:24px}
+.v-artist .artist-head .bio-text{color:rgba(255,255,255,.82)}
+@media(max-width:560px){
+  .v-artist .page-cols .artist-head{min-height:0;border-radius:20px}
+  .v-artist .artist-head .ah-title{padding:22px 18px 0}
+  .v-artist .artist-head .ah-body{padding:0 18px 18px;margin-top:6px}
+  .v-artist .artist-head .ah-title h1{font-size:34px}
+  .v-artist .artist-head .wimg-fallback{font-size:150px;right:12px;top:10px}
+}
