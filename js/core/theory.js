@@ -517,6 +517,67 @@ export const SCALES = [
 ];
 export const SCALE_BY_ID = Object.fromEntries(SCALES.map(s => [s.id, s]));
 
+/**
+ * A scale spelled from its degrees: each degree number gets its own letter (the 3rd of F♯ Lydian
+ * is A♯, its ♯4 is B♯, never C), and the accidental comes from the pitch. root: an item of ROOTS.
+ * Returns [{pc, name, label}].
+ */
+export function spellScale(root, scaleId) {
+  const sc = SCALE_BY_ID[scaleId]; if (!sc || !root) return [];
+  return sc.steps.map((st, i) => {
+    const label = sc.labels[i], pc = mod12(root.pc + st);
+    // seven-note scales take one letter per degree in order (the altered scale's ♭9 and ♯9 are
+    // written as ♭2 and ♭3: C D♭ E♭ F♭ G♭ A♭ B♭); others follow their degree labels
+    const deg = sc.steps.length === 7 ? i + 1 : label === 'R' ? 1 : +String(label).replace(/[^0-9]/g, '');
+    const li = (root.letter + ((deg - 1) % 7)) % 7;
+    let acc = pc - LETTER_PC[li]; if (acc > 6) acc -= 12; if (acc < -6) acc += 12;
+    return { pc, name: LETTERS[li] + (ACC[acc] != null ? ACC[acc] : ''), label };
+  });
+}
+
+/**
+ * Playable positions of a scale: real fingerings you can run straight up from the low E string to
+ * the high e without skipping a note. Seven-note (and longer) scales use the three-notes-per-string
+ * shapes, pentatonics the five two-notes-per-string boxes, the blues scales the pentatonic box plus
+ * the blue note inside it. One position starts on each scale tone of the low E string (frets 0–12).
+ * Returns [{lo, hi, notes: [{s, f, midi, label}]}], notes in ascending order.
+ */
+export function scalePositions(rootPc, scaleId, { tuning = STD_LOW, maxStart = 12 } = {}) {
+  const sc = SCALE_BY_ID[scaleId]; if (!sc) return [];
+  const base = scaleId === 'blues' ? 'minorPent' : scaleId === 'majorBlues' ? 'majorPent' : scaleId;
+  const n = SCALE_BY_ID[base].steps.length;
+  const nps = scaleId === 'chromatic' ? 4 : n <= 5 || scaleId === 'wholeTone' ? 2 : 3;
+  const pcs = sc.steps.map(x => mod12(rootPc + x));
+  const out = [], seenStart = new Set();
+  for (let f = 0; f <= maxStart && out.length < (n <= 5 ? 5 : Math.min(n, 7)); f++) {
+    if (!SCALE_BY_ID[base].steps.some(x => mod12(rootPc + x) === mod12(tuning[0] + f))) continue;
+    let notes = scaleId === 'chromatic'
+      // chromatic: one finger per fret plus a stretch (frets f…f+4 on every string), each pitch once
+      ? (() => { const seen = new Set(), ns = []; for (let k = 0; k < 6; k++) for (let fr = f; fr <= f + 4; fr++) { const m = tuning[k] + fr; if (!seen.has(m)) { seen.add(m); ns.push({ s: 6 - k, f: fr, midi: m }); } } return ns.sort((x, y) => x.midi - y.midi); })()
+      : scaleNps(rootPc, base, f, nps, { tuning });
+    if (!notes || seenStart.has(notes[0].midi % 12)) continue;
+    seenStart.add(notes[0].midi % 12);
+    if (base !== scaleId) {
+      // the blue note(s) between box notes: on the lower note's string, or the upper one's if that's closer to the box
+      const lo0 = Math.min(...notes.map(x => x.f)), hi0 = Math.max(...notes.map(x => x.f));
+      const isExtra = m => pcs.includes(mod12(m)) && !SCALE_BY_ID[base].steps.some(x => mod12(rootPc + x) === mod12(m));
+      const run = notes.slice().sort((a, b) => a.midi - b.midi), add = [];
+      for (let q = 0; q + 1 < run.length; q++) for (let m = run[q].midi + 1; m < run[q + 1].midi; m++) {
+        if (!isExtra(m)) continue;
+        const a = run[q], b = run[q + 1], fa = a.f + (m - a.midi), fb = b.f - (b.midi - m);
+        if (fa <= hi0 + 1) add.push({ s: a.s, f: fa, midi: m });
+        else if (fb >= Math.max(0, lo0 - 1)) add.push({ s: b.s, f: fb, midi: m });
+        else add.push({ s: a.s, f: fa, midi: m });
+      }
+      notes = notes.concat(add);
+      notes.sort((a, b) => a.midi - b.midi);
+    }
+    notes = notes.map(x => ({ ...x, label: sc.labels[pcs.indexOf(mod12(x.midi))] }));
+    out.push({ lo: Math.min(...notes.map(x => x.f)), hi: Math.max(...notes.map(x => x.f)), notes });
+  }
+  return out;
+}
+
 /** Scale notes inside a fret window (a "box"), ordered low string → high, ascending. */
 export function scaleBox(rootPc, scaleId, startFret, { span = 3, tuning = STD_LOW } = {}) {
   const sc = SCALE_BY_ID[scaleId]; const pcs = sc.steps.map(x => mod12(rootPc + x));

@@ -25,7 +25,13 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: one way to pick a level, everywhere (four tiers)
+## Latest: scale positions you can play straight through, and a music-theory test suite
+
+- **Fix:** the scales tool's positions were 4-fret windows, so playing a position straight up often skipped a degree (A Lydian position 4 skipped the 3rd; 879 of 1,263 positions across all scales and keys skipped something). Positions are now real fingerings: three notes per string for seven-note and eight-note scales, the five boxes for pentatonics, the box plus the blue note for the blues scales, two per string for the whole-tone scale, one finger per fret plus a stretch for chromatic (`scalePositions` in js/core/theory.js).
+- **Fix:** scales are spelled from their degrees, one letter per degree (F♯ Lydian has B♯, not C; the altered scale is C D♭ E♭ F♭ G♭ A♭ B♭) (`spellScale`).
+- **tests/t_theory.mjs** checks the music against first principles and hand-typed textbook spellings, in all 12 keys: every scale and chord formula, mode rotations, spelling, every position (whole scale, no skipped note, right frets and labels, at least an octave), the lessons' scale runs, every chord voicing (only chord tones), diatonic chord qualities and roots, the interval table, and every lesson in every path and tier (notes on the neck, real chord names). It runs on every push with the other tests.
+
+## Earlier: one way to pick a level, everywhere (four tiers)
 
 - Every lesson, course and path offers the same four tiers: **Foundations, Intermediate, Advanced, Mastery** (js/ui/tierpicker.js, js/core/tiers.js). The recommended tier carries a small "Recommended" mark; any tier is one tap, with no warnings. Guests see all four with none marked.
 - Where: technique paths (the stage tabs), artist pages (above Lessons; every unit is drawn in the tier), course pages (kept with the course as `tierPick`; the practice page and timed sessions play the exercises in that tier), the library's practice page (Customize → Level) and the timed-session runner. New course and Build a master class pick a tier instead of a 1–10 slider.
