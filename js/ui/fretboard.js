@@ -75,34 +75,39 @@ export function exerciseDiagramsHTML(ex, opts = {}) {
 /**
  * Horizontal fretboard (string 1 at the top, like tab).
  * marks: [{s, f, label, family, ghost, cls}]; muted: [string numbers]; opts: {maxFret, interactive,
- * highlightFrets: [lo, hi] (frets outside are dimmed), focusString: string number to highlight}
+ * highlightFrets: [lo, hi] (frets outside are dimmed), focusString: string number to highlight,
+ * minFret: draw only frets minFret+1..maxFret (a window up the neck; 0 = from the nut)}
  */
-export function fretboardSVG({ marks = [], muted = [], maxFret = 15, interactive = false, highlightFrets = null, focusString = null, fw = 46, cls = '', names = null } = {}) {
-  const NUT = 38, FW = fw, ROW = 26, TOP = 18, H = TOP + ROW * 5 + 30, W = NUT + maxFret * FW + 12;
-  let o = `<svg class="fboard ${interactive ? 'interactive' : ''} ${cls}" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Fretboard">`;
+export function fretboardSVG({ marks = [], muted = [], maxFret = 15, minFret = 0, interactive = false, highlightFrets = null, focusString = null, fw = 46, cls = '', names = null } = {}) {
+  const off = Math.max(0, Math.min(minFret | 0, maxFret - 1));
+  const NUT = 38, FW = fw, ROW = 26, TOP = 18, H = TOP + ROW * 5 + 30, W = NUT + (maxFret - off) * FW + 12;
+  const X = f => NUT + (f - off) * FW;           // x of the fret wire f
+  const inWin = f => f > off && f <= maxFret;    // frets drawn as cells
+  let o = `<svg class="fboard ${interactive ? 'interactive' : ''} ${off ? 'fb-window' : ''} ${cls}" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Fretboard${off ? `, frets ${off + 1} to ${maxFret}` : ''}">`;
   // inlays
-  [3, 5, 7, 9, 15, 17, 19, 21].filter(f => f <= maxFret).forEach(f => { o += `<circle cx="${NUT + (f - 0.5) * FW}" cy="${TOP + ROW * 2.5}" r="5" class="fb-inlay"/>`; });
-  [12, 24].filter(f => f <= maxFret).forEach(f => { o += `<circle cx="${NUT + (f - 0.5) * FW}" cy="${TOP + ROW * 1.5}" r="5" class="fb-inlay"/><circle cx="${NUT + (f - 0.5) * FW}" cy="${TOP + ROW * 3.5}" r="5" class="fb-inlay"/>`; });
-  // frets and nut
-  for (let f = 0; f <= maxFret; f++) { const x = NUT + f * FW; o += `<line x1="${x}" y1="${TOP}" x2="${x}" y2="${TOP + ROW * 5}" class="${f === 0 ? 'fb-nut' : 'fb-fret'}"/>`; if (f > 0) o += `<text x="${x - FW / 2}" y="${H - 6}" text-anchor="middle" class="fb-num ${[3, 5, 7, 9, 12, 15, 17, 19, 21, 24].includes(f) ? 'em' : ''}">${f}</text>`; }
+  [3, 5, 7, 9, 15, 17, 19, 21].filter(inWin).forEach(f => { o += `<circle cx="${X(f - 0.5)}" cy="${TOP + ROW * 2.5}" r="5" class="fb-inlay"/>`; });
+  [12, 24].filter(inWin).forEach(f => { o += `<circle cx="${X(f - 0.5)}" cy="${TOP + ROW * 1.5}" r="5" class="fb-inlay"/><circle cx="${X(f - 0.5)}" cy="${TOP + ROW * 3.5}" r="5" class="fb-inlay"/>`; });
+  // frets and nut (a window up the neck starts at a plain fret wire, not the nut)
+  for (let f = off; f <= maxFret; f++) { const x = X(f); o += `<line x1="${x}" y1="${TOP}" x2="${x}" y2="${TOP + ROW * 5}" class="${f === 0 ? 'fb-nut' : 'fb-fret'}"/>`; if (f > off) o += `<text x="${x - FW / 2}" y="${H - 6}" text-anchor="middle" class="fb-num ${[3, 5, 7, 9, 12, 15, 17, 19, 21, 24].includes(f) ? 'em' : ''}">${f}</text>`; }
   // strings (thicker for low)
   if (focusString >= 1 && focusString <= 6) o += `<rect x="${NUT - 30}" y="${TOP + (focusString - 1) * ROW - 8}" width="${W - NUT + 24}" height="16" rx="8" class="fb-focus"/>`;
   for (let s = 1; s <= 6; s++) { const y = TOP + (s - 1) * ROW; o += `<line x1="${NUT - 30}" y1="${y}" x2="${W - 6}" y2="${y}" class="fb-str" style="stroke-width:${0.8 + (s - 1) * 0.35}"/>`; o += `<text x="4" y="${y + 4}" class="fb-sname">${esc((names || ['e', 'B', 'G', 'D', 'A', 'E'])[s - 1])}</text>`; }
   // dim the frets outside the practice area
   if (Array.isArray(highlightFrets)) {
     const [lo, hi] = highlightFrets, y = TOP - 12, h = ROW * 5 + 24;
-    if (lo > 0) o += `<rect x="${NUT - 30}" y="${y}" width="${(lo - 1) * FW + 30}" height="${h}" class="fb-dim"/>`;
-    if (hi < maxFret) o += `<rect x="${NUT + hi * FW}" y="${y}" width="${W - (NUT + hi * FW)}" height="${h}" class="fb-dim"/>`;
+    if (lo > off && lo > 0) o += `<rect x="${NUT - 30}" y="${y}" width="${X(lo - 1) - (NUT - 30)}" height="${h}" class="fb-dim"/>`;
+    if (hi < maxFret) o += `<rect x="${X(hi)}" y="${y}" width="${W - X(hi)}" height="${h}" class="fb-dim"/>`;
   }
   // click targets
-  if (interactive) for (let s = 1; s <= 6; s++) for (let f = 0; f <= maxFret; f++) {
-    const x = f === 0 ? NUT - 26 : NUT + (f - 1) * FW, w = f === 0 ? 26 : FW, y = TOP + (s - 1) * ROW - ROW / 2;
+  if (interactive) for (let s = 1; s <= 6; s++) for (let f = off === 0 ? 0 : off + 1; f <= maxFret; f++) {
+    const x = f === 0 ? NUT - 26 : X(f - 1), w = f === 0 ? 26 : FW, y = TOP + (s - 1) * ROW - ROW / 2;
     o += `<rect class="fb-hit" data-s="${s}" data-f="${f}" x="${x}" y="${y}" width="${w}" height="${ROW}"/>`;
   }
   muted.forEach(s => { o += `<text x="${NUT - 13}" y="${TOP + (s - 1) * ROW + 5}" text-anchor="middle" class="fb-x">×</text>`; });
-  // marks
+  // marks (outside a window they aren't drawn)
   for (const m of marks) {
-    const x = m.f === 0 ? NUT - 13 : NUT + (m.f - 0.5) * FW, y = TOP + (m.s - 1) * ROW, r = m.ghost ? 9 : 11.5;
+    if (off && !(m.f > off && m.f <= maxFret)) continue;
+    const x = m.f === 0 ? NUT - 13 : X(m.f - 0.5), y = TOP + (m.s - 1) * ROW, r = m.ghost ? 9 : 11.5;
     const lab = m.label != null ? String(m.label) : '';
     o += `<g class="fb-mark ${m.ghost ? 'ghost' : ''} ${m.cls || ''}" data-ms="${m.s}" data-mf="${m.f}"><circle cx="${x}" cy="${y}" r="${r}" class="fam-${m.family || 'root'}"/>${lab ? `<text x="${x}" y="${y + 4}" text-anchor="middle" class="${lab.length > 2 ? 'sm' : ''}">${esc(lab)}</text>` : ''}</g>`;
   }

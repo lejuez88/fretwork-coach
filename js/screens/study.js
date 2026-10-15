@@ -21,14 +21,44 @@ export function passCriterion(ex) {
 /** Instructions without the pass criterion (shown on its own card). */
 const howTo = (ex, pass) => String((ex && ex.instr) || '').replace(pass, '').trim();
 
-/** The notes of the tab on a neck diagram, when the lesson has no chord or scale diagram of its own. */
-function neckOf(ex) {
+/** Smallest scale at which the neck still reads well (fret cells ~24px, note dots ~14px). */
+const MIN_SCALE = 0.62;
+const NECK_FW = 40, NECK_W = frets => 38 + frets * NECK_FW + 12;
+
+/**
+ * The notes of the tab on a neck diagram, when the lesson has no chord or scale diagram of its own.
+ * Never scrolls: the SVG scales to the card's width. Two versions are drawn: the neck from the nut to
+ * just past the highest note, and a window on the lesson's frets with two frets of margin either side
+ * (at least 5 frets). fitNeck() shows the whole neck when it still reads well at the card's width,
+ * otherwise the window.
+ */
+export function neckOf(ex) {
   const ns = (ex.tab && ex.tab.notes) || [];
   const seen = new Set(), marks = [];
   for (const n of ns) { if (!(n.s >= 1 && n.s <= 6) || n.f == null || n.f < 0) continue; const k = `${n.s}:${n.f}`; if (seen.has(k)) continue; seen.add(k); marks.push({ s: n.s, f: n.f, label: '' }); }
   if (!marks.length) return '';
   const hi = Math.max(...marks.map(m => m.f)), lo = Math.min(...marks.map(m => m.f));
-  return `<div class="fbwrap">${fretboardSVG({ marks, maxFret: Math.max(5, Math.min(22, hi + 1)), highlightFrets: [lo, hi], fw: 40 })}</div>`;
+  const full = Math.max(5, Math.min(22, hi + 1));
+  let wLo = Math.max(0, lo - 3), wHi = Math.min(22, Math.max(hi + 2, wLo + 5));
+  if (wHi - wLo < 5) wLo = Math.max(0, wHi - 5);
+  if (wLo <= 1) wLo = 0; // close to the nut: show the nut
+  const fullSVG = fretboardSVG({ marks, maxFret: full, highlightFrets: [lo, hi], fw: NECK_FW });
+  const win = wLo > 0 || wHi < full;
+  const winSVG = win ? fretboardSVG({ marks, minFret: wLo, maxFret: wHi, highlightFrets: [lo, hi], fw: NECK_FW }) : '';
+  return `<div class="fbwrap sp-neck" data-full="${NECK_W(full)}">
+    <div class="sp-neck-full">${fullSVG}</div>
+    ${win ? `<div class="sp-neck-win" hidden>${winSVG}<p class="sp-neck-cap small muted">Frets ${wLo === 0 ? 'open' : wLo + 1}–${wHi} · the part of the neck this lesson uses</p></div>` : ''}
+  </div>`;
+}
+
+/** Show the whole neck if it reads well at this width, otherwise the lesson's window. */
+export function fitNeck(root) {
+  const box = root.querySelector('.sp-neck'); if (!box) return;
+  const win = box.querySelector('.sp-neck-win'), full = box.querySelector('.sp-neck-full');
+  if (!win) return;
+  const avail = box.clientWidth - 8;
+  const useWin = avail > 0 && avail / +box.dataset.full < MIN_SCALE;
+  win.hidden = !useWin; full.hidden = useWin;
 }
 
 export function mountStudy(root, { navigate }) {
@@ -67,6 +97,7 @@ export function mountStudy(root, { navigate }) {
         <button class="btn primary gp-pill sp-go" data-sp="play">${icon('play')} Practice it</button>
         <button class="sp-circle" data-sp="next" ${C.idx >= C.items.length - 1 ? 'disabled' : ''} aria-label="Next lesson">${icon('chevron-right')}</button>
       </div></div>`;
+    fitNeck(root);
   }
   const TIER = { foundations: 'Foundations', intermediate: 'Intermediate', advanced: 'Advanced', mastery: 'Mastery' };
   const onClick = e => {
@@ -77,8 +108,9 @@ export function mountStudy(root, { navigate }) {
     C.idx = n; setPlayCtx(C); render(); window.scrollTo(0, 0);
   };
   const onKey = e => { if (e.altKey && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) { const b = root.querySelector(`[data-sp="${e.key === 'ArrowRight' ? 'next' : 'prev'}"]`); if (b && !b.disabled) b.click(); } };
-  root.addEventListener('click', onClick); window.addEventListener('keydown', onKey);
+  const onResize = () => fitNeck(root);
+  root.addEventListener('click', onClick); window.addEventListener('keydown', onKey); window.addEventListener('resize', onResize);
   document.body.classList.add('studymode');
   render();
-  return () => { root.removeEventListener('click', onClick); window.removeEventListener('keydown', onKey); document.body.classList.remove('studymode'); };
+  return () => { root.removeEventListener('click', onClick); window.removeEventListener('keydown', onKey); window.removeEventListener('resize', onResize); document.body.classList.remove('studymode'); };
 }
