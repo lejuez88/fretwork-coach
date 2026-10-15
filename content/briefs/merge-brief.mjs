@@ -42,12 +42,13 @@ if (!brief) {
 if (brief) {
   if (brief.schemaVersion !== 1) problems.push('schemaVersion must be 1');
   if (brief.topic?.id !== topicId) problems.push(`topic.id is "${brief.topic?.id}", expected "${topicId}"`);
+  const nStrings = [6, 7, 8].includes(brief.topic?.strings) ? brief.topic.strings : 6; // 7 and 8 only when the topic declares an extended-range guitar
   const patterns = brief.concept?.patterns || [];
   const ids = new Set(patterns.map(p => p.id));
   if (!patterns.length) problems.push('concept.patterns is empty');
   for (const p of patterns) {
     if (!['player', 'primary', 'secondary', 'unconfirmed'].includes(p.confirmed)) problems.push(`pattern ${p.id}: confirmed level missing or invalid`);
-    if (!Array.isArray(p.notation) || !p.notation.every(n => Array.isArray(n) && n.length === 2 && n[0] >= 1 && n[0] <= 6 && n[1] >= 0 && n[1] <= 22)) problems.push(`pattern ${p.id}: notation must be [[string 1-6, fret 0-22], ...]`);
+    if (!Array.isArray(p.notation) || !p.notation.every(n => Array.isArray(n) && n.length === 2 && n[0] >= 1 && n[0] <= nStrings && n[1] >= 0 && n[1] <= 22)) problems.push(`pattern ${p.id}: notation must be [[string 1-${nStrings}, fret 0-22], ...]`);
     if (!p.picking || !['d', 'u'].includes(p.picking.firstStroke)) problems.push(`pattern ${p.id}: picking.firstStroke must be d or u`);
   }
   const seen = new Set();
