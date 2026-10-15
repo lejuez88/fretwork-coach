@@ -22,6 +22,7 @@ import { tierPickerHTML } from '../ui/tierpicker.js';
 import { tierIdFor } from '../core/tiers.js';
 import { isGuest } from '../ui/guest.js';
 
+const initials = n => String(n || '').split(/[\s:—–-]+/).filter(w => /^[A-Za-z0-9]/.test(w)).slice(0, 2).map(w => w[0].toUpperCase()).join('') || '♪';
 const STATUS = { locked: ['🔒', 'Locked'], available: ['●', 'Ready'], in_progress: ['◐', 'In progress'], mastered: ['✓', 'Mastered'] };
 
 export function mountCourse(root, { id, navigate }) {
@@ -43,13 +44,13 @@ export function mountCourse(root, { id, navigate }) {
     const sessions = p.practiceLog.filter(l => l.courseId === c.id), mins = sessions.reduce((a, l) => a + l.minutes, 0);
     root.innerHTML = `
       <a class="link" href="#/home">← Dashboard</a>
-      <section class="card course-hero ${master ? 'master' : ''}">${master ? `<div class="mc-banner">${topicArtHTML(c.topic && c.topic.cat)}</div>` : wikiTile(g ? g.wiki : c.genre, g ? g.name : c.genre, 'banner')}
+      <section class="card course-hero gp-hero-c ${master ? 'master' : ''}"><div class="gp-badge-lg">${esc(initials(c.name))}</div>
         <div class="label">${master ? `${MC_ICON} Master class · ${esc(c.topic ? c.topic.title : c.style)}` : `${esc(g ? g.name : c.genre)} · ${esc(c.style)}`}</div>
         <h1>${esc(c.name)}</h1><p>${esc(c.tree && c.tree.summary || c.tagline)}</p>
         ${c.players.length ? `<p class="muted small">Inspired by ${c.players.map(esc).join(', ')}</p>` : ''}
         <div class="cprog big"><div class="bar"><i style="width:${c.progress || 0}%"></i></div><span>${c.progress || 0}%</span></div>
         <p class="small muted">${sessions.length} session${sessions.length === 1 ? '' : 's'} · ${fmtMinutes(mins)} practiced</p>
-        ${c.tree ? tierPickerHTML({ current: curTier(), recommended: recTier(), attr: 'data-ctier' }) : ''}
+        ${c.tree ? tierPickerHTML({ current: curTier(), recommended: recTier(), attr: 'data-ctier', list: true }) : ''}
         ${nextHTML()}
       </section>
       ${isGenericPlan(c) ? `<section class="card levelup"><div class="label">New: a plan built for ${esc(c.style)}</div>
@@ -74,7 +75,7 @@ export function mountCourse(root, { id, navigate }) {
     if (!nx) return `<a class="btn primary block" href="#/home/routine/${c.id}">▶ Practice this course</a>`;
     return `<div class="nextlesson"><div class="label">Your next lesson · chosen for you</div>
       <b>${esc(nx.skill.title)}</b><p class="small">${esc(nx.reason)}</p>
-      <div class="row"><button class="btn primary" data-c="startnext">▶ Practice it</button><button class="btn" data-c="timed">⏱ Timed session · ${lessonMinutes()} min</button></div>
+      <div class="row"><button class="btn primary gp-pill" data-c="startnext">▶ ${c.state && Object.values(c.state.exercises || {}).some(e => e.history && e.history.length) ? 'Continue' : 'Start'}</button><button class="btn" data-c="timed">⏱ Timed session · ${lessonMinutes()} min</button></div>
       <a class="linkbtn small" href="#/home/routine/${c.id}">Customize: pick the skill or length yourself</a></div>`;
   }
   /** Practice the next lesson on the practice page (no timer), with the whole course to step through. */

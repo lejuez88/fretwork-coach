@@ -25,7 +25,13 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: teaching method first (no made-up drills)
+## Latest: Guided Path redesign, Note Finder levels and mic
+
+- **Guided Path look** (COSMETICS.md, 2026-10-15): top navigation on wide screens (Home, Practice, Techniques, Artists, Songs, Tools) with a streak pill and profile button; Home opens with a Continue card and progress ring, today's path as a trail of nodes (done, active, locked), and technique cards. Course pages get a centered hero with an initials badge and the four tiers as numbered cards. Second accent per scheme is the `--accent2` token; gradients are `--grad`/`--grad-d`.
+- **Study page, then practice page**: a lesson now opens on its Study page (`#/lesson`, js/screens/study.js): progress bar, the idea, why it matters, the theory, how to practice it, the diagram, the pass criterion and the common mistake. "Practice it" opens the practice page (`#/play`) with the tab. Direct opens (`ctx.direct`) still go straight to `#/play`.
+- **Note Finder**: four levels (Foundations to Mastery) and an answer mode where you play the note on your guitar (microphone, js/tools/notelistener.js); a wrong octave counts as a near miss.
+
+## Earlier: teaching method first (no made-up drills)
 
 - **Content standard (CONTENT.md, "Teaching method first").** Every path records how its topic is actually taught: the standard sequence and drill formats from 3+ recognized method books or teachers (`pedagogy` on the entry), with every skill mapped to a step. Lessons must be those standard drills. The old rule that every stage mix 4+ learning-science methods is gone (it produced drills such as vibrato plus degree recall); practice methods are optional tags now.
 - **Validator.** Checks the pedagogy record (errors for new and rebuilt paths), counts it toward the reference standard (★), and prints a **Pedagogy audit** list of the 36 existing paths, artist-used first. The daily content run audits at least two per run until the list is empty. The index carries `taught` and `taughtOn`.

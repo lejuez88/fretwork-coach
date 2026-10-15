@@ -21,6 +21,10 @@ import { openMasterSheet, topicArtHTML, MC_ICON } from '../ui/mastersheet.js';
 import { weekStripHTML, openManualLog } from '../ui/practicehistory.js';
 import { tierIdFor, levelInTier } from '../core/tiers.js';
 import { tierPickerHTML } from '../ui/tierpicker.js';
+import { recommendSession, nextInCourse } from '../core/coach.js';
+import { hasActiveRoutine } from './routine.js';
+import { openPractice, courseContext } from './play.js';
+import { KB_INDEX } from '../data/kb.js';
 
 export function mountDashboard(root, { navigate, courseId = null, skillId = null }) {
   const p = Store.profile;
@@ -28,24 +32,28 @@ export function mountDashboard(root, { navigate, courseId = null, skillId = null
   let tick = null;
   // Two columns on wide screens (main: lesson and courses; side: this week, explore,
   // track); one column, in the same order, on phones.
+  // Guided Path: the greeting, then "continue where you left off" beside this week, then
+  // today's path (the node trail), the technique library and your courses; the side column
+  // keeps explore and the track of the day. One column, in the same order, on phones.
   root.innerHTML = `<div data-r="head"></div>
+    <div class="gp-hero"><div data-r="continue"></div><div class="dash-side gp-week" data-r="week"></div></div>
     <div class="dash-cols">
-      <div class="dash-main"><section class="card routine-cta" data-r="routine"></section><div data-r="main"></div></div>
+      <div class="dash-main"><section class="card routine-cta" data-r="routine"></section><div data-r="tech"></div><div data-r="main"></div></div>
       <div class="dash-side"><div data-r="side"></div><section class="card track" data-r="track"></section></div>
     </div>`;
   const head = root.querySelector('[data-r="head"]'), main = root.querySelector('[data-r="main"]'), side = root.querySelector('[data-r="side"]');
+  const week = root.querySelector('[data-r="week"]'), cont = root.querySelector('[data-r="continue"]'), tech = root.querySelector('[data-r="tech"]');
   let builder = null;
 
   function render() {
     const st = Practice.stats(p), act = Practice.active();
     const open = p.courses.filter(c => c.status !== 'archived');
     const name = p.questionnaire.name || 'there';
-    const hour = new Date().getHours(), greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
     const est = estimatedCount(p);
+    let mins = null; try { mins = (recommendSession(p) || {}).minutes; } catch { /* no course yet */ }
 
     head.innerHTML = `
-      <div class="dash-head"><div><div class="label">${new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div><h1>${greet}, ${esc(name)}.</h1></div>
-        <div class="streak-badge ${st.streak ? 'hot' : ''}" title="Days in a row with 15+ minutes"><b>${st.streak}</b><span>day${st.streak === 1 ? '' : 's'}<br>streak</span></div></div>
+      <div class="dash-head gp-greet"><div><h1>Hey ${esc(name)} 👋</h1><p class="small muted">${open.length && mins ? `Here’s today’s path: about ${mins} minutes.` : 'Pick a path and start playing.'}</p></div></div>
       ${est ? `<a class="slimnote" href="#/reassess"><span><b>Finish your assessment</b> <span class="muted">· ${est} skill area${est > 1 ? 's' : ''} still estimated, so lessons may start too easy</span></span><span class="go">Continue ›</span></a>` : ''}`;
 
     main.innerHTML = `
@@ -54,19 +62,21 @@ export function mountDashboard(root, { navigate, courseId = null, skillId = null
         ${open.length ? `<div class="courselist">${open.map(courseRow).join('')}</div>` : '<p class="muted small">No courses yet. A course turns your style and level into a full learning path.</p>'}
       </section>`;
 
-    side.innerHTML = `
+    cont.innerHTML = continueHTML(open);
+    tech.innerHTML = techHTML();
+    week.innerHTML = `
       <section class="card weekcard ${act ? 'live' : ''}">
         <div class="sec-head"><h3>This week</h3><a class="link small" href="#/profile">History →</a></div>
         <div class="wk-sum"><div><b>${fmtMinutes(st.week)}</b><span class="small muted">this week</span></div><div><b class="${st.practicedToday >= 15 ? 'ok' : ''}">${fmtMinutes(st.practicedToday)}</b><span class="small muted">today</span></div><div><b>${st.best}</b><span class="small muted">best streak</span></div></div>
         ${weekStripHTML(st)}
         ${act ? liveSession(act, open) : `<div class="row wk-actions"><button class="btn" data-d="start">⏱ Start timer</button><button class="btn ghost" data-d="manual">+ Log practice</button></div>
           <p class="small muted wk-hint">Jamming or playing songs? Run the timer so it counts toward your streak.</p>`}
-      </section>
-      ${exploreHTML()}`;
+      </section>`;
+    side.innerHTML = exploreHTML();
     hydrateImages(main); hydrateImages(side);
     if (builder) builder.refresh();
     clearInterval(tick);
-    if (act) tick = setInterval(() => { const c = side.querySelector('[data-r="clock"]'); if (c) c.textContent = fmtClock(Practice.elapsedSec()); }, 1000);
+    if (act) tick = setInterval(() => { const c = week.querySelector('[data-r="clock"]'); if (c) c.textContent = fmtClock(Practice.elapsedSec()); }, 1000);
   }
 
   function liveSession(act, open) {
@@ -75,6 +85,28 @@ export function mountDashboard(root, { navigate, courseId = null, skillId = null
       ${open.length ? `<label class="mini">Counts toward</label><select data-r="sesscourse"><option value="">Free practice</option>${open.map(c => `<option value="${c.id}" ${c.id === act.courseId ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select>` : ''}
       <div class="row"><button class="btn primary" data-d="finish">Finish & log</button><button class="btn" data-d="tools">Open tools</button></div>
       <button class="linkbtn small" data-d="discard">Discard this session</button></div>`;
+  }
+
+  /** "Continue where you left off": a lesson in progress, else the course you practiced last, with its progress ring. */
+  function continueHTML(open) {
+    if (hasActiveRoutine()) return `<a class="gp-continue" href="#/practice/run"><span class="gp-c-in"><span class="gp-c-txt"><span class="label">Continue</span><b>Today’s lesson is in progress</b><span class="small muted">Pick up where you left off</span></span>${ringHTML(null)}</span></a>`;
+    const c = [...open].filter(x => x.tree).sort((a, b) => String(b.lastPracticed || '').localeCompare(String(a.lastPracticed || '')))[0];
+    if (!c) return '';
+    const pct = progressPct(c), nx = nextInCourse(p, c);
+    const kind = isMaster(c) ? (c.topic && c.topic.cat === 'artist' ? 'Artist series' : 'Master class') : ((GENRE_BY_ID[c.genre] || {}).name || 'Course');
+    return `<button class="gp-continue" data-d="continue" data-c="${c.id}"><span class="gp-c-in"><span class="gp-c-txt"><span class="label">Continue</span>
+      <b>${esc(c.name)}${nx ? ` — ${esc(nx.skill.title)}` : ''}</b><span class="small muted">${esc(kind)} · ${esc(tierName(c.difficulty))}${c.lastPracticed ? ` · last played ${esc(c.lastPracticed)}` : ''}</span></span>${ringHTML(pct)}</span></button>`;
+  }
+  const ringHTML = pct => `<span class="gp-ring" style="--pct:${pct == null ? 50 : pct}"><span>${pct == null ? icon('play') : `${pct}%`}</span></span>`;
+  /** Technique library cards: paths you've started first, then ones at your level. */
+  function techHTML() {
+    const started = id => Object.keys(p.varState || {}).some(k => k.startsWith(`kb:${id}:`));
+    const lvl = t => (p.domains[t.domain] ? p.domains[t.domain].level : 4);
+    const fits = t => (t.stages || []).some(st => lvl(t) >= st.levels[0] - 1 && lvl(t) <= st.levels[1]);
+    const list = [...KB_INDEX].sort((a, b) => (started(b.id) - started(a.id)) || (fits(b) - fits(a)) || a.title.localeCompare(b.title)).slice(0, 4);
+    if (!list.length) return '';
+    return `<section class="gp-tech"><div class="sec-head"><h3>Technique library</h3><a class="link small" href="#/techniques">All paths →</a></div>
+      <div class="gp-tech-grid">${list.map(t => `<a class="gp-tcard dom-${t.domain}" href="#/techniques/${t.id}"><span class="gp-badge">${icon('target')}</span><b>${esc(t.title)}</b><span class="small muted">${esc(tierName(lvl(t)))} · ${t.lessons} lessons</span></a>`).join('')}</div></section>`;
   }
 
   /** Shortcuts to the learning areas; the master class for your biggest need comes first. */
@@ -142,6 +174,7 @@ export function mountDashboard(root, { navigate, courseId = null, skillId = null
     if (mc) { const t = MASTER_BY_ID[mc.dataset.mc]; if (t) openMasterSheet({ title: t.title, topicId: t.id, cat: t.cat, domain: t.domain }, { navigate }); return; }
     const b = e.target.closest('button'); if (!b) return;
     switch (b.dataset.d) {
+      case 'continue': { const c = p.courses.find(x => x.id === b.dataset.c); const nx = c && nextInCourse(p, c); if (c && nx) openPractice(courseContext(p, c, { skillId: nx.skill.id }), navigate); else if (c) navigate('#/course/' + c.id); return; }
       case 'start':
         Practice.start({ source: 'free', courseId: null, genre: p.questionnaire.genres[0] || null });
         render(); return;

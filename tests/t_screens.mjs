@@ -25,7 +25,7 @@ const origErr = console.error; console.error = (...a) => { errors.push(a.join(' 
   ok(view().querySelector('.dash-side .weekcard .wk-bars') && view().querySelectorAll('.wk-day').length === 7, 'home: this week strip');
   ok(view().querySelectorAll('.dash-side .explore .ex-row').length >= 2, 'home: explore links');
   ok(!view().querySelector('.cal') && !view().querySelector('.mastercard') && !view().querySelector('.artistcard') && !view().querySelector('.lv'), 'home: calendar, master classes, artist tiles and skill bars moved off home');
-  ok(view().querySelector('[data-r="routine"] details.plan-full:not([open])') && view().querySelector('[data-r="routine"] .plan-sum .ps'), 'home: the plan is folded into a summary');
+  ok(view().querySelector('[data-r="routine"] details.plan-full:not([open])') && view().querySelectorAll('[data-r="routine"] .gp-trail .gp-node').length >= 3 && view().querySelector('[data-r="routine"] .gp-node.active [data-r="start"]'), 'home: today’s path as a node trail (the first step starts it), the full plan folded');
   view().querySelector('.weekcard [data-d="start"]').click(); await sleep(10);
   const sel = view().querySelector('.weekcard [data-r="sesscourse"]');
   ok(sel && view().querySelector('.weekcard [data-r="clock"]'), 'free-practice timer runs in the week card');

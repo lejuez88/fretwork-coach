@@ -3,7 +3,8 @@
 // core/coach.js), with the reasons, and one button to start. Only the length is
 // asked, as a quick choice. Everything can still be chosen by hand under
 // "Customize": the course, the skill and the exact time.
-import { esc, toast, fmtMinutes } from '../core/util.js';
+import { esc, toast, fmtMinutes, today } from '../core/util.js';
+import { icon } from './icons.js';
 import { tempoShort } from './temporow.js';
 import { Store } from '../core/store.js';
 import { Claude } from '../core/claude.js';
@@ -53,10 +54,10 @@ export function mountRoutineBuilder(el, { navigate, courseId = null, skillId = n
     if (custom) return renderCustom(courses);
     // Guided: the plan is ready to start as soon as the course has one
     if (selected.tree && !plan) plan = buildRoutine(p, selected, { budget: minutes, focusSkillId: focusSkill() });
-    el.className = 'card routine-cta guided';
+    el.className = 'card routine-cta guided path-card';
     const skill = rec.next && rec.next.skill;
     el.innerHTML = `
-      <div class="label">Today’s lesson · chosen for you</div>
+      <div class="label">Today’s path · chosen for you</div>
       <h3>${esc(selected.name)}${skill ? `: <span class="hl">${esc(skill.title)}</span>` : ''}</h3>
       ${rec.reasons.length ? `<ul class="why-list">${rec.reasons.slice(0, 2).map(r => `<li>${esc(r)}</li>`).join('')}</ul>` : ''}
       ${isGenericPlan(selected) ? `<p class="note warn">This course still uses the old standard plan. <a class="link" href="#/course/${selected.id}">Rebuild it for ${esc(selected.style)}</a> to practice the style’s own material.</p>` : ''}
@@ -118,12 +119,24 @@ export function mountRoutineBuilder(el, { navigate, courseId = null, skillId = n
     }
     const sum = {};
     plan.items.forEach(it => { sum[it.block] = (sum[it.block] || 0) + it.minutes; });
-    const stretch = plan.items.find(it => it.block === 'stretch');
     return `<div class="planbox guided">
-      <div class="plan-sum">${Object.keys(BLOCKS).filter(k => sum[k]).map(k => `<span class="ps b-${k}" style="flex:${sum[k]}" title="${BLOCKS[k].label}: ${Math.round(sum[k])} min"><i></i><span>${SHORT[k]}</span></span>`).join('')}</div>
-      ${stretch ? `<p class="small plan-stretch"><span class="muted">Today’s stretch:</span> <b>${esc(stretch.ex.name)}</b></p>` : ''}
+      ${trailHTML(sum)}
       <details class="plan-full"><summary>See the plan · ${plan.items.length} exercises · ${fmtMinutes(total)}</summary>${rows}</details>
       <button class="btn primary block" data-r="start">▶ Start today’s lesson</button></div>`;
+  }
+  /**
+   * Today's path as a node trail (Guided Path): one node per part of the lesson, in order —
+   * done (✓), the one to do next (⚡, tap to start) and the rest (locked until you get there).
+   */
+  function trailHTML(sum) {
+    const blocks = Object.keys(BLOCKS).filter(k => sum[k]);
+    const done = p.practiceLog.some(l => l.date === today() && l.source === 'routine' && l.courseId === selected.id);
+    return `<ol class="gp-trail" aria-label="Today’s path">${blocks.map((k, i) => {
+      const first = plan.items.find(it => it.block === k), state = done ? 'done' : i === 0 ? 'active' : 'todo';
+      const ic = state === 'done' ? icon('check') : state === 'active' ? icon('zap') : icon('lock');
+      return `<li class="gp-node ${state}">${state === 'active' ? `<button class="gp-dot" data-r="start" aria-label="Start: ${esc(SHORT[k])}">${ic}</button>` : `<span class="gp-dot">${ic}</span>`}
+        <span class="gp-txt"><b>${esc(SHORT[k])}</b><span>${esc(first ? first.ex.name : '')} · ${Math.round(sum[k])} min</span></span></li>`;
+    }).join('')}</ol>`;
   }
   async function ensureTree() {
     if (selected.tree) return true;

@@ -11,7 +11,8 @@
 // sessions are the routines built on Home.
 //
 // A practice context: {title, back, backLabel, idx, items: [routine-item shape + skill/unit info],
-// courseId?, kind}. openPractice(ctx) stores it (so a reload keeps your place) and opens #/play.
+// courseId?, kind}. openPractice(ctx) stores it (so a reload keeps your place) and opens the lesson's
+// Study page (#/lesson), whose "Practice it" opens #/play.
 import { esc, toast } from '../core/util.js';
 import { Store } from '../core/store.js';
 import { Claude } from '../core/claude.js';
@@ -51,9 +52,14 @@ const saveCtx = c => { try { sessionStorage.setItem(PLAY_KEY, JSON.stringify(c))
 export function openPractice(ctx, navigate) {
   const c = { kind: 'lessons', idx: 0, ...ctx, idx: Math.max(0, Math.min((ctx.items || []).length - 1, ctx.idx || 0)) };
   saveCtx(c); memo = c;
-  if (navigate) navigate('#/play'); else location.hash = '#/play';
+  // Guided Path: a lesson opens on its Study page first; "Practice it" there opens the practice page
+  const to = ctx.direct ? '#/play' : '#/lesson';
+  if (navigate) navigate(to); else location.hash = to;
 }
 let memo = null;
+/** The practice context in use (for the Study page). */
+export const currentPlayCtx = () => memo || getCtx();
+export const setPlayCtx = c => { memo = c; saveCtx(c); };
 
 /** A practice context for the exercise library: every exercise in the same topic, starting at `id`. */
 export function libraryContext(p, id, vid = null) {

@@ -35,6 +35,8 @@ import { applyScheme } from './ui/scheme.js';
 import { initDrawer, menuButtonHTML } from './ui/drawer.js';
 import { logoHTML } from './ui/logo.js';
 import { icon } from './ui/icons.js';
+import { topNavHTML, updateTopNav, profileButtonHTML } from './ui/topnav.js';
+import { mountStudy } from './screens/study.js';
 
 const view = () => $('#view');
 let cleanup = null;
@@ -113,10 +115,12 @@ function initHeader() {
   slot('menu', menuButtonHTML('in-header'), true);
   slot('logo', logoHTML());
   slot('settings', icon('settings'));
+  slot('topnav', topNavHTML(), true);
+  slot('profile', profileButtonHTML(), true);
 }
 
 const LIB_FOR_TAB = { 'spider-1234': 'spider', 'penta-box1': 'penta', 'penta-16ths': 'penta', 'gcd-changes': 'open-changes', 'legato-3nps': 'legato', 'blues-shuffle-a': 'shuffle', 'string-skip': 'string-cross', 'sweep-am': 'sweep' };
-const needsProfile = new Set(['home', 'tools', 'profile', 'course', 'results', 'practice', 'reassess', 'evaluate', 'songs', 'song', 'artist', 'techniques', 'play']);
+const needsProfile = new Set(['home', 'tools', 'profile', 'course', 'results', 'practice', 'reassess', 'evaluate', 'songs', 'song', 'artist', 'techniques', 'play', 'lesson']);
 
 function route() {
   if (cleanup) { try { cleanup(); } catch { /* ignore */ } cleanup = null; }
@@ -134,6 +138,7 @@ function route() {
   window.scrollTo(0, 0);
   const tabFor = { home: 'home', course: 'home', artist: 'home', techniques: 'practice', practice: 'practice', reassess: 'profile', evaluate: 'tools', tools: 'tools', profile: 'profile', results: 'profile', songs: 'songs', song: 'songs' };
   const playing = page === 'play' || (page === 'practice' && parts[1] === 'ex' && parts[2] && !isSpecial(decodeURIComponent(parts[2])));
+  updateTopNav();
   Shell.tabs(!!ready && !playing && !['welcome', 'onboarding', 'assessment'].includes(page) && !(page === 'reassess' && parts[1] === 'run'), tabFor[page]);
 
   switch (page) {
@@ -172,6 +177,7 @@ function route() {
       cleanup = mountTools(root, { tab: parts[1] || 'tuner', exerciseId: parts[2] ? decodeURIComponent(parts[2]) : null, navigate }); break;
     case 'course': cleanup = mountCourse(root, { id: parts[1], navigate }); break;
     case 'play': cleanup = mountPlay(root, { navigate }); break;
+    case 'lesson': cleanup = mountStudy(root, { navigate }); break;
     case 'practice':
       if (parts[1] === 'run') cleanup = mountRoutineRunner(root, { navigate });
       else if (parts[1] === 'summary') cleanup = mountRoutineSummary(root, { navigate });

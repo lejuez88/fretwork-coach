@@ -26,7 +26,9 @@ console.error = (...a) => { errors.push(a.join(' ')); };
     // practice every lesson: open the first on the practice page and step through with ›
     let players = 0;
     view().querySelector('[data-al="practice"][data-i="0"]').click(); await sleep(60);
-    ok(location.hash === '#/play', id + ': practice opens the practice page');
+    ok(location.hash === '#/lesson' && view().querySelector('.sp-card h1'), id + ': practice opens the Study page');
+    view().querySelector('[data-sp="play"]').click(); await sleep(40);
+    ok(location.hash === '#/play', id + ': “Practice it” opens the practice page');
     for (let i = 0; i < n; i++) {
       if (view().querySelector('.play-stage .tabplayer')) players++;
       const nx = view().querySelector('[data-pl="next"]'); if (nx && !nx.disabled) { nx.click(); await sleep(8); }
@@ -91,7 +93,9 @@ console.error = (...a) => { errors.push(a.join(' ')); };
   ok(view().querySelector('a.btn.primary[href^="#/course/"]'), 'artist page links to your master class');
   // practice a lesson
   view().querySelector('[data-al="practice"][data-i="2"]').click(); await sleep(80);
-  ok(location.hash === '#/play' && view().querySelector('.play-stage'), 'practice opens the practice page');
+  ok(location.hash === '#/lesson' && view().querySelector('.sp-pass, .sp-read'), 'practice opens the Study page');
+  view().querySelector('[data-sp="play"]').click(); await sleep(80);
+  ok(location.hash === '#/play' && view().querySelector('.play-stage'), '“Practice it” opens the practice page');
   ok(!localStorage.getItem('fretworkCoach.activeRoutine'), 'no timer for a single lesson');
   // Technique library: learning paths
   await go('#/practice');
@@ -115,7 +119,9 @@ console.error = (...a) => { errors.push(a.join(' ')); };
     ok(view().querySelectorAll('.path-stage').length === 4, t.id + ' shows all four stages');
     ok(view().querySelectorAll('.path-stage.missing').length === 4 - t.stages.length, t.id + ' marks missing stages');
     view().querySelector('[data-al="practice"][data-i="0"]').click(); await sleep(40);
-    ok(view().querySelector('.play-stage .tabplayer, .play-stage .metro'), t.id + ' practice opens a player');
+    ok(view().querySelector('.sp-card h1'), t.id + ' practice opens the Study page');
+    view().querySelector('[data-sp="play"]').click(); await sleep(40);
+    ok(view().querySelector('.play-stage .tabplayer, .play-stage .metro'), t.id + ' “Practice it” opens a player');
   }
   // the request box on the library page
   await go('#/techniques');
