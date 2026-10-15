@@ -15,7 +15,7 @@ const read = name => {
   if (!existsSync(f)) return null;
   let t = readFileSync(f, 'utf8').trim().replace(/^```(?:json)?\s*/, '').replace(/```\s*$/, '').trim();
   // A Google Doc read as Markdown escapes brackets and underscores (\\[ \\] \\_ \\#); JSON never has those escapes, so undo them.
-  t = t.replace(/\\([\[\]_#*>~`-])/g, '$1');
+  t = t.replace(/\\([!-\/:-@\[-`{-~])/g, (m, c) => (c === '"' || c === '\\' || c === '/') ? m : c); // undo Google Docs Markdown escapes such as \[ \] \_ \!
   // Text before the first { or after the last } (a header line from a pasted chat) is dropped.
   const a = t.indexOf('{'), b = t.lastIndexOf('}'); if (a > 0 || (b >= 0 && b < t.length - 1)) t = t.slice(Math.max(a, 0), b + 1);
   try { return JSON.parse(t); } catch (e) { problems.push(`${name}: not valid JSON (${e.message})`); return undefined; }

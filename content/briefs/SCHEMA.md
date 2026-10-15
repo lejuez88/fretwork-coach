@@ -62,6 +62,8 @@ Each reply is exported from Gemini with "Export to Docs" (this makes a Google Do
 ## Rules for the build
 
 - `confirmed: "player"` is final. Never override it or re-check it against other sources.
+- `player` is only valid when the topic's row in `content/QUEUE.md` (Player requests) contains an explicit specification with exact strings, frets and picking, and the brief's pattern matches it exactly. The Gem has been seen marking its own invented patterns `player` (thumping, 2026-10-15), so a `player` pattern with no matching specification in the row is treated as `unconfirmed`, and a mismatch builds nothing. Topics from the Discovered section have no player specification, so none of their patterns may be `player`.
+- Strings 7 and 8 are not supported by the app yet (see REQUESTS); a brief with notation on string 7 or 8 is rejected by `merge-brief.mjs`.
 - Artist-named patterns are built only from exact strings, frets and picking in the brief. Anything `unconfirmed` or missing goes in the run summary under "Needs your check".
 - A malformed brief, or one missing context needed to build correctly, builds nothing; the summary says what is missing.
 - Exercises stay original ("in the style of"); never transcribe a riff, solo or tab.
