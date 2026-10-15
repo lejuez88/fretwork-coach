@@ -10,7 +10,7 @@ import {
 } from './theory.js';
 
 /* ------------------------------- Helpers ------------------------------- */
-const OPEN = { 1: 64, 2: 59, 3: 55, 4: 50, 5: 45, 6: 40 };
+const OPEN = { 1: 64, 2: 59, 3: 55, 4: 50, 5: 45, 6: 40, 7: 35, 8: 30 };
 /** Fret of a pitch class on a string within [lo, hi]. */
 export function fretOn(s, pc, lo = 0, hi = 15) { for (let f = lo; f <= hi; f++) if (mod12(OPEN[s] + f) === mod12(pc)) return f; return null; }
 /** Root fret on the low E string for box shapes (E plays in open position). */

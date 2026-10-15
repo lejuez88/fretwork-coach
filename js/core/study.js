@@ -4,7 +4,7 @@
 // work out from the exercise itself: the notes it uses and the scale they make, the chords and
 // their tones, the rhythm and the learning method. With a Claude key, "Explain it" can write
 // study notes for any exercise (saved, so asking again costs nothing).
-import { SCALES, SCALE_BY_ID, STD_LOW, mod12, chordTones, parseChord } from './theory.js';
+import { SCALES, SCALE_BY_ID, STD_LOW, OPEN_STD, mod12, chordTones, parseChord } from './theory.js';
 import { methodOf } from './methods.js';
 import { beatLabel } from './tempo.js';
 
@@ -18,7 +18,7 @@ export function pitchClassesOf(ex) {
   const count = {};
   notes.forEach(n => {
     if (n.x === 'mute') return;
-    const open = tuning ? tuning[n.s - 1] : STD_LOW[6 - n.s];
+    const open = tuning ? tuning[n.s - 1] : OPEN_STD[n.s - 1];
     const pc = mod12(open + n.f + (n.x === 'pb' && n.bendTo != null ? n.bendTo - n.f : 0));
     count[pc] = (count[pc] || 0) + 1;
   });
@@ -52,9 +52,9 @@ export function rootOfPcs(seq) {
 }
 /** The root of an exercise's tab (see rootOfPcs). */
 export function lessonRootPc(ex) {
-  const notes = ((ex && ex.tab && ex.tab.notes) || []).filter(n => n.x !== 'mute' && n.f != null && n.s >= 1 && n.s <= 6);
+  const notes = ((ex && ex.tab && ex.tab.notes) || []).filter(n => n.x !== 'mute' && n.f != null && n.s >= 1 && n.s <= 8);
   const tuning = (ex.tab && ex.tab.tuning) || null;
-  return rootOfPcs(notes.map(n => (tuning ? tuning[n.s - 1] : STD_LOW[6 - n.s]) + n.f));
+  return rootOfPcs(notes.map(n => (tuning ? tuning[n.s - 1] : OPEN_STD[n.s - 1]) + n.f));
 }
 const nameIn = (pc, scaleId) => (/♭/.test(SCALE_BY_ID[scaleId] ? SCALE_BY_ID[scaleId].labels.join('') : '') || [5, 10, 3, 8, 1].includes(pc) ? NAMES_F : NAMES_S)[mod12(pc)];
 
@@ -63,7 +63,7 @@ export function theoryFacts(ex) {
   const out = [];
   if (!ex) return out;
   const count = pitchClassesOf(ex), first = ex.tab && ex.tab.notes && ex.tab.notes[0];
-  const firstPc = first ? mod12(((ex.tab.tuning && ex.tab.tuning[first.s - 1]) || STD_LOW[6 - first.s]) + first.f) : null;
+  const firstPc = first ? mod12(((ex.tab.tuning && ex.tab.tuning[first.s - 1]) || OPEN_STD[first.s - 1]) + first.f) : null;
   const sc = inferScale(count, firstPc);
   if (sc) {
     const s = SCALE_BY_ID[sc.scale], names = s.steps.map(st => nameIn(sc.root + st, sc.scale));

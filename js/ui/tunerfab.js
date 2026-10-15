@@ -2,7 +2,8 @@
 // curved meter just below the button (it starts listening right away); tapping
 // the fork again folds it away and stops the mic. Nothing else on the screen
 // is covered or paused, so you can tune and carry on. The button hides on the
-// full tuner in Tools, where it would be redundant.
+// full tuner in Tools, where it would be redundant. The playback bar (ui/transport.js) has the
+// same button whenever the bar is showing; opened from there, the meter pops up above the bar.
 import { Store } from '../core/store.js';
 import { mountTuner } from '../tools/tuner.js';
 
@@ -11,18 +12,20 @@ const onTunerScreen = () => { const h = location.hash || ''; return h === '#/too
 
 let pop = null, off = null, fab = null;
 
-export function openQuickTuner() {
+/** Open the quick tuner; where: 'header' (below the header button) or 'dock' (above the playback bar). */
+export function openQuickTuner(where = 'header') {
   if (pop || !fab) return;
   const p = Store.profile;
   const settings = p ? p.settings : {};
   const save = patch => { if (Store.profile) { Object.assign(Store.profile.settings, patch); Store.save(); } };
   pop = document.createElement('div');
-  pop.className = 'tunepop'; pop.id = 'tunepop';
+  pop.className = 'tunepop' + (where === 'dock' ? ' at-dock' : ''); pop.id = 'tunepop';
   document.body.appendChild(pop);
   off = mountTuner(pop, settings, save, { pop: true, autostart: true });
   document.body.classList.add('tuning');
   fab.setAttribute('aria-expanded', 'true');
   requestAnimationFrame(() => pop && pop.classList.add('show'));
+  window.dispatchEvent(new Event('fc:tuner'));
 }
 export function closeQuickTuner() {
   if (!pop) return;
@@ -32,8 +35,13 @@ export function closeQuickTuner() {
   el.classList.remove('show'); el.remove();
   document.body.classList.remove('tuning');
   if (fab) fab.setAttribute('aria-expanded', 'false');
+  window.dispatchEvent(new Event('fc:tuner'));
 }
 export const quickTunerOpen = () => !!pop;
+/** The quick tuner can be used here (it's hidden on the full tuner screen). */
+export const quickTunerAvailable = () => !!fab && !onTunerScreen();
+export function toggleQuickTuner(where = 'header') { if (pop) closeQuickTuner(); else openQuickTuner(where); }
+export const FORK_ICON = FORK;
 
 function syncVisibility() {
   if (!fab) return;

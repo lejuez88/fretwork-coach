@@ -9,6 +9,7 @@ import { ROOTS, SCALE_BY_ID, STD_LOW, mod12, intervalFamily, spellScale, scalePo
 import { fretboardSVG } from '../ui/fretboard.js';
 import { SCALE_GROUPS, SCALE_INFO, SCALE_PATHS } from '../data/scaleinfo.js';
 import { KB_BY_ID } from '../data/kb.js';
+import { currentTuning, stringNames, tuningLabel, stringCount } from '../core/guitar.js';
 
 const KEY = 'fretworkCoach.scales';
 const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || 'null') || {}; } catch { return {}; } };
@@ -21,13 +22,14 @@ export function scaleNotes(rootPc, id) {
  * Marks for every scale note on the neck (frets 0..maxFret). The root is always in the root color;
  * other degrees are plain unless their label is in `hl` (a Set of degree labels such as '3', '♭7').
  */
-export function neckMarksFor(rootPc, id, { maxFret = 15, labels = 'degree', lo = 0, hi = 99, lit = null, hl = null } = {}) {
+export function neckMarksFor(rootPc, id, { maxFret = 15, labels = 'degree', lo = 0, hi = 99, lit = null, hl = null, tuning = null } = {}) {
   const notes = scaleNotes(rootPc, id), out = [];
-  for (let i = 0; i < 6; i++) for (let f = 0; f <= maxFret; f++) {
-    const n = notes.find(x => x.pc === mod12(STD_LOW[i] + f)); if (!n) continue;
-    const inBox = lit ? lit.has(`${6 - i}:${f}`) : f >= lo && f <= hi;
+  const low = tuning ? tuning.slice().reverse() : STD_LOW, NS = low.length; // lowest string first
+  for (let i = 0; i < NS; i++) for (let f = 0; f <= maxFret; f++) {
+    const n = notes.find(x => x.pc === mod12(low[i] + f)); if (!n) continue;
+    const inBox = lit ? lit.has(`${NS - i}:${f}`) : f >= lo && f <= hi;
     const isRoot = n.label === 'R', on = !isRoot && hl && hl.has(n.label);
-    out.push({ s: 6 - i, f, label: labels === 'note' ? n.name : n.label, family: isRoot ? 'root' : on ? intervalFamily(n.label) : 'plain', cls: on ? 'hl' : '', ghost: !inBox });
+    out.push({ s: NS - i, f, label: labels === 'note' ? n.name : n.label, family: isRoot ? 'root' : on ? intervalFamily(n.label) : 'plain', cls: on ? 'hl' : '', ghost: !inBox });
   }
   return out;
 }
@@ -40,7 +42,8 @@ export function mountScalesGlossary(el) {
   const rootPc = () => ROOTS[S.root].pc;
 
   /** Positions: real fingerings (3 notes per string, or the pentatonic boxes) you can run straight through. */
-  const positions = () => scalePositions(rootPc(), S.scale);
+  const tun = currentTuning(); // string 1 first, the player's guitar (Settings → Guitar)
+  const positions = () => scalePositions(rootPc(), S.scale, { tuning: tun.slice().reverse() });
   function render() {
     const sc = SCALE_BY_ID[S.scale], info = SCALE_INFO[S.scale] || {}, notes = scaleNotes(rootPc(), S.scale);
     const pos = positions(), box = S.pos > 0 ? pos[S.pos - 1] : null;
@@ -57,7 +60,8 @@ export function mountScalesGlossary(el) {
       <div class="row sc-act"><button class="btn sm primary" data-sc="play">▶ Play it</button><div class="chips">${[['degree', 'Degrees'], ['note', 'Notes']].map(([k, l]) => `<button class="chip sm ${S.labels === k ? 'on' : ''}" data-lab="${k}">${l}</button>`).join('')}</div>
         ${path ? `<a class="btn sm" href="#/techniques/${path.id}">Learn it step by step: ${esc(path.title)} ›</a>` : ''}</div>
       <div class="chips sc-pos"><button class="chip sm ${!box ? 'on' : ''}" data-pos="0">Whole neck</button>${pos.map((p, i) => `<button class="chip sm ${S.pos === i + 1 ? 'on' : ''}" data-pos="${i + 1}">Position ${i + 1} · frets ${p.lo}–${p.hi}</button>`).join('')}</div>
-      <div class="fbwrap">${fretboardSVG({ marks: neckMarksFor(rootPc(), S.scale, { labels: S.labels, maxFret: box ? Math.max(15, box.hi) : 15, lit: box ? new Set(box.notes.map(n => `${n.s}:${n.f}`)) : null, hl: S.hl }), maxFret: box ? Math.max(15, box.hi) : 15, highlightFrets: box ? [box.lo, box.hi] : null })}</div>
+      <div class="fbwrap">${fretboardSVG({ marks: neckMarksFor(rootPc(), S.scale, { labels: S.labels, maxFret: box ? Math.max(15, box.hi) : 15, lit: box ? new Set(box.notes.map(n => `${n.s}:${n.f}`)) : null, hl: S.hl, tuning: tun }), maxFret: box ? Math.max(15, box.hi) : 15, highlightFrets: box ? [box.lo, box.hi] : null, names: stringNames(tun) })}</div>
+      ${guitarNote()}
       <dl class="sc-info">
         ${info.sound ? `<dt>Sound</dt><dd>${esc(info.sound)}</dd>` : ''}
         ${info.built ? `<dt>How it’s built</dt><dd>${esc(info.built)}</dd>` : ''}
@@ -67,6 +71,7 @@ export function mountScalesGlossary(el) {
       </dl>
     </section>`;
   }
+  const guitarNote = () => (stringCount() !== 6 || tun.some((m, i) => m !== [64, 59, 55, 50, 45, 40][i]) ? `<p class="small muted gt-note">${stringCount()}-string guitar · ${esc(tuningLabel())} · change it in <a class="link" href="#/settings">Settings → Guitar</a></p>` : '');
   const stepPattern = steps => steps.map((s, i) => { const d = (steps[i + 1] != null ? steps[i + 1] : 12) - s; return d === 1 ? 'H' : d === 2 ? 'W' : d === 3 ? 'W+H' : `${d}`; }).join(' ');
   function play() {
     const c = Audio.get(); if (!c) return;

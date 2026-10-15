@@ -16,13 +16,14 @@ import { clickSoundSelectHTML } from '../ui/clicksound.js';
 import { computePicks, suggestPicking, strokeSVG, PICK_MODES } from './picking.js';
 import { fretboardSVG } from '../ui/fretboard.js';
 import { rootOfPcs } from '../core/study.js';
+import { tuningForTab, tabStrings, stringNames as namesFor, guitar, tuningLabel, STANDARD } from '../core/guitar.js';
 import { chordTimeline, chordAt, findDiagrams, highlightChord } from '../ui/chordsync.js';
 import { beatLabel, clickNote } from '../core/tempo.js';
 import { Transport } from '../ui/transport.js';
 
 const PC = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-/** String labels for a tuning (string 1 first): standard gives e B G D A E. */
-export const stringNames = (tuning = STD_TUNING) => tuning.map((m, i) => { const n = PC[((m % 12) + 12) % 12]; return i === 0 && n === 'E' ? 'e' : n; });
+/** String labels for a tuning (string 1 first): standard gives e B G D A E; 7 and 8 strings add B and F♯. */
+export const stringNames = (tuning = STD_TUNING) => namesFor(tuning);
 const noteName = m => PC[((m % 12) + 12) % 12];
 
 const ROW = 18, BOTTOM = 12, PAD = 28, NOTE_DX = 4;
@@ -79,8 +80,16 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
   const beatsPerBar = ex.beatsPerBar || bpbOpt;
   const total = exerciseBeats(ex, beatsPerBar);
   const notes = [...ex.notes].sort((a, b) => a.t - b.t);
-  const tuning = Array.isArray(ex.tuning) && ex.tuning.length === 6 ? ex.tuning : STD_TUNING;
+  // Strings and tuning: the tab's own (tab.strings / tab.tuning) if it declares them, otherwise the
+  // player's guitar (Settings → Guitar) for the strings the tab uses. 7- and 8-string tabs draw 7 or 8 lines.
+  const tabSpec = { strings: ex.strings, tuning: ex.tuning, notes };
+  const NS = tabStrings(tabSpec);
+  const tuning = tuningForTab(tabSpec);
   const names = stringNames(tuning);
+  const g = guitar();
+  const tuningMsg = NS > g.strings ? `Written for a ${NS}-string guitar (${namesFor(tuning).slice().reverse().join(' ')}); your guitar is set to ${g.strings} strings.`
+    : !Array.isArray(ex.tuning) && tuning.some((m, i) => m !== STANDARD[NS][i]) ? `Played in your tuning: ${tuningLabel(g.strings, g.tuning)}. The tab is written for standard tuning, so retuned strings sound and are named as your guitar plays them.`
+    : '';
   const minStep = Math.min(...notes.map(n => n.d).filter(Boolean), 1);
   const pxBeat = clamp(Math.round(24 / minStep), 48, 100);
   const onsets = [...new Set(notes.map(n => +n.t.toFixed(4)))].sort((a, b) => a - b);
@@ -113,6 +122,7 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
       <div class="tp-goal" title="${esc(clickNote(ex))}"><span>Goal</span><b>${ex.goalBpm || '—'}</b><span>BPM · ${esc(label)}</span></div>
     </div>
     ${ex.why ? `<p class="why">${esc(ex.why)}</p>` : ''}`}
+    ${tuningMsg ? `<p class="tp-tuning small muted">${esc(tuningMsg)}</p>` : ''}
     <div class="tp-view ${S.scroll ? 'scroll' : 'static'}${S.picks ? ' picks' : ''}${evalMode ? '' : ' seekable'}" data-r="view"><div class="tp-track" data-r="track"></div></div>
     <div class="tp-ruler${evalMode ? ' ro' : ''}" data-r="ruler" aria-label="Bars: click to move the playhead, drag to loop a section">
       <div class="tp-rsel" data-r="rsel" hidden></div><i class="tp-rfill" data-r="prog"></i><b class="tp-rhead" data-r="rhead"></b><div class="tp-rbars" data-r="rbars"></div>
@@ -174,14 +184,14 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
     const beatsPerLine = barsPerLine * beatsPerBar;
     for (let start = 0; start < total; start += beatsPerLine) {
       const end = Math.min(total, start + beatsPerLine);
-      const w = PAD + (end - start) * pxBeat + 10, h = TOP + ROW * 5 + BOTTOM;
+      const w = PAD + (end - start) * pxBeat + 10, h = TOP + ROW * (NS - 1) + BOTTOM;
       let s = `<svg class="tabsvg" width="${Math.round(w * Z)}" height="${Math.round(h * Z)}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Tab">`;
-      s += `<rect class="tab-selrect" x="0" y="${TOP - 13}" width="0" height="${ROW * 5 + 22}" rx="6" style="display:none"/>`;
+      s += `<rect class="tab-selrect" x="0" y="${TOP - 13}" width="0" height="${ROW * (NS - 1) + 22}" rx="6" style="display:none"/>`;
       names.forEach((name, i) => {
         const y = TOP + i * ROW;
         s += `<text x="6" y="${y + 4}" class="tab-sname">${name}</text><line x1="${PAD - 6}" y1="${y}" x2="${w - 6}" y2="${y}" class="tab-line"/>`;
       });
-      for (let b = start; b <= end; b += beatsPerBar) { const x = PAD + (b - start) * pxBeat - 6; s += `<line x1="${x}" y1="${TOP}" x2="${x}" y2="${TOP + ROW * 5}" class="tab-bar"/>`; if (b < end) s += `<text x="${x + 3}" y="${TOP - (S.picks ? 36 : 16)}" class="tab-barno">${b / beatsPerBar + 1}</text>`; }
+      for (let b = start; b <= end; b += beatsPerBar) { const x = PAD + (b - start) * pxBeat - 6; s += `<line x1="${x}" y1="${TOP}" x2="${x}" y2="${TOP + ROW * (NS - 1)}" class="tab-bar"/>`; if (b < end) s += `<text x="${x + 3}" y="${TOP - (S.picks ? 36 : 16)}" class="tab-barno">${b / beatsPerBar + 1}</text>`; }
       for (let b = start; b < end; b++) s += `<text x="${PAD + (b - start) * pxBeat - 2}" y="${h - 1}" class="tab-count">${(b % beatsPerBar) + 1}</text>`;
       notes.forEach((n, i) => {
         if (n.t < start - EPS || n.t >= end - EPS) return;
@@ -197,7 +207,7 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
           if (fingers.length) s += `<text x="${both ? x + 7 : x}" y="${PICK_Y + 4}" class="tab-finger" data-pi="${i}">${fingers.join('')}</text>`;
         }
       });
-      s += `<line class="tab-head" x1="0" y1="${TOP - 16}" x2="0" y2="${TOP + ROW * 5 + 6}" style="display:none"/></svg>`;
+      s += `<line class="tab-head" x1="0" y1="${TOP - 16}" x2="0" y2="${TOP + ROW * (NS - 1) + 6}" style="display:none"/></svg>`;
       const wrap = document.createElement('div'); wrap.className = 'tab-sys'; wrap.innerHTML = s;
       track.appendChild(wrap);
       systems.push({ el: wrap, svg: wrap.firstChild, start, end, w, head: wrap.querySelector('.tab-head'), selrect: wrap.querySelector('.tab-selrect') });
@@ -330,7 +340,7 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
   function playNote(n, t) {
     const c = Audio.ctx;
     if (!S.sound || t < c.currentTime - 0.01) return;
-    const spread = n.chord ? 0.012 * (6 - n.s) : 0;
+    const spread = n.chord ? 0.012 * (NS - n.s) : 0;
     if (n.x === 'mute') Audio.guitar(noteMidi(n, tuning), t + spread, { dur: 0.05, gain: n.chord ? 0.2 : 0.35, bright: 0.2 });
     else if (n.x === 'nh' || n.x === 'ah') {
       const dur = Math.max(n.bar === 'dive' ? 1 : 0.4, n.d * spb() * 2);

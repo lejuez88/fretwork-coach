@@ -9,6 +9,7 @@ import {
   INVERSION_NAMES, STRING_SETS, setName, coreTones, parseChord, STD_LOW, mod12, pcName, fretsToString, describeVoicing
 } from '../core/theory.js';
 import { chordDiagramSVG, fretboardSVG, FAMILY_LEGEND } from '../ui/fretboard.js';
+import { currentTuning, stringNames, tuningLabel } from '../core/guitar.js';
 
 const FAMILIES = [['triad', 'Triads'], ['drop2', 'Drop 2'], ['drop3', 'Drop 3'], ['shell', 'Shells']];
 const KEY = 'fretworkCoach.glossary';
@@ -16,9 +17,13 @@ const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || 'null'
 
 export function mountChordGlossary(el, { initial = null } = {}) {
   const saved = load();
+  // The player's guitar: shapes and inversions sit on the top six strings in its tuning; the whole
+  // neck and Build use every string (7- and 8-string guitars included).
+  const TUN = currentTuning(), N = TUN.length, LOW = TUN.slice().reverse(), LOW6 = TUN.slice(0, 6).reverse(), NAMES = stringNames(TUN);
+  const extraMuted = Array.from({ length: N - 6 }, (_, k) => 7 + k); // strings 7, 8: not part of a six-string shape
   const S = {
     root: saved.root != null ? saved.root : 0, type: saved.type || 'maj', view: saved.view || 'shapes', label: saved.label || 'interval',
-    family: null, setIdx: 0, sel: 0, inv: 'all', build: Array(6).fill(null)
+    family: null, setIdx: 0, sel: 0, inv: 'all', build: Array(N).fill(null)
   };
   if (initial) {
     const c = parseChord(initial);
@@ -28,17 +33,17 @@ export function mountChordGlossary(el, { initial = null } = {}) {
   const root = () => ROOTS[S.root];
   const families = () => {
     const n = coreTones(S.type).length;
-    return FAMILIES.filter(([k]) => (k === 'triad' ? n === 3 : k === 'shell' ? !!inversionVoicings(root(), S.type, 'shell').length : n === 4 && k !== 'shell'));
+    return FAMILIES.filter(([k]) => (k === 'triad' ? n === 3 : k === 'shell' ? !!inversionVoicings(root(), S.type, 'shell', { tuning: LOW6 }).length : n === 4 && k !== 'shell'));
   };
 
   let shapes = [], invs = [];
   function compute() {
-    shapes = findVoicings(root(), S.type, { limit: 8 });
+    shapes = findVoicings(root(), S.type, { limit: 8, tuning: LOW6 });
     const fams = families();
     if (!S.family || !fams.some(([k]) => k === S.family)) S.family = fams.length ? fams[0][0] : null;
-    const sets = S.family ? STRING_SETS[S.family].filter(set => inversionVoicings(root(), S.type, S.family, { set }).length) : [];
+    const sets = S.family ? STRING_SETS[S.family].filter(set => inversionVoicings(root(), S.type, S.family, { set, tuning: LOW6 }).length) : [];
     if (S.setIdx >= sets.length) S.setIdx = 0;
-    invs = S.family && sets.length ? inversionVoicings(root(), S.type, S.family, { set: sets[S.setIdx] }) : [];
+    invs = S.family && sets.length ? inversionVoicings(root(), S.type, S.family, { set: sets[S.setIdx], tuning: LOW6 }) : [];
     S._sets = sets;
   }
 
@@ -55,9 +60,9 @@ export function mountChordGlossary(el, { initial = null } = {}) {
   }
   function neckMarks() {
     const tones = chordTones(root(), S.type), out = [];
-    for (let i = 0; i < 6; i++) for (let f = 0; f <= 15; f++) {
-      const t = tones.find(x => x.pc === mod12(STD_LOW[i] + f));
-      if (t) out.push({ s: 6 - i, f, label: S.label === 'note' ? t.name : t.label, family: intervalFamily(t.label), ghost: t.label !== 'R' && false });
+    for (let i = 0; i < N; i++) for (let f = 0; f <= 15; f++) {
+      const t = tones.find(x => x.pc === mod12(LOW[i] + f));
+      if (t) out.push({ s: N - i, f, label: S.label === 'note' ? t.name : t.label, family: intervalFamily(t.label), ghost: t.label !== 'R' && false });
     }
     return out;
   }
@@ -92,12 +97,12 @@ export function mountChordGlossary(el, { initial = null } = {}) {
   }
 
   function viewHTML(v) {
-    const board = S.view === 'neck' ? fretboardSVG({ marks: neckMarks() }) : v ? fretboardSVG({ marks: marksFor(v), muted: v.frets.map((f, i) => (f == null ? 6 - i : null)).filter(Boolean) }) : '';
+    const board = S.view === 'neck' ? fretboardSVG({ marks: neckMarks(), names: NAMES }) : v ? fretboardSVG({ marks: marksFor(v), names: NAMES, muted: [...v.frets.map((f, i) => (f == null ? 6 - i : null)).filter(Boolean), ...extraMuted] }) : '';
     let below = '';
     if (S.view === 'shapes') {
       below = shapes.length ? `<p class="small muted">${shapes.length} shapes up the neck. Tap one to see it on the fretboard.</p>
         <div class="vgrid">${shapes.map((x, i) => `<button class="vcard ${i === S.sel ? 'on' : ''}" data-sel="${i}">${chordDiagramSVG(x, { mode: S.label, title: x.frets.some(f => f === 0) && x.maxF <= 4 ? 'Open' : `Fret ${x.minF}` })}<span class="small muted">${x.inversion ? esc(x.name) : x.barre ? 'Barre' : x.frets.some(f => f === 0) ? 'Open strings' : 'Movable'}</span></button>`).join('')}</div>`
-        : '<p class="muted">No playable shape found for this chord in standard tuning.</p>';
+        : `<p class="muted">No playable shape found for this chord in ${esc(tuningLabel(N, TUN))}.</p>`;
     } else if (S.view === 'inversions') {
       const fams = families(), list = invList();
       const n = coreTones(S.type).length;
@@ -128,19 +133,19 @@ export function mountChordGlossary(el, { initial = null } = {}) {
 
   /* ------------------------------- Build -------------------------------- */
   function buildHTML() {
-    const b = S.build, played = b.map((f, i) => (f == null ? null : { i, f, midi: STD_LOW[i] + f })).filter(Boolean);
+    const b = S.build, played = b.map((f, i) => (f == null ? null : { i, f, midi: LOW[i] + f })).filter(Boolean);
     const bass = played.length ? played[0].midi : null;
     const cands = played.length ? identifyChord(played.map(p => p.midi), bass) : [];
     const best = cands[0];
-    const desc = best && best.type ? describeVoicing(b, best.name) : null;
+    const desc = best && best.type ? describeVoicing(b, best.name, LOW) : null;
     const marks = played.map(p => {
       const lab = desc ? (S.label === 'note' ? desc.names[p.i] : S.label === 'finger' ? desc.fingers[p.i] : desc.labels[p.i]) : pcName(p.midi);
-      return { s: 6 - p.i, f: p.f, label: lab == null ? '' : lab, family: desc ? intervalFamily(desc.labels[p.i]) : 'root' };
+      return { s: N - p.i, f: p.f, label: lab == null ? '' : lab, family: desc ? intervalFamily(desc.labels[p.i]) : 'root' };
     });
-    const muted = b.map((f, i) => (f == null ? 6 - i : null)).filter(Boolean);
+    const muted = b.map((f, i) => (f == null ? N - i : null)).filter(Boolean);
     return `
       <p class="small muted">Tap a fret on each string to build a chord (tap the space left of the nut for an open string, tap a note again to mute that string). The chord is named as you go.</p>
-      <div class="fbwrap">${fretboardSVG({ marks, muted, interactive: true })}</div>
+      <div class="fbwrap">${fretboardSVG({ marks, muted, interactive: true, names: NAMES })}</div>
       ${legendHTML()}
       <div class="buildres">
         ${!played.length ? '<p class="muted">No notes yet.</p>' : best ? `
@@ -154,9 +159,11 @@ export function mountChordGlossary(el, { initial = null } = {}) {
   }
   const v0 = () => shapes[S.sel] || null;
 
+  /** Play a fret array (lowest string first): six frets = a shape on the top six strings, N frets = Build. */
   function play(frets, arp = false) {
     const c = Audio.get(); if (!c) return toast('Audio is not supported here.');
-    const ms = frets.map((f, i) => (f == null ? null : STD_LOW[i] + f)).filter(m => m != null);
+    const tun = frets.length === N ? LOW : LOW6;
+    const ms = frets.map((f, i) => (f == null ? null : tun[i] + f)).filter(m => m != null);
     if (!ms.length) return;
     if (arp) ms.forEach((m, i) => Audio.guitar(m, c.currentTime + 0.05 + i * 0.22, { dur: 1.6, gain: 0.5 }));
     else Audio.strum(ms, c.currentTime + 0.05, { dur: 2.4, gain: 0.7 });
@@ -165,10 +172,10 @@ export function mountChordGlossary(el, { initial = null } = {}) {
   const onClick = e => {
     const hit = e.target.closest('.fb-hit');
     if (hit && S.view === 'build') {
-      const i = 6 - +hit.dataset.s, f = +hit.dataset.f;
+      const i = N - +hit.dataset.s, f = +hit.dataset.f;
       S.build[i] = S.build[i] === f ? null : f;
       render();
-      if (S.build[i] != null) { const c = Audio.get(); if (c) Audio.guitar(STD_LOW[i] + f, c.currentTime + 0.02, { dur: 1.2, gain: 0.5 }); }
+      if (S.build[i] != null) { const c = Audio.get(); if (c) Audio.guitar(LOW[i] + f, c.currentTime + 0.02, { dur: 1.2, gain: 0.5 }); }
       return;
     }
     const b = e.target.closest('button, [data-view]'); if (!b) return;
@@ -184,10 +191,10 @@ export function mountChordGlossary(el, { initial = null } = {}) {
     if (d.x === 'arp') { const v = current(); if (v) play(v.frets, true); return; }
     if (d.x === 'playroot') { const v = shapes[0]; if (v) play(v.frets); return; }
     if (d.x === 'playbuild') return play(S.build);
-    if (d.x === 'clear') { S.build = Array(6).fill(null); return render(); }
-    if (d.x === 'fromsel') { const v = v0(); if (v) S.build = v.frets.slice(); return render(); }
+    if (d.x === 'clear') { S.build = Array(N).fill(null); return render(); }
+    if (d.x === 'fromsel') { const v = v0(); if (v) S.build = [...Array(N - 6).fill(null), ...v.frets]; return render(); }
     if (d.x === 'open') {
-      const played = S.build.map((f, i) => (f == null ? null : STD_LOW[i] + f)).filter(m => m != null);
+      const played = S.build.map((f, i) => (f == null ? null : LOW[i] + f)).filter(m => m != null);
       const best = identifyChord(played, played[0])[0];
       if (best && best.type) { S.root = ROOTS.findIndex(r => r.pc === best.root.pc); S.type = best.type; S.view = 'shapes'; S.sel = 0; persist(); render(); }
     }

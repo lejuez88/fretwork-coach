@@ -9,7 +9,8 @@ import { lessonStudy, lessonRootPc } from '../core/study.js';
 import { exerciseDiagramsHTML, fretboardSVG } from '../ui/fretboard.js';
 import { DOMAIN_BY_KEY } from '../assessment/engine.js';
 import { tierName } from '../core/courses.js';
-import { STD_LOW, mod12 } from '../core/theory.js';
+import { OPEN_STD, mod12 } from '../core/theory.js';
+import { tabStrings, stringNames } from '../core/guitar.js';
 import { icon } from '../ui/icons.js';
 import { currentPlayCtx, setPlayCtx } from './play.js';
 
@@ -36,10 +37,12 @@ const NECK_FW = 40, NECK_W = frets => 38 + frets * NECK_FW + 12;
 export function neckOf(ex) {
   const ns = (ex.tab && ex.tab.notes) || [];
   const tuning = (ex.tab && ex.tab.tuning) || null, root = lessonRootPc(ex);
-  const pcOf = n => mod12((tuning ? tuning[n.s - 1] : STD_LOW[6 - n.s]) + n.f);
+  const NS = tabStrings(ex.tab); // 6, or 7 / 8 for an extended-range tab
+  const names = stringNames(tuning && tuning.length === NS ? tuning : OPEN_STD.slice(0, NS));
+  const pcOf = n => mod12((tuning ? tuning[n.s - 1] : OPEN_STD[n.s - 1]) + n.f);
   const seen = new Set(), marks = [];
   for (const n of ns) {
-    if (!(n.s >= 1 && n.s <= 6) || n.f == null || n.f < 0 || n.x === 'mute') continue;
+    if (!(n.s >= 1 && n.s <= NS) || n.f == null || n.f < 0 || n.x === 'mute') continue;
     const k = `${n.s}:${n.f}`; if (seen.has(k)) continue; seen.add(k);
     const isRoot = root != null && pcOf(n) === root; // the root is always marked
     marks.push({ s: n.s, f: n.f, label: isRoot ? 'R' : '', family: isRoot ? 'root' : 'plain' });
@@ -50,9 +53,9 @@ export function neckOf(ex) {
   let wLo = Math.max(0, lo - 3), wHi = Math.min(22, Math.max(hi + 2, wLo + 5));
   if (wHi - wLo < 5) wLo = Math.max(0, wHi - 5);
   if (wLo <= 1) wLo = 0; // close to the nut: show the nut
-  const fullSVG = fretboardSVG({ marks, maxFret: full, highlightFrets: [lo, hi], fw: NECK_FW });
+  const fullSVG = fretboardSVG({ marks, maxFret: full, highlightFrets: [lo, hi], fw: NECK_FW, names, strings: NS });
   const win = wLo > 0 || wHi < full;
-  const winSVG = win ? fretboardSVG({ marks, minFret: wLo, maxFret: wHi, highlightFrets: [lo, hi], fw: NECK_FW }) : '';
+  const winSVG = win ? fretboardSVG({ marks, minFret: wLo, maxFret: wHi, highlightFrets: [lo, hi], fw: NECK_FW, names, strings: NS }) : '';
   return `<div class="fbwrap sp-neck" data-full="${NECK_W(full)}">
     <div class="sp-neck-full">${fullSVG}</div>
     ${root != null && marks.some(m => m.family === 'root') ? `<p class="sp-neck-key small muted"><span class="fb-key fam-root">R</span> Root: ${esc(ROOT_NAME[root])}</p>` : ''}

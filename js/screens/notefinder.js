@@ -8,14 +8,18 @@
 import { esc, toast } from '../core/util.js';
 import { Audio } from '../core/audio.js';
 import { Store, isGuest } from '../core/store.js';
-import { STD_LOW, mod12, pcName } from '../core/theory.js';
+import { mod12, pcName } from '../core/theory.js';
+import { currentTuning, stringNames, stringLabels } from '../core/guitar.js';
+export { stringLabels };
 import { fretboardSVG } from '../ui/fretboard.js';
 import { tierPickerHTML } from '../ui/tierpicker.js';
 import { tierIdFor, TIER_BY_ID } from '../core/tiers.js';
 import { createNoteListener } from '../tools/notelistener.js';
 
 const KEY = 'fretworkCoach.noteFinder';
-const STRING_NAMES = { 1: 'high E', 2: 'B', 3: 'G', 4: 'D', 5: 'A', 6: 'low E' };
+const STRING_NAMES = new Proxy({}, { get: (_, k) => stringLabels()[k] });
+/** All strings of the player's guitar, lowest first: [6..1], [7..1] or [8..1]. */
+export const allStrings = () => Array.from({ length: currentTuning().length }, (_, i) => currentTuning().length - i);
 const NATURALS = [0, 2, 4, 5, 7, 9, 11];
 const ALL12 = Array.from({ length: 12 }, (_, i) => i);
 /** The four levels, as settings. */
@@ -30,11 +34,11 @@ export function loadNoteFinder() {
   try { return Object.assign({}, NF_DEFAULTS, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch { return { ...NF_DEFAULTS }; }
 }
 const saveSettings = S => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* ignore */ } };
-const midiAt = (s, f) => STD_LOW[6 - s] + f;
+const midiAt = (s, f) => currentTuning()[s - 1] + f;
 /** Every fret (0..maxFret) on a string where a pitch class sits. */
 export const fretsFor = (s, pc, maxFret) => { const out = []; for (let f = 0; f <= maxFret; f++) if (mod12(midiAt(s, f)) === pc) out.push(f); return out; };
 /** Apply a level's settings (keeps the mode and how you answer). */
-export const withTier = (S, tid) => ({ ...S, ...NF_TIERS[tid], strings: NF_TIERS[tid].strings.slice(), notes: NF_TIERS[tid].notes.slice(), tier: tid });
+export const withTier = (S, tid) => ({ ...S, ...NF_TIERS[tid], strings: NF_TIERS[tid].strings.length === 6 ? allStrings() : NF_TIERS[tid].strings.slice(), notes: NF_TIERS[tid].notes.slice(), tier: tid });
 
 /**
  * The next prompt. In order: strings low to high, notes in order. At random: weighted toward the
@@ -75,6 +79,7 @@ export function judgePlayed(midi, s, pc, maxFret) {
 export function mountNoteFinder(el) {
   const p = Store.profile;
   let S = loadNoteFinder();
+  { const n = currentTuning().length; S.strings = S.strings.filter(x => x >= 1 && x <= n); if (!S.strings.length) S.strings = [Math.min(n, 6), 5]; }
   const recTier = p && !isGuest(p) && p.domains && p.domains.fretboard ? tierIdFor(p.domains.fretboard.level) : null;
   if (!S.tier && recTier && !localStorage.getItem(KEY)) S = withTier(S, recTier);
   const st = { playing: false, seq: 0, n: 0, ok: 0, times: [], misses: {}, roundMiss: {}, last: null, prompt: null, t0: 0, feedback: null, wrong: null, heard: null, hint: '' };
@@ -92,7 +97,7 @@ export function mountNoteFinder(el) {
     drawPlay(); drawSettings();
   }
   function neck(marks, interactive) {
-    return `<div class="fbwrap nf-neck">${fretboardSVG({ marks, interactive, maxFret: Math.max(12, S.frets), focusString: st.prompt && S.mode === 'find' ? st.prompt.s : null, highlightFrets: [0, S.frets], fw: 44 })}</div>`;
+    return `<div class="fbwrap nf-neck">${fretboardSVG({ marks, interactive, names: stringNames(), maxFret: Math.max(12, S.frets), focusString: st.prompt && S.mode === 'find' ? st.prompt.s : null, highlightFrets: [0, S.frets], fw: 44 })}</div>`;
   }
   const chips = (list, cur, attr) => `<div class="chips">${list.map(([k, l]) => `<button class="chip ${cur === k ? 'on' : ''}" data-${attr}="${k}">${l}</button>`).join('')}</div>`;
   function drawPlay() {
@@ -138,7 +143,7 @@ export function mountNoteFinder(el) {
     }
   }
   function describe(x) {
-    const strs = x.strings.length === 6 ? 'all strings' : x.strings.slice().sort((a, b) => b - a).map(s => STRING_NAMES[s]).join(' and ') + (x.strings.length === 1 ? ' string' : ' strings');
+    const strs = x.strings.length === allStrings().length ? 'all strings' : x.strings.slice().sort((a, b) => b - a).map(s => STRING_NAMES[s]).join(' and ') + (x.strings.length === 1 ? ' string' : ' strings');
     const nts = x.notes.length === 12 ? 'all 12 notes' : x.notes.length === 7 && NATURALS.every(n => x.notes.includes(n)) ? 'the natural notes' : `${x.notes.length} notes`;
     return `${strs[0].toUpperCase() + strs.slice(1)}, ${nts}, frets 0–${x.frets}${x.limit ? `, ${x.limit} seconds a note` : ''}.`;
   }
@@ -146,7 +151,7 @@ export function mountNoteFinder(el) {
     const host = el.querySelector('[data-r="set"]'); if (!host) return;
     const dis = st.playing ? 'disabled' : '';
     host.innerHTML = `<details class="nf-custom" ${S.tier ? '' : 'open'}><summary><h3>Customize</h3><span class="small muted">${S.tier ? `Using the ${TIER_BY_ID[S.tier].name} settings` : 'Your own mix'}</span></summary>
-      <div class="field"><label>Strings</label><div class="chips">${[6, 5, 4, 3, 2, 1].map(s => `<button class="chip ${S.strings.includes(s) ? 'on' : ''}" data-str="${s}" ${dis}>${STRING_NAMES[s]}</button>`).join('')}<button class="chip ghost" data-str="all" ${dis}>All</button></div></div>
+      <div class="field"><label>Strings</label><div class="chips">${allStrings().map(s => `<button class="chip ${S.strings.includes(s) ? 'on' : ''}" data-str="${s}" ${dis}>${STRING_NAMES[s]}</button>`).join('')}<button class="chip ghost" data-str="all" ${dis}>All</button></div></div>
       <div class="field"><label>Notes</label><div class="chips">${ALL12.map(pc => `<button class="chip ${S.notes.includes(pc) ? 'on' : ''}" data-note="${pc}" ${dis}>${esc(name(pc))}</button>`).join('')}</div>
         <div class="chips" style="margin-top:6px"><button class="chip ghost" data-notes="nat" ${dis}>Naturals</button><button class="chip ghost" data-notes="acc" ${dis}>Sharps / flats</button><button class="chip ghost" data-notes="all" ${dis}>All 12</button><button class="chip ghost" data-notes="rand" ${dis}>Random 4</button></div></div>
       <div class="field"><label>Frets</label><div class="chips">${[5, 7, 12, 15, 22].map(f => `<button class="chip ${S.frets === f ? 'on' : ''}" data-frets="${f}" ${dis}>0–${f}</button>`).join('')}</div></div>
@@ -200,7 +205,7 @@ export function mountNoteFinder(el) {
   function heard(midi) {
     if (!st.playing || !mic() || st.feedback || !st.prompt) return;
     const pr = st.prompt, v = judgePlayed(midi, pr.s, pr.pc, S.frets);
-    if (v === 'ok') return answer(true, pr.s, midi - STD_LOW[6 - pr.s]);
+    if (v === 'ok') return answer(true, pr.s, midi - currentTuning()[pr.s - 1]);
     if (v === 'octave') { st.hint = `That’s ${name(pr.pc, pr.flat)}, but not on the ${STRING_NAMES[pr.s]} string${S.frets < 22 ? ` (frets 0–${S.frets})` : ''}. Find it there.`; return drawPlay(); }
     st.heard = name(mod12(midi), pr.flat);
     answer(false, pr.s, fretsFor(pr.s, pr.pc, S.frets)[0]);
@@ -227,7 +232,7 @@ export function mountNoteFinder(el) {
     if (b.dataset.nftier) { S = withTier(S, b.dataset.nftier); custom = false; }
     else if (b.dataset.mode) { S.mode = b.dataset.mode; custom = false; }
     else if (b.dataset.answer) { S.answer = b.dataset.answer; custom = false; }
-    else if (b.dataset.str) { if (b.dataset.str === 'all') S.strings = [6, 5, 4, 3, 2, 1]; else { const s = +b.dataset.str; S.strings = S.strings.includes(s) ? S.strings.filter(x => x !== s) : [...S.strings, s]; } }
+    else if (b.dataset.str) { if (b.dataset.str === 'all') S.strings = allStrings(); else { const s = +b.dataset.str; S.strings = S.strings.includes(s) ? S.strings.filter(x => x !== s) : [...S.strings, s]; } }
     else if (b.dataset.note != null) { const pc = +b.dataset.note; S.notes = S.notes.includes(pc) ? S.notes.filter(x => x !== pc) : [...S.notes, pc]; }
     else if (b.dataset.notes) S.notes = b.dataset.notes === 'nat' ? NATURALS.slice() : b.dataset.notes === 'acc' ? [1, 3, 6, 8, 10] : b.dataset.notes === 'all' ? ALL12.slice() : shuffle(ALL12).slice(0, 4);
     else if (b.dataset.frets) S.frets = +b.dataset.frets;
@@ -236,7 +241,7 @@ export function mountNoteFinder(el) {
     else if (b.dataset.round != null) S.round = +b.dataset.round;
     else if (b.dataset.flats) { S.flats = !S.flats; S.mixNames = false; }
     else if (b.dataset.nf === 'randomize') {
-      const strs = shuffle([6, 5, 4, 3, 2, 1]).slice(0, 1 + Math.floor(Math.random() * 3));
+      const strs = shuffle(allStrings()).slice(0, 1 + Math.floor(Math.random() * 3));
       S = { ...S, strings: strs, notes: shuffle(ALL12).slice(0, 3 + Math.floor(Math.random() * 6)), frets: [7, 12, 12, 15][Math.floor(Math.random() * 4)], order: 'random', mode: Math.random() < 0.5 ? 'find' : 'name' };
       toast('New mix: ' + describe(S));
     } else changed = false;

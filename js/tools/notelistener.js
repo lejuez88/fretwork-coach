@@ -3,13 +3,14 @@
 // ringing from before, or a tone the app is playing (ignore(ms)), is skipped until you pluck again.
 import { Audio } from '../core/audio.js';
 import { detectPitch, rms, freqToMidi } from './pitch.js';
+import { listenRange } from '../core/guitar.js';
 
 /**
  * createNoteListener({ onNote(midi, pc), onLevel?(rms), a4?: () => 440 })
  * → { start(): Promise<true | Error>, stop(), ignore(ms), get on() }
  */
 export function createNoteListener({ onNote, onLevel = null, a4 = () => 440 } = {}) {
-  const m = { on: false, an: null, hp: null, buf: null, timer: null, cur: null, n: 0, env: 0, quiet: 0, fired: false, ignoreUntil: 0 };
+  const m = { range: listenRange(), on: false, an: null, hp: null, buf: null, timer: null, cur: null, n: 0, env: 0, quiet: 0, fired: false, ignoreUntil: 0 };
   function frame() {
     if (!m.an || !Audio.ctx) return;
     m.an.getFloatTimeDomainData(m.buf);
@@ -21,7 +22,7 @@ export function createNoteListener({ onNote, onLevel = null, a4 = () => 440 } = 
     if (Date.now() < m.ignoreUntil) return;
     if (lv > 0.015 && lv > prevEnv * 1.5) { m.fired = false; m.n = 0; m.cur = null; }   // a new pluck
     if (m.fired) return;
-    const pd = detectPitch(m.buf, Audio.ctx.sampleRate, { minFreq: 70, maxFreq: 1400, threshold: 0.12 });
+    const pd = detectPitch(m.buf, Audio.ctx.sampleRate, { minFreq: m.range.minFreq, maxFreq: 1400, threshold: 0.12 });
     if (!pd || pd.clarity < 0.85) { m.n = 0; return; }
     const midi = Math.round(freqToMidi(pd.freq, a4()));
     if (midi === m.cur) m.n++; else { m.cur = midi; m.n = 1; }
@@ -34,8 +35,9 @@ export function createNoteListener({ onNote, onLevel = null, a4 = () => 440 } = 
       try {
         const src = await Audio.openMic();
         const c = Audio.ctx;
-        m.hp = c.createBiquadFilter(); m.hp.type = 'highpass'; m.hp.frequency.value = 60;
-        m.an = c.createAnalyser(); m.an.fftSize = 2048; m.an.smoothingTimeConstant = 0;
+        m.range = listenRange(); // the lowest string of the player's guitar (7- and 8-string included)
+        m.hp = c.createBiquadFilter(); m.hp.type = 'highpass'; m.hp.frequency.value = m.range.highpass;
+        m.an = c.createAnalyser(); m.an.fftSize = m.range.fftSize; m.an.smoothingTimeConstant = 0;
         src.connect(m.hp); m.hp.connect(m.an);
         m.buf = new Float32Array(m.an.fftSize);
         Object.assign(m, { on: true, cur: null, n: 0, env: 0, quiet: 0, fired: false });

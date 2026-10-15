@@ -7,7 +7,7 @@ import { progressionNames } from '../core/styles.js';
 export { mod12, scaleNps, scaleBox, chordTones, parseChord, ROOT_BY_PC, SCALE_BY_ID, rootFret6, fretOn };
 
 /* ------------------------------- Helpers ------------------------------- */
-export const OPEN = { 1: 64, 2: 59, 3: 55, 4: 50, 5: 45, 6: 40 };
+export const OPEN = { 1: 64, 2: 59, 3: 55, 4: 50, 5: 45, 6: 40, 7: 35, 8: 30 }; // string → open MIDI (7 = low B, 8 = low F♯ on extended-range guitars)
 export const N = (s, f, t, d, x, extra) => ({ t: +t.toFixed(4), d, s, f, ...(x ? { x } : {}), ...(extra || {}) });
 export const nameOf = pc => (ROOT_BY_PC[mod12(pc)] ? ROOT_BY_PC[mod12(pc)].name : 'A');
 export const minorKey = c => (c.minor ? mod12(c.key) : mod12(c.key - 3));

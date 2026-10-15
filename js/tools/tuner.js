@@ -5,7 +5,9 @@ import { detectPitch, rms, freqToMidi, midiToFreq, midiName, median, NOTE_NAMES 
 import { esc } from '../core/util.js';
 import { Store } from '../core/store.js';
 import { inputSummaryHTML, openAudioSheet } from '../ui/audiosetup.js';
+import { guitar, PRESETS, presetIdOf, presetNotes, setGuitar, tuningNotes, STRING_COUNTS } from '../core/guitar.js';
 
+/** Six-string tunings (kept for older callers; the tuner itself follows Settings → Guitar). */
 export const TUNINGS = {
   standard: { label: 'Standard (E A D G B E)', notes: [40, 45, 50, 55, 59, 64] },
   dropD: { label: 'Drop D', notes: [38, 45, 50, 55, 59, 64] },
@@ -25,7 +27,12 @@ export const TUNINGS = {
  * Returns cleanup.
  */
 export function mountTuner(el, settings, onSettings, { mini = false, pop = false, autostart = false } = {}) {
-  let a4 = settings.referenceA4 || 440, tuningKey = settings.tuning in TUNINGS ? settings.tuning : 'standard';
+  let a4 = settings.referenceA4 || 440;
+  // One row per string of the player's guitar (6, 7 or 8), lowest first, in its tuning.
+  const notes = () => guitar().tuning.slice().reverse();
+  const tuningSelect = () => { const g = guitar(), id = presetIdOf(g.strings, g.tuning);
+    return `${PRESETS[g.strings].map(([k, l, t]) => `<option value="${k}" ${k === id ? 'selected' : ''}>${esc(l)} (${esc(tuningNotes(t))})</option>`).join('')}${id === 'custom' ? `<option value="custom" selected>Custom (${esc(tuningNotes(g.tuning))})</option>` : ''}`; };
+  const countChips = () => { const n = guitar().strings; return STRING_COUNTS.map(k => `<button class="chip sm ${k === n ? 'on' : ''}" data-strings="${k}" aria-pressed="${k === n}">${k}-string</button>`).join(''); };
   let target = null; // null = auto (nearest string) | 'chromatic' | string index
   let running = false, analyser = null, hp = null, buf = null, timer = null, raf = null;
   const hist = []; let shown = null, inTuneSince = 0, strobePos = 0, lastFrame = performance.now(), lastCents = null;
@@ -56,7 +63,7 @@ export function mountTuner(el, settings, onSettings, { mini = false, pop = false
     <div class="tuner-status" data-r="status">Tap Start and play one string at a time.</div>
     <div class="strings" data-r="strings"></div>
     <div class="row tmini-ctrl"><button class="btn primary" data-r="go">🎤 Start tuner</button>
-      <select data-r="tuning" aria-label="Tuning">${Object.entries(TUNINGS).map(([k, t]) => `<option value="${k}" ${k === tuningKey ? 'selected' : ''}>${esc(t.label)}</option>`).join('')}</select></div>
+      <select data-r="tuning" aria-label="Tuning">${tuningSelect()}</select></div>
     <div class="small muted tmini-foot">A4 = <b data-r="a4">${a4}</b> Hz · more options in <a class="link" href="#/tools/tuner" data-r="full">Tools → Tuner</a></div>
   </div>` : `
   <div class="tuner card">
@@ -77,9 +84,10 @@ export function mountTuner(el, settings, onSettings, { mini = false, pop = false
   <div class="card">
     <div class="label">Strings</div>
     <div class="strings" data-r="strings"></div>
-    <p class="muted small">Tap a string to lock the target and hear a reference tone. Tap Auto to pick the nearest string, or Chromatic for any note.</p>
+    <div class="chips tuner-count" data-r="count">${countChips()}</div>
+    <p class="muted small">Tap a string to lock the target and hear a reference tone. Tap Auto to pick the nearest string, or Chromatic for any note. Set strings and tuning for every tool in <a class="link" href="#/settings">Settings → Guitar</a>.</p>
     <div class="row">
-      <label class="mini grow">Tuning<select data-r="tuning">${Object.entries(TUNINGS).map(([k, t]) => `<option value="${k}" ${k === tuningKey ? 'selected' : ''}>${esc(t.label)}</option>`).join('')}</select></label>
+      <label class="mini grow">Tuning<select data-r="tuning">${tuningSelect()}</select></label>
       <label class="mini">A4 (Hz)<div class="a4"><button class="kbtn sm" data-a4="-1">−</button><b data-r="a4">${a4}</b><button class="kbtn sm" data-a4="1">+</button></div></label>
     </div>
   </div>`;
@@ -87,12 +95,14 @@ export function mountTuner(el, settings, onSettings, { mini = false, pop = false
 
   function renderStrings() {
     if (!r('strings')) return;
-    const notes = TUNINGS[tuningKey].notes;
+    const ns = notes(), N = ns.length;
     r('strings').innerHTML =
       `<button class="chip ${target === null ? 'on' : ''}" data-t="auto">Auto</button>` +
-      notes.map((m, i) => `<button class="chip ${target === i ? 'on' : ''}" data-t="${i}">${6 - i}: ${midiName(m)}</button>`).join('') +
+      ns.map((m, i) => `<button class="chip ${target === i ? 'on' : ''}" data-t="${i}">${N - i}: ${midiName(m)}</button>`).join('') +
       `<button class="chip ${target === 'chromatic' ? 'on' : ''}" data-t="chromatic">Chromatic</button>`;
-    r('target').textContent = target === null ? 'Auto' : target === 'chromatic' ? 'Chromatic' : `String ${6 - target}`;
+    r('target').textContent = target === null ? 'Auto' : target === 'chromatic' ? 'Chromatic' : `String ${N - target}`;
+    if (r('count')) r('count').innerHTML = countChips();
+    if (r('tuning')) r('tuning').innerHTML = tuningSelect();
   }
   renderStrings();
 
@@ -100,8 +110,8 @@ export function mountTuner(el, settings, onSettings, { mini = false, pop = false
     const m = freqToMidi(freq, a4);
     let refMidi;
     if (target === 'chromatic') refMidi = Math.round(m);
-    else if (typeof target === 'number') refMidi = TUNINGS[tuningKey].notes[target];
-    else { const notes = TUNINGS[tuningKey].notes; refMidi = notes.reduce((b, n) => (Math.abs(n - m) < Math.abs(b - m) ? n : b), notes[0]); if (Math.abs(refMidi - m) > 2.5) refMidi = Math.round(m); }
+    else if (typeof target === 'number') refMidi = notes()[target];
+    else { const ns = notes(); refMidi = ns.reduce((b, n) => (Math.abs(n - m) < Math.abs(b - m) ? n : b), ns[0]); if (Math.abs(refMidi - m) > 2.5) refMidi = Math.round(m); }
     const ref = midiToFreq(refMidi, a4);
     return { refMidi, cents: 1200 * Math.log2(freq / ref) };
   }
@@ -183,13 +193,14 @@ export function mountTuner(el, settings, onSettings, { mini = false, pop = false
     }
     if (b.dataset.r === 'go') return running ? stop() : start();
     if (b.dataset.a4) { a4 = Math.max(415, Math.min(466, a4 + Number(b.dataset.a4))); r('a4').textContent = a4; onSettings({ referenceA4: a4 }); return; }
+    if (b.dataset.strings) { setGuitar({ strings: +b.dataset.strings }); target = null; renderStrings(); return; }
     if (b.dataset.t != null) {
       const t = b.dataset.t; target = t === 'auto' ? null : t === 'chromatic' ? 'chromatic' : Number(t);
-      if (typeof target === 'number') { const m = TUNINGS[tuningKey].notes[target]; Audio.guitar(m, null, { dur: 2.5, gain: 0.7, cents: 1200 * Math.log2(a4 / 440) }); }
+      if (typeof target === 'number') { const m = notes()[target]; Audio.guitar(m, null, { dur: 2.5, gain: 0.7, cents: 1200 * Math.log2(a4 / 440) }); }
       renderStrings();
     }
   });
-  if (r('tuning')) r('tuning').addEventListener('change', e => { tuningKey = e.target.value; target = null; renderStrings(); onSettings({ tuning: tuningKey }); });
+  if (r('tuning')) r('tuning').addEventListener('change', e => { const g = guitar(), t = presetNotes(g.strings, e.target.value); if (t) setGuitar({ tuning: t }); target = null; renderStrings(); });
 
   if (autostart) start();
   return () => { dead = true; stop(); };

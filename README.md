@@ -25,7 +25,15 @@ Open **Settings** (the ⚙ at the top) and paste an Anthropic API key (create on
 
 Without a key, everything still works with built-in data: catalog guitarists and songs, standard course plans and lessons, and a library of original drills.
 
-## Latest: Guided Path redesign, Note Finder levels and mic
+## Latest: 7- and 8-string guitars, any tuning, tuner in the playback bar
+
+- **Settings → Guitar** (js/ui/guitarsettings.js, js/core/guitar.js): 6, 7 or 8 strings and a tuning per string count, with presets (6: Standard, Drop D, half step down, full step down, Drop C, DADGAD, open G/D/E; 7: Standard B E A D G B E, Drop A, half, full; 8: Standard F♯ B E A D G B E, Drop E, half, full) and every string settable on its own. Saved in `profile.settings.guitar` = `{strings, tunings: {6, 7, 8}}`, so it syncs through Drive with the profile. The old `settings.tuning` (tuner) carries over.
+- **Every tool follows it**: fretboards (fretboardSVG draws 6–8 strings), note finder (strings, prompts, the mic), scales (neck and positions, any tuning), chords (shapes and inversions on the top six strings in your tuning; whole neck and Build on every string), intervals (strings, the mic), the tuner (one row per string, 6/7/8 switch, presets), the note listener (down to the lowest string), the tab player (labels, neck, sound).
+- **Tab format**: `tab.strings: 6 | 7 | 8` and `tab.tuning` (MIDI, string 1 first, one per string) in the normalizer (coursegen normTab), the validator and the tab player; documented in CONTENT.md. A tab without `tuning` plays in the player's tuning, with a note when that isn't standard; a 7/8-string tab on a 6-string setting still shows every string, with a note.
+- **Tuner button in the playback bar** (ui/transport.js): whenever the bar shows and the tuner isn't the current screen; it opens the quick tuner above the bar. The header button stays.
+- Tests: tests/t_guitar.mjs. The unknown-guitarist tests now use a made-up name (Tosin Abasi will become a real topic).
+
+## Earlier: Guided Path redesign, Note Finder levels and mic
 
 - **Guided Path look** (COSMETICS.md, 2026-10-15): top navigation on wide screens (Home, Practice, Techniques, Artists, Songs, Tools) with a streak pill and profile button; Home opens with a Continue card and progress ring, today's path as a trail of nodes (done, active, locked), and technique cards. Course pages get a centered hero with an initials badge and the four tiers as numbered cards. Second accent per scheme is the `--accent2` token; gradients are `--grad`/`--grad-d`.
 - **Study page, then practice page**: a lesson now opens on its Study page (`#/lesson`, js/screens/study.js): progress bar, the idea, why it matters, the theory, how to practice it, the diagram, the pass criterion and the common mistake. "Practice it" opens the practice page (`#/play`) with the tab. Direct opens (`ctx.direct`) still go straight to `#/play`.

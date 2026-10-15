@@ -132,11 +132,12 @@ console.error = (...a) => { errors.push(a.join(' ')); };
   ok(/bossa nova/.test(view().querySelector('.kbqueue').textContent), 'queue shows the request');
   // the gap prompt in the master-class sheet
   const { openMasterSheet } = await import('../js/ui/mastersheet.js');
-  const sh = openMasterSheet({ title: 'Tosin Abasi style', cat: 'artist' }, { navigate: () => {} }); await sleep(20);
+  // a made-up guitarist, so the test keeps working as real artists are added
+  const sh = openMasterSheet({ title: 'Corwin Halvorsen style', cat: 'artist' }, { navigate: () => {} }); await sleep(20);
   const gapBox = document.querySelector('.kbgap');
-  ok(gapBox && /Tosin Abasi/.test(gapBox.textContent), 'master sheet asks to add an unknown guitarist');
+  ok(gapBox && /Corwin Halvorsen/.test(gapBox.textContent), 'master sheet asks to add an unknown guitarist');
   gapBox.querySelector('[data-kbadd]').click(); await sleep(20);
-  ok(p.kbRequests.some(r => r.text === 'Tosin Abasi' && r.kind === 'guitarist'), 'guitarist added to the research queue');
+  ok(p.kbRequests.some(r => r.text === 'Corwin Halvorsen' && r.kind === 'guitarist'), 'guitarist added to the research queue');
   sh.close();
   await go('#/techniques/rolling5s'); await sleep(60);
   ok(/Eric Johnson/.test(view().querySelector('.pc-main').textContent), 'rolling 5s lists Eric Johnson');

@@ -1,4 +1,4 @@
-// Settings: Claude API key + model, optional YouTube key, audio, images,
+// Settings: Claude API key + model, optional YouTube key, guitar (strings and tuning), audio, images,
 // data import/export, reset. Keys live only in this browser, never in exports.
 import { esc, toast } from '../core/util.js';
 import { schemePickerHTML, setScheme } from '../ui/scheme.js';
@@ -11,6 +11,7 @@ import { cleanKey, keyProblems, fingerprint, storageAdvice, homeScreenNote, keys
 import qrcode from '../vendor/qrcode.js';
 import { mountAudioSetup } from '../ui/audiosetup.js';
 import { clickSoundSelectHTML } from '../ui/clicksound.js';
+import { mountGuitarSettings } from '../ui/guitarsettings.js';
 import { importBlockHTML, wireImport } from '../ui/importui.js';
 import { saveImported, describeProfile } from '../core/importer.js';
 import { driveReady, getClientId, setClientId, loadGoogle, saveToDrive, loadFromDrive, lastDriveFile } from '../core/gdrive.js';
@@ -66,6 +67,7 @@ export function mountSettings(root, { navigate, applySettings }) {
         <div class="row nowrap"><input type="text" data-r="keylink" placeholder="https://…#/keys/…" ${KEY_ATTRS}><button class="btn" data-s="uselink">Add keys</button></div></div>
       <p class="small" data-r="linkstatus"></p>
     </section>
+    ${p ? `<section class="card" id="guitar"><h3>Guitar</h3><p class="muted small">Your guitar’s strings and tuning. Saved with your profile${real ? ' and synced through Google Drive' : ''}; every tool follows it.</p><div data-r="guitarset"></div></section>` : ''}
     ${p ? `<section class="card"><h3>Metronome sound</h3><p class="muted small">The click used by the metronome, the tab player and every lesson. Choosing one plays a bar of it.</p>${clickSoundSelectHTML()}</section>` : ''}
     ${p ? `<section class="card"><h3>Audio input & output</h3><p class="muted small">Used by the tuner and playing evaluations. Pick your audio interface (e.g. a Focusrite Scarlett), amp/pedal USB, or microphone.</p><div data-r="audio"></div></section>` : ''}
     ${p ? `<section class="card">
@@ -238,12 +240,14 @@ export function mountSettings(root, { navigate, applySettings }) {
     if (e.target.dataset.r === 'wiki') { p.settings.wikiImages = e.target.checked; Wiki.enabled = e.target.checked; Store.save(); }
   };
   root.addEventListener('click', onClick); root.addEventListener('change', onChange);
+  const gtSlot = root.querySelector('[data-r="guitarset"]');
+  const offGuitar = gtSlot ? mountGuitarSettings(gtSlot) : null;
   const audioSlot = root.querySelector('[data-r="audio"]');
   const offAudio = audioSlot ? mountAudioSetup(audioSlot, { profile: p }) : null;
   const offImport = wireImport(root, {
     onDone: (prof) => { if (applySettings) applySettings(); setTimeout(() => navigate(Object.keys(prof.domains || {}).length ? '#/home' : '#/onboarding'), 900); }
   });
-  return () => { clearTimeout(qrTimer); if (offAudio) offAudio(); offImport(); root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); };
+  return () => { clearTimeout(qrTimer); if (offGuitar) offGuitar(); if (offAudio) offAudio(); offImport(); root.removeEventListener('click', onClick); root.removeEventListener('change', onChange); };
 }
 
 /* ------------------------- Keys from another device ------------------------- */

@@ -5,6 +5,8 @@
 // to the high e string (index 0 = string 6), null = muted string.
 
 export const STD_LOW = [40, 45, 50, 55, 59, 64];           // string 6 … string 1 (MIDI)
+/** Standard open strings by string number (index 0 = string 1 = high e … 6 = low E, 7 = low B, 8 = low F♯). */
+export const OPEN_STD = [64, 59, 55, 50, 45, 40, 35, 30];
 const LETTERS = 'CDEFGAB', LETTER_PC = [0, 2, 4, 5, 7, 9, 11];
 const ACC = { '-2': '♭♭', '-1': '♭', 0: '', 1: '♯', 2: '♯♯' };
 export const mod12 = n => ((n % 12) + 12) % 12;
@@ -431,12 +433,12 @@ export function voiceLead(chordNames, { family = 'drop2', set = null, startFret 
   }).filter(Boolean);
 }
 
-/** Labels (intervals), note names and fingering for a given fret array played as `name`. */
-export function describeVoicing(frets, name) {
+/** Labels (intervals), note names and fingering for a given fret array played as `name` (tuning: lowest string first, same length as frets). */
+export function describeVoicing(frets, name, tuning = STD_LOW) {
   const c = typeof name === 'string' ? parseChord(name) : name;
   if (!c || !frets) return null;
   const tones = chordTones(c.root, c.type);
-  const pcAt = i => mod12(STD_LOW[i] + frets[i]);
+  const pcAt = i => mod12(tuning[i] + frets[i]);
   const labels = frets.map((f, i) => (f == null ? null : (tones.find(t => t.pc === pcAt(i)) || { label: LABEL_FOR_SEMIS[mod12(pcAt(i) - c.root.pc)] }).label));
   const names = frets.map((f, i) => (f == null ? null : (tones.find(t => t.pc === pcAt(i)) || { name: pcName(pcAt(i)) }).name));
   const info = voicingInfo(frets);
@@ -553,7 +555,7 @@ export function scalePositions(rootPc, scaleId, { tuning = STD_LOW, maxStart = 1
     if (!SCALE_BY_ID[base].steps.some(x => mod12(rootPc + x) === mod12(tuning[0] + f))) continue;
     let notes = scaleId === 'chromatic'
       // chromatic: one finger per fret plus a stretch (frets f…f+4 on every string), each pitch once
-      ? (() => { const seen = new Set(), ns = []; for (let k = 0; k < 6; k++) for (let fr = f; fr <= f + 4; fr++) { const m = tuning[k] + fr; if (!seen.has(m)) { seen.add(m); ns.push({ s: 6 - k, f: fr, midi: m }); } } return ns.sort((x, y) => x.midi - y.midi); })()
+      ? (() => { const seen = new Set(), ns = []; for (let k = 0; k < tuning.length; k++) for (let fr = f; fr <= f + 4; fr++) { const m = tuning[k] + fr; if (!seen.has(m)) { seen.add(m); ns.push({ s: tuning.length - k, f: fr, midi: m }); } } return ns.sort((x, y) => x.midi - y.midi); })()
       : scaleNps(rootPc, base, f, nps, { tuning });
     if (!notes || seenStart.has(notes[0].midi % 12)) continue;
     seenStart.add(notes[0].midi % 12);
@@ -582,27 +584,27 @@ export function scalePositions(rootPc, scaleId, { tuning = STD_LOW, maxStart = 1
 export function scaleBox(rootPc, scaleId, startFret, { span = 3, tuning = STD_LOW } = {}) {
   const sc = SCALE_BY_ID[scaleId]; const pcs = sc.steps.map(x => mod12(rootPc + x));
   const notes = [];
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < tuning.length; i++) {
     let here = [];
     for (let f = startFret; f <= startFret + span; f++) if (f >= 0 && pcs.includes(mod12(tuning[i] + f))) here.push(f);
     if (here.length < 2) for (let f = startFret + span + 1; f <= startFret + span + 1 && here.length < 2; f++) if (pcs.includes(mod12(tuning[i] + f))) here.push(f);
-    here.forEach(f => notes.push({ s: 6 - i, f, midi: tuning[i] + f, label: sc.labels[pcs.indexOf(mod12(tuning[i] + f))] }));
+    here.forEach(f => notes.push({ s: tuning.length - i, f, midi: tuning[i] + f, label: sc.labels[pcs.indexOf(mod12(tuning[i] + f))] }));
   }
   // remove duplicate pitches across strings (keep the lower string's note)
   const seen = new Set();
   return notes.filter(n => { if (seen.has(n.midi)) return false; seen.add(n.midi); return true; });
 }
 
-/** N-notes-per-string pattern (2 = pentatonic boxes, 3 = 3nps) starting on string 6 at or above `startFret`. */
+/** N-notes-per-string pattern (2 = pentatonic boxes, 3 = 3nps) starting on the lowest string (tuning[0], lowest first) at or above `startFret`. */
 export function scaleNps(rootPc, scaleId, startFret, nps = 3, { tuning = STD_LOW } = {}) {
   const sc = SCALE_BY_ID[scaleId]; const pcs = sc.steps.map(x => mod12(rootPc + x));
   let m = tuning[0] + Math.max(0, startFret); while (!pcs.includes(mod12(m))) m++;
-  const seq = []; while (seq.length < nps * 6) { if (pcs.includes(mod12(m))) seq.push(m); m++; }
+  const seq = []; while (seq.length < nps * tuning.length) { if (pcs.includes(mod12(m))) seq.push(m); m++; }
   const notes = [];
-  for (let k = 0; k < 6; k++) for (let j = 0; j < nps; j++) {
+  for (let k = 0; k < tuning.length; k++) for (let j = 0; j < nps; j++) {
     const midi = seq[k * nps + j], f = midi - tuning[k];
     if (f < 0 || f > 22) return null;
-    notes.push({ s: 6 - k, f, midi, label: sc.labels[pcs.indexOf(mod12(midi))] });
+    notes.push({ s: tuning.length - k, f, midi, label: sc.labels[pcs.indexOf(mod12(midi))] });
   }
   return notes;
 }

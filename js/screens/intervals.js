@@ -20,6 +20,7 @@ import {
   intervalLabel, intervalFamily, newRound, nextPrompt, scoreAnswer, roundDone, summarizeRound, answersPerMinute, settingsLevel,
   positionsOf, pcAt, shapeTip, noteLabel
 } from '../core/intervals.js';
+import { currentTuning, stringNames, listenRange } from '../core/guitar.js';
 
 const SET_KEY = 'fretworkCoach.intervalTrainer';
 export function loadTrainerSettings() {
@@ -37,7 +38,7 @@ const FIELDS = {
   from: ['Measure from', () => [['root', 'The root'], ['previous', 'Last note (chain)'], ['random', '🎲 Root or last note']]],
   order: ['Order', () => [['random', '🎲 Random'], ['up', 'Low to high'], ['down', 'High to low']]],
   labels: ['Show the interval as', () => [['deg', 'Number (♭3)'], ['short', 'Short (m3)'], ['long', 'Full (minor 3rd)'], ['random', '🎲 Mixed']]],
-  string: ['String', () => [['any', 'Any string'], ...[1, 2, 3, 4, 5, 6].map(s => [s, `String ${s} (${STRING_NAMES[s]})`]), ['random', '🎲 Random each prompt']]],
+  string: ['String', () => [['any', 'Any string'], ...Array.from({ length: currentTuning().length }, (_, k) => k + 1).map(s => [s, `String ${s} (${STRING_NAMES[s]})`]), ['random', '🎲 Random each prompt']]],
   area: ['Neck area', () => [...Object.entries(AREAS).map(([k, a]) => [k, a[2]]), ['random', '🎲 Random each round']]],
   showRoots: ['Roots on the neck', () => [[true, 'Show'], [false, 'Hide']]],
   answer: ['Answer by', () => [['mic', '🎤 Play it (mic)'], ['tap', '👆 Tap the neck']]],
@@ -122,8 +123,9 @@ export function mountIntervalTrainer(root, { navigate, entry, embedded = false }
       const src = await Audio.openMic();
       if (dead) { Audio.closeMic(); return false; }
       const c = Audio.ctx;
-      mic.hp = c.createBiquadFilter(); mic.hp.type = 'highpass'; mic.hp.frequency.value = 60;
-      mic.an = c.createAnalyser(); mic.an.fftSize = 2048; mic.an.smoothingTimeConstant = 0;
+      mic.range = listenRange(); // down to the guitar's lowest string (7- and 8-string included)
+      mic.hp = c.createBiquadFilter(); mic.hp.type = 'highpass'; mic.hp.frequency.value = mic.range.highpass;
+      mic.an = c.createAnalyser(); mic.an.fftSize = mic.range.fftSize; mic.an.smoothingTimeConstant = 0;
       src.connect(mic.hp); mic.hp.connect(mic.an);
       mic.buf = new Float32Array(mic.an.fftSize);
       Object.assign(mic, { on: true, m: null, n: 0, env: 0, quiet: 0, block: null, sounding: null });
@@ -151,7 +153,7 @@ export function mountIntervalTrainer(root, { navigate, entry, embedded = false }
     mic.quiet = 0;
     if (Date.now() < mic.ignoreUntil) return;                 // the reference tone is playing
     if (lv > 0.015 && lv > prevEnv * 1.5) { mic.block = null; mic.n = 0; mic.m = null; } // a new pluck
-    const pd = detectPitch(mic.buf, Audio.ctx.sampleRate, { minFreq: 70, maxFreq: 1300, threshold: 0.12 });
+    const pd = detectPitch(mic.buf, Audio.ctx.sampleRate, { minFreq: (mic.range || listenRange()).minFreq, maxFreq: 1300, threshold: 0.12 });
     if (!pd || pd.clarity < 0.85) { mic.n = 0; return; }
     const m = Math.round(freqToMidi(pd.freq, a4()));
     if (m === mic.m) mic.n++; else { mic.m = m; mic.n = 1; }
@@ -304,7 +306,7 @@ export function mountIntervalTrainer(root, { navigate, entry, embedded = false }
       zone = AREAS[S.area].slice(0, 2); focus = typeof S.string === 'number' ? S.string : null;
     }
     const interactive = S.answer === 'tap' && state === 'playing';
-    return `<div class="fbwrap it-board ${interactive ? 'tapping' : ''}" data-r="board">${fretboardSVG({ marks, interactive, highlightFrets: zone && (zone[0] > 0 || zone[1] < 15) ? zone : null, focusString: focus })}</div>`;
+    return `<div class="fbwrap it-board ${interactive ? 'tapping' : ''}" data-r="board">${fretboardSVG({ marks, interactive, names: stringNames(), highlightFrets: zone && (zone[0] > 0 || zone[1] < 15) ? zone : null, focusString: focus })}</div>`;
   }
   function setIdleStatus(text) { const el = $r('idlestatus'); if (el) el.textContent = text; }
 

@@ -403,3 +403,19 @@ body.studymode .tunefab{display:none}
 .tone.is-root{background:color-mix(in srgb,var(--fc) 18%,var(--inset))}
 .sc-tonehint .linkbtn{display:inline-flex;align-items:center;flex:none;color:var(--accent-text);font-size:12.5px;padding:0 2px;min-height:40px}
 @media(max-width:640px){.sc-tonebox{align-items:flex-start}}
+
+/* --- Guitar setting (Settings → Guitar) and the tuner button in the playback bar */
+.gt-set .chips .chip{min-height:40px}
+.gt-strings{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin:6px 0 10px}
+.gt-str{display:grid;grid-template-columns:28px 56px minmax(96px,1fr) 40px;align-items:center;gap:8px;padding:6px 8px;border-radius:12px;background:var(--inset-bg);border:1px solid var(--line)}
+.gt-num{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--ctl-bg);border:1px solid var(--line);font:700 13px var(--head)}
+.gt-str select{min-height:40px;width:100%}
+.gt-hear{min-width:40px;min-height:40px}
+.gt-note{margin:6px 0 0}
+.tp-tuning{margin:4px 2px 6px;padding:6px 10px;border-radius:10px;background:color-mix(in srgb,var(--accent2) 10%,transparent);border:1px solid color-mix(in srgb,var(--accent2) 35%,transparent)}
+.tr-tune{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:44px}
+.tr-tune svg{width:20px;height:20px;color:var(--accent)}
+.tr-tune.on{border-color:var(--accent);background:var(--accent-soft)}
+.tunepop.at-dock{top:auto!important;bottom:calc(var(--dock-top,96px) + 12px)!important;right:max(16px,env(safe-area-inset-right))}
+.tunepop.at-dock::after{top:auto;bottom:-7px;right:40px;transform:rotate(45deg)}
+.tuner-count .chip{min-height:40px}

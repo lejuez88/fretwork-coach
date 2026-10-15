@@ -42,7 +42,7 @@ function gridOf(times) {
   }
   return null;
 }
-const FINGER_FOR_STRING = { 1: 'a', 2: 'm', 3: 'i', 4: 'p', 5: 'p', 6: 'p' };
+const FINGER_FOR_STRING = { 1: 'a', 2: 'm', 3: 'i', 4: 'p', 5: 'p', 6: 'p', 7: 'p', 8: 'p' };
 
 /**
  * Compute directions for notes sorted by time.

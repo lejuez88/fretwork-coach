@@ -43,8 +43,16 @@ function checkExercise(where, ex) {
     const notes = ex.tab.notes || [];
     if (notes.length < 3) err(where, 'tab has fewer than 3 notes');
     if (notes.length > 400) err(where, `tab has ${notes.length} notes (max 400)`);
+    // 7- and 8-string tabs declare tab.strings; tab.tuning (optional) has one MIDI note per string, string 1 first
+    if (ex.tab.strings != null && ![6, 7, 8].includes(ex.tab.strings)) err(where, `tab.strings ${ex.tab.strings} (6, 7 or 8)`);
+    const NS = [7, 8].includes(ex.tab.strings) ? ex.tab.strings : 6;
+    if (ex.tab.tuning != null) {
+      const t = ex.tab.tuning;
+      if (!Array.isArray(t) || t.length !== NS) err(where, `tab.tuning must have ${NS} notes (one per string, string 1 first)${NS === 6 && Array.isArray(t) && [7, 8].includes(t.length) ? ': add tab.strings for a 7- or 8-string tab' : ''}`);
+      else if (!t.every(m => Number.isInteger(m) && m >= 20 && m <= 76)) err(where, 'tab.tuning: MIDI note numbers 20–76 (E2 = 40, low B = 35, low F♯ = 30)');
+    }
     notes.forEach((x, i) => {
-      if (!(Number.isInteger(x.s) && x.s >= 1 && x.s <= 6)) err(where, `note ${i}: string ${x.s} (1 = high e … 6 = low E)`);
+      if (!(Number.isInteger(x.s) && x.s >= 1 && x.s <= NS)) err(where, `note ${i}: string ${x.s} (1 = high e … 6 = low E${NS > 6 ? ', 7 = low B' : ''}${NS > 7 ? ', 8 = low F♯' : ''})${x.s >= 7 && x.s <= 8 && NS === 6 ? ': strings 7 and 8 need tab.strings: 7 or 8' : ''}`);
       if (!(Number.isInteger(x.f) && x.f >= 0 && x.f <= 22)) err(where, `note ${i}: fret ${x.f} (0–22)`);
       if (!(x.t >= 0 && x.d > 0)) err(where, `note ${i}: bad timing t=${x.t} d=${x.d}`);
       if (x.x && !TECHS.includes(x.x)) err(where, `note ${i}: unknown technique "${x.x}"`);

@@ -254,6 +254,9 @@ A generator receives `c = { key, minor, lvl, genre, prog }` and returns `make(c,
 
 Tab note rules:
 - String 1 is the high e and string 6 is the low E. Frets run 0–22.
+- **7- and 8-string tabs** declare `strings` on the tab: `tab: { strings: 7 | 8, notes }`. Strings are numbered like tab: 1 = high e … 6 = low E, **7 = low B, 8 = low F♯**. Without `strings` a tab is for six strings and may only use strings 1–6 (the validator errors on string 7 or 8). Standard tuning for each count, as MIDI with string 1 first: 6 = `[64, 59, 55, 50, 45, 40]`, 7 = `[64, 59, 55, 50, 45, 40, 35]`, 8 = `[64, 59, 55, 50, 45, 40, 35, 30]`. Generators stay six-string unless the lesson is made for an extended-range guitar; only lessons that declare `strings: 7 | 8` use strings 7 and 8.
+- **Tuning.** Lessons are written in standard tuning and leave `tuning` out. A lesson that needs another tuning (Drop D, Drop A, open G …) adds `tab.tuning`: an array of MIDI note numbers, **one per string, string 1 (high e) first**, the same length as the string count (6, or `strings`). Example, Drop D: `tab: { tuning: [64, 59, 55, 50, 45, 38], notes }`; Drop A on a 7-string: `tab: { strings: 7, tuning: [64, 59, 55, 50, 45, 40, 33], notes }`. Values are 20–76 (E2 = 40, B1 = 35, F♯1 = 30). Say the tuning in `instr` too. Frets are written as played in that tuning.
+- How the app plays them: a tab with `tuning` sounds and is labelled in that tuning. A tab without it is shown in the player's own tuning (Settings → Guitar), so a player in Drop D sees and hears string 6 as D; the player sees a note saying the tab is written for standard. A 7- or 8-string tab on a guitar set to fewer strings still shows every string, with a note that it's written for 7 or 8 strings.
 - `t` and `d` are in beats.
 - Techniques:
   - `h` hammer-on, `p` pull-off, `/` and `\` slides, `~` vibrato, `pm` palm mute, `t` tap.
@@ -273,7 +276,7 @@ Chord parts add two fields:
 - `chords`: the chord names. Add `backing` for an accompaniment loop.
 
 `js/data/lib.js` has helpers for most needs:
-- `pentBox`, `pent3nps`, `scaleNps`, `scaleBox`: scale shapes.
+- `pentBox`, `pent3nps`, `scaleNps`, `scaleBox`: scale shapes. For 7- and 8-string shapes pass the tuning, lowest string first: `scaleNps(root, scale, startFret, 3, { tuning: [30, 35, 40, 45, 50, 55, 59, 64] })` gives three notes per string across all eight strings (string numbers 8 … 1). `OPEN[7]` (35) and `OPEN[8]` (30) and `fretOn(7 | 8, pc)` work too.
 - `spreadVoicing`, `topTriad`, `keyChords`, `chordInfo`: chords.
 - `OPEN_SHAPES`, `onString`, `bassPair`: open chords for fingerstyle.
 - `legatoMarks`, `fromSeq`, `byString`, `fretOn`, `rootFret6`: building note sequences.
@@ -282,7 +285,7 @@ Chord parts add two fields:
 
 - **Edge zone.** A player at a lesson's level should succeed 70–85% of the time.
 - **Measurable.** Every lesson has a start and goal tempo and a clear pass criterion.
-- **Musically correct.** Every note belongs to the scale or chord it claims. Verify pitches from string and fret, using standard tuning MIDI 40 45 50 55 59 64 for strings 6 to 1.
+- **Musically correct.** Every note belongs to the scale or chord it claims. Verify pitches from string and fret, using standard tuning MIDI 40 45 50 55 59 64 for strings 6 to 1 (35 for string 7, 30 for string 8), or the tab's own `tuning` when it has one.
 - **Theory follows the hands.** Name the concept in `why` or `instr` and apply it on the neck right away.
 - **Specific, not generic.** A lesson for a named technique drills that technique itself.
 - **Musical.** Every stage ends with at least one skill that uses the technique in music: over a progression, in a groove, in a short original piece.
@@ -304,6 +307,10 @@ The queue has three sections. Every run keeps them up to date.
    - If the Drive connector isn't available in the run, say so in the log and carry on with the rest of the queue.
 2. **Depth backlog.** Incomplete paths, copied from the validator's coverage table.
 3. **Discovered.** New topics found by research.
+
+### Research briefs (the player's Gemini Gem)
+
+Briefs arrive in Google Drive (`FretworkCoach/Briefs/Inbox`); the format and the merge step are in `content/briefs/SCHEMA.md`. **Gemini's sources are leads, not proof:** the content run verifies every lead it relies on by opening a real page that teaches the thing, cites that page's URL, and marks anything it can't verify `unconfirmed` (listed under "Needs your check"). A `primary` label is the run's own judgement from the page, never the Gem's. Details: `content/briefs/SCHEMA.md`, "Sources are leads".
 
 ## What every run does, in order
 

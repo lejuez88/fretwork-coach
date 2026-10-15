@@ -3,7 +3,8 @@
 // player you used last: play/pause, back to the start, tempo (±1, ±5, slider, tap),
 // and the playback switches (click, loop, count-in, guitar sound, tempo ladder,
 // click sound). The players hide their own copies of these controls while docked.
-// Space bar plays and pauses (when you aren't typing).
+// Space bar plays and pauses (when you aren't typing). The tuner button opens the quick tuner
+// above the bar whenever the tuner is available (not on the full tuner screen).
 //
 // A player attaches with Transport.attach(ctrl) and calls the returned handle's
 // sync() when its state changes; detach() when it unmounts. ctrl:
@@ -12,6 +13,7 @@
 import { esc } from '../core/util.js';
 import { clickSoundSelectHTML } from './clicksound.js';
 import { icon } from './icons.js';
+import { quickTunerAvailable, quickTunerOpen, toggleQuickTuner, FORK_ICON } from './tunerfab.js';
 
 const OPEN_KEY = 'fretworkCoach.dockOpen';
 const stack = [];
@@ -31,6 +33,7 @@ function ensureBar() {
   bar.addEventListener('input', onInput);
   window.addEventListener('resize', place);
   window.addEventListener('fc:bars', place);
+  window.addEventListener('fc:tuner', syncTune);
   document.addEventListener('keydown', onKey);
   return bar;
 }
@@ -54,6 +57,7 @@ function render() {
         </div>
         <input class="tr-range wide-only" type="range" min="${c.min || 30}" max="${c.max || 240}" value="${bpm}" data-tr="range" aria-label="Tempo">
         <button class="kbtn tr-tap wide-only" data-tr="tap">Tap</button>
+        ${quickTunerAvailable() ? `<button class="kbtn tr-tune ${quickTunerOpen() ? 'on' : ''}" data-tr="tune" aria-controls="tunepop" aria-expanded="${quickTunerOpen()}" aria-label="Tuner" title="Tuner">${FORK_ICON}<span class="tr-tune-l wide-only">Tune</span></button>` : ''}
         <button class="kbtn tr-more ${optsOpen ? 'on' : ''}" data-tr="more" aria-expanded="${optsOpen}" aria-label="More playback options" title="More options">${icon('ellipsis')}</button>
       </div>
       <div class="tr-opts" ${optsOpen ? '' : 'hidden'}>
@@ -73,6 +77,11 @@ function render() {
   loop();
 }
 
+/** Light up the tuner button while the quick tuner is open. */
+function syncTune() {
+  const t = bar && bar.querySelector('[data-tr="tune"]'); if (!t) return;
+  const open = quickTunerOpen(); t.classList.toggle('on', open); t.setAttribute('aria-expanded', open);
+}
 function paintStatus() {
   if (!active || !bar) return;
   const s = active.status ? active.status() : null;
@@ -110,6 +119,7 @@ function onClick(e) {
   switch (b.dataset.tr) {
     case 'play': c.toggle(); break;
     case 'restart': if (c.restart) c.restart(); break;
+    case 'tune': toggleQuickTuner('dock'); break;
     case 'more':
       optsOpen = !optsOpen; try { localStorage.setItem(OPEN_KEY, optsOpen ? '1' : '0'); } catch { /* ignore */ }
       render(); break;

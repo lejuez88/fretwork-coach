@@ -29,18 +29,20 @@ const TECHS = ['h', 'p', '/', '\\', 'b', 'pb', 'r', '~', 'pm', 't', 'mute', 'gho
 const PICKING = ['alternate', 'strict', 'economy', 'down', 'fingers', 'hybrid'];
 /** Whammy-bar moves a note can carry ({bar, barDepth in semitones}); see CONTENT.md, tab note rules. */
 export const BAR_MOVES = ['dip', 'scoop', 'dive', 'vib', 'flutter'];
-const validTuning = t => (Array.isArray(t) && t.length === 6 && t.every(m => Number.isInteger(m) && m >= 28 && m <= 76) ? t.slice() : null);
+/** tab.strings: 6 (default), 7 or 8 (strings 1 = high e … 6 = low E, 7 = low B, 8 = low F♯); tab.tuning: one MIDI note per string, string 1 first. */
+const tabStringCount = tab => ([7, 8].includes(+tab.strings) ? +tab.strings : Array.isArray(tab.tuning) && [7, 8].includes(tab.tuning.length) ? tab.tuning.length : 6);
+const validTuning = (t, n = 6) => (Array.isArray(t) && t.length === n && t.every(m => Number.isInteger(m) && m >= 20 && m <= 76) ? t.slice() : null);
 function normTab(tab) {
   if (!tab || !Array.isArray(tab.notes)) return null;
-  const tuning = validTuning(tab.tuning);
+  const NS = tabStringCount(tab), tuning = validTuning(tab.tuning, NS), strings = NS > 6 ? { strings: NS } : {};
   // Already-timed notes (imported tab sections, library exercises): keep their rhythm
   if (tab.notes.length && tab.notes.every(n => n && !Array.isArray(n) && typeof n === 'object')) {
-    const notes = tab.notes.slice(0, 400).filter(n => n.s >= 1 && n.s <= 6 && n.f >= 0 && n.f <= 24 && n.t >= 0 && n.d > 0)
+    const notes = tab.notes.slice(0, 400).filter(n => n.s >= 1 && n.s <= NS && n.f >= 0 && n.f <= 24 && n.t >= 0 && n.d > 0)
       .map(n => ({ t: +n.t, d: +n.d, s: +n.s, f: +n.f, ...(n.x ? { x: n.x } : {}), ...(n.chord ? { chord: true } : {}), ...(n.bendTo != null ? { bendTo: n.bendTo } : {}),
         ...(BAR_MOVES.includes(n.bar) ? { bar: n.bar, ...(n.barDepth > 0 && n.barDepth <= 24 ? { barDepth: +n.barDepth } : {}) } : {}),
         ...(n.pick === 'd' || n.pick === 'u' ? { pick: n.pick } : {}), ...(['p', 'i', 'm', 'a', 'c'].includes(n.fing) ? { fing: n.fing } : {}) }));
     if (notes.length < 1) return null;
-    return { notes, swing: !!tab.swing, ...(tab.beats ? { beats: +tab.beats } : {}), ...(tuning ? { tuning } : {}) };
+    return { notes, swing: !!tab.swing, ...(tab.beats ? { beats: +tab.beats } : {}), ...strings, ...(tuning ? { tuning } : {}) };
   }
   // Claude's compact form: [[string, fret, tech?, beats?], ...] with a default step
   const step = [0.25, 1 / 3, 0.5, 1].reduce((b, v) => (Math.abs(v - Number(tab.step)) < Math.abs(b - Number(tab.step)) ? v : b), 0.5);
@@ -50,12 +52,12 @@ function normTab(tab) {
     const s = Number(n[0]), f = Number(n[1]);
     const d = [0.25, 1 / 3, 0.5, 0.75, 1, 1.5, 2, 3, 4].find(v => Math.abs(v - Number(n[3])) < 0.02) || step;
     if (s === 0 || n[0] === 'r') { t += d; continue; }            // rest
-    if (!(s >= 1 && s <= 6 && f >= 0 && f <= 22 && Number.isInteger(s) && Number.isInteger(f))) continue;
+    if (!(s >= 1 && s <= NS && f >= 0 && f <= 22 && Number.isInteger(s) && Number.isInteger(f))) continue;
     const x = TECHS.includes(n[2]) ? n[2] : undefined;
     notes.push({ t: Math.round(t * 1000) / 1000, d, s, f, ...(x ? { x } : {}) });
     t += d;
   }
-  return notes.length >= 3 ? { notes, swing: !!tab.swing && step === 0.5, ...(tuning ? { tuning } : {}) } : null;
+  return notes.length >= 3 ? { notes, swing: !!tab.swing && step === 0.5, ...strings, ...(tuning ? { tuning } : {}) } : null;
 }
 
 export function normalizeExercise(raw, used = new Set()) {
@@ -281,7 +283,7 @@ export function fallbackExercises(course) {
 export function toPlayerExercise(ex, bpm) {
   if (!ex.tab || !ex.tab.notes || !ex.tab.notes.length) return null;
   return { id: ex.id, name: ex.name, unit: ex.unit, why: ex.why, goalBpm: ex.goalBpm, bpm: bpm || ex.startBpm, notes: ex.tab.notes, swing: ex.tab.swing,
-    ...(ex.tab.beats ? { beats: ex.tab.beats } : {}), ...(ex.tab.tuning || ex.tuning ? { tuning: ex.tab.tuning || ex.tuning } : {}),
+    ...(ex.tab.beats ? { beats: ex.tab.beats } : {}), ...(ex.tab.tuning || ex.tuning ? { tuning: ex.tab.tuning || ex.tuning } : {}), ...(ex.tab.strings ? { strings: ex.tab.strings } : {}),
     instr: ex.instr, ...(ex.picking ? { picking: ex.picking } : {}), ...(ex.pickKey ? { pickKey: ex.pickKey } : {}), ...(ex.beatsPerBar ? { beatsPerBar: ex.beatsPerBar } : {}),
     // chord boxes, so the player can light up the one that is sounding
     ...(ex.voicings && ex.voicings.length ? { voicings: ex.voicings } : {}), ...(ex.chords && ex.chords.length ? { chords: ex.chords } : {}),

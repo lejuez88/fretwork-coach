@@ -118,9 +118,10 @@ const pitch = n => STD_LOW[6 - n.s] + n.f;
     const g1 = knowledgeGap('bossa nova'); ok(g1 && g1.text === 'bossa nova' && g1.kind === 'style', 'unknown style: ' + JSON.stringify(g1));
     const g3 = knowledgeGap('slide guitar'); ok(g3 && g3.kind === 'technique', 'slide guitar is not legato slides: ' + JSON.stringify(g3));
     ok(knowledgeGap('Switching between F and C') === null && knowledgeGap('My bends sound out of tune') === null, 'ordinary practice requests are not gaps');
-    const g2 = knowledgeGap('Tosin Abasi style', 'guitarist'); ok(g2 && g2.kind === 'guitarist' && g2.text === 'Tosin Abasi', 'unknown guitarist: ' + JSON.stringify(g2));
+    // a made-up name no content run will build (real players, like Tosin Abasi, become topics)
+    const g2 = knowledgeGap('Corwin Halvorsen style', 'guitarist'); ok(g2 && g2.kind === 'guitarist' && g2.text === 'Corwin Halvorsen', 'unknown guitarist: ' + JSON.stringify(g2));
     ok(knowledgeGap('Eric Johnson style', 'guitarist') === null, 'known guitarist has no gap');
-    addRequest(p1, { text: 'Tosin Abasi', kind: 'guitarist' }); addRequest(p1, { text: 'tosin abasi', kind: 'guitarist' });
+    addRequest(p1, { text: 'Corwin Halvorsen', kind: 'guitarist' }); addRequest(p1, { text: 'corwin halvorsen', kind: 'guitarist' });
     ok(p1.kbRequests.length === 1, 'requests are not duplicated');
     const f = requestsFile(p1); ok(f.requests[0].status === 'queued' && f.requests[0].kind === 'guitarist' && !JSON.stringify(f).includes('sk-ant'), 'requests file');
     addRequest(p1, { text: 'travis picking for beginners', kind: 'technique' });

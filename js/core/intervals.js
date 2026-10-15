@@ -3,6 +3,7 @@
 // playing the note (microphone) or tapping it on the fretboard. Every musical
 // setting can be fixed or randomized.
 import { mod12, ROOT_BY_PC, SCALES, SCALE_BY_ID, parseNote } from './theory.js';
+import { currentTuning, stringLabels } from './guitar.js';
 
 export const INTERVALS = [
   ['1', 0, '1', 'P1', 'root'], ['b2', 1, '♭2', 'm2', 'minor 2nd'], ['2', 2, '2', 'M2', 'major 2nd'], ['b3', 3, '♭3', 'm3', 'minor 3rd'], ['3', 4, '3', 'M3', 'major 3rd'],
@@ -17,8 +18,9 @@ const DEG_NUM = { 1: 1, b2: 2, 2: 2, b3: 3, 3: 3, 4: 4, '#4': 4, b5: 5, 5: 5, '#
 
 export const KEY_NAMES = Array.from({ length: 12 }, (_, pc) => ROOT_BY_PC[pc].name);
 export const AREAS = { neck: [0, 15, 'Whole neck'], open: [0, 4, 'Open position (frets 0–4)'], p5: [5, 8, 'Frets 5–8'], p7: [7, 10, 'Frets 7–10'], p9: [9, 12, 'Frets 9–12'], p12: [12, 15, 'Frets 12–15'] };
-export const STRING_NAMES = ['', 'high e', 'B', 'G', 'D', 'A', 'low E'];
-export const OPEN_MIDI = [64, 59, 55, 50, 45, 40]; // string 1 … string 6
+// The player's guitar (Settings → Guitar): 6, 7 or 8 strings in any tuning.
+export const STRING_NAMES = new Proxy([], { get: (a, k) => (/^\d+$/.test(String(k)) ? stringLabels()[k] || '' : a[k]) });
+export const OPEN_MIDI = new Proxy([], { get: (a, k) => (k === 'length' ? currentTuning().length : /^\d+$/.test(String(k)) ? currentTuning()[k] : a[k]) }); // string 1 … string N
 export const SCALE_CHOICES = [['chromatic', 'All 12 (chromatic)'], ...SCALES.filter(s => s.id !== 'chromatic').map(s => [s.id, s.name])];
 export const DEFAULTS = {
   key: 9,                 // pc | 'random-round' | 'random-prompt' | 'cycle4'
@@ -29,7 +31,7 @@ export const DEFAULTS = {
   includeRoot: false,     // ask for the root (1) too: true | false | 'random'
   order: 'random',        // 'random' | 'up' | 'down'
   from: 'root',           // 'root' | 'previous' | 'random'
-  string: 'any',          // 'any' | 1..6 | 'random'
+  string: 'any',          // 'any' | 1..strings | 'random'
   area: 'neck',           // area id | 'random'
   labels: 'deg',          // 'deg' | 'short' | 'long' | 'random'
   count: 20,              // prompts per round (0 = keep going)
@@ -52,7 +54,7 @@ export function normalizeSettings(s = {}) {
   if (!['random', 'up', 'down'].includes(o.order)) o.order = 'random';
   if (!['root', 'previous', 'random'].includes(o.from)) o.from = 'root';
   if (!(o.area in AREAS) && o.area !== 'random') o.area = 'neck';
-  if (o.string !== 'any' && o.string !== 'random') o.string = +o.string >= 1 && +o.string <= 6 ? +o.string : 'any';
+  if (o.string !== 'any' && o.string !== 'random') o.string = +o.string >= 1 && +o.string <= currentTuning().length ? +o.string : 'any';
   if (!['deg', 'short', 'long', 'random'].includes(o.labels)) o.labels = 'deg';
   o.count = [0, 10, 20, 30, 50].includes(+o.count) ? +o.count : 20;
   o.time = [0, 2, 3, 5, 8].includes(+o.time) ? +o.time : 0;
@@ -128,7 +130,7 @@ export function newRound(settings, prev = null, rnd = Math.random) {
 export function positionsOf(pc, area = 'neck', string = null) {
   const [lo, hi] = Array.isArray(area) ? area : (AREAS[area] || AREAS.neck);
   const out = [];
-  for (let s = 1; s <= 6; s++) { if (string && s !== string) continue; for (let f = lo; f <= hi; f++) if (mod12(OPEN_MIDI[s - 1] + f) === mod12(pc)) out.push({ s, f }); }
+  for (let s = 1; s <= currentTuning().length; s++) { if (string && s !== string) continue; for (let f = lo; f <= hi; f++) if (mod12(OPEN_MIDI[s - 1] + f) === mod12(pc)) out.push({ s, f }); }
   return out;
 }
 
@@ -149,7 +151,7 @@ export function nextPrompt(round, rnd = Math.random) {
   const refPc = chained ? round.lastTarget : key;
   const refName = chained ? round.lastTargetName : KEY_NAMES[key];
   const it = INTERVAL_BY_ID[id];
-  const string = s.string === 'random' ? 1 + Math.floor(rnd() * 6) : s.string === 'any' ? null : +s.string;
+  const string = s.string === 'random' ? 1 + Math.floor(rnd() * currentTuning().length) : s.string === 'any' ? null : +s.string;
   const labels = s.labels === 'random' ? pick(['deg', 'short', 'long'], rnd) : s.labels;
   const targetPc = mod12(refPc + it.semis);
   // Where to play it: the round's area, on one string if asked. A short window on
