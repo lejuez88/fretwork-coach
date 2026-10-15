@@ -1,15 +1,15 @@
 // The minor pentatonic scale, from scratch to mastery.
 //
-// Concept-first: instead of a list of fixed tabs, this file holds a model of the
-// scale (its degrees, the five boxes, the diagonal and one-string shapes, where
-// it bends, which notes are chord tones) and a composer that builds exercises
-// from independent dimensions: shape × sequence × rhythm × key plan × technique ×
-// musical context. Every lesson is one choice along those dimensions, at any key
-// and level, and is tagged with the learning method it applies (js/core/methods.js):
-// chunking, accurate repetitions, retrieval, interleaving, variable practice, focus
-// on the sound, hearing it first, and use in music. New lessons are new specs, not
-// new code. This is the reference for how the content runs should model a topic
-// (CONTENT.md, "Concept-first lessons").
+// Teaching method first (CONTENT.md): the path follows the order recognized teachers use (see
+// `pedagogy` below): box 1 slowly and cleanly, its roots, licks and restricted-note improvising in it;
+// then the other four boxes one at a time, the slides that link neighbours, sequences against a click,
+// keys, in-tune bends, the blues scale and the major pentatonic; then the whole neck, groups of 5 and 6,
+// and phrasing; finally any key on demand, performance tempo and a full solo.
+//
+// Concept-first: the file holds a model of the scale (its degrees, the five boxes, the diagonal and
+// one-string shapes, where it bends, which notes are chord tones) and a composer that builds every
+// exercise from it, in any key and at any level. Audited 2026-10-15: singing and degree call-outs were
+// removed from the playing drills (no source combines them), licks and a three-note improvisation added.
 import { OPEN, N, make, pentBox, pent3nps, byString, nameOf, minorKey, mod12, S, stage, entry, M, scaleNps, rootFret6 } from '../lib.js';
 import { ejRolling5s } from './rolling5s.js';
 import { pgPent6s } from './pent6s.js';
@@ -108,8 +108,8 @@ export function rootsEverywhere(c) {
   return make(c, {
     id: 'pent-roots-everywhere', name: `Find every ${nameOf(k)}: the roots in all five boxes`, domain: 'fretboard', method: 'retrieval',
     unit: 'quarter notes', goal: 90, start: 50, minutes: 4,
-    why: 'Every phrase is heard against the root, and every box is anchored by it. Finding the roots from memory, not from the tab, is what lets you start a solo anywhere.',
-    instr: 'Before each bar, say out loud where the roots of the next box are, then look away from the screen and play them. Use the tab only to check yourself afterwards. Pass: all five boxes with no peeking, twice.',
+    why: 'Every box is anchored by its roots: they tell you which key you are in and where each shape sits. Finding them without the tab is what lets you start a solo anywhere.',
+    instr: 'One bar per box, boxes 1 to 5: play every root in the box, low to high. After the first pass, cover the tab and find them from the shape alone, checking afterwards. Pass: all five boxes without the tab, twice.',
     watch: 'Reading the tab instead of recalling: cover it after the first pass.', simplify: 'Boxes 1 and 2 only.', tab: { notes }
   });
 }
@@ -123,48 +123,63 @@ export function degreeCallouts(c, { order = ['R', '5', '♭3', '♭7', '4'] } = 
     t = Math.ceil(t / 4) * 4 || 4;
   }
   return make(c, {
-    id: 'pent-degree-callouts', name: `Degree call-outs in box 1: ${order.join(', ')}`, domain: 'theory', method: 'retrieval',
+    id: 'pent-degree-callouts', name: `Where each degree sits in box 1: ${order.join(', ')}`, domain: 'theory', method: 'retrieval',
     unit: 'quarter notes', goal: 80, start: 50, minutes: 4,
     why: 'Knowing which note of the scale is under each finger (root, ♭3, 4, 5, ♭7) is what turns a shape into music: it tells you which notes sound resolved, tense or bluesy.',
-    instr: `Each bar plays one degree wherever it sits in box 1: first every root, then every 5th, every ♭3, every ♭7, every 4th. Say the degree name as you play. Then do it with the tab hidden. Pass: the whole order from memory without a wrong note.`,
+    instr: `Each bar plays one degree wherever it sits in box 1: ${order.map(d => `every ${d === 'R' ? 'root' : d}`).join(', then ')}. Then play the same bars with the tab hidden. Pass: the whole order without the tab and without a wrong note.`,
     watch: 'Mixing up the 4th and the 5th: the 5th is always two frets above the 4th on the same string in this box.', simplify: 'Roots and 5ths only.', tab: { notes }
   });
 }
-/** Play a note, rest a beat while singing the next one, then play it (hear it first). */
-export function singThenPlay(c) {
-  const k = minorKey(c), list = box(k, 1); if (!list) return null;
-  const pick = list.slice(2, 9), notes = []; let t = 0;
-  [...pick, ...pick.slice(0, -1).reverse()].forEach(([s, f]) => { notes.push(N(s, f, t, 1)); t += 2; });
+/**
+ * Licks from box 1 (JustinGuitar, "5 blues licks from pattern 1"; Chad Johnson, Pentatonic Scales for Guitar):
+ * short, original phrases of under a bar, each with a bar of space, using the box's bend points and the
+ * same-fret roll. Every note is a box-1 note; bends go to the next scale note (4 → 5, ♭7 → R, ♭3 → 4).
+ */
+export function box1Licks(c, { set = 1 } = {}) {
+  const k = minorKey(c), B = byString(pentBox(k, 1)); if (!B[1] || !B[2] || !B[3] || !B[4] || !B[5]) return null;
+  const notes = []; let t = 0;
+  const put = (s, f, d, x, extra) => { notes.push(N(s, f, t, d, x, extra)); t += d; };
+  const licks = set === 1 ? [
+    // A: down from the root on the high e, the 4 → 5 bend on the G string, released, into the root on the D string
+    () => { put(1, B[1][0], 0.5); put(2, B[2][1], 0.5); put(2, B[2][0], 0.5); put(3, B[3][1], 1, 'b', { bendTo: B[3][1] + 2 }); put(3, B[3][1], 0.5, 'r', { bendTo: B[3][1] + 2 }); put(3, B[3][0], 0.5); put(4, B[4][1], 2.5, '~'); },
+    // B: the ♭7 → root bend on the B string, then the roll: the same fret on the e and B strings with one finger
+    () => { put(2, B[2][1], 1, 'b', { bendTo: B[2][1] + 2 }); put(1, B[1][0], 0.5); put(2, B[2][0], 0.5); put(3, B[3][1], 0.5); put(3, B[3][0], 0.5); put(4, B[4][1], 3, '~'); }
+  ] : [
+    // C: low in the box with hammer-ons, up to a held ♭3 on the G string
+    () => { put(5, B[5][0], 0.5); put(5, B[5][1], 0.5, 'h'); put(4, B[4][0], 0.5); put(4, B[4][1], 0.5, 'h'); put(3, B[3][0], 2, '~'); put(4, B[4][1], 0.5); put(4, B[4][0], 0.5, 'p'); put(5, B[5][1], 3, '~'); },
+    // D: the ♭3 → 4 bend on the high e, released, down to the 4 on the G string
+    () => { put(1, B[1][1], 1, 'b', { bendTo: B[1][1] + 2 }); put(1, B[1][1], 0.5, 'r', { bendTo: B[1][1] + 2 }); put(1, B[1][0], 0.5, 'p'); put(2, B[2][1], 0.5); put(2, B[2][0], 0.5, 'p'); put(3, B[3][1], 3, '~'); }
+  ];
+  licks.forEach(l => { for (let r = 0; r < 2; r++) { l(); t = Math.ceil((t + 1) / 4) * 4; if (t % 8) t += 4; } });
+  const names = set === 1 ? 'the G-string bend and the roll' : 'hammer-ons, pull-offs and the high-e bend';
   return make(c, {
-    id: 'pent-sing-then-play', name: `Sing, then play: ${nameOf(k)} minor pentatonic`, domain: 'ear', method: 'audiation',
-    unit: 'one note every 2 beats', goal: 80, start: 50, minutes: 4,
-    why: 'Singing the next note before playing it connects the sound in your head to the place on the neck: the foundation of playing what you hear.',
-    instr: 'Play a note on the beat, then during the silent beat sing the next note of the scale (any octave, quietly is fine). Play it and check: did your voice match? Pass: 8 notes in a row where the sung note matched.',
-    watch: 'Playing the note first and singing along afterwards: sing it before you play it.', simplify: 'Three notes only: root, ♭3, 4.', tab: { notes }
+    id: `pent-licks-${set}`, name: `Licks from box 1: ${names} (${nameOf(k)} minor)`, domain: 'improv', method: 'chunking',
+    unit: 'one-bar licks with a bar of space', goal: 90, start: 56, minutes: 5, backing: [nameOf(k) + 'm', nameOf(k) + 'm'],
+    why: 'Teachers bring the first pentatonic shape to life with a handful of short licks: they show where the bends are, which fingers to use, and that a few notes with space already sound like a solo.',
+    instr: set === 1
+      ? `Two licks, each played twice with a bar of space after it. Lick 1 bends the 4 up to the 5 on the G string (fret ${B[3][1]} to the pitch of fret ${B[3][1] + 2}) with the ring finger, two fingers behind it, then releases it. Lick 2 bends the ♭7 up to the root on the B string, then plays fret ${B[1][0]} on the e and B strings with one finger, rolling the fingertip so the notes don't ring together. Pass: each lick 4 times in a row in time, every bend in tune.`
+      : `Two licks, each played twice with a bar of space after it. Lick 1 climbs the low strings with hammer-ons (index to ring finger) to a held ♭3 on the G string, then falls back with a pull-off. Lick 2 bends the ♭3 up to the 4 on the high e (ring finger, supported), releases it and pulls off down the box to the 4 on the G string. Pass: each lick 4 times in a row in time, every bend in tune.`,
+    watch: 'Bending with the pinky or a lone finger: bend with the ring finger and the fingers behind it pushing too.', simplify: 'Play the first lick only, without the bend.', tab: { notes }
   });
 }
-/** The app plays a short phrase, then leaves a bar of silence for you to echo it by ear (hear it first). */
-export function echoCalls(c) {
-  const k = minorKey(c), list = box(k, 1); if (!list) return null;
-  const r = rng(53 + (c.lvl || 2)), notes = []; let t = 0;
-  const rootIx = list.findIndex(([s, f], i) => i >= 3 && mod12(pitch(s, f) - k) === 0);
-  const len = (c.lvl || 2) <= 2 ? 3 : 4;
-  for (let ph = 0; ph < 4; ph++) {
-    let ix = rootIx + Math.floor(r() * 3) - 1;
-    for (let i = 0; i < len; i++) {
-      const [s, f] = list[Math.max(0, Math.min(list.length - 1, ix))];
-      const d = i === len - 1 ? 2 - (len - 1) * 0.5 + 1 : 0.5;
-      notes.push(N(s, f, t, Math.max(0.5, d))); t += i === len - 1 ? Math.max(0.5, d) : 0.5;
-      ix += r() < 0.5 ? -1 : 1;
-    }
-    t = Math.ceil(t / 4) * 4 + 4; // a silent bar for your echo
-  }
+/**
+ * Three notes, one spot (JustinGuitar's restricted-note improvising): four example phrases from only three
+ * box-1 notes (the 4 on the G string, the 5 and the ♭7 on the B string, plus their bends), each with space.
+ */
+export function threeNotes(c) {
+  const k = minorKey(c), B = byString(pentBox(k, 1)); if (!B[2] || !B[3]) return null;
+  const g4 = B[3][1], b5 = B[2][0], b7 = B[2][1], notes = []; let t = 0;
+  const put = (s, f, d, x, extra) => { notes.push(N(s, f, t, d, x, extra)); t += d; };
+  put(2, b7, 1); put(2, b5, 1); put(3, g4, 2, 'b', { bendTo: g4 + 2 }); t = 8;
+  put(2, b5, 0.5); put(2, b7, 0.5); put(2, b5, 1); put(3, g4, 2, '~'); t = 16;
+  put(3, g4, 1, 'b', { bendTo: g4 + 2 }); put(3, g4, 0.5, 'r', { bendTo: g4 + 2 }); put(2, b5, 2.5, '~'); t = 24;
+  put(2, b5, 0.5); put(2, b7, 1.5, 'b', { bendTo: b7 + 2 }); put(2, b7, 2, 'pb', { bendTo: b7 + 2 });   // the bend held at the root
   return make(c, {
-    id: 'pent-echo-calls', name: `Call and echo by ear (${nameOf(k)} minor, box 1)`, domain: 'ear', method: 'audiation',
-    unit: `${len}-note phrases`, goal: 80, start: 55, minutes: 5,
-    why: 'Copying short phrases by ear, straight away and in time, is how players learn to play what they hear. The silent bar is your turn.',
-    instr: 'Cover the tab and the fretboard. Listen to each phrase, then play it back in the silent bar that follows. Start from the root (the first note is always near it). Check yourself against the tab only after each round. Pass: 3 of the 4 phrases echoed exactly, twice in a row.',
-    watch: 'Looking at the tab before you try: guess, then check.', simplify: 'Turn the tempo down and echo only the first two notes of each phrase.', tab: { notes }
+    id: 'pent-three-notes', name: `Three notes, one spot: improvising with the 4, 5 and ♭7 (${nameOf(k)} minor, box 1)`, domain: 'improv', method: 'transfer',
+    unit: 'phrases with space', goal: 84, start: 56, minutes: 6, backing: [nameOf(k) + 'm', nameOf(k) + 'm'],
+    why: 'Limiting yourself to three notes takes away the urge to run the scale and leaves only phrasing: rhythm, repetition, bends and space. It is how many teachers start a player improvising.',
+    instr: `The notes: fret ${g4} on the G string (the 4, bent up to the 5), fret ${b5} on the B string (the 5) and fret ${b7} on the B string (the ♭7, bent up to the root). Play the four written phrases, each followed by a bar of silence. Then improvise over the backing with only these three notes and their bends: change the rhythm, start on different beats, repeat an idea before changing it. Pass: the written phrases in time with the bends in tune, then 8 bars of your own using only the three notes.`,
+    watch: 'Reaching for a fourth note: the limit is the exercise.', simplify: 'Two notes only, the B-string pair, no bends.', tab: { notes }
   });
 }
 /**
@@ -247,7 +262,7 @@ export function keysInterleaved(c, { keys = null, boxN = 1 } = {}) {
     id: `pent-keys-${boxN}-${set.length}`, name: `Box ${boxN} in ${names.length} keys: ${names.join(', ')}`, domain: 'fretboard', method: 'interleaving',
     unit: '8th notes', goal: 110, start: 60, minutes: 5, dl: 1,
     why: 'Practicing one key until it is smooth feels productive but doesn’t transfer well. Changing key every two bars forces you to find the shape each time, which is what real playing asks of you.',
-    instr: `Box ${boxN}, ascending, then hold the top note while you find the next key's position: ${names.join(' → ')}. Say the key out loud during the held note. Pass: the whole cycle without stopping, twice, then once with the tab hidden.`,
+    instr: `Box ${boxN}, ascending, then hold the top note while you find the next key's root on the low E string: ${names.join(' → ')}. Pass: the whole cycle without stopping, twice, then once with the tab hidden.`,
     watch: 'Stopping to think: if you need more time, lower the tempo rather than breaking the bar.', simplify: 'Two keys only, back and forth.', tab: { notes }
   });
 }
@@ -286,7 +301,7 @@ export function alongOneString(c, { s = 3 } = {}) {
     id: `pent-one-string-${s}`, name: `The whole scale along the ${['', 'high E', 'B', 'G', 'D', 'A', 'low E'][s]} string (${nameOf(k)} minor)`, domain: 'fretboard', method: 'variable',
     unit: unitName(step), goal: 100, start: 55, minutes: 4,
     why: 'Boxes are vertical; melodies are often horizontal. Playing the scale along one string shows the intervals as distances (3 frets, 2 frets…) and links every box through the notes they share.',
-    instr: 'One finger does most of the work, sliding on the wide jumps. Say the degree of each note as you go (R, ♭3, 4, 5, ♭7). Pass: up and down twice without a wrong note, then once on another string.',
+    instr: 'One finger does most of the work, sliding on the wide jumps (the gaps repeat in the same order every octave: 3, 2, 2, 3, 2 frets). Pass: up and down twice without a wrong note, then once on another string.',
     watch: 'Looking for the frets instead of hearing the intervals: the gaps repeat in the same order every octave.', simplify: 'Only frets 0–12.', tab: { notes }
   });
 }
@@ -346,10 +361,10 @@ export function oneStringIntro(c) {
   const offs = [0, 3, 5, 7, 10, 12], names = ['R', '♭3', '4', '5', '♭7', 'R'], seq = [...offs, ...offs.slice(0, -1).reverse()], notes = []; let t = 0;
   seq.forEach((o, i) => { const prev = seq[i - 1]; notes.push(tagN(N(s, r + o, t, 2, prev != null && r + prev > 0 && Math.abs(o - prev) >= 3 ? (o > prev ? '/' : '\\') : null), PCS(k))); t += 2; });
   return make(c, {
-    id: 'pent-one-string-intro', name: `Before the box: ${nameOf(k)} minor pentatonic on one string (${s === 6 ? 'low E' : 'A'} string, fret ${r} to ${r + 12})`, domain: 'fretboard', method: 'audiation',
+    id: 'pent-one-string-intro', name: `Before the box: ${nameOf(k)} minor pentatonic on one string (${s === 6 ? 'low E' : 'A'} string, fret ${r} to ${r + 12})`, domain: 'fretboard', method: 'external-focus',
     unit: 'half notes', goal: 80, start: 40, minutes: 3,
     why: 'Five notes, five distances: 3 frets, 2, 2, 3, 2 back to the root. Played on one string, the scale is a sound and a shape you can see before it is folded into a box.',
-    instr: `One finger, sliding: ${names.join(' – ')} up the ${s === 6 ? 'low E' : 'A'} string and back. In the beat before each note, sing it, then play it and check. Say the degree name as you play. Pass: up and down twice with every note sung in tune first.`,
+    instr: `One finger, sliding: ${names.join(' – ')} up the ${s === 6 ? 'low E' : 'A'} string and back, two beats per note. Let each note ring and listen to the size of each step before you move. Pass: up and down twice in time, every slide landing exactly on its fret.`,
     watch: 'Counting frets instead of hearing the step: the jumps of 3 sound wider than the jumps of 2.', simplify: 'Root to 5th only.', tab: { notes }
   });
 }
@@ -488,19 +503,50 @@ export default entry({
   aliases: ['pentatonic scale', 'minor pentatonic', 'pentatonic boxes'],
   summary: 'The five-note scale behind rock, blues and most lead guitar, built from scratch: one string, the box, all five boxes and the slides between them, the major pentatonic and the blue note, sequences, keys, bends and phrasing, then real soloing.',
   prereqs: [],
-  sources: ['https://www.pickupmusic.com/blog/how-to-play-minor-pentatonic-scales', 'https://jgmusiclessons.com/how-to-play-minor-pentatonic-scales-on-guitar/', 'https://hubguitar.com/fretboard/pentatonic-scale-sequences', 'https://study-guitar.com/blog/the-minor-pentatonic-scale-on-guitar', 'https://www.premierguitar.com/articles/25911-blue-horizons-how-to-mix-major-and-minor-pentatonics', 'https://community.justinguitar.com/t/major-pentatonic-in-the-blues/2095', 'https://www.guitarworld.com/lessons/three-essential-blues-scales-every-guitarist-should-know', 'https://study-guitar.com/blog/the-blues-scale-on-guitar'],
+  sources: ['https://justinguitar.com/guitar-lessons/minor-pentatonic-the-5-patterns-sc-304', 'https://guitarplayer.com/lessons/soar-along-the-neck-with-the-minor-pentatonic-scales-overlapping-patterns', 'https://guitarlessons.com/guitar-lessons/lead-guitar/pentatonic-scale-sequencing-3s/', 'https://community.justinguitar.com/t/first-steps-in-blues-improvisation-using-minor-pentatonic-scale-pattern-1/78164', 'https://www.halleonard.com/product/695699', 'https://www.pickupmusic.com/blog/how-to-play-minor-pentatonic-scales', 'https://jgmusiclessons.com/how-to-play-minor-pentatonic-scales-on-guitar/', 'https://hubguitar.com/fretboard/pentatonic-scale-sequences', 'https://study-guitar.com/blog/the-minor-pentatonic-scale-on-guitar', 'https://www.premierguitar.com/articles/25911-blue-horizons-how-to-mix-major-and-minor-pentatonics', 'https://community.justinguitar.com/t/major-pentatonic-in-the-blues/2095', 'https://www.guitarworld.com/lessons/three-essential-blues-scales-every-guitarist-should-know', 'https://study-guitar.com/blog/the-blues-scale-on-guitar'],
+  pedagogy: {
+    date: '2026-10-15',
+    summary: 'Teachers start with one shape (pattern 1, rooted on the low E string), played slowly and perfectly and used at once in licks and restricted-note improvising; then add the other four patterns one at a time, link neighbours through their shared notes and slides, drill sequences against a metronome in every pattern, and finish by soloing across the whole neck.',
+    sequence: [
+      { id: 'one-shape', tier: 'foundations', step: 'Pattern 1, slowly and perfectly', how: 'Learn the first shape before any other: one finger per fret, fingertips, no barre; root to the top, down to the lowest note and back to the root, about ten times perfectly at a very slow speed.', skills: ['pent-shape'], source: 0 },
+      { id: 'roots', tier: 'foundations', step: 'Know the roots (and the degrees) of the shape', how: 'Find the roots that anchor each pattern and the key; label each note of the shape by its scale degree.', skills: ['pent-know'], source: 1 },
+      { id: 'licks', tier: 'foundations', step: 'Licks from pattern 1, bends in tune', how: 'A handful of short licks in the first pattern teach the bend points (with supported fingers, never the pinky), the same-fret roll and phrasing.', skills: ['pent-licks'], source: 3 },
+      { id: 'restricted', tier: 'foundations', step: 'First improvising: few notes, space, licks as building blocks', how: 'Improvise with only three notes in one spot, then with short phrases; vary the rhythm and where a lick starts.', skills: ['pent-first-music'], source: 3 },
+      { id: 'all-five', tier: 'intermediate', step: 'Patterns 2 to 5, one at a time', how: 'Pattern 2 next, then 3, 4 and 5; each learned on its own, from the root, up and down.', skills: ['pent-boxes'], source: 0 },
+      { id: 'connect', tier: 'intermediate', step: 'Connect neighbouring patterns', how: 'Neighbouring patterns share "linking notes"; loop pairs of patterns (1–2, 3–4, 5–1) and shift between them with slides.', skills: ['pent-connect'], source: 1 },
+      { id: 'sequences', tier: 'intermediate', step: 'Sequences with a metronome', how: 'Interval sequences (skipping a note) and groups of 3 and 4 started on each scale note, slowly with a metronome, raising the tempo gradually; then in all five fingerings.', skills: ['pent-sequences'], source: 2 },
+      { id: 'keys', tier: 'intermediate', step: 'Other keys', how: 'Move the shapes and licks to other keys by moving the root.', skills: ['pent-keys'], source: 3 },
+      { id: 'expression', tier: 'intermediate', step: 'Bends and vibrato in tune', how: 'Bend the natural bend points up to the pitch of the fretted target; add vibrato to held notes.', skills: ['pent-expression'], source: 3 },
+      { id: 'blues-major', tier: 'intermediate', step: 'The blues scale and the major pentatonic', how: 'Add the ♭5 as a passing note; learn the major pentatonic positions (the same shapes from a new root) and use major on the I chord, minor from the IV in a blues.', skills: ['pent-blue', 'pent-changes'], source: 4 },
+      { id: 'neck', tier: 'advanced', step: 'The whole neck: mapping and moving between positions', how: 'Travel through every pattern along the neck with slides and legato, on single strings and across positions, in any key.', skills: ['pent-neck', 'pent-anykey'], source: 1 },
+      { id: 'groups', tier: 'advanced', step: 'Longer groupings: 5 and 6', how: 'Groups of 5 and 6 notes, each started on the next scale note and fitted to one beat, with a metronome.', skills: ['pent-speed'], source: 2 },
+      { id: 'phrasing', tier: 'advanced', step: 'Phrasing with licks and bends', how: 'Use licks and bends as building blocks of phrases over a backing, with space between them.', skills: ['pent-phrasing'], source: 3 },
+      { id: 'tempo', tier: 'mastery', step: 'Push the tempo limit gradually', how: 'Raise the metronome step by step until you reach your limit, then keep pushing it over time, in every fingering.', skills: ['pent-performance'], source: 2 },
+      { id: 'solo', tier: 'mastery', step: 'A full-neck solo over a progression', how: 'Use all five patterns, freely and in any key, in a complete solo over a chord progression.', skills: ['pent-instant', 'pent-voice'], source: 1 }
+    ],
+    drills: ['Pattern from the root to the top, down to the lowest note and back to the root, slowly and perfectly', 'Pairs of neighbouring patterns looped through their linking notes', 'Interval sequences and groups of 3, 4, 5 and 6 with a metronome, in all five fingerings', 'Licks per pattern, moved to other keys', 'Restricted improvising with three notes', 'Bends to the pitch of the fretted target', 'A full-neck solo over a progression'],
+    mistakes: ['Bending with the pinky or a lone finger', 'Barring or folding the fingers, so notes ring together', 'Running all five patterns up and down without making music with any of them', 'Raising the tempo before the pattern is clean', 'Losing the group when the string changes in a sequence', 'Bends that stop short of the pitch'],
+    sources: [
+      { title: 'Minor Pentatonic: The 5 Patterns', author: 'Justin Sandercoe (JustinGuitar)', url: 'https://justinguitar.com/guitar-lessons/minor-pentatonic-the-5-patterns-sc-304' },
+      { title: 'Soar Along the Neck with the Minor Pentatonic Scale’s Overlapping Patterns', author: 'Tom Kolb (Guitar Player)', url: 'https://guitarplayer.com/lessons/soar-along-the-neck-with-the-minor-pentatonic-scales-overlapping-patterns' },
+      { title: 'Pentatonic Scale Sequences, parts 1 and 2', author: 'Hub Guitar', url: 'https://hubguitar.com/fretboard/pentatonic-scale-sequences' },
+      { title: 'First Steps in Blues Improvisation using Minor Pentatonic Scale Pattern 1 (Blues Lead Guitar course)', author: 'Justin Sandercoe (JustinGuitar)', url: 'https://community.justinguitar.com/t/first-steps-in-blues-improvisation-using-minor-pentatonic-scale-pattern-1/78164' },
+      { title: 'Pentatonic Scales for Guitar: The Essential Guide (Hal Leonard)', author: 'Chad Johnson', url: 'https://www.halleonard.com/product/695699' },
+      { title: 'Pentatonic Scale Sequencing 3’s', author: 'Guitareo (guitarlessons.com)', url: 'https://guitarlessons.com/guitar-lessons/lead-guitar/pentatonic-scale-sequencing-3s/' }
+    ]
+  },
   ctx: { key: 9, minor: true, prog: 'minorRock' },
   stages: [
     stage('foundations', 'Box 1, by ear and from memory',
-      'Play the scale along one string and box 1 up and down from memory at 80 BPM in 8th notes, find every root without looking, sing-then-play 8 notes in tune, and answer a backing with three-note phrases.', [
+      'Play box 1 up and down from memory at 80 BPM in 8th notes, find every root without the tab, play four box-1 licks with in-tune bends, and improvise 8 bars over a backing with only three notes.', [
         S('pent-shape', 'The shape, in small pieces', 'fretboard', 'One string first, then box 1 two strings at a time, then whole, slowly and cleanly.', [c => oneStringIntro(c), c => boxChunks(c),
           run('pent-box1-clean', 'Box 1 of {key} pentatonic, clean and even', 'accurate-reps', { box: 1, seq: 'updown', step: 0.5, goal: 100, why: 'Accuracy first, then speed: clean repetitions build the movement you will keep; fumbled ones build the fumble.', instr: 'Up and down the box in 8th notes with strict alternate picking. If a note buzzes or a string rings over, drop 10 BPM. Pass: 4 clean repetitions in a row.', watch: 'Speeding up on the easy strings: keep every note the same length.', simplify: 'Quarter notes.' })],
           ST('The minor pentatonic is five notes: root, ♭3, 4, 5, ♭7. On one string they are distances of 3, 2, 2, 3 and 2 frets; folded across the strings they make box 1, two notes per string.', 'Almost every rock and blues solo starts from this shape: it is the first map of the neck most players learn.', ['No half steps between neighbouring notes: that is why the scale rarely sounds wrong.', 'Box 1 starts on the root on the low E string; one finger per fret, index to pinky.'])),
         S('pent-know', 'Know the notes you play', 'theory', 'Roots and degrees, recalled rather than read.', [c => rootsEverywhere(c), c => degreeCallouts(c, { order: ['R', '5', '♭3'] })],
           ST('Every note of the box has a name relative to the key: R, ♭3, 4, 5 or ♭7. The roots are the anchors: two or three in every box.', 'Knowing the degrees tells you which notes sound resolved (R, 5), minor (♭3) or tense (4, ♭7).', ['In box 1 the roots sit under the index finger on strings 6 and 1, and under the ring finger on string 4.', 'The 5th is always two frets above the 4th on the same string in box 1.'])),
-        S('pent-hear', 'Hear it before you play it', 'ear', 'Sing the next note, then find it.', [c => singThenPlay(c), c => echoCalls(c)],
-          ST('Hearing a note before playing it (audiation) links the sound in your head to the place on the neck.', 'It is the basis of playing by ear and of improvising melodies you mean, not shapes you remember.', ['Short phrases near the root are the easiest to echo.'])),
-        S('pent-first-music', 'First music', 'improv', 'Short phrases with space, over a groove.', [c => motifPhrase(c), M('transfer', ['callResponse', { chords: '$minorRock', scale: 'minorPent' }])],
+        S('pent-licks', 'Licks from box 1', 'improv', 'Short licks that show the bends, the roll and the fingers.', [c => box1Licks(c, { set: 1 }), c => box1Licks(c, { set: 2 })],
+          ST('A lick is a short, complete phrase. Box 1 has three natural bend points (4 → 5 on the G string, ♭7 → root on the B, ♭3 → 4 on the high e) and one spot where two strings share a fret, played with one rolled finger.', 'Licks turn the shape into music straight away and teach where the bends and the fingers go.', ['Bend with the ring finger and the fingers behind it; the pinky rarely bends.', 'A lick is a building block: change its rhythm, start it on another beat, make it your own.'])),
+        S('pent-first-music', 'First music', 'improv', 'Three notes, short phrases and space, over a groove.', [c => threeNotes(c), c => motifPhrase(c), M('transfer', ['callResponse', { chords: '$minorRock', scale: 'minorPent' }])],
           ST('A phrase is a short idea, repeated and varied, with space after it, like a sentence.', 'Three notes and a rest already make music; running the whole box doesn’t.', ['Say it, say it again a step higher, then answer down to the root.']))
       ], [1, 3]),
     stage('intermediate', 'All five boxes, connected; major and blue',
