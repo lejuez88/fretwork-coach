@@ -15,6 +15,7 @@ import { noteMidi, exerciseBeats, STD_TUNING } from './exercises.js';
 import { clickSoundSelectHTML } from '../ui/clicksound.js';
 import { computePicks, suggestPicking, strokeSVG, PICK_MODES } from './picking.js';
 import { fretboardSVG } from '../ui/fretboard.js';
+import { rootOfPcs } from '../core/study.js';
 import { chordTimeline, chordAt, findDiagrams, highlightChord } from '../ui/chordsync.js';
 import { beatLabel, clickNote } from '../core/tempo.js';
 import { Transport } from '../ui/transport.js';
@@ -224,7 +225,9 @@ export function mountTabPlayer(el, ex, { settings = {}, onSettings = () => {}, o
     host.hidden = !S.neck;
     if (!S.neck) { host.innerHTML = ''; neckMarks = new Map(); return; }
     const seen = new Map();
-    notes.forEach(n => { if (n.x === 'mute') return; const k = `${n.s}:${n.f}`; if (!seen.has(k)) seen.set(k, { s: n.s, f: n.f, label: noteName(noteMidi(n, tuning)), family: 'root', cls: 'tpm' }); });
+    // the root (of the scale the notes make) is always marked in the root color; the rest are plain
+    const played = notes.filter(n => n.x !== 'mute'), root = rootOfPcs(played.map(n => noteMidi(n, tuning)));
+    played.forEach(n => { const k = `${n.s}:${n.f}`; if (seen.has(k)) return; const m = noteMidi(n, tuning), isRoot = root != null && ((m % 12) + 12) % 12 === root; seen.set(k, { s: n.s, f: n.f, label: noteName(m), family: isRoot ? 'root' : 'plain', cls: 'tpm' + (isRoot ? ' is-root' : '') }); });
     const maxF = Math.max(0, ...notes.map(n => n.f));
     const maxFret = clamp(Math.max(15, maxF + 1), 15, 24);
     host.innerHTML = fretboardSVG({ marks: [...seen.values()], maxFret, interactive: true, fw: 42, cls: 'tpboard', names });

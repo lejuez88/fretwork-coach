@@ -40,6 +40,22 @@ export function inferScale(count, firstPc = null) {
   }
   return best;
 }
+/**
+ * The root (pitch class) of a run of notes, in the order they're played: the root of the scale that
+ * best explains them (the same one the Study page's theory names), else the first note.
+ */
+export function rootOfPcs(seq) {
+  const pcs = (seq || []).filter(pc => pc != null).map(mod12); if (!pcs.length) return null;
+  const count = {}; pcs.forEach(pc => { count[pc] = (count[pc] || 0) + 1; });
+  const sc = inferScale(count, pcs[0]);
+  return sc ? sc.root : pcs[0];
+}
+/** The root of an exercise's tab (see rootOfPcs). */
+export function lessonRootPc(ex) {
+  const notes = ((ex && ex.tab && ex.tab.notes) || []).filter(n => n.x !== 'mute' && n.f != null && n.s >= 1 && n.s <= 6);
+  const tuning = (ex.tab && ex.tab.tuning) || null;
+  return rootOfPcs(notes.map(n => (tuning ? tuning[n.s - 1] : STD_LOW[6 - n.s]) + n.f));
+}
 const nameIn = (pc, scaleId) => (/♭/.test(SCALE_BY_ID[scaleId] ? SCALE_BY_ID[scaleId].labels.join('') : '') || [5, 10, 3, 8, 1].includes(pc) ? NAMES_F : NAMES_S)[mod12(pc)];
 
 /** Theory facts the app can state about an exercise (plain sentences). */

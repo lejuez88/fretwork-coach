@@ -34,5 +34,10 @@ Audio.ctx = { currentTime: 5, state: 'running' }; Audio.guitar = () => {}; Audio
   ok(![...win.querySelectorAll('.fb-num')].some(t => +t.textContent < 15 || +t.textContent > 22) && !win.querySelector('.fb-nut'), 'the window draws only those frets (no nut)');
   const loBox = document.createElement('div'); loBox.innerHTML = neckOf({ tab: { notes: [{ s: 6, f: 0 }, { s: 1, f: 3 }] } });
   ok(loBox.querySelector('.sp-neck-full .fb-nut') && !loBox.querySelector('.sp-neck-win'), 'open position: the neck from the nut, no window needed');
+  // the root is always marked: C major run, C notes are the root color with R, the rest plain
+  const cBox = document.createElement('div');
+  cBox.innerHTML = neckOf({ tab: { notes: [[5, 3], [5, 5], [4, 2], [4, 3], [4, 5], [3, 2], [3, 4], [3, 5], [2, 1]].map(([s, f]) => ({ s, f })) } });
+  const rootMarks = [...cBox.querySelectorAll('.sp-neck-full .fb-mark')].filter(m => m.querySelector('circle.fam-root'));
+  ok(rootMarks.length === 3 && rootMarks.every(m => m.querySelector('text').textContent === 'R') && cBox.querySelectorAll('.sp-neck-full circle.fam-plain').length === 6 && /Root: C/.test(cBox.textContent), 'the root (C) is marked R in the root color; other notes plain');
   window.__finish();
 })().catch(e => { console.log('TEST ERROR', e && e.stack || e); window.__finish(); });

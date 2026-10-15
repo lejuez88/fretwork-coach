@@ -75,5 +75,22 @@ Audio.ctx = { currentTime: 5, state: 'running' }; Audio.get = () => Audio.ctx; A
   ok(/Diminished \(whole–half\)/.test(g2.querySelector('h2').textContent) && /W H W H/.test(g2.textContent) && g2.querySelector('.sc-info dt'), 'the glossary shows a scale, its step pattern and notes');
   g2.querySelector('[data-pos="1"]').click(); await sleep(5);
   ok(g2.querySelector('.fb-mark.ghost') && g2.querySelector('.fb-dim'), 'a position dims the rest of the neck');
+  // colors: the root is always marked, every other note plain until its interval is toggled on
+  ok(marks.every(m => m.family === 'root' || m.family === 'plain') && marks.filter(m => m.label === 'R').every(m => m.family === 'root'), 'by default: roots marked, the rest plain');
+  const fam = (g, l) => [...new Set([...g.querySelectorAll('.fb-mark')].filter(m => m.querySelector('text') && m.querySelector('text').textContent === l).map(m => m.querySelector('circle').getAttribute('class')))].join();
+  const sel2 = g2.querySelector('[data-r="scale"]'); sel2.value = 'major'; sel2.dispatchEvent(new Event('change', { bubbles: true })); await sleep(5);
+  g2.querySelector('[data-pos="0"]').click(); await sleep(5);
+  ok(fam(g2, 'R') === 'fam-root' && fam(g2, '3') === 'fam-plain' && fam(g2, '7') === 'fam-plain', 'major: root colored, 3 and 7 plain');
+  ok(!g2.querySelector('.tone.is-root[data-hl]') && g2.querySelectorAll('.tone-tg').length === 6, 'six interval toggles; the root isn’t one (it’s always on)');
+  g2.querySelector('[data-hl="3"]').click(); await sleep(5);
+  ok(fam(g2, '3') === 'fam-third' && fam(g2, '7') === 'fam-plain' && g2.querySelector('[data-hl="3"]').getAttribute('aria-pressed') === 'true', 'toggling the 3 lights only the 3rds');
+  g2.querySelector('[data-hl="7"]').click(); await sleep(5);
+  ok(fam(g2, '3') === 'fam-third' && fam(g2, '7') === 'fam-seventh' && fam(g2, '5') === 'fam-plain', 'any combination: 3 and 7 together, the 5 stays plain');
+  g2.querySelector('[data-hl="3"]').click(); await sleep(5);
+  ok(fam(g2, '3') === 'fam-plain' && fam(g2, '7') === 'fam-seventh', 'tapping again turns it off');
+  g2.querySelector('[data-hlall="1"]').click(); await sleep(5);
+  ok(g2.querySelectorAll('.tone-tg.on').length === 6, 'highlight all');
+  g2.querySelector('[data-hlall="0"]').click(); await sleep(5);
+  ok(!g2.querySelector('.tone-tg.on') && fam(g2, '5') === 'fam-plain', 'clear highlights');
   window.__finish();
 })().catch(e => { console.log('TEST ERROR', e && e.stack || e); window.__finish(); });

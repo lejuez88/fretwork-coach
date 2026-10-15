@@ -386,3 +386,20 @@ body.studymode .tunefab{display:none}
   .sp-card h1{font-size:30px}
   .sp-grid{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:24px;align-items:start}
 }
+
+/* --- Root always marked; other notes plain until highlighted (Study neck, tab player neck, Scales) */
+.fam-plain{--fc:color-mix(in srgb,var(--text) 72%,var(--panel));fill:color-mix(in srgb,var(--text) 72%,var(--panel))}
+.fb-mark .fam-root{stroke:color-mix(in srgb,var(--text) 92%,transparent);stroke-width:2}
+.tpboard .fb-mark.is-root{opacity:.6}
+.tpboard .fb-mark.is-root.out{opacity:.2}
+.sp-neck-key{display:flex;align-items:center;justify-content:center;gap:6px;margin:6px 0 0}
+.fb-key{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--fc);color:#120d09;font:700 10px var(--body)}
+.sc-tonebox{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.tone-tg:not(.on){--fc:var(--line)}
+.tone-tg{font:inherit;color:var(--text);cursor:pointer;min-height:44px;transition:background .12s,border-color .12s}
+.tone-tg:hover{border-color:color-mix(in srgb,var(--text) 35%,var(--line))}
+.tone-tg.on{background:color-mix(in srgb,var(--fc) 22%,var(--inset));border-color:color-mix(in srgb,var(--fc) 70%,transparent);border-top-color:var(--fc)}
+.tone-tg:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tone.is-root{background:color-mix(in srgb,var(--fc) 18%,var(--inset))}
+.sc-tonehint .linkbtn{display:inline-flex;align-items:center;flex:none;color:var(--accent-text);font-size:12.5px;padding:0 2px;min-height:40px}
+@media(max-width:640px){.sc-tonebox{align-items:flex-start}}
