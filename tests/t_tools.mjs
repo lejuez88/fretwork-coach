@@ -43,6 +43,25 @@ Audio.ctx = { currentTime: 5, state: 'running' }; Audio.get = () => Audio.ctx; A
   el.querySelector('[data-nf="randomize"]').click(); await sleep(5);
   const rnd = JSON.parse(localStorage.getItem('fretworkCoach.noteFinder'));
   ok(rnd.strings.length >= 1 && rnd.notes.length >= 3, 'randomize picks strings and notes');
+  // levels: four tiers set strings, notes, frets and a time limit in one tap
+  ok(el.querySelectorAll('.tier4 .t4').length === 4, 'note finder: the four levels');
+  el.querySelector('[data-nftier="mastery"]').click(); await sleep(5);
+  const mt = JSON.parse(localStorage.getItem('fretworkCoach.noteFinder'));
+  ok(mt.tier === 'mastery' && mt.strings.length === 6 && mt.notes.length === 12 && mt.frets === 22 && mt.limit === 3, 'mastery: every string, all 12 notes, 22 frets, 3 seconds a note');
+  el.querySelector('[data-nftier="foundations"]').click(); await sleep(5);
+  const ft = JSON.parse(localStorage.getItem('fretworkCoach.noteFinder'));
+  ok(ft.tier === 'foundations' && ft.strings.join() === '6,5' && ft.notes.length === 7 && !ft.limit, 'foundations: low E and A, natural notes, no time limit');
+  el.querySelector('[data-frets="7"]').click(); await sleep(5);
+  ok(JSON.parse(localStorage.getItem('fretworkCoach.noteFinder')).tier === null, 'changing a setting makes it your own mix');
+  // playing the note on the guitar
+  ok(nf.judgePlayed(48, 5, 0, 12) === 'ok' && nf.judgePlayed(60, 5, 0, 15) === 'ok' && nf.judgePlayed(60, 5, 0, 12) === 'octave' && nf.judgePlayed(49, 5, 0, 12) === 'wrong', 'a played C counts on the A string at fret 3 or 15, not out of reach; a C♯ is wrong');
+  ok(nf.judgePlayed(60, 6, 0, 12) === 'octave' && nf.judgePlayed(48, 6, 0, 12) === 'ok', 'middle C isn’t on the low E string within 12 frets; the C at fret 8 is');
+  el.querySelector('[data-mode="find"]').click(); await sleep(5);
+  ok(el.querySelector('[data-answer="mic"]'), 'find it: answer by playing it on the guitar');
+  el.querySelector('[data-answer="mic"]').click(); await sleep(5);
+  el.querySelector('[data-nf="start"]').click(); await sleep(30);
+  ok(JSON.parse(localStorage.getItem('fretworkCoach.noteFinder')).answer === 'tap' && el.querySelector('.nf-note'), 'no microphone: it falls back to tapping and the round still starts');
+  el.querySelector('[data-nf="stop"]').click();
   off();
   // scales glossary
   ok(sc.scaleNotes(9, 'minorPent').map(n => n.name).join() === 'A,C,D,E,G', 'A minor pentatonic notes');

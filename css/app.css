@@ -1525,3 +1525,17 @@ body.playmode .tunefab{display:none}
 .how-taught .ht-steps li span{display:block;margin-top:2px}
 .how-taught.pending{border-style:dashed}
 .ht-src ul{margin:6px 0 0;padding-left:18px}
+/* Note finder: levels, answering on the guitar, time limit */
+.nf-modes{display:flex;flex-wrap:wrap;gap:8px 14px;margin:0 0 6px}
+.nf-time{height:5px;border-radius:3px;background:var(--inset);overflow:hidden;margin:6px 0 8px}
+.nf-time i{display:block;height:100%;width:100%;background:var(--amber);transform-origin:left;animation:nfTime linear forwards}
+@keyframes nfTime{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.nf-listen{display:flex;align-items:center;gap:10px;margin:8px 0}
+.nf-mic{font:600 14px var(--head);color:var(--amber)}
+.nf-meter{flex:1;max-width:220px;height:6px;border-radius:3px;background:var(--inset);overflow:hidden}
+.nf-meter i{display:block;height:100%;width:0;background:#5cc46b;transition:width .08s}
+.nf-custom summary{list-style:none;display:flex;align-items:baseline;gap:10px;cursor:pointer}
+.nf-custom summary::-webkit-details-marker{display:none}
+.nf-custom summary h3{margin:0}
+.nf-custom[open] summary{margin-bottom:10px}
+@media(prefers-reduced-motion:reduce){.nf-time i{animation:none}}

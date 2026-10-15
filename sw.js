@@ -1,6 +1,6 @@
 // Offline cache for the app shell. Network-first for app files so updates show
 // up on the next load; images from Wikipedia are cached as they are viewed.
-const CACHE = 'fretwork-v2k-34';
+const CACHE = 'fretwork-v2k-35';
 const SHELL = [
   './', 'index.html', 'css/app.css', 'css/theme.css', 'manifest.json', 'icon.svg',
   'js/app.js', 'js/core/util.js', 'js/core/store.js', 'js/core/claude.js', 'js/core/wiki.js', 'js/core/audio.js',
@@ -18,7 +18,7 @@ const SHELL = [
   'js/core/tempo.js', 'js/ui/chordsync.js', 'js/ui/temporow.js', 'js/core/keys.js', 'js/vendor/qrcode.js', 'js/core/gdrive.js',
   'js/data/kb.js', 'js/data/lib.js', 'js/data/index.js', 'js/core/kbrequests.js', 'js/ui/kbrequest.js', 'js/core/lessoncache.js', 'js/screens/artist.js', 'js/screens/techniques.js', 'js/ui/lessoncards.js', 'js/core/coach.js',
   'js/core/methods.js', 'js/ui/clicksound.js', 'js/ui/practicehistory.js', 'js/ui/transport.js',
-  'js/screens/notefinder.js', 'js/screens/scales.js', 'js/data/scaleinfo.js',
+  'js/screens/notefinder.js', 'js/tools/notelistener.js', 'js/screens/scales.js', 'js/data/scaleinfo.js',
   'js/screens/play.js', 'js/core/record.js', 'js/core/study.js', 'js/ui/colors.js', 'js/ui/guest.js', 'js/core/tiers.js', 'js/ui/tierpicker.js',
   'js/ui/icons.js', 'js/ui/logo.js', 'img/logo/word-1.png', 'img/logo/pick-1.png', 'img/logo/word-2.png', 'img/logo/pick-2.png', 'img/logo/word-3.png', 'img/logo/pick-3.png', 'img/logo/word-4.png', 'img/logo/pick-4.png', 'js/ui/scheme.js', 'js/ui/drawer.js'
 ];
