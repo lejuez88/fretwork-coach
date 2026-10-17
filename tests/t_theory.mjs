@@ -142,7 +142,8 @@ const ok = window.__ok;
       for (const l of ls) {
         count++;
         const ns = (l.ex.tab && l.ex.tab.notes) || [];
-        if (ns.some(n => !(n.s >= 1 && n.s <= 6) || !(n.f >= 0 && n.f <= 24))) bad.push(`${t.id}: ${l.ex.name}: a note off the neck`);
+        const nStr = [6, 7, 8].includes(l.ex.tab && l.ex.tab.strings) ? l.ex.tab.strings : 6;
+        if (ns.some(n => !(n.s >= 1 && n.s <= nStr) || !(n.f >= 0 && n.f <= 24))) bad.push(`${t.id}: ${l.ex.name}: a note off the neck`);
         (l.ex.chords || []).forEach(c => { if (!T.parseChord(c)) bad.push(`${t.id}: ${l.ex.name}: unknown chord ${c}`); });
       }
     }
