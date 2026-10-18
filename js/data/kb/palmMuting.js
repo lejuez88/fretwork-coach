@@ -17,6 +17,13 @@
 // arpeggios use the same grid with the key's minor pentatonic or the bar's chord tones. The composer
 // `pmRun(c, spec)` builds an exercise from style (chug | pedal | single | arp) × pattern plan × progression
 // × key plan × octave.
+//
+// Teaching method first (CONTENT.md, `pedagogy` below), audited 2026-10-18: placement and the first muted
+// 8ths, the muted/open switch, accents and roots, gallops, 16ths, single-note lines and pedal tones,
+// syncopation and stops, palm-muted arpeggios, riff and lead, then tempo and your own riff. Removed:
+// speaking the rhythm (`pm-sing`), covering the tab, "from memory" and naming roots aloud (`pm-roots`,
+// `pm-single-recall`, `pm-recall-key`, `pm-six-keys`, `pm-random`, the capstone); added the mute-four,
+// lift-four drill (`pm-lift`).
 import { OPEN, N, nameOf, make, mod12, chordInfo, topTriad, S, stage, entry, targetGuide } from '../lib.js';
 import { rng } from './bending.js';
 
@@ -37,6 +44,8 @@ export const PATTERNS = {
   sixteenthsAcc: { name: '16ths with accents on 1 and the "and" of 2', unit: '16th notes', ev: Array.from({ length: 16 }, (_, i) => [i, 1, i === 0 || i === 6 ? 'A' : 'C']) },
   push: { name: 'the push (the next chord an 8th early)', unit: '8th notes', next: true, ev: [[0, 2, 'C'], [2, 2, 'C'], [4, 2, 'C'], [6, 2, 'C'], [8, 2, 'C'], [10, 2, 'C'], [12, 2, 'C'], [14, 2, 'A']] },
   synco: { name: '3+3+2 syncopation', unit: 'syncopated 8ths', ev: [[0, 3, 'A'], [3, 3, 'A'], [6, 2, 'A'], [8, 2, 'C'], [10, 2, 'C'], [12, 2, 'A'], [14, 2, 'C']] },
+  muteLift4: { name: 'four muted, four open', unit: '8th notes', ev: [[0, 2, 'C'], [2, 2, 'C'], [4, 2, 'C'], [6, 2, 'C'], [8, 2, 'A'], [10, 2, 'A'], [12, 2, 'A'], [14, 2, 'A']] },
+  muteLift2: { name: 'two muted, two open', unit: '8th notes', ev: [[0, 2, 'C'], [2, 2, 'C'], [4, 2, 'A'], [6, 2, 'A'], [8, 2, 'C'], [10, 2, 'C'], [12, 2, 'A'], [14, 2, 'A']] },
   stops: { name: 'stops with scratches', unit: 'syncopated 16ths', ev: [[0, 2, 'A'], [2, 1, 'x'], [3, 1, 'x'], [4, 2, 'C'], [6, 2, 'C'], [8, 2, 'A'], [10, 1, 'x'], [11, 1, 'x'], [12, 1, 'C'], [13, 1, 'C'], [14, 2, 'A']] },
   pedal8: { name: 'pedal 8ths with triad stabs', unit: '8th notes', ev: [[0, 2, 'C'], [2, 2, 'A'], [4, 2, 'C'], [6, 2, 'C'], [8, 2, 'C'], [10, 2, 'A'], [12, 2, 'C'], [14, 2, 'A']] },
   pedal16: { name: 'pedal 16ths with triad stabs', unit: '16th notes', ev: Array.from({ length: 16 }, (_, i) => [i, 1, [3, 6, 11, 14].includes(i) ? 'A' : 'C']) }
@@ -169,9 +178,9 @@ export function pmRandom(c) {
     names.push(`${nameOf(root)}5, ${PATTERNS[pn].name}`); near = R.f;
   }
   return make(c, {
-    id: 'pm-random', name: `Random access: a new chord and rhythm every bar (${nameOf(k)} ${c.minor ? 'minor' : 'major'})`, domain: 'rhythm', method: 'interleaving', unit: 'mixed rhythms', goal: 132, start: 76, minutes: 5, dl: 1, picking: 'alternate', tab: { notes },
+    id: 'pm-random', name: `A new chord and rhythm every bar (${nameOf(k)} ${c.minor ? 'minor' : 'major'})`, domain: 'rhythm', method: 'interleaving', unit: 'mixed rhythms', goal: 132, start: 76, minutes: 5, dl: 1, picking: 'alternate', tab: { notes },
     why: 'At mastery level the muting hand reacts to whatever the riff asks: a random chord and rhythm every bar makes the mute and the lift automatic.',
-    instr: `${names.join(' → ')}. Read only the names: find the root, play the rhythm, lift the palm for the accents. Pass: all 8 bars in time from the names alone.`,
+    instr: `${names.join(' → ')}. Find each root near the last, play the rhythm, lift the palm for the accents. Pass: all 8 bars in time.`,
     watch: 'The palm staying down on the accents.', simplify: 'The first four bars.'
   });
 }
@@ -194,7 +203,7 @@ function pmStudy(c, capstone) {
     domain: 'rhythm', method: 'transfer', unit: 'mixed rhythms', goal: capstone ? 132 : 112, start: capstone ? 76 : 64, minutes: capstone ? 8 : 6, dl: capstone ? 1 : 0, picking: 'alternate',
     backing: chords, chords: [...new Set(chords)], tab: { notes },
     why: capstone ? 'An original 16-bar riff that uses the whole path: accents, gallops, the push, stops with scratches, pedal-tone triad stabs, a palm-muted single-note line, 16ths and an arpeggio bar.' : 'An original 8-bar hard-rock riff: an accent and chugs, a gallop bar, the push, a stop, two bars of pedal-tone triad stabs, a muted single-note bar and a syncopated ending.',
-    instr: capstone ? 'Learn it four bars at a time; say each bar’s rhythm name before you play it. Then write your own 16 bars on the same chords. Pass: the study at the goal tempo with the muted notes even and the accents ringing, then your own version once.' : 'Learn it two bars at a time, then as one riff with the backing. Pass: two times through at the goal tempo with every accent ringing and every chug the same thud.',
+    instr: capstone ? 'Learn it four bars at a time. Then write your own 16 bars on the same chords. Pass: the study at the goal tempo with the muted notes even and the accents ringing, then your own version once.' : 'Learn it two bars at a time, then as one riff with the backing. Pass: two times through at the goal tempo with every accent ringing and every chug the same thud.',
     watch: 'Chugs getting louder (or the mute lifting) as the riff speeds up.', simplify: capstone ? 'Bars 1–8.' : 'Bars 1–4.'
   });
 }
@@ -210,28 +219,59 @@ export default entry({
   aliases: ['palm muting', 'palm-muted riffs', 'chugging', 'chugs'],
   summary: 'The picking hand rests on the strings at the bridge so notes thud, then lifts for accents that ring: from the first muted root, through 8ths, gallops and 16ths, accents and pushes, single-note riffs, the pedal-tone rhythm style and palm-muted arpeggios, to syncopated stops at tempo, random access and an original riff study.',
   prereqs: [],
-  sources: ['https://fretjam.com/palm-mute-guitar.html', 'https://guitarlessons.com/guitar-lessons/guitar-technique/how-to-palm-mute-guitar/', 'https://pmtonline.co.uk/pmt-college/how-to-palm-mute', 'https://guitarworld.com/lessons/6-guitar-tricks-you-can-learn-from-eddie-van-halen'],
+  sources: ['https://www.guitarworld.com/lessons/techniques/palm-muting', 'https://www.andyguitar.co.uk/videos/10-l1-int-elec-jam-track-basic-palm-muting', 'https://www.fundamental-changes.com/metal-rhythm-guitar/', 'https://www.premierguitar.com/lessons/cram-session-thrash-metal-rhythms', 'https://www.guitarmasterclass.net/wiki/index.php/Palm_Muting', 'https://www.guitarplayer.com/lessons/eddie-van-halen-12-techniques-behind-his-riffing-rhythm-work', 'https://fretjam.com/palm-mute-guitar.html', 'https://guitarlessons.com/guitar-lessons/guitar-technique/how-to-palm-mute-guitar/', 'https://pmtonline.co.uk/pmt-college/how-to-palm-mute', 'https://guitarworld.com/lessons/6-guitar-tricks-you-can-learn-from-eddie-van-halen'],
+  pedagogy: {
+    date: '2026-10-18',
+    summary: 'Taught from placement: the fleshy edge of the picking hand rests lightly on the strings at the bridge, moved a millimetre at a time until notes thud but keep their pitch; first on the open low E in downstroke 8ths, then on power chords, holding one chord until the mute is consistent. Then the switch between muted and open (four and four, then every two; the hands like a see-saw), accents and the push, then gallops (down-down-up, one beat looped for stamina), reverse gallops, alternate-picked 16ths and bursts, palm-muted single-note lines and pedal-tone licks, syncopated riffs with rests and stops, palm-muted downstroke arpeggios, and finally riff-and-lead pieces at tempo, always with a metronome and with breaks against strain.',
+    sequence: [
+      { id: 'place', tier: 'foundations', step: 'Placement and the first muted 8ths', how: 'The edge of the hand on the strings at the bridge, light pressure; the open low E (or a root) in downstroke 8ths, open first, then muted; then one power chord until the mute is consistent.', skills: ['pm-touch'], source: 0 },
+      { id: 'switch', tier: 'foundations', step: 'Muted and open: the switch', how: 'Mute four notes, lift for four, then every two; muted chugs against a ringing accent.', skills: ['pm-hear'], source: 2 },
+      { id: 'move', tier: 'foundations', step: 'Accents in new places and root changes', how: 'Accents on beat 1, then on 1 and 3; the roots moving between the low E and A strings with the palm still.', skills: ['pm-switch'], source: 1 },
+      { id: 'first', tier: 'foundations', step: 'A first riff with the band', how: 'Muted and open power chords over a progression; the push into the next chord.', skills: ['pm-first-music'], source: 1 },
+      { id: 'gallops', tier: 'intermediate', step: 'Gallops and reverse gallops', how: 'An 8th and two 16ths, down-down-up, one beat looped for stamina; then the reverse gallop.', skills: ['pm-gallop'], source: 3 },
+      { id: '16ths', tier: 'intermediate', step: '16ths with alternate picking, accents inside them', how: 'Strict alternate picking built up slowly with a metronome; accents by lifting the palm.', skills: ['pm-sixteenths'], source: 3 },
+      { id: 'single', tier: 'intermediate', step: 'Palm-muted single-note lines', how: 'Muted notes of the scale near the root; a pedal-tone figure with the low root muted.', skills: ['pm-single'], source: 0 },
+      { id: 'pedal', tier: 'intermediate', step: 'The pedal tone and the push', how: 'A muted low root under ringing chords; the open chord landing just before beat 1.', skills: ['pm-pedal'], source: 1 },
+      { id: 'riff', tier: 'intermediate', step: 'Riffs mixing the patterns', how: 'Muting, downstrokes and short bursts of alternate picking in one riff.', skills: ['pm-music'], source: 2 },
+      { id: 'synco', tier: 'advanced', step: 'Syncopation, rests and stops', how: 'Syncopated chug riffs with rests; stops with fretting-hand scratches.', skills: ['pm-synco'], source: 0 },
+      { id: 'arps', tier: 'advanced', step: 'Palm-muted arpeggios', how: 'Chord shapes arpeggiated with palm-muted downstrokes.', skills: ['pm-arps'], source: 5 },
+      { id: 'mix', tier: 'advanced', step: 'Patterns combined and transposed', how: 'A new pattern every bar; the riff moved to other keys.', skills: ['pm-mixed'], source: 2 },
+      { id: 'lead', tier: 'advanced', step: 'Riff and lead', how: 'A riff with pedal tones, and palm muting inside lead lines (muted, then open).', skills: ['pm-adv-music'], source: 0 },
+      { id: 'tempo', tier: 'mastery', step: 'At performance tempo, every key', how: 'Gallops and 16ths at speed with breaks against strain; the riff through the keys.', skills: ['pm-perf', 'pm-recall-m'], source: 3 },
+      { id: 'own', tier: 'mastery', step: 'Your own riff and lead piece', how: 'A riff-and-lead piece, then your own riff and a solo over it.', skills: ['pm-voice'], source: 0 }
+    ],
+    drills: ['The open low E in palm-muted downstroke 8ths', 'Palm-muted power chords held until the mute is consistent', 'Mute four, lift four; then every two', 'Gallops (down-down-up), one beat looped', 'Reverse gallops', 'Alternate-picked muted 16ths with a metronome', 'A pedal-tone figure with the low root muted', 'Palm-muted downstroke arpeggios'],
+    mistakes: ['The hand too far toward the neck (no pitch) or off the bridge (no mute)', 'Pressing too hard: the notes go dead or sharp, a floating bridge goes out of tune', 'Not lifting the palm for the accents', 'Unplayed strings ringing (no fretting-hand muting)', 'Practising without a metronome', 'Playing through tension and strain instead of taking breaks'],
+    sources: [
+      { title: 'How to palm mute on guitar', author: 'Jamie Humphries (Guitar World)', url: 'https://www.guitarworld.com/lessons/techniques/palm-muting' },
+      { title: 'Intermediate Electric Level 1: basic palm muting', author: 'Andy Guitar', url: 'https://www.andyguitar.co.uk/videos/10-l1-int-elec-jam-track-basic-palm-muting' },
+      { title: 'Metal Rhythm Guitar, Part 1', author: 'Rob Thorpe (Fundamental Changes)', url: 'https://www.fundamental-changes.com/metal-rhythm-guitar/' },
+      { title: 'Cram Session: Thrash-Metal Rhythms', author: 'Jamie Humphries (Premier Guitar)', url: 'https://www.premierguitar.com/lessons/cram-session-thrash-metal-rhythms' },
+      { title: 'Palm Muting', author: 'GuitarMasterClass wiki', url: 'https://www.guitarmasterclass.net/wiki/index.php/Palm_Muting' },
+      { title: 'Eddie Van Halen: the techniques behind his riffing and rhythm work', author: 'Dale Turner (Guitar Player)', url: 'https://www.guitarplayer.com/lessons/eddie-van-halen-12-techniques-behind-his-riffing-rhythm-work' }
+    ]
+  },
   ctx: { key: 4, minor: true, prog: 'powerMinor' },
   stages: [
     stage('foundations', 'The muted chug',
-      'Palm-muted 8th notes on the low root with downstrokes at 90 BPM, every note the same short thud, with an unmuted power chord on beat 1 of each bar over i–♭VI–♭VII–i; name the progression’s roots from memory.', [
+      'Palm-muted 8th notes on the low root with downstrokes at 90 BPM, every note the same short thud, with an unmuted power chord on beat 1 of each bar over i–♭VI–♭VII–i; switch between muted and open every four and every two 8ths; and move the roots between the low E and A strings without the palm moving.', [
         S('pm-touch', 'Find the mute', 'picking', 'Open, then muted; quarters, then 8ths.', [
           P_('pm-teach', 'Open, then muted: the root ringing, then thudding ({key})', 'chunking', { teach: true, prog: 'one', patterns: ['quarters'], reps: 1, goal: 84, start: 50, why: 'Palm muting is a matter of where and how hard the hand rests. Playing the same note open, then muted, then muted in 8ths, builds the touch in steps and lets you hear the difference.', instr: HOW + 'Bar 1: the root open with downstrokes. Bar 2: the same with the palm resting at the bridge. Bar 3: muted 8ths. Then the muted quarter notes. Pass: every muted note has pitch but stops short.', watch: 'Resting too far from the bridge: the note goes dead with no pitch.', simplify: 'Bars 1 and 2 only.' }),
           P_('pm-eighths', 'Downstroke 8ths, counting the even ones ({chords})', 'accurate-reps', { patterns: ['eighths'], prog: 'auto', picking: 'down', goal: 92, start: 54, why: 'Steady muted downstroke 8ths are the core of rock rhythm. Counting only bars where every note is the same volume and length trains an even mute.', instr: HOW + 'All downstrokes. One chord a bar: move the root, keep the palm where it is. Count a bar only if every chug is even. Pass: 8 even bars in a row.', watch: 'The palm sliding off the strings when the root moves to the A string.', simplify: 'Quarter notes.' })], ST(
           'Palm muting damps the strings with the edge of the picking hand where they leave the bridge. The note keeps its pitch but loses its ring: a short, percussive thud.',
           'It is the sound of almost all rock and metal rhythm guitar: the muted notes give drive, the unmuted ones punch out.',
           ['The closer to the bridge, the more pitch; the further toward the neck, the more muted.', 'Downstrokes give a heavier, more even chug than alternate picking at moderate tempos.'])),
-        S('pm-hear', 'Hear the mute', 'ear', 'Thud versus ring; the rhythm first.', [
+        S('pm-hear', 'Hear the mute', 'picking', 'Thud versus ring; muted, then open.', [
           P_('pm-depth', 'Listen for the thud: 8ths with one accent a bar ({chords})', 'external-focus', { patterns: ['accent1'], prog: 'auto', oct: false, goal: 92, start: 54, why: 'The ear is the best judge of the mute: a good chug thuds with a clear pitch; a good accent rings. Listening for that difference (rather than watching the hand) fixes both.', instr: HOW + 'Beat 1: lift the palm and let the power chord ring. The other 8ths: muted. Listen to each bar: are the chugs short with pitch, and the accent full? Pass: every bar heard as thud, thud … ring.', watch: 'The accent still muted because the palm didn’t lift.', simplify: 'Only the first two chords.' }),
-          P_('pm-sing', 'Hear it first: count the rhythm aloud, then play it ({chords})', 'audiation', { patterns: ['accent13'], prog: 'auto', oct: false, goal: 90, start: 52, why: 'A riff is its rhythm. Saying it aloud first ("DUN chug chug chug DUN chug chug chug") puts the accents in your head before the hand plays them.', instr: 'Speak the rhythm with the click: "DUN" on the accents (beats 1 and 3), "chug" on the muted 8ths. Then play it. Pass: the played rhythm matches the spoken one for 8 bars.', watch: 'Accents drifting off beats 1 and 3.', simplify: 'Accent on 1 only.' })], ST(
+          P_('pm-lift', 'Muted, then open: four 8ths muted, four open, then every two ({chords})', 'chunking', { patterns: ['muteLift4', 'muteLift2'], prog: 'auto', oct: false, picking: 'down', goal: 90, start: 52, why: 'Switching between muted and open is one small move: the palm down on the strings, then lifted a few millimetres. Four and four first, then every two, so the switch gets quicker.', instr: HOW + 'Odd bars: four muted downstrokes, then lift for four ringing power chords. Even bars: two muted, two open, twice. Pass: 8 bars where every muted note thuds and every open one rings.', watch: 'The palm lifting off the bridge for the muted notes too.', simplify: 'Four and four only.' })], ST(
           'Muted and open notes are two sounds with one hand: down for the chug, lifted for the accent. A riff is the pattern between them.',
           'Hearing that pattern is what makes a riff groove.',
-          ['A muted note still has pitch: if it doesn’t, the hand is too far from the bridge.', 'Speak a rhythm before you play it: the hands follow the voice.'])),
-        S('pm-switch', 'Mute, lift, move', 'fretboard', 'Accents and roots from memory.', [
+          ['A muted note still has pitch: if it doesn’t, the hand is too far from the bridge.', 'The hands work like a see-saw: the palm lifts for the open notes and drops for the muted ones.'])),
+        S('pm-switch', 'Mute, lift, move', 'fretboard', 'Accents in new places; roots on two strings.', [
           P_('pm-accent', 'A new accent spot every bar: 8ths with accents on 1, then on 1 and 3 ({chords})', 'variable', { patterns: ['accent1', 'accent13'], prog: 'auto2', oct: false, goal: 92, start: 54, why: 'Changing where the accent falls varies the one move that matters most (lift and drop the palm) while the rest stays the same.', instr: HOW + 'Odd bars: one accent on beat 1. Even bars: accents on 1 and 3. Pass: 8 bars with every accent ringing.', watch: 'Lifting the palm too far and losing the anchor.', simplify: 'Accent on 1 in every bar.' }),
-          P_('pm-roots', 'From memory: the progression’s roots on the low strings ({chords})', 'retrieval', { patterns: ['eighths'], prog: 'auto', goal: 90, start: 52, why: 'Riffs move between roots on the low E and A strings. Finding each root from the chord name builds the low-string map every riff relies on.', instr: 'Cover the tab. Say each chord’s root, find it on the low E or A string near the last one, and chug a bar. Pass: all four from memory.', watch: 'Jumping up the neck when a lower root is near.', simplify: 'Look once, then cover.' })], ST(
+          P_('pm-roots', 'The progression’s roots on the low E and A strings, each near the last ({chords})', 'accurate-reps', { patterns: ['eighths'], prog: 'auto', goal: 90, start: 52, why: 'Riffs move between roots on the low E and A strings. Taking each new root on whichever string keeps the hand close builds the low-string map every riff relies on, with the palm staying put.', instr: HOW + 'One chord a bar, muted 8ths on its root; move the fretting hand, not the palm. Pass: 8 bars with every chug even across the string changes.', watch: 'Jumping up the neck when a lower root is near.', simplify: 'Two chords.' })], ST(
           'Riffs are built from chord roots on the two lowest strings, chugged with the palm, plus accents where the palm lifts.',
-          'Knowing the roots by name lets you play any riff in any key.',
+          'Knowing the roots on both low strings lets you play any riff in any key.',
           ['The same note sits five frets lower on the A string than on the low E string.', 'A power chord is root + 5th: the same fret shape on any root.'])),
         S('pm-first-music', 'First music', 'rhythm', 'A first riff with the band; call and response.', [
           P_('pm-first-riff', 'First riff with the band: 8ths with accents ({chords})', 'transfer', { patterns: ['accent1', 'eighths', 'accent13', 'eighths'], prog: 'auto', reps: 2, oct: false, goal: 94, start: 56, why: 'With a drum backing the chugs lock to the hi-hat and the accents to the snare and kick: the rhythm guitar becomes part of the band.', instr: HOW + 'Two times through with the backing. Pass: 8 bars locked to the drums.', watch: 'Rushing the accent bars.', simplify: 'Muted 8ths throughout.' }),
@@ -256,7 +296,7 @@ export default entry({
           ['Down on the beat and the "and", up on "e" and "a".', 'Accents come from lifting the mute, not from picking harder.'])),
         S('pm-single', 'Single-note riffs', 'fretboard', 'Muted lines on the low strings.', [
           P_('pm-single', 'A palm-muted single-note riff: the minor pentatonic on the low strings ({key})', 'variable', { style: 'single', patterns: ['eighths', 'gallop'], prog: 'auto', riff: [0, 0, 3, 0, 5, 0, 7, 3, 0, 10, 0, 5], goal: 104, start: 58, why: 'Many riffs are single notes, not chords: a muted root pedal with scale notes in between. Different degrees in each bar vary the line while the mute stays even.', instr: HOW + 'Muted 8ths (odd bars) and gallops (even bars), the notes walking between the root and the pentatonic notes around it on the low E and A strings. Pass: 8 bars, every note muted and even.', watch: 'Higher notes ringing louder than the root.', simplify: '8ths only.' }),
-          P_('pm-single-recall', 'From memory: the pentatonic riff notes on the E and A strings ({key})', 'retrieval', { style: 'single', patterns: ['eighths'], prog: 'one', riff: [0, 3, 5, 7, 10, 7, 5, 3], goal: 100, start: 56, why: 'The low pentatonic notes (R ♭3 4 5 ♭7) are the raw material of riffs. Finding them from memory near the root lets you make up riffs on the spot.', instr: 'Cover the tab. Say each degree, find it on the low E or A string near the root, play it muted. Pass: up and down from memory.', watch: 'Shifting position for notes that are under your fingers.', simplify: 'Root, ♭3, 4 only.' })], ST(
+          P_('pm-single-recall', 'The pentatonic riff notes up and down on the E and A strings ({key})', 'accurate-reps', { style: 'single', patterns: ['eighths'], prog: 'one', riff: [0, 3, 5, 7, 10, 7, 5, 3], goal: 100, start: 56, why: 'The low pentatonic notes (R ♭3 4 5 ♭7) are the raw material of riffs; muting them evenly up and down the two low strings is the step before making up riffs with them.', instr: HOW + 'Muted 8ths up the low pentatonic notes and back, every note the same thud. Pass: up and down twice, then make up a one-bar riff from the same notes.', watch: 'Shifting position for notes that are under your fingers.', simplify: 'Root, ♭3, 4 only.' })], ST(
           'A single-note riff mixes a muted low root with other scale notes; the minor pentatonic near the root is the usual source.',
           'Riffs like this carry whole songs in hard rock and metal.',
           ['Minor pentatonic degrees: R ♭3 4 5 ♭7.', 'The root works as a pedal between the other notes.'])),
@@ -274,7 +314,7 @@ export default entry({
           ['Four-bar riffs often end with a push into the repeat.', 'Keep the chugs even across every pattern.']))
       ], [4, 6]),
     stage('advanced', 'Syncopation, stops and arpeggios',
-      'The 3+3+2 syncopation and stops with fretting-hand scratches at 120 BPM, palm-muted arpeggios through a progression in four keys, mixed patterns bar by bar, a riff recalled in a new key, and an advanced riff study.', [
+      'The 3+3+2 syncopation and stops with fretting-hand scratches at 120 BPM, palm-muted arpeggios through a progression in four keys, mixed patterns bar by bar, the riff transposed to two new keys, and an advanced riff study.', [
         S('pm-synco', 'Syncopation and stops', 'rhythm', '3+3+2; scratches.', [
           P_('pm-synco', 'The 3+3+2 syncopation ({chords})', 'variable', { patterns: ['synco', 'eighths'], prog: 'auto3', goal: 120, start: 66, why: 'Grouping 8 16ths as 3+3+2 puts the accents off the beat: the syncopated punch of many hard-rock and metal riffs.', instr: HOW + 'Odd bars: accents on 1, the "a" of 1 and the "and" of 2, then chugs. Even bars: straight muted 8ths. Pass: 8 bars without the accents sliding onto the beat.', watch: 'Evening out the 3+3+2 into straight 8ths.', simplify: 'Count it aloud first.' }),
           P_('pm-stops', 'Stops with fretting-hand scratches ({chords})', 'accurate-reps', { patterns: ['stops'], prog: 'auto', picking: 'alternate', goal: 116, start: 64, why: 'A stop silences the chord with the fretting hand (it relaxes but stays on the strings) so the pick plays dead "scratches": a percussive gap inside the riff.', instr: HOW + 'Accent, then two scratches (fretting hand relaxed on the strings, no notes), chugs, accent, scratches, chugs, accent. Count only clean bars. Pass: 8 clean bars in a row.', watch: 'Notes sounding in the scratches.', simplify: 'Rests instead of scratches.' })], ST(
@@ -287,10 +327,10 @@ export default entry({
           'A palm-muted arpeggio plays a chord’s notes one by one, each one muted so they don’t blur together.',
           'It adds motion to a rhythm part without the wash of a ringing chord.',
           ['Angle the palm to cover the higher strings too.', 'The chord tones come from the shape you hold.'])),
-        S('pm-mixed', 'Mixed and recalled', 'fretboard', 'Patterns bar by bar; a new key.', [
+        S('pm-mixed', 'Mixed patterns and new keys', 'fretboard', 'Patterns bar by bar; the riff transposed.', [
           P_('pm-mix', 'Interleaved: gallop, 16ths, synco and stops, a new one every bar ({chords})', 'interleaving', { patterns: ['gallopAcc', 'sixteenthsAcc', 'synco', 'stops'], prog: 'auto', picking: 'alternate', reps: 2, goal: 116, start: 64, why: 'Switching rhythm every bar is harder than repeating one, and that is what makes the switches automatic.', instr: HOW + 'One pattern per bar, in turn. Pass: 8 bars in time.', watch: 'The stops bar losing time.', simplify: 'Two patterns.' }),
-          P_('pm-recall-key', 'From memory: the riff in a new key ({key} up a fourth and a fifth)', 'retrieval', { patterns: ['accent1', 'gallop', 'synco', 'push'], prog: 'auto', keys: [5, 7], goal: 112, start: 62, why: 'Moving a riff to a new key from memory (roots found by name, rhythm kept) is how you transpose on the bandstand.', instr: 'Cover the tab. Play the riff (accent, gallop, synco, push) with the progression a fourth up, then a fifth up, finding the roots by name. Pass: both keys in time.', watch: 'Playing the old key’s roots.', simplify: 'One key.' })], ST(
-          'Mixed practice and recall make riffs portable: any rhythm, any key.',
+          P_('pm-recall-key', 'The riff in a new key: a fourth up, then a fifth up ({key} and up)', 'interleaving', { patterns: ['accent1', 'gallop', 'synco', 'push'], prog: 'auto', keys: [5, 7], goal: 112, start: 62, why: 'Moving a riff to a new key keeps its rhythm and moves its roots: how you transpose on the bandstand.', instr: HOW + 'The riff (accent, gallop, synco, push) a fourth up, then a fifth up. Pass: both keys in time without stopping.', watch: 'Playing the old key’s roots.', simplify: 'One key.' })], ST(
+          'Mixed practice and transposing make riffs portable: any rhythm, any key.',
           'Bands change keys for singers; riffs have to move.',
           ['A fourth up: E → A; a fifth up: E → B.', 'Keep the rhythm; move the roots.'])),
         S('pm-adv-music', 'In music', 'rhythm', 'A riff and a solo over it.', [
@@ -301,19 +341,19 @@ export default entry({
           ['Lift the palm on the note you want to stand out.', 'Start phrases muted, end them ringing.']))
       ], [7, 8]),
     stage('mastery', 'Your riffs',
-      'Accented 16th-note gallops at 132 BPM, any called pattern and chord on the spot, riffs from memory in six keys, and your own 16-bar riff.', [
+      'Accented 16th-note gallops at 132 BPM, a new pattern and chord every bar, the riff in six keys, and your own 16-bar riff.', [
         S('pm-perf', 'At performance tempo', 'picking', 'Speed and random access.', [
           P_('pm-perf', 'Performance tempo: accented gallops and 16ths in two keys ({key})', 'edge', { patterns: ['gallopAcc', 'sixteenthsAcc'], prog: 'auto', keys: [0, 7], picking: 'alternate', goal: 132, start: 76, why: 'Gallops and accented 16ths at performance tempo in two keys: endurance, an even mute and clean lifts together.', instr: HOW + 'Tempo ladder: +4 BPM after each clean pass. Pass: clean at the goal tempo.', watch: 'Forearm tension: let the wrist do the work.', simplify: 'One key.' }),
           c => pmRandom(c)], ST(
           'Mastery is an even mute and clean accents at speed, in any order.',
           'Live riffs are fast and don’t wait.',
-          ['Raise the tempo only after a clean pass.', 'Read the name, not the tab.'])),
-        S('pm-recall-m', 'From memory', 'fretboard', 'Six keys; your own riff.', [
-          P_('pm-six-keys', 'From memory: the riff in six keys', 'retrieval', { patterns: ['accent1', 'gallop'], prog: 'auto', keys: [0, 5, 10, 3, 8, 1], picking: 'alternate', goal: 128, start: 74, why: 'The same riff in six keys from memory: the roots found by name at tempo.', instr: 'Cover the tab. For each key, name the four roots, then play the riff. Pass: all six keys in time.', watch: 'A pause at each key.', simplify: 'Three keys.' }),
+          ['Raise the tempo only after a clean pass.', 'Keep each new root near the last.'])),
+        S('pm-recall-m', 'Every key, and your own bars', 'fretboard', 'Six keys; your own riff bars.', [
+          P_('pm-six-keys', 'The riff in six keys around the cycle of fourths', 'interleaving', { patterns: ['accent1', 'gallop'], prog: 'auto', keys: [0, 5, 10, 3, 8, 1], picking: 'alternate', goal: 128, start: 74, why: 'The same riff in six keys at tempo: the roots move across the low strings while the mute and the rhythm stay the same.', instr: HOW + 'Four bars per key, no gap between keys. Pass: all six keys in time.', watch: 'A pause at each key.', simplify: 'Three keys.' }),
           P_('pm-own', 'Make it yours: the written bars, then your own riff bars ({chords})', 'transfer', { patterns: ['synco', 'gallopAcc', 'stops', 'push'], prog: 'auto', reps: 2, goal: 124, start: 72, minutes: 6, why: 'The tab gives a riff; the lesson is to rewrite every second bar with your own mix of chugs, accents and stops.', instr: 'Play the written odd bars; replace the even bars with your own palm-muted rhythm on the same chord. Pass: two times through in time, your bars different each time.', watch: 'Your bars copying the written ones.', simplify: 'Rewrite only the last bar.' })], ST(
-          'Recall in six keys and rewriting riffs are the test that the model is yours.',
+          'Six keys and rewriting riffs are the test that the technique is yours.',
           'Writing riffs is the goal of all rhythm technique.',
-          ['Name the roots before you play.', 'Keep one element (the rhythm or the chords) and change the other.'])),
+          ['A fourth up moves each root five frets up the same string, or to the next string at the same fret.', 'Keep one element (the rhythm or the chords) and change the other.'])),
         S('pm-voice', 'Your own riff', 'rhythm', 'A capstone riff, then a solo over it.', [c => pmEtude(c),
           c => targetGuide(c, { prog: c.minor ? 'powerMinor' : 'mixo', scale: c.minor ? 'minorPent' : 'majorPent', name: 'Solo over your riff: muted pentatonic phrases that open up at the end' })], ST(
           'The capstone riff combines every pattern and style; then you write and solo over your own.',
