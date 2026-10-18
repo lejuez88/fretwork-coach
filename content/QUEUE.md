@@ -21,14 +21,14 @@ Synced from the player's Google Drive file `Fretwork Coach research requests.jso
 
 ## Depth backlog
 
-Incomplete paths and paths below the reference standard, from the validator's coverage table (`node tools/validate-content.mjs`). As of 2026-10-18 (third run): **39 of 39 paths complete; 25 meet the reference standard (★)**: pentatonic, vibrato, bending, alternatePicking, legato, phrasing, chordEmbellish, doubleStops, sharp9, octaves, texasShuffle, raking, thumbSlap, majMinPent, thumping, chromaticPassing, hybridPicking, tapping, subdivisions, palmMuting, multiTap, djentRiffs, and (audited in the third run) openPulls, harmonics and slides. The other 14 wait in the validator's Pedagogy audit table. Artists ready: gilmour, greg-howe, hendrix, john-mayer, srv, tosin-abasi, van-halen (ready again, 2026-10-18 third run).
+Incomplete paths and paths below the reference standard, from the validator's coverage table (`node tools/validate-content.mjs`). As of 2026-10-18 (fourth run): **39 of 39 paths complete; 27 meet the reference standard (★)**: pentatonic, vibrato, bending, alternatePicking, legato, phrasing, chordEmbellish, doubleStops, sharp9, octaves, texasShuffle, raking, thumbSlap, majMinPent, thumping, chromaticPassing, hybridPicking, tapping, subdivisions, palmMuting, multiTap, djentRiffs, openPulls, harmonics and slides (third run), and economyPicking and arpMelodies (fourth run). The other 12 wait in the validator's Pedagogy audit table. Artists ready: gilmour, greg-howe, hendrix, john-mayer, srv, tosin-abasi, van-halen, guthrie-govan (ready again, 2026-10-18 fourth run).
 
 Priority order:
-0. **Pedagogy audit, at least two paths per run, in the validator's order:** next arpMelodies and economyPicking (Guthrie Govan, two left now that slides is ★), then hexatonic, pent6s, pgLick, pgSix, positionShifts, rolling5s, skipArps, speedPent, spreadTriads, stretchPent (Eric Johnson and Paul Gilbert), then sweepChanges and travis.
-1. Artists: no artist is planned on the roster now. Van Halen is ready again (2026-10-18). Finish the older artists (Guthrie Govan next: economyPicking, arpMelodies; then Eric Johnson and Paul Gilbert, five paths each), then pick the next roster artist.
+0. **Pedagogy audit, at least two paths per run, in the validator's order:** next hexatonic, pent6s, pgLick, pgSix, positionShifts, rolling5s, skipArps, speedPent, spreadTriads, stretchPent (Eric Johnson and Paul Gilbert), then sweepChanges and travis.
+1. Artists: no artist is planned on the roster now. Van Halen is ready again (2026-10-18). Guthrie Govan is ready again too (2026-10-18 fourth run). Finish the older artists (Eric Johnson and Paul Gilbert, five paths each), then pick the next roster artist.
 2. Fundamentals (new paths): chord changes and barre chords, strumming, fretboard knowledge (CAGED), sweep picking fundamentals.
 3. Study notes for the older paths (the validator warns on the paths still waiting for their audit).
-4. `topVideo` for all ten artists (needs a YouTube view-count check the content runs couldn't do).
+4. `topVideo` for the other nine artists (needs a YouTube view-count check; YouTube pages block view counts for most videos). tosin-abasi has one since 2026-10-18 (CAFO, 4.9M views, the only count the run could read: player to confirm it is the most viewed).
 
 ## Discovered
 

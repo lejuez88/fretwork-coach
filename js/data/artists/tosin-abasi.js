@@ -56,6 +56,7 @@ His playing treats the guitar as a percussion and keyboard instrument as well as
 
 This course builds those techniques one path at a time: thumping, tapped chords, alternate picking, palm muting, odd groupings, then djent riffs, and closes with an 8-string study and soloing over his kind of harmony.`,
   bands: ['Animals as Leaders', 'T.R.A.M.', 'Reflux'],
+  topVideo: { id: 'q0ZrF7taMHA', title: 'Animals As Leaders "CAFO" official music video', channel: 'Prosthetic Records' },
   ctx: { key: 6, minor: true, prog: 'minorRock' },
   units: [
     PU(thumping, { title: 'Thumping', summary: 'Thumb down and up through the string, index and middle pops: his slap-and-pop groove on the low strings.' }),
