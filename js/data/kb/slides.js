@@ -11,6 +11,14 @@
 // and the slide kinds (legato, shift, into, out, long, double-stop). The composer `slideRun(c, spec)`
 // builds an exercise from scale × strings × which tones (moves between neighbours, chord tones,
 // degrees) × kind × note value × keys; phrases are written in degrees with a box for each note.
+//
+// Teaching method first (CONTENT.md, `pedagogy` below), audited 2026-10-18: the legato slide and the shift
+// slide on one string (pressure on, ease off, full pressure on arrival), every finger, sliding into a
+// note, the scale along one string, first phrases; then box to box, slide-and-return and long slides,
+// sliding out; then sliding 6ths, runs that shift position, keys, slow vocal slides; then tempo and your
+// own study. Removed: singing the target (`slides-hear`), naming degrees and keys aloud, covering the tab
+// and "from memory" versions (`slides-degrees`, `slides-boxes-called`, the "read only the names" bars of
+// `slides-random`); added `slides-fingers` (every finger, half and whole steps) and `slides-into-scale`.
 import { OPEN, N, nameOf, minorKey, make, pentBox, byString, mod12, SCALE_BY_ID, S, stage, entry, M, targetGuide } from '../lib.js';
 
 /* ------------------------------- The concept ------------------------------- */
@@ -109,12 +117,12 @@ export function slideOneString(c, { string = 2, scale = 'minorPent' } = {}) {
   const seq = [...up.map((f, i) => [string, f, i % 2 ? '/' : null]), ...up.slice().reverse().map((f, i) => [string, f, i % 2 ? '\\' : null])];
   const k = nameOf(key), pent = scale === 'minorPent';
   return make(c, {
-    id: `slides-one-string-${string}${pent ? '' : '-' + scale}`, name: `${k} ${SCN[scale]} along the ${STR[string]} string, with slides`, domain: 'fretboard', method: pent && string === 2 ? 'retrieval' : 'variable',
+    id: `slides-one-string-${string}${pent ? '' : '-' + scale}`, name: `${k} ${SCN[scale]} along the ${STR[string]} string, with slides`, domain: 'fretboard', method: 'variable',
     unit: fast ? '8th notes' : 'quarter notes', goal: fast ? 84 : 96, start: 50, minutes: 5, dl: pent ? 0 : 1,
     why: pent ? 'Playing a scale up one string shows how the boxes connect horizontally and trains the slide as a way to change position. You hear the notes of the scale as distances on a single string.'
       : 'Dorian on one string adds the 2 and the bright 6 between the pentatonic notes: the slides get shorter (whole and half steps), and you hear exactly where the two extra notes sit.',
-    instr: `Start at fret ${up[0]}. Pick a note, slide (/) to the next scale note with the same finger, pick the next, slide again, all the way up to fret ${up[up.length - 1]}; then come back down the same way (\\). Say the scale degree of each note you land on (${pent ? 'R, ♭3, 4, 5, ♭7' : 'R, 2, ♭3, 4, 5, 6, ♭7'}). Pass: two clean trips with every slide landing on the beat.`,
-    watch: 'Looking at the fretboard so long that the slide arrives late.', simplify: 'Pick every note, no slides, until the frets are memorized.', tab: { notes: seq.map(([s, f, x], i) => N(s, f, i * step, step, x)) }
+    instr: `Start at fret ${up[0]}. Pick a note, slide (/) to the next scale note with the same finger, pick the next, slide again, all the way up to fret ${up[up.length - 1]}; then come back down the same way (\\). The steps are ${pent ? 'two and three frets (R, ♭3, 4, 5, ♭7)' : 'one and two frets (R, 2, ♭3, 4, 5, 6, ♭7)'}, so each slide is a different length. Pass: two clean trips with every slide landing on the beat.`,
+    watch: 'Looking at the fretboard so long that the slide arrives late.', simplify: 'Pick every note, no slides, until the frets feel familiar.', tab: { notes: seq.map(([s, f, x], i) => N(s, f, i * step, step, x)) }
   });
 }
 
@@ -157,11 +165,11 @@ export function slideDegrees(c) {
   const k = minorKey(c), s = 2, l = fromRoot(k, s, 'minorPent', 6), notes = [], names = []; let t = 0;
   for (const j of [2, 1, 4, 3, 5]) { const f = l[j]; if (f == null) return null; notes.push(N(s, l[0], t, 1), N(s, f, t + 1, 1, '/'), N(s, f, t + 2, 1, '~'), N(s, l[0], t + 3, 1, '\\')); names.push(degOf(k, s, f)); t += 4; }
   return make(c, {
-    id: 'slides-degrees', name: `Slide to the degree: from the root along the B string (${nameOf(k)} minor pentatonic)`, domain: 'fretboard', method: 'retrieval',
+    id: 'slides-degrees', name: `Slide and return: from the root to each pentatonic note along the B string (${nameOf(k)} minor pentatonic)`, domain: 'fretting', method: 'variable',
     unit: 'quarter notes', goal: 84, start: 50, minutes: 4,
-    why: 'Knowing how far each degree is from the root on one string (a minor 3rd is 3 frets, a 4th is 5, a 5th is 7) lets you slide to a chosen note instead of hoping. Recalling the distance by degree name builds that map.',
-    instr: `From the root on the B string, slide to the ${names.join(', then the ')}, each time holding it with vibrato and sliding back. Cover the tab: say the degree and its distance in frets before each slide. Pass: all five from memory, landing on pitch.`,
-    watch: 'Counting frets with your eyes: feel the distance.', simplify: 'Only the ♭3, 4 and 5.', tab: { notes: liftOpen(notes) }
+    why: 'Pick once, slide to a note, slide back: the slide-and-return drill. Here every slide starts from the root and goes a different distance (a minor 3rd is 3 frets, a 4th 5, a 5th 7, a ♭7 10), so the hand learns how far to travel without overshooting.',
+    instr: `From the root on the B string, slide to the ${names.join(', then the ')}, each time holding it with vibrato and sliding back to the root. Keep the thumb loose on the long ones and watch the target fret. Pass: all five slides landing on pitch, twice.`,
+    watch: 'Overshooting the long slides.', simplify: 'Only the ♭3, 4 and 5.', tab: { notes: liftOpen(notes) }
   });
 }
 /** Through all five boxes on the G and B strings: two notes on each string, then a shift slide into the next box (interleaving). */
@@ -231,7 +239,7 @@ export function slideKeys(c) {
     id: 'slides-keys', name: `Box-joining slides in four keys: ${names.join(', ')}`, domain: 'fretboard', method: 'interleaving',
     unit: '8th notes', goal: 96, start: 54, minutes: 5, dl: 1,
     why: 'The slide between box 1 and box 2 is a shape, so it works in every key. Changing key every bar trains you to find it at once wherever box 1 sits.',
-    instr: `${names.join(' → ')}: on the G string then the B string, the two box-1 notes, a slide up into box 2 and back. Name the key before each bar. Pass: all four keys without stopping.`,
+    instr: `${names.join(' → ')}: on the G string then the B string, the two box-1 notes, a slide up into box 2 and back. Look one bar ahead to the next key’s box 1. Pass: all four keys without stopping.`,
     watch: 'Sliding to the wrong fret in the new key: look one beat ahead.', simplify: 'Two keys.', tab: { notes: liftOpen(notes) }
   });
 }
@@ -245,10 +253,10 @@ export function boxesCalled(c) {
     notes.push(N(2, B[0], t + 1, 1), N(2, B[1], t + 2, 2, '~')); t += 4;
   }
   return make(c, {
-    id: 'slides-boxes-called', name: `Long slides between boxes called out of order (${nameOf(k)} minor pentatonic, B string)`, domain: 'fretboard', method: 'retrieval',
+    id: 'slides-boxes-called', name: `Long slides between boxes out of order (${nameOf(k)} minor pentatonic, B string)`, domain: 'fretboard', method: 'variable',
     unit: 'quarter notes', goal: 84, start: 50, minutes: 4, dl: 1,
-    why: 'A long slide jumps the hand across several boxes in one gesture. Calling the boxes out of order means you must know where each one sits on the string before you leave, which is what makes long slides land.',
-    instr: `Boxes ${order.map(boxName).join(', ')}: slide along the B string into the upper note of each box, play its lower note, return to the upper and hold with vibrato. Cover the tab. Pass: all six from memory, every slide arriving on pitch.`,
+    why: 'A long slide jumps the hand across several boxes in one gesture. Taking the boxes out of order makes every slide a different distance, up or down, which is what long slides in real solos are like.',
+    instr: `Boxes ${order.map(boxName).join(', ')}: slide along the B string into the upper note of each box, play its lower note, return to the upper and hold with vibrato. Watch the target fret on the long ones and loosen the thumb. Pass: all six with every slide arriving on pitch.`,
     watch: 'Stopping short on the long slides.', simplify: 'Neighbouring boxes only.', tab: { notes: liftOpen(notes) }
   });
 }
@@ -275,10 +283,10 @@ export function slideRandom(c) {
     names.push(`${nameOf(k)}m boxes ${boxName(a)}→${boxName(ch[j + 1])}, ${STR[s]}`);
   }
   return make(c, {
-    id: 'slides-random', name: 'Random access: a new key, box and string every bar, joined by slides', domain: 'fretboard', method: 'interleaving',
+    id: 'slides-random', name: 'Mixed bars: a new key, box and string every bar, joined by slides', domain: 'fretboard', method: 'interleaving',
     unit: '8th notes', goal: 96, start: 54, minutes: 5, dl: 1,
-    why: 'At mastery level any box-to-box slide in any key should be ready the moment you need it.',
-    instr: `${names.join(' → ')}. Read only the names: the two notes of the lower box on that string, slide into the next box, slide back, land. Pass: all 8 bars from the names alone at the goal tempo.`,
+    why: 'At mastery level any box-to-box slide in any key should be ready the moment you need it: a new key, box and string every bar.',
+    instr: `${names.join(' → ')}. Each bar: the two notes of the lower box on that string, slide into the next box, slide back, land. Look one bar ahead. Pass: all 8 bars at the goal tempo.`,
     watch: 'Hesitating on box 4 to 5.', simplify: 'The first four bars.', tab: { notes: liftOpen(notes) }
   });
 }
@@ -335,46 +343,123 @@ export function slideEtude(c) {
   });
 }
 /* --------------------------------- The path --------------------------------- */
+const ST = (concept, why, theory) => ({ concept, why, theory });
 export default entry({
   id: 'slides', kind: 'technique', title: 'Slides', domain: 'fretting',
   re: /\bslid(es?|ing)\b(?! guitar)|legato slides?|shift slides?/,
   aliases: ['legato slides', 'shift slides', 'sliding 6ths'],
   summary: 'Moving a note along the string without lifting the finger: legato and shift slides, sliding into and out of notes, joining the five boxes, sliding 6ths and fast position-shifting runs, in any key and in real phrases.',
   prereqs: ['pentatonic'],
-  sources: ['https://www.guitarworld.com/lessons/learning-slide-how-legato-technique-can-enhance-your-sound', 'https://jgmusiclessons.com/how-to-play-slides-on-guitar/', 'https://appliedguitartheory.com/lessons/guitar-sliding-exercises-to-level-up-your-technique/', 'https://www.premierguitar.com/lessons/guthrie-govans-erotic-cakes', 'https://www.merriammusic.com/blog/music-school/sliding-technique-crash-course/'],
+  sources: ['https://www.guitarworld.com/lessons/learning-slide-how-legato-technique-can-enhance-your-sound', 'https://jgmusiclessons.com/how-to-play-slides-on-guitar/', 'https://appliedguitartheory.com/lessons/guitar-sliding-exercises-to-level-up-your-technique/', 'https://songnotes.net/lessons/430/', 'https://www.premierguitar.com/lessons/guthrie-govans-erotic-cakes', 'https://www.andyguitar.co.uk/videos/lesson-6-electric-double-stops-3rds-6ths'],
+  pedagogy: {
+    date: '2026-10-18',
+    summary: 'Taught from the slide itself: the legato slide (pick once, keep contact, ease off while moving and press fully on arrival) and the shift slide (pick the arrival again), up and down on one string, then with every finger, chromatic and scale steps. Then sliding into a note from below, slide-and-return, sliding out, long slides and glissando; slides along the scale and between pentatonic positions so the hand moves across the neck; short pentatonic phrases with slides over a backing, then writing your own. Later, sliding 6ths and horizontal runs with slides (Govan), several keys, and slides chosen for their speed in a solo.',
+    sequence: [
+      { id: 'two', tier: 'foundations', step: 'Legato and shift slides on one string, every finger', how: 'On the G string: a legato slide up and down, then a shift slide up and down; pressure on, ease off, full pressure on arrival; then the same with each finger in turn.', skills: ['slides-motion'], source: 1 },
+      { id: 'into', tier: 'foundations', step: 'Sliding into a note', how: 'A quick slide from below heard as one note; then into each landing note of the scale.', skills: ['slides-into'], source: 2 },
+      { id: 'scale', tier: 'foundations', step: 'Slides up the scale along one string', how: 'The scale and pentatonic along a string, sliding between its notes (steps of different lengths).', skills: ['slides-string'], source: 2 },
+      { id: 'phrase', tier: 'foundations', step: 'Pentatonic phrases with slides', how: 'Short A minor pentatonic phrases with one or two slides, then your own phrase over a backing.', skills: ['slides-first-music'], source: 1 },
+      { id: 'positions', tier: 'intermediate', step: 'Sliding between pentatonic positions', how: 'Slides as the link between boxes, instead of staying locked in one; extended pentatonic patterns that shift position.', skills: ['slides-boxes'], source: 3 },
+      { id: 'strings', tier: 'intermediate', step: 'Other strings and scales', how: 'The same slides on other strings and with the major scale or Dorian (one- and two-fret steps).', skills: ['slides-strings'], source: 2 },
+      { id: 'control', tier: 'intermediate', step: 'Slide and return, sliding out, long slides', how: 'Pick once, slide to a note and back; release pressure toward the nut to fade out; long slides across the neck.', skills: ['slides-control'], source: 0 },
+      { id: 'solo', tier: 'intermediate', step: 'Slides in a solo', how: 'Phrases across positions over a backing; slides into target notes.', skills: ['slides-music'], source: 1 },
+      { id: 'sixths', tier: 'advanced', step: 'Sliding 6ths', how: 'Diatonic 6ths on strings a string apart, slid from one to the next as in Govan-style arpeggio melodies.', skills: ['slides-double'], source: 4 },
+      { id: 'runs', tier: 'advanced', step: 'Runs that shift position with slides; other keys', how: 'A finger ready behind the sliding one; ascending slide phrases answered by descending ones; the box-joining slide in other keys.', skills: ['slides-runs'], source: 4 },
+      { id: 'speed', tier: 'advanced', step: 'Slide speed: long and slow (glissando) slides', how: 'Slow, deliberate slides versus fast arrivals; long slides between distant positions.', skills: ['slides-adv-control'], source: 0 },
+      { id: 'blues', tier: 'advanced', step: 'Slides in blues phrasing', how: 'A solo over a blues that slides between positions.', skills: ['slides-adv-music'], source: 2 },
+      { id: 'tempo', tier: 'mastery', step: 'Performance tempo, any key', how: 'Sliding runs and 6ths up to speed; box-to-box slides in any key.', skills: ['slides-performance', 'slides-random-access'], source: 4 },
+      { id: 'own', tier: 'mastery', step: 'Your own slide music', how: 'A study, then your own phrases and solos built on slides.', skills: ['slides-voice'], source: 1 }
+    ],
+    drills: ['Legato slide up and down, then shift slide up and down, on the G string', 'Chromatic and scale slides with each finger in turn', 'Sliding into each scale note from below', 'Slide-and-return through the scale and the pentatonic', 'Sliding between pentatonic positions', 'Sliding out of notes and long slides across the neck', 'Sliding diatonic 6ths up and down the neck', 'Short pentatonic phrases with slides over a backing'],
+    mistakes: ['Lifting or easing off the finger mid-slide, so the target is silent', 'Gripping too hard (thumb included), so the slide is sluggish', 'Overshooting or missing the target fret', 'A slide speed that doesn’t suit the phrase', 'Sliding only with the comfortable finger', 'The starting note of a slide-in heard as a note of its own'],
+    sources: [
+      { title: 'Learning to Slide: how legato technique can enhance your sound', author: 'Kathy Dickson (Guitar World)', url: 'https://www.guitarworld.com/lessons/learning-slide-how-legato-technique-can-enhance-your-sound' },
+      { title: 'How to Play Slides on Guitar', author: 'JG Music Lessons', url: 'https://jgmusiclessons.com/how-to-play-slides-on-guitar/' },
+      { title: 'Guitar sliding exercises to level up your technique', author: 'Applied Guitar Theory', url: 'https://appliedguitartheory.com/lessons/guitar-sliding-exercises-to-level-up-your-technique/' },
+      { title: 'Pentatonic Slides (Learning Lead Guitar, lesson 3)', author: 'Song Notes', url: 'https://songnotes.net/lessons/430/' },
+      { title: 'Guthrie Govan’s Erotic Cakes (style lesson)', author: 'Sam Bell (Premier Guitar)', url: 'https://www.premierguitar.com/lessons/guthrie-govans-erotic-cakes' }
+    ]
+  },
   ctx: { key: 9, minor: true, prog: 'minorRock' },
   stages: [
     stage('foundations', 'The slide itself',
       'Slide between neighbouring scale notes on the G string so the target sounds at full volume and on the beat at 80 BPM, shift-slide up and down a string, slide into chord tones from below so only the target is heard, slide to a sung pitch, play the pentatonic along the B and G strings naming each degree, and play two sliding phrases over a minor groove.', [
         S('slides-motion', 'Legato and shift slides', 'fretting', 'One finger, two notes, constant pressure.', [
           R_('slides-pair', 'Two notes, one pick stroke: slides up and back on {string} ({key})', 'chunking', { string: 3, n: 5, kind: 'pair', step: 1, goal: 80, start: 50, why: 'The legato slide is two notes for one pick stroke: pick, keep pressing, glide to the next fret, arrive. Doing it between neighbouring scale notes one pair at a time isolates the pressure and the stop.', instr: 'Pick the first note, slide up to the next scale note without picking (/), slide back (\\), rest a beat; then the next pair up the string. Ease off a little as you start moving and press fully as you arrive. Pass: every pair with the target as loud as the picked note, twice.', watch: 'Letting go of the string mid-slide so the target is silent.', simplify: 'Slide up only.' }),
-          R_('slides-shift', 'Shift slides: up and down {string}, picking each arrival ({key})', 'accurate-reps', { string: 3, n: 6, kind: 'shift', step: 0.5, goal: 88, start: 52, why: 'A shift slide moves the hand to a new position and picks the arrival note again, so it is heard clearly on the beat. It is how you change position inside a line without a gap.', instr: 'Pick a note, slide to the next scale note and pick it again as you arrive; continue up the string, then come back down the same way. Count only clean, on-pitch arrivals. Pass: up and down twice with every arrival exactly on the 8th note.', watch: 'Arriving late because the slide started late.', simplify: 'Quarter notes.' })]),
-        S('slides-into', 'Into the target', 'ear', 'Slides that start fast and land exactly.', [c => slideInto(c), c => slideHear(c)]),
-        S('slides-string', 'The scale along a string', 'fretboard', 'Horizontal playing, joined by slides.', [c => slideOneString(c, { string: 2 }), c => slideOneString(c, { string: 3 })]),
-        S('slides-first-music', 'First music', 'improv', 'Phrases hinged on slides.', [c => slidePhrase(c, { level: 1 }), M('transfer', ['callResponse', { chords: '$minorRock', scale: 'minorPent' }])])
+          R_('slides-shift', 'Shift slides: up and down {string}, picking each arrival ({key})', 'accurate-reps', { string: 3, n: 6, kind: 'shift', step: 0.5, goal: 88, start: 52, why: 'A shift slide moves the hand to a new position and picks the arrival note again, so it is heard clearly on the beat. It is how you change position inside a line without a gap.', instr: 'Pick a note, slide to the next scale note and pick it again as you arrive; continue up the string, then come back down the same way. Count only clean, on-pitch arrivals. Pass: up and down twice with every arrival exactly on the 8th note.', watch: 'Arriving late because the slide started late.', simplify: 'Quarter notes.' }),
+          R_('slides-fingers', 'Every finger: half- and whole-step slides up {string} ({key})', 'accurate-reps', { string: 3, n: 6, kind: 'pair', step: 1, scale: 'minor', goal: 80, start: 48, why: 'Slides are not only for the ring finger: the natural minor has half steps (one fret) and whole steps (two), and real lines slide with whichever finger is on the note. Playing the same slides with each finger in turn evens them out, the pinky most of all.', instr: 'The slide pairs up the string, first with the index finger, then the middle, ring and little finger (one pass each). Pick once, slide up, slide back. Pass: four passes, one per finger, every target clear and in tune.', watch: 'The little finger collapsing and buzzing.', simplify: 'Index and ring finger only.' })], ST(
+          'A slide moves a fretted note along the string without lifting the finger. In a legato slide only the first note is picked; in a shift slide the arrival is picked again, so it sounds more defined.',
+          'Slides join notes the way a singer does and move the hand to a new position in the same gesture.',
+          ['Normal pressure to start, ease off while moving, full pressure on arrival.', 'Tab: 7/9 is a slide up, 9\\7 a slide down.', 'Gripping hard with the thumb makes slides sluggish.'])),
+        S('slides-into', 'Into the target', 'fretting', 'Slides that start fast and land exactly.', [c => slideInto(c),
+          R_('slides-into-scale', 'Sliding into each scale note from below on {string} ({key})', 'accurate-reps', { string: 2, n: 6, kind: 'into', step: 1, goal: 80, start: 48, why: 'Sliding into a note from the scale note below is a decoration: the start is a blur and only the target should be heard. Doing it on every note of the scale up one string trains the quick start and the exact stop.', instr: 'For each note: touch the note below with light pressure, already moving, and arrive on the target on the beat with full pressure; let it ring. Up the string. Pass: every target on the beat and in tune, twice.', watch: 'The starting note sounding as a note of its own.', simplify: 'Pick the target again on arrival.' })], ST(
+          'Sliding into a note starts a fret or two below (or above) and arrives on the target: the listener hears one note with a vocal attack.',
+          'It is the most common slide in blues and rock phrasing, an expressive way to start a note.',
+          ['The start is light and short; the target gets the time and the volume.', 'Slide into chord tones (root, 3rd, 5th) to make them stand out.'])),
+        S('slides-string', 'The scale along a string', 'fretboard', 'Horizontal playing, joined by slides.', [c => slideOneString(c, { string: 2 }), c => slideOneString(c, { string: 3 })], ST(
+          'Played along one string, the minor pentatonic is a ladder of two- and three-fret steps; sliding up every second note climbs the neck.',
+          'Playing along a string shows how the box shapes connect horizontally, and slides are what join them.',
+          ['Minor pentatonic steps: 3, 2, 2, 3, 2 frets (R ♭3 4 5 ♭7 R).', 'The same ladder starts on a different fret on each string.'])),
+        S('slides-first-music', 'First music', 'improv', 'Phrases hinged on slides.', [c => slidePhrase(c, { level: 1 }), M('transfer', ['callResponse', { chords: '$minorRock', scale: 'minorPent' }])], ST(
+          'Short pentatonic phrases come alive with one or two slides: a slide up into the ♭7 or the root, a slide back down to finish.',
+          'This is where the slide stops being an exercise and becomes phrasing.',
+          ['Pick only the first note of each slide.', 'Write a short phrase of your own with one slide in it.']))
       ], [1, 3]),
     stage('intermediate', 'Joining the boxes',
-      'Slide between boxes 1–2 and 2–3 on the top strings and through all five boxes in time at 90 BPM, play Dorian and the pentatonic along the high e and G strings, keep long slides alive and slide out of notes cleanly, slide to any named degree from the root, and phrase across three boxes over a minor progression.', [
-        S('slides-boxes', 'Box to box', 'fretboard', 'Slides as the hinges between the five shapes.', [c => slideBoxes(c), c => slideBoxes(c, { a: 2, b: 3 }), c => boxChain(c)]),
-        S('slides-strings', 'Other strings and scales', 'fretboard', 'The same idea on the high e, and with Dorian.', [c => slideOneString(c, { string: 1 }), c => slideOneString(c, { string: 3, scale: 'dorian' })]),
-        S('slides-control', 'Long, out and on demand', 'fretting', 'Long slides that stay alive, falls, and slides to a named degree.', [
+      'Slide between boxes 1–2 and 2–3 on the top strings and through all five boxes in time at 90 BPM, play Dorian and the pentatonic along the high e and G strings, keep long slides alive, slide out of notes cleanly, slide and return from the root to every note of the pentatonic, and phrase across three boxes over a minor progression.', [
+        S('slides-boxes', 'Box to box', 'fretboard', 'Slides as the hinges between the five shapes.', [c => slideBoxes(c), c => slideBoxes(c, { a: 2, b: 3 }), c => boxChain(c)], ST(
+          'Neighbouring pentatonic boxes share notes along each string; sliding from a box’s upper note into the next box moves the hand without a gap.',
+          'Sliding between positions instead of staying locked in one box is how most players cover the neck in a solo.',
+          ['Box 2 starts on box 1’s upper note on each string.', 'Slide with the ring finger and keep the shape of the next box ready.'])),
+        S('slides-strings', 'Other strings and scales', 'fretboard', 'The same idea on the high e, and with Dorian.', [c => slideOneString(c, { string: 1 }), c => slideOneString(c, { string: 3, scale: 'dorian' })], ST(
+          'Each string has its own ladder of the scale; Dorian adds the 2 and the 6, so the slides become one- and two-fret steps.',
+          'Changing the string and the scale changes the slide lengths while the motion stays the same.',
+          ['Dorian: R 2 ♭3 4 5 6 ♭7.', 'Shorter slides need a more exact stop.'])),
+        S('slides-control', 'Long, out and slide-and-return', 'fretting', 'Long slides that stay alive, falls, and slides out and back from the root.', [
           R_('slides-long', 'Long slides: root to 5th and back on {string} ({key})', 'external-focus', { string: 2, kind: 'long', n: 6, step: 1, goal: 76, start: 50, why: 'Sliding seven frets from the root to the 5th is where the note usually dies halfway. Listening for a continuous, full sound across the whole distance trains the steady pressure a long slide needs.', instr: 'Pick the root, slide up to the 5th (seven frets) in one beat, hold it with vibrato, slide back to the root. Listen for the note staying loud the whole way. Pass: four long slides in a row that never fade.', watch: 'Gripping hard with the thumb: it locks the hand.', simplify: 'Root to 4th (five frets).' }),
           R_('slides-out', 'Falling off notes: hold, then slide out down {string} ({key})', 'variable', { string: 1, kind: 'out', n: 6, step: 1, goal: 80, start: 50, why: 'Sliding out of a note (holding it, then letting it fall to the note below as the pressure eases) ends a phrase with a sigh instead of a full stop. Practised on each step of the scale it becomes controllable.', instr: 'Hold each note with a little vibrato, then slide down to the next scale note below on the “and” and stop there. Work down the high e string. Pass: every fall landing on its note and in time, twice.', watch: 'Sliding all the way down the neck: stop on the next note.', simplify: 'Slide out without stopping on a note (a fall-off).' }),
-          c => slideDegrees(c)]),
-        S('slides-music', 'In music', 'improv', 'Phrases across boxes, and a solo.', [c => slidePhrase(c, { level: 2 }), c => targetGuide(c, { prog: 'minorRock', scale: 'minorPent', name: 'Solo that slides into every guide note' })])
+          c => slideDegrees(c)], ST(
+          'Long slides cross several frets in one gesture; sliding out releases a note toward the nut; slide-and-return picks once, slides away and comes back.',
+          'Control over distance and release is what makes slides land in a solo instead of smearing.',
+          ['Loosen the thumb for long slides; keep it still for short ones.', 'Watch the target fret on long slides to avoid overshooting.'])),
+        S('slides-music', 'In music', 'improv', 'Phrases across boxes, and a solo.', [c => slidePhrase(c, { level: 2 }), c => targetGuide(c, { prog: 'minorRock', scale: 'minorPent', name: 'Solo that slides into every guide note' })], ST(
+          'A phrase that slides through two or three boxes travels the neck while it sings.',
+          'Slides into guide notes (the chord tones that change with the harmony) make a solo follow the chords.',
+          ['Slide into the target on the strong beat.', 'Rest after a long slide so it is heard.']))
       ], [4, 6]),
     stage('advanced', 'Double stops, runs and keys',
-      'Slide diatonic 6ths up and down the G and high e strings with both notes arriving together, play sliding runs up the top two strings in triplets at 100 BPM, join boxes in four keys without stopping, land long slides between boxes called out of order, slide vocally over slow changes, and phrase across the neck over a blues.', [
-        S('slides-double', 'Double-stop slides', 'fretting', 'Two fingers sliding as one.', [c => slideSixths(c), c => slideSixths(c, { scale: 'minor' })]),
-        S('slides-runs', 'Runs and keys', 'fretting', 'Slides inside fast lines; the shapes in any key.', [c => slideRuns(c), c => slideKeys(c)]),
-        S('slides-adv-control', 'Long and vocal', 'fretboard', 'Long slides from memory; slow, singing slides.', [c => boxesCalled(c), c => vocalSlides(c)]),
-        S('slides-adv-music', 'In a solo', 'improv', 'Sliding blues phrases.', [c => slidePhrase(c, { level: 3 }), c => targetGuide(c, { prog: 'blues', scale: 'minorPent', name: 'Blues solo: slide between at least three boxes every chorus' })])
+      'Slide diatonic 6ths up and down the G and high e strings with both notes arriving together, play sliding runs up the top two strings in triplets at 100 BPM, join boxes in four keys without stopping, land long slides between boxes out of order, slide vocally over slow changes, and phrase across the neck over a blues.', [
+        S('slides-double', 'Double-stop slides', 'fretting', 'Two fingers sliding as one.', [c => slideSixths(c), c => slideSixths(c, { scale: 'minor' })], ST(
+          'A 6th on the G and high e strings (the B string muted between) slides as one shape to the next 6th of the scale.',
+          'Sliding 6ths are a soul, country and fusion sound; Guthrie Govan slides them through whole melodies.',
+          ['A diatonic 6th is a 3rd turned upside down.', 'Both fingers move together and arrive together.'])),
+        S('slides-runs', 'Runs and keys', 'fretting', 'Slides inside fast lines; the shapes in any key.', [c => slideRuns(c), c => slideKeys(c)], ST(
+          'In a fast run a slide on every second note shifts position without a visible jump: the line climbs the neck string by string.',
+          'This is the horizontal, flowing run of fusion and blues-rock players, and the box-joining slide works in every key.',
+          ['Have the next finger ready behind the one that slides.', 'An ascending sliding run is often answered by a descending one.'])),
+        S('slides-adv-control', 'Long and vocal', 'fretboard', 'Long slides out of order; slow, singing slides.', [c => boxesCalled(c), c => vocalSlides(c)], ST(
+          'Long slides between distant boxes and slow, vocal slides (the pitch rising through the gap and settling) are the two extremes of slide speed.',
+          'Choosing the speed of a slide is part of the phrase: a slow slide sounds deliberate, a fast one arrives sharply.',
+          ['Add vibrato only after the slide has arrived.', 'A slow slide that sounds every fret is a glissando.'])),
+        S('slides-adv-music', 'In a solo', 'improv', 'Sliding blues phrases.', [c => slidePhrase(c, { level: 3 }), c => targetGuide(c, { prog: 'blues', scale: 'minorPent', name: 'Blues solo: slide between at least three boxes every chorus' })], ST(
+          'Over a blues, slides carry phrases from the high boxes back home to box 1.',
+          'Horizontal phrasing over a blues is where slides do most of their work.',
+          ['End the chorus on the root after a slide down.', 'Mix short slides into notes with long position slides.']))
       ], [7, 8]),
     stage('mastery', 'Fluent, fast and your own',
-      'Play sliding runs in 16ths and sliding 6ths in 8ths at performance tempo, any key, box and string on demand, and perform your own 8-bar slide study.', [
-        S('slides-performance', 'Performance tempo', 'fretting', 'Slides at speed.', [c => slideRuns(c, { fast: true }), c => slideSixths(c, { fast: true })]),
-        S('slides-random-access', 'Any key, any box', 'fretboard', 'No warning.', [c => slideRandom(c), c => targetGuide(c, { prog: 'dorianVamp', scale: 'dorian', name: 'Dorian vamp solo: slide into every bar line' })]),
-        S('slides-voice', 'Your own voice', 'improv', 'A study, then your version.', [c => slideEtude(c), c => targetGuide(c, { prog: 'slowBlues', scale: 'minorPent', name: 'Slow blues: long, vocal slides and space' })])
+      'Play sliding runs in 16ths and sliding 6ths in 8ths at performance tempo, box-to-box slides in a new key every bar, and perform your own 8-bar slide study.', [
+        S('slides-performance', 'Performance tempo', 'fretting', 'Slides at speed.', [c => slideRuns(c, { fast: true }), c => slideSixths(c, { fast: true })], ST(
+          'At performance tempo the slides have to land as exactly as picked notes.',
+          'Fast sliding runs and 6ths are the vocabulary of fluid fusion and soul lines.',
+          ['Raise the tempo only after a clean pass.', 'Relax the hand between runs.'])),
+        S('slides-random-access', 'Any key, any box', 'fretboard', 'A new key every bar.', [c => slideRandom(c), c => targetGuide(c, { prog: 'dorianVamp', scale: 'dorian', name: 'Dorian vamp solo: slide into every bar line' })], ST(
+          'A new key, box and string every bar tests the box-joining slide anywhere on the neck.',
+          'In a real solo the slide has to be ready wherever the hand is.',
+          ['Look one bar ahead.', 'Slide into the bar line to mark each new chord.'])),
+        S('slides-voice', 'Your own voice', 'improv', 'A study, then your version.', [c => slideEtude(c), c => targetGuide(c, { prog: 'slowBlues', scale: 'minorPent', name: 'Slow blues: long, vocal slides and space' })], ST(
+          'The capstone study uses every slide of the path; then you write your own on the same plan.',
+          'A technique becomes yours when you compose and improvise with it.',
+          ['Learn the study two bars at a time.', 'Keep the plan, change the phrases.']))
       ], [9, 10])
   ]
 });

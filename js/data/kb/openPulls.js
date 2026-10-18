@@ -15,6 +15,15 @@
 // composer `opRun(c, spec)` builds an exercise from figure × melody plan (a list of scale steps above
 // the pedal) × string plan (one string, or a cascade across the open strings in the key) × scale
 // (natural minor, minor pentatonic, major, Dorian) × key plan × rhythm.
+//
+// Teaching method first (CONTENT.md, `pedagogy` below), audited 2026-10-18: the pull-off motion (pull
+// down, not lift off) on one string, even volume and muting the idle strings, triplets climbing one open
+// string with the first of each three accented, other strings, a first fill; then 16ths, double pull-offs
+// and hammers from the open string, cascades across the open strings, pentatonic and other keys, riff and
+// fill; then sextuplets, Dorian and blues colours, four keys, solos; then tempo, every key and your own
+// piece. Removed: singing over the drone (`op-sing`), covering the tab, naming notes and "from memory"
+// versions (`op-find`, `op-called`, `op-blues`, `op-six-keys`, the "read only the names" bars of
+// `op-random`); added `op-mute` (muting the idle strings) and `op-accent` (accented triplets climbing).
 import { OPEN, N, nameOf, make, mod12, S, stage, entry, targetGuide } from '../lib.js';
 import { rng } from './bending.js';
 
@@ -157,9 +166,9 @@ export function opRandom(c) {
     names.push(`${SN[ped.s]} string, ${F.name}, ${plan}`);
   }
   return make(c, {
-    id: 'op-random', name: `Random access: a new string, figure and direction every bar (${nameOf(k)} ${c.minor ? 'minor' : 'major'})`, domain: 'fretboard', method: 'interleaving', unit: 'mixed groupings', goal: 104, start: 58, minutes: 5, dl: 1, tab: { notes },
-    why: 'At mastery level open-string figures are vocabulary: a random string, figure and direction every bar makes them available on demand instead of as rehearsed runs.',
-    instr: `${names.join(' → ')}. Read only the names: find the scale on that string and play the figure. Pass: all 8 bars in time from the names alone.`,
+    id: 'op-random', name: `Mixed bars: a new string, figure and direction every bar (${nameOf(k)} ${c.minor ? 'minor' : 'major'})`, domain: 'fretboard', method: 'interleaving', unit: 'mixed groupings', goal: 104, start: 58, minutes: 5, dl: 1, tab: { notes },
+    why: 'At mastery level open-string figures are vocabulary: a new string, figure and direction every bar is the way they turn up in a solo, rather than one rehearsed run.',
+    instr: `${names.join(' → ')}. Each bar changes string, figure or direction; keep the click steady through the changes and mute the string you leave. Pass: all 8 bars in time.`,
     watch: 'Every bar becoming the same figure.', simplify: 'Triplets in every bar.'
   });
 }
@@ -191,7 +200,7 @@ function opStudy(c, { capstone = false } = {}) {
     domain: 'improv', method: 'transfer', unit: 'mixed groupings', goal: capstone ? 100 : 88, start: capstone ? 56 : 50, minutes: capstone ? 8 : 6, dl: capstone ? 1 : 0,
     backing: chords, chords: [...new Set(chords)], tab: { notes },
     why: capstone ? 'An original 16-bar piece that uses the whole path: a palm-muted riff, triplets, double pull-offs, the 16th climb and sextuplet cascades on every open string of the key, over a one-chord vamp with a Dorian colour.' : 'An original 8-bar piece in the style of early hard rock: a palm-muted riff on the low string answered by open-string pull-off fills on the top strings, ending on the root.',
-    instr: capstone ? 'Learn it four bars at a time; name each bar’s figure and string first. Then write your own 16 bars on the same plan (riff, fill, riff, fill …). Pass: the study at the goal tempo, then your own version once.' : 'Learn it two bars at a time, then as one piece. The riff bars stay tight and muted; the fills ring. Pass: two times through at the goal tempo with no gap between riff and fill.',
+    instr: capstone ? 'Learn it four bars at a time, slowly, then join the sections. Then write your own 16 bars on the same plan (riff, fill, riff, fill …). Pass: the study at the goal tempo, then your own version once.' : 'Learn it two bars at a time, then as one piece. The riff bars stay tight and muted; the fills ring. Pass: two times through at the goal tempo with no gap between riff and fill.',
     watch: 'The fills rushing ahead of the riff.', simplify: capstone ? 'Bars 1–8.' : 'Bars 1–4.'
   });
 }
@@ -207,7 +216,37 @@ export default entry({
   aliases: ['open string licks', 'open string legato', 'pull-offs to open strings'],
   summary: 'Fretted notes pulled off to a ringing open string: from the first pull-off, through melodies over the open-string pedal, double pull-offs, hammer-from-open figures and cascades across the open strings of the key, to 16th and sextuplet runs, riffs with open-string fills, random access at tempo and an original study.',
   prereqs: [],
-  sources: ['https://guitarworld.com/lessons/last-licks-open-string-riffs', 'https://www.guitarplayer.com/lessons/eddie-van-halens-playing-secrets-how-to-solo-like-the-lead-guitar-legend', 'https://guitargearfinder.com/lessons/pull-off-exercises', 'https://www.premierguitar.com/lessons/electric-etudes-eddie-van-halen-techniques'],
+  sources: ['https://www.sweetwater.com/insync/how-to-play-pull-offs-guitar-lesson/', 'https://www.guitarworld.com/lessons/techniques/if-you-learn-one-thing-from-angus-young-it-should-be-this', 'https://guitarworld.com/lessons/last-licks-open-string-riffs', 'https://www.guitarmasterclass.net/ls/Open-String-Solo', 'https://fretjam.com/pull-off-exercises.html', 'https://www.guitarplayer.com/lessons/eddie-van-halens-playing-secrets-how-to-solo-like-the-lead-guitar-legend'],
+  pedagogy: {
+    date: '2026-10-18',
+    summary: 'Taught from the pull-off motion up: pick a fretted note and pull the finger down off the string (a pluck, not a lift) so the open string sounds as loud as the picked note, with both hands muting the idle strings. Then a repeating pull-off triplet that climbs one open string (accenting the first note of each three), the same on other strings, and the open string used as a pedal under a scale; then 16ths, double pull-offs and hammers from the open string, runs across the open strings of the key, pentatonic, Dorian and blues versions, and finally inserting the runs into riffs and solos.',
+    sequence: [
+      { id: 'motion', tier: 'foundations', step: 'The pull-off motion to the open string', how: 'Pick the fretted note, then pull the fingertip down and slightly away so it plucks the string; the open string needs no fretting. Pull, don’t lift off, and don’t drag the string sharp.', skills: ['op-motion'], source: 0 },
+      { id: 'clean', tier: 'foundations', step: 'Even volume and muting the idle strings', how: 'Balance the slurred and picked notes; the picking-hand palm and the fretting finger keep every other open string quiet.', skills: ['op-hear'], source: 2 },
+      { id: 'climb', tier: 'foundations', step: 'A repeating triplet climbing one open string', how: 'Pull-off triplets on one open string (the G string in the classic E-minor lick), repeating and moving up the neck, the first note of each three accented; then on other strings.', skills: ['op-where'], source: 1 },
+      { id: 'phrase', tier: 'foundations', step: 'A first open-string fill in a phrase', how: 'Insert an open string, hammer-on or pull-off into a familiar rock or blues phrase over a backing.', skills: ['op-first-music'], source: 1 },
+      { id: 'speed', tier: 'intermediate', step: '16th-note figures over the pedal', how: 'Pull-off 16ths and the pick–pull–pull–hammer climb against the click; fretted notes pulled off to the same pedal note.', skills: ['op-sixteenths'], source: 4 },
+      { id: 'double', tier: 'intermediate', step: 'Double pull-offs and hammers from the open string', how: 'A hammer-on followed by a double pull-off to the open string; picking the open string and hammering up.', skills: ['op-double'], source: 2 },
+      { id: 'cascade', tier: 'intermediate', step: 'Cascades across the open strings of the key', how: 'Runs that fall from one open string to the next, mixing groupings (triplets slowing to 16ths), muting each string as it is left.', skills: ['op-cascade'], source: 2 },
+      { id: 'scales', tier: 'intermediate', step: 'The pentatonic and other keys', how: 'Choose an open string that belongs to the scale (root or another scale tone) and lay the minor pentatonic over it, in A, B and E minor.', skills: ['op-recall'], source: 3 },
+      { id: 'riff', tier: 'intermediate', step: 'Riff and fill', how: 'Palm-muted low open-string riffing answered by pull-off fills on the top strings; a short study.', skills: ['op-music'], source: 1 },
+      { id: 'six', tier: 'advanced', step: 'Sextuplets and 16th-note-triplet cascades', how: 'Fast cascades of six notes a beat, accent on the picked note, across the open strings.', skills: ['op-six'], source: 2 },
+      { id: 'colours', tier: 'advanced', step: 'Dorian, Mixolydian and blues-scale colours', how: 'The same figures with E Dorian, the blues scale and Mixolydian over an open-string pedal.', skills: ['op-colours'], source: 2 },
+      { id: 'keys', tier: 'advanced', step: 'Several keys and wider contours', how: 'The figures in other keys (A and B Dorian, G Mixolydian) and with wider, zigzag contours.', skills: ['op-keys-adv'], source: 3 },
+      { id: 'solo', tier: 'advanced', step: 'Runs inside a solo', how: 'A mini solo combining the figures: picked phrases answered by open-string runs back to the root.', skills: ['op-adv-music'], source: 1 },
+      { id: 'tempo', tier: 'mastery', step: 'Performance tempo and every key', how: 'The cascades at tempo, figures changing every bar, and the climb in keys that need a fretted pedal.', skills: ['op-perf', 'op-recall-m'], source: 2 },
+      { id: 'own', tier: 'mastery', step: 'Your own open-string piece', how: 'Compose and improvise with the figures over a riff.', skills: ['op-voice'], source: 3 }
+    ],
+    drills: ['Pick a fretted note, pull off to the open string, counting only even pairs', 'Pull-off triplets repeating and climbing one open string, first note accented', 'Pulling off to the same pedal note from each scale step', 'A hammer-on followed by a double pull-off to the open string', 'Cascades across the open strings of the key', 'The same figures in the pentatonic, Dorian and blues scale', 'A palm-muted riff answered by open-string fills'],
+    mistakes: ['Lifting the finger straight up, so the open string barely sounds', 'Dragging the string sideways, so the fretted note goes sharp', 'The pulling finger catching the next string, or idle open strings ringing', 'Uneven volume between picked and slurred notes', 'Triplets drifting off the click (no accent on the first note)', 'An open string that is not in the key'],
+    sources: [
+      { title: 'How to Play Pull-Offs (guitar lesson)', author: 'Nick Bowcott (Sweetwater inSync)', url: 'https://www.sweetwater.com/insync/how-to-play-pull-offs-guitar-lesson/' },
+      { title: 'If you learn one thing from Angus Young it should be this', author: 'Guitar World', url: 'https://www.guitarworld.com/lessons/techniques/if-you-learn-one-thing-from-angus-young-it-should-be-this' },
+      { title: 'Last Licks: open-string riffs', author: 'Martin Goulding (Guitar World)', url: 'https://guitarworld.com/lessons/last-licks-open-string-riffs' },
+      { title: 'Open String Solo', author: 'GuitarMasterClass', url: 'https://www.guitarmasterclass.net/ls/Open-String-Solo' },
+      { title: 'Pull-off exercises', author: 'Fretjam', url: 'https://fretjam.com/pull-off-exercises.html' }
+    ]
+  },
   ctx: { key: 4, minor: true, prog: 'minorRock' },
   stages: [
     stage('foundations', 'Pull off to the open string',
@@ -218,17 +257,17 @@ export default entry({
           'A pull-off sounds a lower note without picking: the finger plucks the string as it leaves. With an open string, the lower note is the open string itself.',
           'It is the fastest legato on the guitar: one finger and the open string can play a whole run.',
           ['Pull off downward (toward the floor), not straight up.', 'The open string is a fixed note: it must belong to the key for the run to sound right.'])),
-        S('op-hear', 'Hear the pedal', 'ear', 'The open string as a drone.', [
+        S('op-hear', 'Even notes, quiet strings', 'fretting', 'Even triplets; muting the idle strings.', [
           O_('op-even', 'Listen for an even line: pull–hammer triplets ({key}, {string})', 'external-focus', { fig: 'trip', plan: 'up', beats: 6, goal: 72, start: 40, why: 'An open-string triplet should sound like three picked notes. Listening for an even volume (rather than watching the fingers) fixes a soft pull-off or a late hammer.', instr: HOW + 'Pick, pull off to the open string, hammer the next scale note. Listen: three notes, the same volume and length. Pass: every triplet even.', watch: 'The hammered note coming early.', simplify: 'Pairs instead of triplets.' }),
-          O_('op-sing', 'Sing it first: the scale over the open-string drone ({key}, {string})', 'audiation', { fig: 'pair', plan: 'up', beats: 6, goal: 70, start: 40, why: 'The open string is a drone, and each fretted note makes an interval with it. Singing the scale against the drone puts those intervals in the ear before the fingers play them.', instr: 'Let the open string ring and sing each scale note above it; then play the pairs. Pass: you can sing the line and the playing matches it.', watch: 'Playing a fret that isn’t in the scale.', simplify: 'The first four notes.' })], ST(
-          'An open string used as a repeating note is a pedal (a drone). Each fretted note forms an interval with it: the sound of the run is those intervals.',
-          'Hearing the pedal is what makes these runs melodic instead of mechanical.',
-          ['The open e string is E: in E minor it is the root; in A minor the 5th.', 'A run sounds even when every note has the same volume and length.'])),
-        S('op-where', 'Where the notes are', 'fretboard', 'The scale on one string, from memory.', [
-          O_('op-find', 'From memory: the {scale} up the string above the open note ({key}, {string})', 'retrieval', { fig: 'pair', plan: 'up', beats: 8, goal: 72, start: 40, why: 'Open-string licks need the scale laid out along one string. Finding it from memory (by step: whole or half) is what lets you invent your own runs.', instr: 'Cover the tab. Say each note name as you go up the string from the open note, fret it and pull off. Pass: eight notes up from memory.', watch: 'Using the same fret spacing everywhere: steps are whole or half.', simplify: 'Look once, then cover.' }),
+          O_('op-mute', 'Muting the idle strings: pull-off pairs on the G string ({key}, {string})', 'accurate-reps', { fig: 'pair', plan: 'updown', beats: 8, strings: [3, 2, 1], goal: 72, start: 40, why: 'An open string rings whenever it is touched, so open-string licks are noisy until both hands mute: the pulling finger must not catch the string below, and the picking-hand palm rests on the strings you are not playing.', instr: HOW + 'Rest the picking-hand palm on the low strings and let the underside of the fretting finger touch the higher strings lightly. Stop after each pass and listen: only the string you play should ring. Pass: 16 pairs with no other string sounding.', watch: 'The pull-off flicking the next string, which then rings on.', simplify: 'Quarter notes, three frets.' })], ST(
+          'An open string used as a repeating note is a pedal. Because it is open it also rings whenever something brushes it, so the idle strings have to be muted by both hands.',
+          'Even volume and silence around the line are what make these runs sound fast and clean instead of smeared.',
+          ['Pull down and slightly away from the neck, so the finger clears the next string.', 'A run sounds even when every note has the same volume and length.'])),
+        S('op-where', 'Triplets up the string', 'fretting', 'Climbing one string; other strings.', [
+          O_('op-accent', 'Triplets climbing the neck, accenting the first of each three ({key}, {string})', 'edge', { fig: 'trip', plan: 'up', beats: 8, goal: 76, start: 42, why: 'The classic first open-string lick is a pull-off triplet that repeats and climbs the string one scale step at a time. A light accent on the first (picked) note of every three keeps the triplets locked to the click.', instr: HOW + 'Pick the first note of each triplet a little harder than the slurred two, and feel it land on the click. Tempo ladder: +4 BPM after each clean pass. Pass: eight beats with every accent on the click.', watch: 'The triplets turning into uneven pairs as the hand climbs.', simplify: 'The first four beats only.' }),
           O_('op-b-string', 'On another string: pull-offs on the B or G string ({key}, {string})', 'variable', { fig: 'trip', plan: 'up', beats: 6, strings: [2, 3, 1], goal: 72, start: 40, why: 'Every open string gives a different pedal note and a different fret pattern. Playing the same figure on another string varies the layout while the motion stays the same.', instr: HOW + 'Play the triplets on the string shown. Mute the strings above it with the side of the picking hand. Pass: every triplet clean.', watch: 'The higher strings ringing.', simplify: 'Pairs.' })], ST(
-          'The scale above an open string is a ladder of whole and half steps. Each string’s ladder starts from a different note.',
-          'Knowing the ladder by ear and name lets you build licks instead of copying them.',
+          'The scale above an open string is a ladder of whole and half steps. Each string’s ladder starts from a different note, so the fret pattern changes from string to string.',
+          'Climbing one string with a repeated figure is how most open-string licks are built; moving it to another string gives a new pedal note.',
           ['Natural minor steps: W H W W H W W.', 'In keys like E, A, D and G several open strings are in the scale; in others only one is.'])),
         S('op-first-music', 'First music', 'improv', 'A melody with the band; answers.', [
           O_('op-first-melody', 'First open-string melody with the band ({key}, {string})', 'transfer', { fig: 'trip', plan: 'hold', beats: 8, reps: 2, backing: rockProg, goal: 74, start: 42, why: 'With a backing the pedal becomes part of the harmony: the open string rings against the chords and the fretted notes make a melody over it.', instr: HOW + 'Two times through with the backing. Pass: 16 bars in time.', watch: 'Stopping at the end of each pass.', simplify: 'Pairs.' }),
@@ -253,15 +292,15 @@ export default entry({
           ['Fret both notes before you pick.', 'A hammer must land hard and right behind the fret.'])),
         S('op-cascade', 'Across the open strings', 'fretboard', 'Cascades; mixed strings.', [
           O_('op-cascade', 'Cascade across the open strings of the key ({key})', 'interleaving', { cascade: true, fig: 'trip', plan: 'down', beats: 4, goal: 100, start: 54, why: 'In keys like E, A and D several open strings belong to the scale. Running a figure down one string, then the next, links them into one long cascade.', instr: HOW + 'Four beats on each open string of the key, top string first. Mute each string after you leave it. Pass: the whole cascade without a gap at the string changes.', watch: 'The last string still ringing under the next.', simplify: 'Two strings.' }),
-          O_('op-mixed-fig', 'Mixed figures: pull-off 16ths, triplets and the climb in turn ({key}, {string})', 'interleaving', { figs: ['pair16', 'trip', 'climb'], plan: 'up', beats: 9, unit: 'mixed groupings', goal: 96, start: 52, why: 'Changing figure every beat breaks the habit of one rhythm: the hand has to choose the grouping each time, which is harder in practice and sticks better.', instr: HOW + 'Beat by beat: pull-off 16ths, then a triplet, then the climb, one scale step higher each beat. Say the figure aloud before each beat at first. Pass: the whole run in time.', watch: 'All runs at the same speed whatever the figure.', simplify: 'One string.' })], ST(
+          O_('op-mixed-fig', 'Mixed figures: pull-off 16ths, triplets and the climb in turn ({key}, {string})', 'interleaving', { figs: ['pair16', 'trip', 'climb'], plan: 'up', beats: 9, unit: 'mixed groupings', goal: 96, start: 52, why: 'Changing figure every beat breaks the habit of one rhythm: the hand has to choose the grouping each time, which is harder in practice and sticks better.', instr: HOW + 'Beat by beat: pull-off 16ths, then a triplet, then the climb, one scale step higher each beat. Pass: the whole run in time.', watch: 'All runs at the same speed whatever the figure.', simplify: 'One string.' })], ST(
           'A cascade links runs on several open strings, each one a pedal of the key.',
           'It turns a one-string trick into a fill that covers the neck.',
           ['Only open strings that are in the key can join the cascade.', 'Mute the string you leave with the picking-hand palm.'])),
-        S('op-recall', 'From memory', 'fretboard', 'Called notes; the pentatonic version.', [
-          O_('op-called', 'From memory: the minor pentatonic over the open string ({key}, {string})', 'retrieval', { scale: 'pent', fig: 'pair16', plan: 'updown', beats: 8, goal: 98, start: 52, why: 'The pentatonic over the pedal has fewer, wider steps: the bluesier sound of open-string riffs. Finding it from memory means knowing which frets to skip.', instr: 'Cover the tab. Name the pentatonic notes up the string, then play the run. Pass: up and down from memory.', watch: 'Playing natural-minor notes by habit.', simplify: 'Up only.' }),
+        S('op-recall', 'Pentatonic and other keys', 'fretboard', 'The pentatonic version; three keys.', [
+          O_('op-called', 'The {scale} over the open string: pull-off 16ths ({key}, {string})', 'variable', { scale: 'pent', fig: 'pair16', plan: 'updown', beats: 8, goal: 98, start: 52, why: 'The pentatonic over the pedal has fewer, wider steps: the bluesier sound of most rock open-string licks. The wider gaps mean longer reaches between fretted notes.', instr: HOW + 'Pull-off 16ths up the {scale} and back down. Pass: eight beats clean, up and down.', watch: 'Playing natural-minor notes by habit.', simplify: 'Up only.' }),
           O_('op-keys', 'Interleaved keys: the run in E, A and D minor shapes ({key} and up)', 'interleaving', { fig: 'trip', plan: 'up', beats: 6, keys: [0, 5, 10], goal: 96, start: 52, why: 'In a new key a different open string becomes the pedal and the ladder changes. Three keys in a row make you rebuild it each time.', instr: HOW + 'The run in three keys a fourth apart. Pass: all three without stopping.', watch: 'The old key’s frets.', simplify: 'Two keys.' })], ST(
           'Each key has its own pedal string and ladder; the pentatonic version skips the scale’s half steps.',
-          'Recalling them in any key makes the technique portable.',
+          'Most open-string licks live in E, A, D and G; playing the figures in several keys makes the technique portable.',
           ['Minor pentatonic: R ♭3 4 5 ♭7.', 'In a key where no open string is in the scale, a fretted note held by the index works as the pedal.'])),
         S('op-music', 'In music', 'improv', 'A riff with fills; a study.', [
           O_('op-riff', 'Riff and fill: palm-muted low notes, open-string answers ({key}, {string})', 'transfer', { fig: 'trip', plan: 'up', beats: 8, riff: true, backing: rockProg, goal: 100, start: 54, why: 'Hard-rock rhythm parts often alternate a palm-muted low pedal with open-string licks on the top strings: rhythm and lead in one part.', instr: HOW + 'Odd beats: two palm-muted 8ths on the low string. Even beats: the open-string triplet. Pass: eight bars in time with the muted notes short and the triplets ringing.', watch: 'The palm mute staying on during the fills.', simplify: 'Riff beats only, then fills only.' }),
@@ -280,7 +319,7 @@ export default entry({
           ['Keep the pick stroke only on the first note of each six.', 'Relax the fretting hand between bursts.'])),
         S('op-colours', 'Other scales', 'fretboard', 'Dorian and blues.', [
           O_('op-dorian', 'A colour scale over the open string: {scale} ({key}, {string})', 'variable', { scale: 'dorian', fig: 'double', plan: 'down', beats: 8, goal: 88, start: 50, why: 'Changing one note of the scale changes the colour of the same run: Dorian (a major 6th) brightens a minor key, Mixolydian (a ♭7) roughens a major one.', instr: HOW + 'Double pull-offs down the {scale}. Listen for the one note that differs from the plain scale. Pass: eight beats clean.', watch: 'Slipping back to the plain scale by habit.', simplify: 'Pairs.' }),
-          O_('op-blues', 'From memory: the {scale} ({key}, {string})', 'retrieval', { scale: 'blues', fig: 'climb', plan: 'updown', beats: 8, goal: 88, start: 50, why: 'The blues scale adds one passing note to the pentatonic (the ♭5 in minor, the ♭3 in major): the gritty sound of blues-rock open-string licks. Finding it from memory is knowing exactly where the extra fret sits.', instr: 'Cover the tab. Name the notes of the {scale} up the string, then play the climb up and down. Pass: from memory, in time.', watch: 'Resting on the passing note.', simplify: 'Up only.' })], ST(
+          O_('op-blues', 'The climb in the {scale} ({key}, {string})', 'variable', { scale: 'blues', fig: 'climb', plan: 'updown', beats: 8, goal: 88, start: 50, why: 'The blues scale adds one passing note to the pentatonic (the ♭5 in minor, the ♭3 in major): the gritty sound of blues-rock open-string licks.', instr: HOW + 'The 16th-note climb up the {scale} and back down; let the passing note pass, don’t stop on it. Pass: eight beats in time.', watch: 'Resting on the passing note.', simplify: 'Up only.' })], ST(
           'Any scale can sit over the open-string pedal: Dorian (natural minor with a major 6th) and the blues scale (pentatonic plus ♭5) are the common colours.',
           'Changing the scale changes the mood of the same figures.',
           ['Dorian: R 2 ♭3 4 5 6 ♭7.', 'Blues scale: R ♭3 4 ♭5 5 ♭7; the ♭5 passes, it doesn’t rest.'])),
@@ -303,12 +342,12 @@ export default entry({
           O_('op-perf', 'Performance tempo: sextuplet cascades in two keys ({key})', 'edge', { cascade: true, fig: 'six', plan: 'down', beats: 2, keys: [0, 7], goal: 100, start: 56, why: 'Sextuplet cascades in two keys: speed, muting and string changes at performance tempo.', instr: HOW + 'Tempo ladder: +4 BPM after each clean pass. Pass: clean at the goal tempo.', watch: 'Tension in the fretting hand.', simplify: 'One key.' }),
           c => opRandom(c)], ST(
           'Mastery is speed with control and figures you can call up in any order.',
-          'Random order makes the figures last.',
-          ['Raise the tempo only after a clean pass.', 'Read the name, not the tab.'])),
-        S('op-recall-m', 'From memory', 'fretboard', 'Six keys; improvising.', [
-          O_('op-six-keys', 'From memory: the climb in six keys', 'retrieval', { fig: 'climb', plan: 'up', beats: 6, keys: [0, 5, 10, 3, 8, 1], goal: 96, start: 54, why: 'Six keys from memory: each needs its pedal and ladder found on the spot, including keys with a capo pedal.', instr: 'Cover the tab. For each key, name the pedal string and the first three scale notes above it, then play the climb. Pass: all six keys in time.', watch: 'A long pause at each key.', simplify: 'Three keys.' }),
+          'Changing figure, string and direction every bar is how the runs appear in a real solo.',
+          ['Raise the tempo only after a clean pass.', 'Mute each string as you leave it.'])),
+        S('op-recall-m', 'Every key', 'fretboard', 'Six keys; improvising.', [
+          O_('op-six-keys', 'The climb in six keys around the cycle of fourths', 'interleaving', { fig: 'climb', plan: 'up', beats: 6, keys: [0, 5, 10, 3, 8, 1], goal: 96, start: 54, why: 'Six keys in a row, including keys where no open string is in the scale and the index finger holds a "capo" pedal: the same figure on a new pedal and ladder every few bars.', instr: HOW + 'The climb in six keys a fourth apart, no gap between keys. Pass: all six keys in time.', watch: 'A long pause at each key.', simplify: 'Three keys.' }),
           c => targetGuide(c, { prog: c.minor ? 'minorRock' : 'mixo', scale: c.minor ? 'minorPent' : 'majorPent', name: 'Improvise: two choruses mixing picked phrases and open-string runs' })], ST(
-          'Recall in six keys shows the model is learned: pedal, ladder, figure.',
+          'Six keys show the model is learned: pedal, ladder, figure.',
           'Improvising with it means choosing when a run adds something.',
           ['Name the pedal before you play.', 'Use open-string runs as punctuation, not as the whole solo.'])),
         S('op-voice', 'Your own piece', 'improv', 'A capstone study, then your version.', [c => opEtude(c),

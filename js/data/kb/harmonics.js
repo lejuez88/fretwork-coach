@@ -15,6 +15,15 @@
 // Pinch harmonics are written `ah` on picked notes of a riff (their exact overtone depends on where the
 // pick strikes). The composer `hmRun(c, spec)` builds an exercise from kind (natural | chime | tapped |
 // harp | pinch | riff) × node set × string set × plan (up, down, motif) × key plan × whammy move.
+//
+// Teaching method first (CONTENT.md, `pedagogy` below), audited 2026-10-18: natural harmonics at 12, then
+// 7 and 5 (touch over the wire, pick, lift), alternating the open string with its harmonic, all six
+// strings and chimes, melodies from the harmonics of a key; then the 4th fret, touched and tapped
+// harmonics 12 frets above fretted notes and chords, pinch harmonics (one motion, thumb right after the
+// pick) in riffs; then the bar, harp harmonics (fretted notes alternating with harmonics), keys; then
+// tempo and your own piece. Removed: singing the pitch (`hm-sing`), naming notes, covering the tab and
+// "from memory" versions (`hm-names`, `hm-called`, `hm-key-all`, `hm-six-keys`, the "read only the names"
+// bars of `hm-random`); added `hm-open-alt` (open string, then its harmonic) and `hm-all-six`.
 import { OPEN, N, nameOf, make, mod12, chordInfo, topTriad, pentBox, byString, S, stage, entry, targetGuide } from '../lib.js';
 import { rng } from './bending.js';
 
@@ -78,7 +87,7 @@ export function hmRun(c, spec) {
         const allow = spec.free ? [mod12(h.p)] : pcs;
         if (kind === 'teach') {
           // the fretted note at the node (12 only sounds the same note), then the harmonic: touch, pick, lift
-          if (h.f === 12) notes.push(tag(N(h.s, 12, t, step), allow));
+          if (h.f === 12 && !spec.open) notes.push(tag(N(h.s, 12, t, step), allow));
           else notes.push(tag(N(h.s, 0, t, step), [mod12(OPEN[h.s])].concat(allow)));
           notes.push(tag(N(h.s, h.f, t + step, step * 2, 'nh'), allow)); t += step * 3;
         } else { notes.push(tag(N(h.s, h.f, t, step, 'nh', barX), allow)); t += step; }
@@ -177,9 +186,9 @@ export function hmRandom(c) {
     }
   }
   return make(c, {
-    id: 'hm-random', name: `Random access: a new kind of harmonic every bar (${nameOf(k)} ${c.minor ? 'minor' : 'major'})`, domain: 'fretboard', method: 'interleaving', unit: 'quarter notes', goal: 100, start: 56, minutes: 5, dl: 1, tab: { notes },
-    why: 'At mastery level harmonics are a palette: natural, chimed or tapped, wherever the music wants them. A random kind and place every bar makes each one available on demand.',
-    instr: `${names.join(' → ')}. Read only the names: find the harmonics and play them. Pass: all 8 bars in time from the names alone.`,
+    id: 'hm-random', name: `Mixed bars: a new kind of harmonic every bar (${nameOf(k)} ${c.minor ? 'minor' : 'major'})`, domain: 'fretboard', method: 'interleaving', unit: 'quarter notes', goal: 100, start: 56, minutes: 5, dl: 1, tab: { notes },
+    why: 'At mastery level harmonics are a palette: natural, chimed or tapped, wherever the music wants them. A new kind and place every bar trains the changes between them.',
+    instr: `${names.join(' → ')}. Each bar changes the kind of harmonic; set the hand for the next kind before the bar line. Pass: all 8 bars in time with every harmonic clear.`,
     watch: 'Natural harmonics turning dull when you rush the touch.', simplify: 'The first four bars.'
   });
 }
@@ -204,7 +213,7 @@ function hmStudy(c, capstone) {
     domain: 'improv', method: 'transfer', unit: 'mixed', goal: capstone ? 96 : 84, start: capstone ? 52 : 48, minutes: capstone ? 8 : 6, dl: capstone ? 1 : 0,
     backing: back, chords: [...new Set(back)], tab: { notes },
     why: capstone ? 'An original 16-bar piece that uses the whole path: chimes, natural-harmonic melodies, a riff with harmonic accents, tapped-harmonic arpeggios, pinch harmonics and a harmonic dived with the bar.' : 'An original 8-bar piece in a hard-rock style: chimes, a palm-muted riff answered by harmonics, a harmonic melody, tapped harmonics over two chords, a pinch accent and a dive to finish.',
-    instr: capstone ? 'Learn it four bars at a time; name each bar’s kind of harmonic before you play it. Then rewrite four bars of your own. Pass: the study at the goal tempo with every harmonic ringing clearly, then your own version.' : 'Learn it two bars at a time, then as one piece with the backing. Pass: two times through at the goal tempo with every harmonic clear.',
+    instr: capstone ? 'Learn it four bars at a time, slowly, then join the sections. Then rewrite four bars of your own. Pass: the study at the goal tempo with every harmonic ringing clearly, then your own version.' : 'Learn it two bars at a time, then as one piece with the backing. Pass: two times through at the goal tempo with every harmonic clear.',
     watch: 'Natural harmonics dying because the finger stays on the string too long.', simplify: capstone ? 'Bars 1–8.' : 'Bars 1–4.'
   });
 }
@@ -214,7 +223,7 @@ export const hmEtude = c => hmStudy(c, true);
 /* --------------------------------- The path --------------------------------- */
 const HOW_N = 'Touch the string lightly directly above the fret wire (not between the frets), without pressing it down; pick close to the bridge, then lift the touching finger at once so the harmonic rings. ';
 const HOW_T = 'Hold the fretted notes; with the picking-hand index or middle finger, tap (bounce off) the same string exactly 12 frets higher, right over the fret wire, so it sounds an octave above (AH in the tab). ';
-const HOW_P = 'Choke up on the pick so only the tip shows; pick with a little extra dig and let the side of the thumb graze the string right after the pick, near the neck pickup or between the pickups (move until it squeals). AH marks the pinch harmonic; the overtone you get depends on where you strike. ';
+const HOW_P = 'Bridge pickup and plenty of gain. Choke up on the pick so only the tip shows; pick a firm downstroke and let the side of the thumb graze the string right after the pick, in one motion, over the pickups (move along the string until it squeals). AH marks the pinch harmonic; the overtone you get depends on where you strike. ';
 const ST = (concept, why, theory) => ({ concept, why, theory });
 export default entry({
   id: 'harmonics', kind: 'technique', title: 'Harmonics (natural, tapped and pinch)', domain: 'picking',
@@ -222,7 +231,38 @@ export default entry({
   aliases: ['natural harmonics', 'artificial harmonics', 'tapped harmonics', 'pinch harmonics', 'pinched harmonics'],
   summary: 'Bell-like overtones: natural harmonics at the 12th, 7th, 5th and 4th frets, chimes, melodies in a key, tapped harmonics over chords and scales, pinch harmonics in riffs, whammy dives and harp-style arpeggios, from the first 12th-fret harmonic to random access at tempo and an original study.',
   prereqs: ['palmMuting'],
-  sources: ['https://www.masterclass.com/articles/learn-how-to-play-natural-harmonics-on-guitar', 'https://www.riffhard.com/?p=37200', 'https://www.tabs4acoustic.com/en/guitar-lessons/artificial-harmonics-on-the-guitar-98.html', 'https://guitarplayer.com/lessons/eddie-van-halen-tapping', 'https://guitarworld.com/lessons/6-guitar-tricks-you-can-learn-from-eddie-van-halen'],
+  sources: ['https://www.masterclass.com/articles/learn-how-to-play-natural-harmonics-on-guitar', 'https://jamplay.com/guitar-lessons/skill-building/2-lead-concepts-techniques/362', 'https://www.premierguitar.com/articles/26505-how-to-handle-harmonics', 'https://www.guitarworld.com/lessons/how-play-pinch-harmonic', 'https://www.tabs4acoustic.com/en/guitar-lessons/artificial-harmonics-on-the-guitar-98.html', 'https://www.premierguitar.com/lessons/electric-etudes-eddie-van-halen-techniques', 'https://www.guitarplayer.com/lessons/eddie-van-halens-playing-secrets-how-to-solo-like-the-lead-guitar-legend'],
+  pedagogy: {
+    date: '2026-10-18',
+    summary: 'Taught in the order natural, then artificial (touched and tapped), then pinch: natural harmonics at the 12th fret first (the G string is the usual start), then the 7th and 5th and the less common nodes, with the touch directly over the fret wire, a pick near the bridge and the finger lifted at once; open strings alternated with their harmonics, then intervals, chimes and melodies from the harmonics a tuning or key offers. Then artificial harmonics 12 frets above a fretted note, single notes first, then over chords, then harp harmonics that alternate fretted notes and harmonics; pinch harmonics from a few hit-or-miss successes to sweet spots, fretted notes in rhythm and riffs; in rock, harmonics dived with the bar and tapped harmonics over a bend.',
+    sequence: [
+      { id: 'n12', tier: 'foundations', step: 'Natural harmonics: 12th fret, then 7th and 5th', how: 'Rest the finger lightly over the fret wire, pick, lift at once; 12 first (easiest), then 7, then 5.', skills: ['hm-touch'], source: 0 },
+      { id: 'alt', tier: 'foundations', step: 'Open strings alternated with their harmonics; letting them ring', how: 'Each open string, then its 12th-fret harmonic; harmonics left to ring into each other.', skills: ['hm-hear'], source: 2 },
+      { id: 'all', tier: 'foundations', step: 'Every string, intervals and chimes', how: 'The nodes across all six strings; two or three strings at one node struck together.', skills: ['hm-map'], source: 1 },
+      { id: 'song', tier: 'foundations', step: 'Natural harmonics in a melody or riff', how: 'Melodies from the harmonics available in the key, and harmonics answering a riff.', skills: ['hm-first-music'], source: 1 },
+      { id: 'less', tier: 'intermediate', step: 'The less common nodes (4th, 9th, 19th)', how: 'The 4th-fret node and mixed nodes in a melody; a more exact touch near the bridge.', skills: ['hm-nodes'], source: 1 },
+      { id: 'art', tier: 'intermediate', step: 'Artificial harmonics: touched or tapped 12 frets above a fretted note', how: 'Single fretted notes first, then a held chord spelled an octave up as harmonics.', skills: ['hm-tapped'], source: 4 },
+      { id: 'pinch', tier: 'intermediate', step: 'Pinch harmonics', how: 'Gain and the bridge pickup; pick and graze with the thumb in one motion; find the sweet spots, then fretted notes in rhythm, then riffs.', skills: ['hm-pinch'], source: 3 },
+      { id: 'key', tier: 'intermediate', step: 'Harmonic melodies in a key', how: 'The harmonics a key offers in a new order; chimes mixed with single harmonics.', skills: ['hm-recall'], source: 2 },
+      { id: 'riff', tier: 'intermediate', step: 'Harmonics in a riff and a study', how: 'Harmonics inside a hard-rock riff, as in the Van Halen intros.', skills: ['hm-music'], source: 5 },
+      { id: 'bar', tier: 'advanced', step: 'Harmonics with the whammy bar', how: 'Harmonics dived and given bar vibrato; dip the bar before a pinch.', skills: ['hm-bar'], source: 3 },
+      { id: 'harp', tier: 'advanced', step: 'Harp harmonics', how: 'Rolls that alternate harmonics with fretted notes, then the roll over a fretted chord, in several keys.', skills: ['hm-harp'], source: 2 },
+      { id: 'dist', tier: 'advanced', step: 'All positions combined and other keys', how: 'All the nodes of a key in one line; artificial harmonics while the fretting hand changes position and key.', skills: ['hm-recall-a'], source: 1 },
+      { id: 'solo', tier: 'advanced', step: 'Harmonics in a solo', how: 'Harmonic accents ending phrases; tapped harmonics over a bend in a solo.', skills: ['hm-adv-music'], source: 5 },
+      { id: 'tempo', tier: 'mastery', step: 'Harp harmonics at tempo, every kind and every key', how: 'Rolls at speed, changing kind of harmonic each bar, tapped harmonics in many keys.', skills: ['hm-perf', 'hm-recall-m'], source: 2 },
+      { id: 'own', tier: 'mastery', step: 'Your own harmonics piece', how: 'Combine the main techniques in a piece of your own.', skills: ['hm-voice'], source: 1 }
+    ],
+    drills: ['12th-fret harmonics on every string, then 7 and 5', 'Open string alternated with its 12th-fret harmonic', 'Chimes: one finger across three strings at a node', 'Melodies from the natural harmonics of a key', 'Artificial harmonics 12 frets above fretted notes and chords', 'Pinch harmonics on open strings, then fretted notes in rhythm, then in a riff', 'Harp harmonics: fretted notes alternating with harmonics over a chord', 'Natural harmonics dived with the whammy bar'],
+    mistakes: ['Touching between the frets instead of directly over the fret wire', 'Pressing the string down instead of resting on it', 'Leaving the touching finger on too long, so the harmonic dies', 'Pinch: picking too lightly, or the thumb touching late or too long so the note goes dead', 'Tapped harmonics pressed down to the fret instead of bounced off', 'Fretted notes louder than the harmonics in harp rolls'],
+    sources: [
+      { title: 'Learn How to Play Natural Harmonics on Guitar', author: 'MasterClass', url: 'https://www.masterclass.com/articles/learn-how-to-play-natural-harmonics-on-guitar' },
+      { title: 'Discover Harmonics on the Guitar (course)', author: 'Jeff Gunn (JamPlay)', url: 'https://jamplay.com/guitar-lessons/skill-building/2-lead-concepts-techniques/362' },
+      { title: 'How to Handle Harmonics', author: 'Kirby Jane (Premier Guitar)', url: 'https://www.premierguitar.com/articles/26505-how-to-handle-harmonics' },
+      { title: 'How to play a pinch harmonic', author: 'Jamie Humphries (Guitar World)', url: 'https://www.guitarworld.com/lessons/how-play-pinch-harmonic' },
+      { title: 'Artificial harmonics on the guitar', author: 'Tabs4Acoustic', url: 'https://www.tabs4acoustic.com/en/guitar-lessons/artificial-harmonics-on-the-guitar-98.html' },
+      { title: 'Electric Etudes: Eddie Van Halen techniques', author: 'Jamie Humphries (Premier Guitar)', url: 'https://www.premierguitar.com/lessons/electric-etudes-eddie-van-halen-techniques' }
+    ]
+  },
   ctx: { key: 4, minor: true, prog: 'minorRock' },
   stages: [
     stage('foundations', 'Touch, pick, lift',
@@ -233,14 +273,14 @@ export default entry({
           'A natural harmonic sounds an overtone of the open string: touching the string at a node (12th, 7th, 5th fret) silences the fundamental and lets the overtone ring.',
           'Harmonics add bell-like notes that sustain, high above the normal range, and a chiming texture to riffs and ballads.',
           ['Touch directly above the fret wire, don’t press.', 'Lift the touching finger as soon as you pick.', 'Bridge pickup and picking near the bridge make harmonics louder.'])),
-        S('hm-hear', 'Hear the node', 'ear', 'The pitch before you play; let them ring.', [
-          H_('hm-sing', 'Hear it first: sing each harmonic’s pitch, then play it ({key})', 'audiation', { kind: 'teach', free: true, nodes: [12, 7], strings: [3, 2, 1], goal: 70, start: 40, why: 'Each node has its own interval above the open string. Singing the harmonic’s pitch before you play makes you hear the overtone you are aiming at, and makes a missed harmonic obvious.', instr: 'Play the open string, sing the note an octave up (fret 12) or an octave and a 5th up (fret 7), then play the harmonic and compare. Pass: your sung pitch matches every harmonic.', watch: 'Singing the open string instead of the overtone.', simplify: '12th fret only.' }),
+        S('hm-hear', 'Clear and ringing', 'picking', 'The open string, then its harmonic; let them ring.', [
+          H_('hm-open-alt', 'Open string, then its harmonic: frets 12 and 7 ({key})', 'chunking', { kind: 'teach', open: true, free: true, nodes: [12, 7], strings: [4, 3, 2, 1], goal: 70, start: 40, why: 'Alternating each open string with its harmonic gives the ear a reference: at fret 12 the harmonic is the same note an octave up, at fret 7 an octave and a 5th up. A harmonic that sounds dull or thin next to the open string shows the touch was off the node.', instr: HOW_N + 'On each string: the open string, then the harmonic at the fret shown. Pass: every harmonic rings as long and clearly as the open string.', watch: 'Lifting the touching finger too late: the harmonic dies at once.', simplify: 'Fret 12 only.' }),
           H_('hm-ring', 'Let them ring: harmonics overlapping across the strings ({key})', 'external-focus', { free: true, nodes: [12, 7, 5], strings: [4, 3, 2, 1], plan: 'strings', goal: 72, start: 42, why: 'Harmonics sustain for a long time; letting each one ring into the next makes a bell-like wash. Listening to that ring (and to which notes die early) tells you which touches need work.', instr: HOW_N + 'Don’t mute anything: each harmonic should still be ringing when the next one sounds. Listen for any that die early and repeat those. Pass: every harmonic rings into the next.', watch: 'The picking hand muting the strings as it moves.', simplify: 'Two strings.' })], ST(
           'Each node sounds a fixed interval above the open string: 12 an octave, 7 an octave and a 5th, 5 two octaves, 4 two octaves and a major 3rd.',
-          'Knowing the pitch you expect is what lets you hear whether you hit the node.',
+          'Hearing the open string next to its harmonic tells you whether you hit the node.',
           ['The 12th and 5th frets sound the open string’s note (an octave and two octaves up).', 'The 7th (and 19th) fret sounds the 5th above the open string.'])),
-        S('hm-map', 'The map', 'fretboard', 'Node pitches from memory; chimes.', [
-          H_('hm-names', 'From memory: the note each harmonic sounds, frets 12, 7 and 5 ({key})', 'retrieval', { free: true, nodes: [12, 7, 5], strings: [6, 5, 4, 3, 2, 1], goal: 72, start: 42, why: 'Naming the note of each harmonic (the open string, its 5th, the open string again) turns them from sounds into notes you can use in a key.', instr: 'Cover the tab. Before each harmonic, name its note: fret 12 and 5 = the open string’s note, fret 7 = its 5th (E string: B; A string: E; D string: A; G string: D; B string: F♯). Then play it. Pass: every note named correctly.', watch: 'Naming the fretted note at fret 7 (B on the E string is right; the fretted note is too).', simplify: 'The top three strings.' }),
+        S('hm-map', 'All six strings; chimes', 'fretboard', 'Every string at 12, 7 and 5; chimes.', [
+          H_('hm-all-six', 'Frets 12, 7 and 5 on all six strings, low E to high e ({key})', 'accurate-reps', { free: true, nodes: [12, 7, 5], strings: [6, 5, 4, 3, 2, 1], goal: 72, start: 42, why: 'The low strings need a slightly firmer pick and the high strings a lighter touch; playing all three nodes on every string makes the touch reliable everywhere. Fret 12 and 5 sound the open string’s note, fret 7 its 5th.', instr: HOW_N + 'String by string from the low E: fret 12, 7, then 5. Count only clear harmonics. Pass: all 18 clear in one pass.', watch: 'The low-string harmonics buzzing because the finger presses down.', simplify: 'The top four strings.' }),
           H_('hm-chimes', 'Chimes: three strings at one node, struck together ({key})', 'variable', { kind: 'chime', free: true, nodes: [12, 7, 5], goal: 72, start: 42, why: 'Laying one finger across three strings at a node and strumming gives a chord of harmonics, a chime. Moving between nodes and string sets varies the touch while the motion stays the same.', instr: 'Lay the finger flat across the three strings directly above the fret wire, strum them, lift. Change node and string set every chime. Pass: every chime with all three notes ringing.', watch: 'One string dead because the finger doesn’t lie flat.', simplify: 'Only fret 12.' })], ST(
           'Harmonics are notes with names: knowing them turns a sound effect into melody and harmony.',
           'Chimes are chords of harmonics, a classic sound in rock intros and ballads.',
@@ -272,11 +312,11 @@ export default entry({
           'A pinch harmonic happens when the thumb grazes the string just after the pick, at a node of the vibrating string: the fundamental is damped and a high overtone screams.',
           'It is the squeal of rock and metal lead playing, used as an accent.',
           ['Choke up on the pick so the thumb is close to the string.', 'More gain and the bridge pickup make them easier.', 'Move the picking spot until it squeals; each note has its own spot.'])),
-        S('hm-recall', 'From memory', 'fretboard', 'Called harmonics; mixed nodes.', [
-          H_('hm-called', 'From memory: the harmonics of {key}, called by note name', 'retrieval', { plan: 'down', nodes: [12, 7, 5], goal: 84, start: 50, why: 'Finding a harmonic from a note name (which string, which node) is what lets you use harmonics in your own melodies.', instr: 'Cover the tab. Go down through the key’s harmonics: say the note, then find its string and node. Pass: all of them from memory.', watch: 'Picking a harmonic that is not in the key.', simplify: 'Look once, then cover.' }),
+        S('hm-recall', 'Harmonics in the key', 'fretboard', 'The key’s harmonics falling; chimes.', [
+          H_('hm-called', 'The harmonics of {key}, high to low across the strings', 'variable', { plan: 'down', nodes: [12, 7, 5], goal: 84, start: 50, why: 'Only the harmonics whose notes are in the key work in a melody. Playing that set from the highest to the lowest crosses strings and nodes in a new order each time.', instr: HOW_N + 'Down through the key’s harmonics with the click. Pass: the whole run in time with every harmonic clear.', watch: 'A harmonic that is not in the key slipping in.', simplify: 'Frets 12 and 7 only.' }),
           H_('hm-mixed', 'Interleaved: chimes in {key}, then single harmonics', 'interleaving', { kind: 'chime', nodes: [12, 7, 5], reps: 2, goal: 84, start: 50, why: 'Mixing chimes (three strings) with single harmonics in the key, node by node, makes the hand change shape every time.', instr: 'Play the chimes in the tab (each in the key), alternating node and string set. Pass: every chime with all three notes ringing.', watch: 'Rolling the chime instead of striking it.', simplify: 'One chime, repeated.' })], ST(
-          'Recalling harmonics by note name connects the map (string × node) to the key.',
-          'It is what lets you improvise with them.',
+          'A key’s harmonics are the string × node pairs whose notes belong to its scale.',
+          'Knowing that set is what lets you write melodies with them.',
           ['A harmonic is in the key if its note is in the key’s scale.', 'Chimes in a key: all three notes in the scale.'])),
         S('hm-music', 'In music', 'improv', 'An 8-bar study; a riff with harmonics.', [c => hmStudyI(c),
           H_('hm-riff-i', 'Riff with the band: palm-muted root, harmonics in the key ({key})', 'transfer', { kind: 'riff', bars: 8, backing: minorProg, goal: 88, start: 52, why: 'A riff where the harmonics are part of the line, not decoration: the low root drives and the harmonics answer in the key.', instr: 'Eight bars with the backing. Pass: two times through in time with every harmonic clear.', watch: 'The harmonics coming in late.', simplify: 'Four bars.' })], ST(
@@ -298,8 +338,8 @@ export default entry({
           'Harp harmonics alternate a fretted note with a tapped harmonic an octave above another note of the same chord, so the notes overlap like a harp.',
           'It turns any chord shape into a shimmering arpeggio.',
           ['Hold the chord the whole bar so the notes keep ringing.', 'The harmonic is 12 frets above the fretted note on its string.'])),
-        S('hm-recall-a', 'From memory', 'fretboard', 'All the natural harmonics of a key; tapped harmonics in four keys.', [
-          H_('hm-key-all', 'From memory: every natural harmonic of {key}, frets 12, 7, 5 and 4', 'retrieval', { plan: 'updown', nodes: [12, 7, 5, 4], goal: 84, start: 50, why: 'The whole set of a key’s natural harmonics, recalled up and down: the full map you need to write with them.', instr: 'Cover the tab. Name each note of the key’s harmonics from low to high, then play them, and back. Pass: up and down from memory.', watch: 'Including harmonics that aren’t in the key.', simplify: 'Frets 12 and 7.' }),
+        S('hm-recall-a', 'Whole key, four keys', 'fretboard', 'All the natural harmonics of a key; tapped harmonics in four keys.', [
+          H_('hm-key-all', 'Every natural harmonic of {key}, frets 12, 7, 5 and 4, up and down', 'variable', { plan: 'updown', nodes: [12, 7, 5, 4], goal: 84, start: 50, why: 'The whole set of a key’s natural harmonics, low to high and back: every node, including the hard 4th fret, in one line.', instr: HOW_N + 'Up through the key’s harmonics and back down, in time. Pass: up and down with every harmonic clear.', watch: 'The 4th-fret notes dropping out.', simplify: 'Frets 12 and 7.' }),
           H_('hm-tap-keys', 'Tapped harmonics on the pentatonic in four keys ({key} and up)', 'interleaving', { kind: 'tapScale', keys: [0, 5, 10, 3], alt: true, goal: 84, start: 50, why: 'Tapped harmonics move with the fretted notes, so they work in every key. Four keys in a row, alternating fretted notes and harmonics, keep the distances fresh.', instr: HOW_T + 'Alternate a fretted note and a tapped harmonic up the box and back, in four keys. Pass: all four keys without stopping.', watch: 'Losing the 12-fret distance in the higher keys.', simplify: 'Two keys.' })], ST(
           'Each key has its own set of natural harmonics; tapped harmonics follow the fretted notes anywhere.',
           'Both maps together let you put harmonics in any key.',
@@ -317,11 +357,11 @@ export default entry({
           c => hmRandom(c)], ST(
           'Mastery is reliable harmonics at speed, in any order.',
           'Live, you need the harmonic to speak the first time.',
-          ['Raise the tempo only after a clean pass.', 'Read the name, not the tab.'])),
-        S('hm-recall-m', 'From memory', 'fretboard', 'Six keys; improvising.', [
-          H_('hm-six-keys', 'From memory: tapped harmonics over the tonic chord in six keys', 'retrieval', { kind: 'tapped', keys: [0, 5, 10, 3, 8, 1], prog: (k, c) => [nameOf(k) + (c.minor ? 'm' : '')], goal: 92, start: 52, why: 'The tonic triad and its tapped harmonics in six keys, from memory: chord shapes and the 12-fret distance at tempo.', instr: 'Cover the tab. For each key, find the triad on the top strings and tap its harmonics. Pass: all six keys in time.', watch: 'A pause at each key.', simplify: 'Three keys.' }),
+          ['Raise the tempo only after a clean pass.', 'Change hand position for each kind before the bar line.'])),
+        S('hm-recall-m', 'Every key', 'fretboard', 'Six keys; improvising.', [
+          H_('hm-six-keys', 'Tapped harmonics over the tonic chord in six keys', 'interleaving', { kind: 'tapped', keys: [0, 5, 10, 3, 8, 1], prog: (k, c) => [nameOf(k) + (c.minor ? 'm' : '')], goal: 92, start: 52, why: 'Tapped harmonics work in any key because they follow the fretted chord: six keys a fourth apart move the triad and the taps every bar.', instr: HOW_T + 'One bar per key, no gap between keys. Pass: all six keys in time with every tap chiming.', watch: 'A pause at each key.', simplify: 'Three keys.' }),
           c => targetGuide(c, { prog: c.minor ? 'minorRock' : 'axis', scale: c.minor ? 'minorPent' : 'majorPent', name: 'Improvise: two choruses using harmonics as phrase endings and accents' })], ST(
-          'Recall in six keys shows the model is learned; improvising shows you can choose.',
+          'Six keys show the model is learned; improvising shows you can choose.',
           'A palette is only useful if you can reach for it.',
           ['Name the chord before you play.', 'Use harmonics where they add colour.'])),
         S('hm-voice', 'Your own piece', 'improv', 'A capstone study, then your version.', [c => hmEtude(c),
