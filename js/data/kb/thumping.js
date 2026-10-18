@@ -29,12 +29,11 @@ export const ROLE = { D: [0, 0], U: [0, 0], P: [12, 2], Q: [19, 3], H: [15, 3] }
 export const WIDE = { P: [24, 4], Q: [31, 5] };
 const MARK = { D: { fing: 'p', pick: 'd' }, U: { fing: 'p', pick: 'u' }, P: { fing: 'i' }, Q: { fing: 'm' } };
 /**
- * 8-string tabs are written (tab.strings: 8) but switched off until the app tests accept them
- * (tests/t_theory.mjs 7c checks strings 1–6 only; content/REQUESTS.md, 2026-10-17). While off, every
- * 8-string lesson is built on a six-string, two strings up (thumb on the low E or A string), or three strings
- * up for the open-string drills (open A), so the path is complete either way. Flip to true when fixed.
+ * 8-string tabs (tab.strings: 8) are on: the app tests accept strings up to a lesson's tab.strings since
+ * commit d6abf0d (content/REQUESTS.md, 2026-10-17). Set to false to build every 8-string lesson on a
+ * six-string instead, two strings up (thumb on the low E or A string), or three up for the open-string drills.
  */
-export const EIGHT_STRING_TABS = false;
+export const EIGHT_STRING_TABS = true;
 const STR8 = { 8: '8th string', 7: '7th string', 6: '6th string', 5: '5th string', 4: 'D string', 3: 'G string', 2: 'B string', 1: 'high e string' };
 const STR6 = { 6: 'low E string', 5: 'A string', 4: 'D string', 3: 'G string', 2: 'B string', 1: 'high e string' };
 const G8 = 'On an 8-string in standard tuning (low to high F♯ B E A D G B E). ';

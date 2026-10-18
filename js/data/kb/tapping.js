@@ -14,6 +14,12 @@
 // or the tap held while the fretted notes move) and tapped slides. The composer `tapRun(c, spec)` builds
 // an exercise from progression × cell × string plan (one string, a string per bar, across strings per
 // beat) × beats per chord × key plan × source (chords or pentatonic box) × teaching mode.
+//
+// Teaching method first (CONTENT.md, `pedagogy` below), audited 2026-10-17: the motion, even notes and
+// muting, voice-led triad shapes, groupings, strings and keys, the pentatonic, pedals, slides and
+// descending runs, fives and sixes, across strings, then tempo and your own music. Removed: singing the
+// arpeggio (`tap-sing`), covering the tab and "from memory" versions and naming chords aloud (`tap-find`,
+// `tap-called`, `tap-long`, `tap-six-keys`, `tap-random`, the studies); added `tap-mute` (muting).
 import { OPEN, N, nameOf, make, mod12, slug, chordInfo, pentBox, byString, S, stage, entry, M, targetGuide } from '../lib.js';
 import { rng } from './bending.js';
 
@@ -239,7 +245,7 @@ function studyRun(c, plan, { id, name, method = 'transfer', goal, start, why, in
 }
 export const tapStudyI = c => studyRun(c, STUDY_I, { id: 'tap-study-8', name: 'Study: an 8-bar tapped progression', goal: 96, start: 52,
   why: 'An original 8-bar piece that joins the intermediate moves: triplet arpeggios, 16ths, a descending bar, a fretted pedal and a last bar across three strings, all outlining a minor-key progression.',
-  instr: 'Learn it two bars at a time; name each bar’s chord and cell before you play it. Then play the eight bars as one piece with the backing. Pass: two times through at the goal tempo without a gap at the bar lines.',
+  instr: 'Learn it two bars at a time, then play the eight bars as one piece with the backing. Pass: two times through at the goal tempo without a gap at the bar lines.',
   watch: 'Rushing the bar where the cell changes.', simplify: 'The first four bars.' });
 export const tapStudyA = c => studyRun(c, STUDY_A, { id: 'tap-study-adv', name: 'Study: sixes, fives, slides and cascades', goal: 84, start: 46,
   why: 'An original 8-bar piece at the advanced level: sextuplets, a quintuplet bar (the push-pull grouping Van Halen liked), a tapped slide, a cascade across strings and a pedal ending.',
@@ -247,7 +253,7 @@ export const tapStudyA = c => studyRun(c, STUDY_A, { id: 'tap-study-adv', name: 
   watch: 'The quintuplet bar turning into 16ths.', simplify: 'Bars 1, 2, 7 and 8.' });
 export const tapEtude = c => studyRun(c, STUDY_M, { id: 'tap-capstone-etude', name: 'Capstone study: 16 bars of tapping', goal: 92, start: 50,
   why: 'An original 16-bar piece that uses the whole path: triplets, 16ths, fives and sixes, slides, cascades, pedals, one string and three, over a minor-key progression that ends on the dominant.',
-  instr: 'Learn it four bars at a time; say each bar’s chord and cell first. Then rewrite four bars with your own cells and strings over the same chords. Pass: the study at the goal tempo, then your rewritten version once.',
+  instr: 'Learn it four bars at a time. Then rewrite four bars with your own cells and strings over the same chords. Pass: the study at the goal tempo, then your rewritten version once.',
   watch: 'Tension building up through the 16 bars: shake out after each four.', simplify: 'Bars 1–8.' });
 
 /** Random access: a random chord of the key, string and cell every bar (interleaving). */
@@ -263,9 +269,9 @@ export function tapRandom(c) {
     names.push(`${ch.name} on the ${SN[s]} string, ${CELLS[cell].name}`);
   }
   return make(c, {
-    id: 'tap-random', name: `Random access: a new chord, string and grouping every bar (${nameOf(k)} ${c.minor ? 'minor' : 'major'})`, domain: 'fretboard', method: 'interleaving', unit: 'mixed groupings', goal: 96, start: 54, minutes: 5, dl: 1, tab: { notes },
+    id: 'tap-random', name: `A new chord, string and grouping every bar (${nameOf(k)} ${c.minor ? 'minor' : 'major'})`, domain: 'fretboard', method: 'interleaving', unit: 'mixed groupings', goal: 96, start: 54, minutes: 5, dl: 1, tab: { notes },
     why: 'At mastery level a tapped arpeggio is a vocabulary you call up anywhere: an unpredictable chord, string and grouping every bar makes it automatic instead of a rehearsed run.',
-    instr: `${names.join(' → ')}. Read only the names, not the tab: find the shape, then tap. Pass: all 8 bars in time from the names alone.`,
+    instr: `${names.join(' → ')}. Keep each new shape near the last one. Pass: all 8 bars in time, no gap at the bar lines.`,
     watch: 'Falling back to the B string.', simplify: 'Triplets in every bar.'
   });
 }
@@ -279,25 +285,52 @@ export default entry({
   aliases: ['finger tapping', 'right-hand tapping', 'tapped arpeggios'],
   summary: 'A picking-hand finger taps notes onto the fretboard and pulls off to fretted notes: from the first slow tap and pull-off, through tapped triplet arpeggios over progressions on every string, pentatonic octave taps, pedal figures and 16ths, to fives and sixes, tapped slides and cascades across strings, random access at tempo and an original study.',
   prereqs: ['pentatonic'],
-  sources: ['https://guitarplayer.com/lessons/eddie-van-halen-tapping', 'https://www.premierguitar.com/lessons/cram-session-two-hand-tapping', 'https://www.premierguitar.com/lessons/electric-etudes-eddie-van-halen-techniques', 'https://guitarworld.com/lessons/6-guitar-tricks-you-can-learn-from-eddie-van-halen', 'https://guitarworld.com/lessons/5-ways-to-make-two-hand-tapping-work-for-you'],
+  sources: ['https://guitarplayer.com/lessons/eddie-van-halen-tapping', 'https://www.premierguitar.com/lessons/cram-session-two-hand-tapping', 'https://guitarlessons.com/guitar-lessons/guitar-technique/how-to-tap-on-guitar/', 'https://dummies.com/article/how-to-tap-the-pentatonic-scale-on-the-guitar-143488', 'https://www.premierguitar.com/lessons/electric-etudes-eddie-van-halen-techniques', 'https://guitarworld.com/lessons/6-guitar-tricks-you-can-learn-from-eddie-van-halen', 'https://guitarworld.com/lessons/5-ways-to-make-two-hand-tapping-work-for-you'],
+  pedagogy: {
+    date: '2026-10-17',
+    summary: 'Taught from the motion up: tap hard and pull off hard (sideways, so the fretted note sounds) with the pick palmed or tucked, the fretting hand alone, then joined into the tap–pull–hammer triplet on a triad, with both hands muting the other strings. Then shapes that follow a progression on one string with the least movement (voice leading), on other strings, and tapping the next pentatonic pattern over the one the fretting hand holds; pedal figures (fretted pedal, tapped pedal); then descending runs, tapped slides, denser and odd groupings (sixes, fives), patterns across strings, and lines through keys; finally performance tempo and using it in your own music.',
+    sequence: [
+      { id: 'motion', tier: 'foundations', step: 'The tap and pull-off, then the tap–pull–hammer triplet', how: 'The picking-hand finger taps hard just behind the fret and pulls off sideways; the fretting hand practises its hammer and pull alone; then the Eruption-style triplet on one string.', skills: ['tap-motion'], source: 0 },
+      { id: 'clean', tier: 'foundations', step: 'Even notes and muting', how: 'Listen for three equal notes; the picking-hand palm and the fretting-hand fingers keep every other string silent.', skills: ['tap-hear'], source: 0 },
+      { id: 'triads', tier: 'foundations', step: 'Triad shapes on one string through a progression', how: 'Each chord as a three-note shape on the string, moving as little as possible from the last one; the same on other strings.', skills: ['tap-where', 'tap-first-music'], source: 3 },
+      { id: 'grouping', tier: 'intermediate', step: 'Triplets and 16ths through progressions', how: 'The same shapes as triplets and as tap–pull–hammer–pull 16ths, one chord per bar.', skills: ['tap-prog'], source: 1 },
+      { id: 'strings', tier: 'intermediate', step: 'Other strings and other keys', how: 'Move the shapes to the G string and mix strings; major-key progressions and their relative minor.', skills: ['tap-strings', 'tap-recall'], source: 3 },
+      { id: 'pent', tier: 'intermediate', step: 'Tapping the pentatonic', how: 'The fretting hand holds one pentatonic pattern while the tap plays the next one (or the octave) on each string.', skills: ['tap-pent'], source: 2 },
+      { id: 'pedal', tier: 'intermediate', step: 'Pedal figures', how: 'The fretted note stays while the tap moves, then the tapped note stays while the fretted notes move.', skills: ['tap-pedal'], source: 1 },
+      { id: 'phrase', tier: 'intermediate', step: 'Tapping inside a solo', how: 'A tapped bar or run answering a picked phrase over a backing.', skills: ['tap-music'], source: 1 },
+      { id: 'dense', tier: 'advanced', step: 'Sixes and fives', how: 'Two tapped triplets per beat; quintuplet arpeggios with the tap on the beat.', skills: ['tap-odd'], source: 3 },
+      { id: 'moves', tier: 'advanced', step: 'Tapped slides and descending runs', how: 'Tap, slide to the next chord tone, pull off; descending tap–pull–pull figures falling through the strings.', skills: ['tap-slide'], source: 1 },
+      { id: 'across', tier: 'advanced', step: 'Across strings and through keys', how: 'Extend the patterns across strings with clean string changes, move the progression through keys, break long runs into segments first.', skills: ['tap-across', 'tap-adv-music'], source: 3 },
+      { id: 'tempo', tier: 'mastery', step: 'Performance tempo and every key', how: 'The patterns worked up to speed across strings and keys.', skills: ['tap-perf', 'tap-recall-m'], source: 3 },
+      { id: 'own', tier: 'mastery', step: 'Your own tapping music', how: 'Compose and improvise with the tapped figures.', skills: ['tap-voice'], source: 1 }
+    ],
+    drills: ['Tap and pull-off on one note, tap hard and pull hard', 'The tap–pull–hammer triplet on a triad', 'Triad shapes on one string through a progression with the least movement', 'The fretting hand on one pentatonic pattern, the tap on the next', 'Fretted pedal and tapped pedal figures', 'Tapped slides and descending tapped runs', 'Quintuplet and sextuplet tapped arpeggios', 'Patterns across strings with clean string changes'],
+    mistakes: ['Lifting the tapping finger straight off so the fretted note does not sound', 'Tapping on top of the fret instead of just behind it', 'Other strings ringing (no muting from either hand)', 'A loud tap and quiet fretted notes', 'Jumping around the neck instead of moving to the nearest shape', 'Raising the tempo before the notes are even'],
+    sources: [
+      { title: 'How to tap on guitar (featured lesson by Ben Eller)', author: 'GuitarLessons.com', url: 'https://guitarlessons.com/guitar-lessons/guitar-technique/how-to-tap-on-guitar/' },
+      { title: 'How to Tap Like Eddie Van Halen', author: 'Dale Turner (Guitar Player)', url: 'https://guitarplayer.com/lessons/eddie-van-halen-tapping' },
+      { title: 'How to tap the pentatonic scale on the guitar (Guitar Rhythm and Techniques For Dummies)', author: 'Desi Serna', url: 'https://dummies.com/article/how-to-tap-the-pentatonic-scale-on-the-guitar-143488' },
+      { title: 'Cram Session: Two-Hand Tapping', author: 'Jamie Humphries (Premier Guitar)', url: 'https://www.premierguitar.com/lessons/cram-session-two-hand-tapping' }
+    ]
+  },
   ctx: { key: 9, minor: true, prog: 'minorRock' },
   stages: [
     stage('foundations', 'Tap, pull, hammer',
-      'Tap–pull–hammer triplets on the B string over i–♭VI–♭VII–V at 70 BPM, one chord per bar, with the tapped and pulled-off notes as loud as the hammered one and the other strings silent; find each chord’s three notes on the B string from memory.', [
+      'Tap–pull–hammer triplets on the B string over i–♭VI–♭VII–V at 70 BPM, one chord per bar, with the tapped and pulled-off notes as loud as the hammered one and the other strings silent; move each chord’s shape to the nearest frets and to the e and G strings.', [
         S('tap-motion', 'The motion in pieces', 'fretting', 'Fretting hand alone, tap and pull alone, then together.', [
           T_('tap-teach', 'Tapping in pieces: fretting hand, tap and pull, then the triplet ({chords})', 'chunking', { teach: true, prog: 'auto', strings: [2], cell: 'tph', goal: 70, start: 40, why: 'A tapped triplet is two motions joined: the fretting hand’s hammer and pull, and the tapping finger’s tap and pull-off. Each is practised alone before they join, so neither hand has to learn both at once.', instr: HOW + 'Each chord gets two bars: beats 1–2 the fretting hand alone (pick L, hammer M, pull to L); beats 3–4 tap T and pull off to L; then a full bar of tap–pull–hammer triplets. Pass: every piece clean, then the full bars in time.', watch: 'The tap landing on top of the fret instead of just behind it.', simplify: 'Only the first chord.' }),
           T_('tap-pull', 'Tap and pull off, counting the clean ones ({chords}, {string})', 'accurate-reps', { cell: 'tp', prog: 'auto', strings: [2], goal: 72, start: 42, why: 'The pull-off from the tap is the weak spot of every beginner’s tapping: the note after the tap dies. Counting only clean pull-offs (as loud as the tap) trains the sideways flick.', instr: HOW + 'Tap T, pull off to L: 8th notes, one chord a bar. Count a rep only when both notes are equally loud. Pass: 16 clean reps in a row.', watch: 'Lifting the tapping finger straight up: the fretted note doesn’t sound.', simplify: 'Quarter notes.' })], ST(
           'Tapping adds a third "finger" on the fretboard: the picking hand hammers a note (the tap) and pulls off to a note the fretting hand holds, which can hammer to a third note. One string then plays a whole chord with almost no picking.',
           'It is the sound of Eddie Van Halen’s "Eruption" and of countless rock and fusion solos: wide arpeggios at a speed picking can’t reach.',
           ['The tap is a hammer-on from nowhere: strike straight down just behind the fret.', 'The pull-off is a small pluck: flick the string sideways as you release.', 'The fretted notes are usually played by the index and the ring or little finger.'])),
-        S('tap-hear', 'Hear it even', 'ear', 'Three equal notes; sing the arpeggio.', [
+        S('tap-hear', 'Even notes, silent strings', 'fretting', 'Three equal notes; nothing else ringing.', [
           T_('tap-even', 'Listen for three equal notes: tap–pull–hammer triplets ({chords})', 'external-focus', { cell: 'tph', prog: 'auto', strings: [2], goal: 70, start: 40, why: 'Good tapping sounds like three picked notes of the same volume. Listening to the evenness (instead of watching the hands) is the fastest way to fix a weak pull-off or a late hammer.', instr: HOW + 'Play each bar and listen only: are the three notes the same volume and the same length? If the pulled-off note is soft, flick harder; if the hammer is late, hammer from closer. Pass: every bar heard as an even triplet.', watch: 'A loud tap and two quiet fretted notes.', simplify: 'One chord, over and over.' }),
-          T_('tap-sing', 'Sing it first: each chord’s three notes, then tap them ({chords})', 'audiation', { cell: 'tp', prog: 'auto', strings: [2], bpc: 2, reps: 2, goal: 70, start: 40, why: 'Singing the arpeggio before tapping puts the chord’s sound in the ear, so the hands aim at a sound you already hear, and wrong notes stand out at once.', instr: 'Before each pass, sing the three notes of each chord (low, middle, high) with the backing. Then tap them: tap and pull-off, two beats per chord. Pass: you can sing every chord’s arpeggio and the tapped notes match it.', watch: 'Tapping the next fret by habit when the chord changes.', simplify: 'Only the first two chords.' })], ST(
+          T_('tap-mute', 'Silent strings: tap–pull–hammer on the high e with both hands muting ({chords})', 'accurate-reps', { cell: 'tph', prog: 'auto', strings: [1], goal: 70, start: 40, why: 'Tapping makes every string near the tap ring unless both hands mute. On the high e every other string is below it, so it is the place to set up the muting before the lower strings.', instr: HOW + 'One chord a bar on the high e string. The picking-hand palm rests across the wound strings; the fretting-hand fingers touch the B and G strings lightly. Tap down hard and pull off hard. Count a bar only when nothing but the e string sounds. Pass: 8 clean bars in a row.', watch: 'The B string ringing after a pull-off.', simplify: 'Tap and pull-off only, no hammer.' })], ST(
           'An even tapped triplet has three notes of the same volume and length, like a picked arpeggio. The usual faults are a soft pulled-off note and a hammered note that comes late.',
-          'Hearing the problem is quicker than seeing it: the hands correct themselves when you listen for evenness.',
-          ['A louder pull-off comes from flicking the string toward the floor, not from pressing harder.', 'Each chord’s three tapped notes are its root, 3rd and 5th in some order.'])),
+          'Hearing the problem is quicker than seeing it, and unwanted ringing strings are the other half of clean tapping.',
+          ['A louder pull-off comes from flicking the string toward the floor, not from pressing harder.', 'Mute the lower strings with the picking-hand palm and the higher ones with the fretting-hand fingers.'])),
         S('tap-where', 'Where the notes are', 'fretboard', 'Chord tones on one string, then three strings.', [
-          T_('tap-find', 'From memory: each chord’s three notes on {string} ({chords})', 'retrieval', { cell: 'tph', prog: 'auto', strings: [2], goal: 70, start: 40, why: 'A tapped arpeggio is a chord laid out along one string. Finding its three notes from the chord name (instead of reading frets) is what later lets you tap over any progression.', instr: 'Cover the tab. For each chord, name its notes, find them on the B string near the 7th fret (lowest two for the fretting hand, the highest one for the tap), then play a bar. Pass: all four chords from memory.', watch: 'Using the same fret pattern for every chord: major and minor shapes differ.', simplify: 'Look once, then cover.' }),
+          T_('tap-find', 'Voice-led shapes: a new chord every two beats, each near the last ({chords}, {string})', 'accurate-reps', { cell: 'tph', prog: 'auto', strings: [2], bpc: 2, goal: 70, start: 40, why: 'A tapped arpeggio is a chord laid out along one string. Taking each new chord’s shape as close as possible to the last one (voice leading) keeps both hands moving as little as possible.', instr: HOW + 'A new chord every two beats on the B string. Before each change, look at which fretted note stays, which moves and where the tap goes. Pass: the progression twice in time with every change on the beat.', watch: 'Using the same fret pattern for every chord: major and minor shapes differ.', simplify: 'Two chords only.' }),
           T_('tap-three-strings', 'The same arpeggios on a new string every bar: {string} ({chords})', 'variable', { cell: 'tph', prog: 'auto', strings: [1, 2, 3], goal: 70, start: 40, why: 'The same chord on another string has another fret pattern. Changing string every bar makes you rebuild the shape each time: variable practice that builds a flexible map instead of one memorised spot.', instr: HOW + 'Bar 1 on the e string, bar 2 on the B, bar 3 on the G, and so on. Mute the unused strings with both hands. Pass: every bar clean and in time.', watch: 'The G-string bars ringing into the B string.', simplify: 'The e and B strings only.' })], ST(
           'A triad on one string is three frets, a few frets apart; the order of root, 3rd and 5th depends on the chord and where you play it. Each string has its own pattern for the same chord.',
           'Knowing the chord tones on every string turns tapping from a memorised trick into something you can use over any song.',
@@ -335,11 +368,11 @@ export default entry({
           'A pedal is a note that repeats while other notes move. With tapping, either hand can hold the pedal: the fretting hand (the taps move) or the tap (the fretted notes move).',
           'Pedal figures give tapped lines melody and direction instead of the same arpeggio over and over.',
           ['A fretted pedal outlines the chord upward through its tones.', 'A tapped pedal on the root sounds like a drone; the moving notes come from the key’s pentatonic scale.'])),
-        S('tap-recall', 'From memory', 'fretboard', 'Called chords on the G string.', [
-          T_('tap-called', 'From memory: called chords on the G string ({chords})', 'retrieval', { cell: 'tph', prog: 'minor3', strings: [3], goal: 94, start: 52, why: 'Hearing a chord name and finding its tapped shape at once is the skill that lets you tap over any song. Recalling it on the G string, the least familiar, makes the retrieval real.', instr: 'Cover the tab. Read the chord name, find its three notes on the G string between frets 4 and 16, then tap a bar. Pass: all four chords from memory, in time.', watch: 'Defaulting to the B-string frets.', simplify: 'Look at the first bar, then cover.' }),
+        S('tap-recall', 'The G string and the relative key', 'fretboard', 'A new progression on the G string; major and relative-minor progressions in turn.', [
+          T_('tap-called', 'Minor-key chords on the G string, frets 4 to 16 ({chords})', 'accurate-reps', { cell: 'tph', prog: 'minor3', strings: [3], goal: 94, start: 52, why: 'The G string is the least familiar for tapping: it is thicker, and its shapes sit four frets higher than on the B string for the same notes. A new progression here moves every shape.', instr: HOW + 'One chord a bar on the G string. Mute the B and e with the fretting-hand fingertips. Pass: all four chords twice, in time, with no other string ringing.', watch: 'Defaulting to the B-string frets.', simplify: 'Two chords.' }),
           T_('tap-major', 'Interleaved keys: a major-key progression, then its relative minor ({chords})', 'interleaving', { cell: 'tph', strings: [2], chords: (k, c) => (c.minor ? [...chordsOf(mod12(k + 3), 'major'), ...chordsOf(k, 'minor')] : [...chordsOf(k, 'major'), ...chordsOf(mod12(k - 3), 'minor')]), goal: 94, start: 52, why: 'A major-key and a minor-key progression share most of their chords but in a new order and with a new home. Alternating them mixes shapes you know in a new sequence.', instr: HOW + 'Bars 1–4: the major-key progression. Bars 5–8: the relative minor’s. Pass: all eight bars without a pause between the halves.', watch: 'Confusing the major and minor shapes of the same root.', simplify: 'Only the first four bars.' })], ST(
-          'Each chord’s tapped shape can be rebuilt from its name: the chord tones, found on the chosen string near your hand.',
-          'Recalling shapes from names (instead of reading tab) is what makes tapping usable over real songs.',
+          'Each chord’s tapped shape is its chord tones on the chosen string, near your hand; a major key and its relative minor share those shapes in a new order.',
+          'New strings and new progressions are what make the shapes usable over real songs.',
           ['A major key and its relative minor use the same notes; their progressions share chords.', 'The G string sits a major 3rd below the B string, so its frets are four higher for the same note.'])),
         S('tap-music', 'In music', 'improv', 'An 8-bar study; a solo with tapped answers.', [c => tapStudyI(c),
           c => targetGuide(c, { prog: c.minor ? 'minorRock' : 'axis', scale: c.minor ? 'minorPent' : 'majorPent', name: 'Solo over the progression: pick a phrase, answer it with a bar of tapping' })], ST(
@@ -364,7 +397,7 @@ export default entry({
         S('tap-across', 'Across strings and keys', 'fretboard', 'Per-beat strings; four keys; a long progression.', [
           T_('tap-across-beat', 'Across strings every beat: G, B, e, B ({chords})', 'interleaving', { cell: 'tph', across: true, prog: 'auto', strings: [3, 2, 1, 2], reps: 2, goal: 84, start: 48, why: 'Changing string on every beat while the chord stays turns three one-string shapes into one arpeggio across the neck.', instr: HOW + 'Each beat on the next string of the pattern G, B, e, B. Pass: eight bars clean.', watch: 'Late string changes.', simplify: 'One string a bar.' }),
           T_('tap-keys', 'Four keys around the cycle of fourths ({chords})', 'interleaving', { cell: 'tph', prog: 'auto', strings: [2], keys: [0, 5, 10, 3], goal: 84, start: 48, why: 'In a new key every shape moves. Four keys a fourth apart make you rebuild them each time instead of playing from finger memory.', instr: HOW + 'The progression in four keys, a fourth apart. Pass: all four keys without stopping.', watch: 'Playing the old key’s frets.', simplify: 'Two keys.' }),
-          T_('tap-long', 'From memory: an 8-chord progression on the B string ({chords})', 'retrieval', { cell: 'tphp', prog: 'long', strings: [2], goal: 84, start: 48, why: 'A longer progression with chords you don’t expect makes the shapes come from the chord names, not from habit.', instr: 'Cover the tab. Read each chord name, find the shape on the B string near the last one, tap a bar of 16ths. Pass: all eight chords from memory.', watch: 'Jumping around the neck: stay near the last shape.', simplify: 'The first four chords.' })], ST(
+          T_('tap-long', 'An 8-chord progression on the B string, each shape near the last ({chords})', 'variable', { cell: 'tphp', prog: 'long', strings: [2], goal: 84, start: 48, why: 'A longer progression with chords you don’t expect moves the shapes in new directions; staying near the last shape keeps the hands calm.', instr: HOW + 'One chord a bar on the B string in 16ths (tap, pull, hammer, pull). Pass: all eight chords in time, twice.', watch: 'Jumping around the neck: stay near the last shape.', simplify: 'The first four chords.' })], ST(
           'Combining strings and keys makes the shapes portable: one chord across three strings, the same progression in any key.',
           'Real songs come in every key; flexible shapes are what let you tap anywhere.',
           ['A cycle of fourths moves each chord root up a fourth.', 'When chords change, stay near the last shape (voice leading).'])),
@@ -375,19 +408,19 @@ export default entry({
           ['Lead into the tapped run from a picked note on the same string.', 'End the run on a long note with vibrato.']))
       ], [7, 8]),
     stage('mastery', 'Your tapping voice',
-      'Sextuplets across strings at 96 BPM in two keys, any called chord, string and grouping on the spot, tapping from memory in six keys, and your own 16-bar tapping piece.', [
+      'Sextuplets across strings at 96 BPM in two keys, a new chord, string and grouping every bar, the progression in six keys, and your own 16-bar tapping piece.', [
         S('tap-perf', 'At performance tempo', 'fretting', 'Speed and random access.', [
           T_('tap-perf', 'Performance tempo: sextuplets across strings in two keys ({chords})', 'edge', { cell: 'six', across: true, prog: 'auto', strings: [2, 1, 2, 3], keys: [0, 7], goal: 96, start: 54, why: 'Sextuplets across strings in two keys: the speed, accuracy and muting of a full tapping passage at once.', instr: HOW + 'Tempo ladder, +4 BPM after each clean pass. Pass: clean at the goal tempo.', watch: 'Tension in the tapping hand.', simplify: 'One key.' }),
           c => tapRandom(c)], ST(
           'Mastery is speed with control, and shapes you can call up in any order.',
           'Performance and improvisation both need tapping to be automatic.',
           ['Raise the tempo only after a clean pass.', 'Random order is harder to practise and lasts longer.'])),
-        S('tap-recall-m', 'From memory', 'fretboard', 'Six keys; improvising.', [
-          T_('tap-six-keys', 'From memory: the progression in six keys on the G and B strings', 'retrieval', { cell: 'tphp', prog: 'auto', strings: [3, 2], keys: [0, 5, 10, 3, 8, 1], goal: 92, start: 52, why: 'The same progression in six keys, from memory, on two strings: retrieval at tempo across the whole neck.', instr: 'Cover the tab. For each key, name the four chords, then tap them (G string, B string in turn). Pass: all six keys in time.', watch: 'A pause at each new key.', simplify: 'Three keys.' }),
+        S('tap-recall-m', 'Every key, and improvising', 'fretboard', 'Six keys; improvising.', [
+          T_('tap-six-keys', 'The progression in six keys on the G and B strings', 'interleaving', { cell: 'tphp', prog: 'auto', strings: [3, 2], keys: [0, 5, 10, 3, 8, 1], goal: 92, start: 52, why: 'The same progression in six keys on two strings: every shape moves, across most of the neck.', instr: HOW + 'One chord a bar, G string and B string in turn, a new key every four bars. Pass: all six keys in time without stopping.', watch: 'A pause at each new key.', simplify: 'Three keys.' }),
           c => targetGuide(c, { prog: c.minor ? 'minorRock' : 'axis', scale: c.minor ? 'minorPent' : 'majorPent', name: 'Improvise: two choruses, the second answering every phrase with tapping' })], ST(
-          'Recall at tempo across keys is the test that the shapes are learned, not memorised in one place.',
+          'At tempo across keys the shapes have to work anywhere on the neck, not in one place.',
           'Improvising with tapping means choosing when to tap, on which chord and string.',
-          ['Name the chords before you play them.', 'Tap only where it adds something.'])),
+          ['A key a fourth higher moves every shape five frets up (or seven down).', 'Tap only where it adds something.'])),
         S('tap-voice', 'Your own piece', 'improv', 'A capstone study, then your version.', [c => tapEtude(c),
           T_('tap-own', 'Make it yours: one tapped bar per chord, then your own bar ({chords})', 'transfer', { cell: 'six', prog: 'long', strings: [2, 3], answer: true, goal: 90, start: 52, minutes: 6, why: 'Mastery means using tapping as your own vocabulary: the tab gives every second bar; the bars between are yours, built from any cell you know.', instr: HOW + 'Odd bars: your own tapped or picked bar over the chord. Even bars: the written sextuplets. Pass: two times through with every bar in time, your bars different each time.', watch: 'Your bars copying the written ones.', simplify: 'Triplets in the written bars.' })], ST(
           'The capstone combines every cell, string and grouping in one piece; the last step is writing your own.',

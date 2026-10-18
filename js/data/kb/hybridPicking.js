@@ -7,6 +7,14 @@
 // higher strings), so the same idea works in any key: pick-and-middle pairs, bass and pinches, rolls,
 // string skipping, double stops, chicken snaps. Keys come from the context: a minor context uses its
 // relative major, so every chord stays diatonic.
+//
+// Teaching method first (CONTENT.md, `pedagogy` below), audited 2026-10-17: keep the normal pick grip,
+// add the middle finger first (pick and middle on two strings), then the ring finger, then the claw
+// (picked bass, plucked pinches), arpeggios and the independence of a line under a pedal; rolls, string
+// skipping, octaves and double stops; chicken picking and banjo rolls; seventh-chord arpeggios, comping
+// and lines at tempo. Removed: the cover-the-tab ear echo (`hybrid-pm-echo`), saying fingers or degrees
+// aloud and "from memory" versions (`hybrid-finger-call`, `hybrid-sixths-42`, `hybrid-pinch-called`,
+// `hybrid-roll-keys`, the 6ths lessons); added the ring finger step (`hybrid-pma-three`).
 import { OPEN, N, nameOf, make, chordInfo, OPEN_SHAPES, onString, bassPair, openVoicings, keyChords, topTriad, pentBox, mod12, S, stage, entry, M } from '../lib.js';
 
 /* ------------------------------- The concept ------------------------------- */
@@ -113,6 +121,24 @@ export function pmEcho(c) {
     why: 'Hearing which strings a pattern uses, then playing it back straight away, ties the sound to the hand. It also checks that the pick and the finger sound equal: if your echo sounds different, one of them is too loud.',
     instr: 'Hold the grip. Cover the tab. Each pattern is four notes (pick on the low string, middle finger on a higher one); in the two silent beats, play it back. Check against the tab after each round. Pass: 3 of the 4 patterns echoed exactly, twice in a row.',
     watch: 'Looking at the tab before you try: guess, then check.', simplify: 'Echo only the first two notes of each pattern.', tab: { notes }
+  });
+}
+/** Adding the ring finger: pick on the D string, middle on the G, ring on the B, through I–IV–I–V (accurate repetitions). */
+export function pmaThree(c) {
+  const k = majKey(c), chords = country(k), notes = [], vs = []; let near = 5;
+  const step = (c.lvl || 2) <= 1 ? 1 : 0.5;
+  for (const [bar, nm] of chords.entries()) {
+    const g = grip(nm, [4, 3, 2], { near, rootLow: true }); if (!g) return null; vs.push(voicing(g)); near = g.at[3];
+    const order = [4, 3, 2, 3];
+    for (let i = 0; i < 4 / step; i++) { const s = order[i % 4]; notes.push(N(s, g.at[s], bar * 4 + i * step, step, null, { fing: s === 4 ? undefined : s === 3 ? 'm' : 'a' })); }
+  }
+  notes.forEach(n => { if (n.fing === undefined) delete n.fing; });
+  return make(c, {
+    id: 'hybrid-pma-three', name: `Adding the ring finger: pick, middle, ring on three strings (${chords.join(' – ')})`, domain: 'picking', method: 'accurate-reps',
+    unit: unitName(step), goal: 100, minutes: 5, picking: 'hybrid', backing: chords,
+    why: 'Once pick and middle finger are even, the ring finger takes the next string up. Each finger now owns one string: pick on the D, middle on the G, ring on the B.',
+    instr: 'Pick the root on the D string, middle finger on the G string, ring finger on the B string, middle finger on the G again: four notes, over and over. Change grip on each bar line without breaking the rhythm. Keep the ring finger as loud as the others. Pass: 8 clean bars in a row with every note even in time and volume.',
+    watch: 'The ring finger plucking weaker than the middle, or the pick hand twisting to reach it.', simplify: 'One chord, quarter notes.', voicings: dedupe(vs), chords, tab: { notes }
   });
 }
 /** Bass, then middle, ring, then both: the pinch built inside one bar (chunking). */
@@ -256,7 +282,7 @@ export function sixthsPluck(c) {
     id: 'hybrid-sixths', name: `${nameOf(k)} major in 6ths on the G and high e strings`, domain: 'picking', method: 'variable',
     unit: split ? '8th notes (split)' : 'quarter notes (pinched)', goal: split ? 116 : 92, minutes: 5,
     why: 'Sixths on strings 3 and 1 are the sweetest double stops in country and soul guitar. Hybrid picking plays both strings at once while skipping the B string, which a pick alone can’t do.',
-    instr: `Pick the G string while the middle finger plucks the high e${split ? ', first one then the other' : ', together'}. The shapes alternate between a 6th with the frets one apart and a 6th with the frets two apart: follow the scale up and back. Mute the B string with the underside of the finger on the G string. Pass: up and down twice with no B string sounding, then play the shapes from memory.`,
+    instr: `Pick the G string while the middle finger plucks the high e${split ? ', first one then the other' : ', together'}. The shapes alternate between a 6th with the frets one apart and a 6th with the frets two apart: follow the scale up and back. Mute the B string with the underside of the finger on the G string. Pass: up and down twice with no B string sounding.`,
     watch: 'The B string ringing between the two notes.', simplify: 'The first four pairs only.', tab: { notes }
   });
 }
@@ -300,7 +326,7 @@ export function sixthsOverChanges(c, { prog = 'country' } = {}) {
     id: `hybrid-sixths-${prog}`, name: `6ths over the changes: chord tones on every chord (${chords.join(' – ')})`, domain: 'improv', method: 'transfer',
     unit: 'quarter notes', goal: 100, minutes: 6, backing: chords, chords,
     why: 'Each chord has two 6th shapes made only of its own chord tones. Sliding between them is the classic country and soul fill: it follows the harmony automatically.',
-    instr: 'Pick on the G string, middle finger on the high e. For each chord: the lower shape, slide up to the higher one, split it into two 8ths, slide back. Say the chord name as it changes. Then improvise your own rhythm with the same shapes. Pass: four bars written, then four bars of your own, every slide landing in time.',
+    instr: 'Pick on the G string, middle finger on the high e. For each chord: the lower shape, slide up to the higher one, split it into two 8ths, slide back. Then improvise your own rhythm with the same shapes. Pass: four bars written, then four bars of your own, every slide landing in time.',
     watch: 'Sliding the two fingers unevenly so the 6th goes out of tune mid-slide.', simplify: 'No slides: just the two shapes per chord.', tab: { notes }
   });
 }
@@ -377,7 +403,7 @@ export function rollKeys(c, { random = false } = {}) {
     unit: '16th notes', goal: random ? 104 : 96, minutes: 5, dl: random ? 1 : 0, picking: 'hybrid', chords: names, voicings: dedupe(vs),
     why: random ? 'At mastery level the roll should run on any chord the band throws at you. Unpredictable changes make you find each triad while the picking hand carries on by itself.'
       : 'Changing key every bar makes the fretting hand find a new triad shape while the picking hand keeps rolling: the two hands learn to work independently.',
-    instr: `The chords are ${names.join(', ')}. Keep the roll going without a gap at the bar line, and find each triad near the last one. Read only the chord name: cover the tab after the first pass. Pass: all 8 bars without breaking the roll${random ? ' at the goal tempo' : ''}.`,
+    instr: `The chords are ${names.join(', ')}. Keep the roll going without a gap at the bar line, and find each triad near the last one. Pass: all 8 bars without breaking the roll${random ? ' at the goal tempo' : ''}.`,
     watch: 'Stopping the picking hand while the fretting hand searches: lower the tempo instead.', simplify: 'The first four bars only.', tab: { notes }
   });
 }
@@ -465,7 +491,7 @@ export function pedalPluck(c) {
     watch: 'The pedal getting louder as the line rises.', simplify: 'Three notes of the line only.', tab: { notes }
   });
 }
-/** Say the finger before every note: p (pick), m, a, over the changes, then from memory (retrieval). */
+/** The p-m-p-a pattern: pick on the D and G strings, middle on the B, ring on the high e, through the changes. */
 export function fingerCall(c) {
   const k = majKey(c), chords = country(k), notes = [], vs = []; let near = 5;
   for (const [bar, nm] of chords.entries()) {
@@ -473,10 +499,10 @@ export function fingerCall(c) {
     [4, 2, 3, 1, 4, 2, 3, 1].forEach((s, i) => notes.push(N(s, g.at[s], bar * 4 + i * 0.5, 0.5)));
   }
   return make(c, {
-    id: 'hybrid-finger-call', name: `Which finger? p-m-p-a through ${chords.join(' – ')}, from memory`, domain: 'picking', method: 'retrieval',
+    id: 'hybrid-finger-call', name: `The p-m-p-a pattern on four strings through ${chords.join(' – ')}`, domain: 'picking', method: 'accurate-reps',
     unit: '8th notes', goal: 96, minutes: 4, picking: 'hybrid', backing: chords, chords, voicings: dedupe(vs),
-    why: 'In hybrid picking every string belongs to a finger: the pick takes the D and G strings, the middle finger the B, the ring finger the high e. Saying the finger before the note, then playing the pattern from memory, makes those assignments automatic.',
-    instr: 'The pattern per beat pair is pick (D), middle (B), pick (G), ring (e). Play one bar saying “p, m, p, a” before each note. Then cover the tab and play all four bars from the chord names alone. Pass: the four bars from memory with no wrong finger, twice.',
+    why: 'In hybrid picking every string belongs to a finger: the pick takes the D and G strings, the middle finger the B, the ring finger the high e. A four-string arpeggio pattern that alternates pick and fingers makes those jobs automatic.',
+    instr: 'The pattern per beat pair is pick (D), middle (B), pick (G), ring (e), in even 8ths. Hold each grip and change on the bar line without breaking the pattern. Count clean bars. Pass: the four bars twice with no wrong finger and every note equally loud.',
     watch: 'The pick creeping onto the B string out of habit.', simplify: 'One chord, quarter notes.', tab: { notes }
   });
 }
@@ -496,7 +522,7 @@ export function popNotes(c) {
     watch: 'Snapping so hard the note goes sharp or rattles.', simplify: 'Only the G and B strings.', tab: { notes }
   });
 }
-/** Diatonic 6ths with the low note picked on the D string and the high note plucked on the B string (retrieval). */
+/** Diatonic 6ths with the low note picked on the D string and the high note plucked on the B string. */
 export function sixthsFourTwo(c) {
   const k = majKey(c), notes = []; let t = 0;
   const all = [];
@@ -511,10 +537,10 @@ export function sixthsFourTwo(c) {
   const seq = [...pairs, ...pairs.slice(0, -1).reverse()];
   seq.forEach(([a, b]) => { notes.push(N(4, a, t, 0.5), N(2, b, t + 0.5, 0.5), N(4, a, t + 1, 1, null, { chord: true }), N(2, b, t + 1, 1, null, { chord: true })); t += 2; });
   return make(c, {
-    id: 'hybrid-sixths-42', name: `6ths on the D and B strings, from memory (${nameOf(k)} major)`, domain: 'fretboard', method: 'retrieval',
+    id: 'hybrid-sixths-42', name: `6ths on the D and B strings (${nameOf(k)} major)`, domain: 'picking', method: 'accurate-reps',
     unit: '8th notes', goal: 104, minutes: 5, picking: 'hybrid',
-    why: 'A 6th spans one skipped string: the pick takes the bottom, the middle finger the top. Knowing the scale’s 6ths on a second string pair (not just G and e) doubles the places you can play them, and recalling them instead of reading builds that map.',
-    instr: 'For each 6th: pick the D-string note, pluck the B-string note, then pinch both together. Up the scale and back. After one pass with the tab, cover it and say the scale degree of each bottom note before you play it. Pass: up and back from memory, twice.',
+    why: 'A 6th spans one skipped string: the pick takes the bottom, the middle finger the top. The scale’s 6ths on a second string pair (not just G and e) double the places you can play them.',
+    instr: 'For each 6th: pick the D-string note, pluck the B-string note, then pinch both together. Up the scale and back. Pass: up and back twice with the G string silent.',
     watch: 'Letting the G string sound: mute it with the underside of the fretting finger.', simplify: 'The first four 6ths.', tab: { notes }
   });
 }
@@ -533,7 +559,7 @@ export function hybridArp7(c) {
     watch: 'The ring finger landing late on the high e.', simplify: '8th notes.', tab: { notes }
   });
 }
-/** A diatonic chord named every bar: find a bass-and-pinch grip on the spot (retrieval). */
+/** Bass and pinches through the diatonic chords of the key, out of order, each grip near the last. */
 export function pinchCalled(c) {
   const k = majKey(c), r = rng(613 + (c.lvl || 7)), deg = [[0, ''], [2, 'm'], [4, 'm'], [5, ''], [7, ''], [9, 'm']], chords = [], notes = [], vs = []; let near = 5;
   for (let bar = 0; bar < 8; bar++) { const [d, q] = deg[Math.floor(r() * deg.length)]; chords.push(nameOf(k + d) + q); }
@@ -547,50 +573,96 @@ export function pinchCalled(c) {
     [3, 2, 1].forEach(s => notes.push(N(s, g.at[s], T + 3, 1, null, { chord: true })));
   }
   return make(c, {
-    id: 'hybrid-pinch-called', name: `Chords on demand: ${chords.join(' – ')}, bass and pinches`, domain: 'rhythm', method: 'retrieval',
+    id: 'hybrid-pinch-called', name: `Bass and pinches through the key’s chords: ${chords.join(' – ')}`, domain: 'rhythm', method: 'variable',
     unit: 'quarter notes', goal: 104, minutes: 5, dl: 1, picking: 'hybrid', backing: chords, chords, voicings: dedupe(vs),
-    why: 'Comping from a chart means finding each chord’s grip the moment you read its name. Every bar here is a diatonic chord out of order, played as a picked root and plucked pinches near the last grip.',
-    instr: 'Cover the tab after one pass. Read only the chord names: pick the root on beat 1, pinch the top three strings on beat 2, root and a two-string pinch on beat 3, all three on beat 4. Stay within a few frets. Pass: all 8 bars from the names, at the goal tempo, twice.',
+    why: 'Comping from a chart means finding each chord’s grip near the last one. Every bar here is a diatonic chord out of order, played as a picked root and a pinched chord with the claw of pick and fingers.',
+    instr: 'Pick the root on beat 1, pinch the top three strings with pick, middle and ring on beat 2, root and a two-string pinch on beat 3, all three on beat 4. Stay within a few frets. Pass: all 8 bars at the goal tempo, twice.',
     watch: 'Jumping to open or root-position shapes far away.', simplify: 'The first four bars.', tab: { notes }
   });
 }
 
+const ST = (concept, why, theory) => ({ concept, why, theory });
 /* --------------------------------- The path --------------------------------- */
 export default entry({
   id: 'hybridPicking', kind: 'technique', title: 'Hybrid picking', domain: 'picking',
   re: /hybrid.?pick|pick (and|&|\+) fingers?|chicken.?pick/,
   aliases: ['pick and fingers', 'chicken picking'],
-  sources: ['https://www.fundamental-changes.com/hybrid-picking-part-1/', 'https://www.londonguitaracademy.com/hybrid-picking-guitar', 'https://my.artistworks.com/blog/how-practice-hybrid-picking-guitar', 'https://www.premierguitar.com/articles/23906-cosmic-country-finger-rolls', 'https://www.premierguitar.com/lessons/fierce-guitar-intervallic-arpeggios'],
+  sources: ['https://www.londonguitaracademy.com/hybrid-picking-guitar', 'https://www.fundamental-changes.com/hybrid-picking-part-1/', 'https://www.premierguitar.com/articles/23906-cosmic-country-finger-rolls', 'https://www.premierguitar.com/pluck-em-a-crash-course-in-country-guitar', 'https://fundamental-changes.com/?p=5303', 'https://www.premierguitar.com/lessons/fierce-guitar-intervallic-arpeggios'],
   summary: 'Pick plus middle and ring fingers, from the first pick-and-finger alternation to rolls, string-skipping lines, 6ths, chicken snaps and a capstone study.',
+  pedagogy: {
+    date: '2026-10-17',
+    summary: 'Taught without changing the pick grip: the middle finger is added first, on the string above the pick, in slow two-string patterns with even timing and volume; then the ring finger on the next string; then the claw (picked bass, plucked chord) and arpeggios that make the fingers independent. Then string skipping, octaves and double stops, finger rolls (down, up, up) and simple country licks; then chicken picking (muted notes, staccato finger notes), banjo rolls ascending and descending, arpeggio studies, comping and improvising; finally fusion sequences and hybrid-picked runs at tempo and your own pieces.',
+    sequence: [
+      { id: 'middle', tier: 'foundations', step: 'Pick and middle finger on two strings', how: 'Keep the normal pick grip; pick on the lower string, the middle finger on the string above, slowly with a metronome, even in time and volume.', skills: ['hybrid-pm'], source: 0 },
+      { id: 'ring', tier: 'foundations', step: 'Adding the ring finger', how: 'Only once the middle finger is comfortable: the ring finger on the next string up, in simple three-string patterns.', skills: ['hybrid-ring'], source: 0 },
+      { id: 'claw', tier: 'foundations', step: 'The claw: picked bass, plucked chord', how: 'The pick plays the bass while middle and ring (and the pick) pluck the chord together, as one sound.', skills: ['hybrid-pinch'], source: 1 },
+      { id: 'independence', tier: 'foundations', step: 'Finger independence: arpeggios, a line under a pedal, a melody over the bass', how: 'Chord shapes one note at a time with every finger on its own string; a moving picked line under a repeated finger note; a top-string melody over a picked root.', skills: ['hybrid-bass', 'hybrid-first-music'], source: 1 },
+      { id: 'rolls', tier: 'intermediate', step: 'Finger rolls: down, up, up', how: 'One pick downstroke, then middle and ring upstrokes, over triads; slowly first, then up to speed.', skills: ['hybrid-rolls'], source: 2 },
+      { id: 'skips', tier: 'intermediate', step: 'String skipping and octaves', how: 'The pick stays on the lower string while a finger reaches two strings up; the skipped string stays muted.', skills: ['hybrid-skip'], source: 0 },
+      { id: 'dstops', tier: 'intermediate', step: 'Double stops plucked by the fingers', how: '6ths and 3rds with the pick and a finger, or middle and ring together, through the scale and over the changes.', skills: ['hybrid-dstops', 'hybrid-control', 'hybrid-changes'], source: 3 },
+      { id: 'chicken', tier: 'advanced', step: 'Chicken picking and string-skipping pentatonic lines', how: 'Muted pick notes against staccato, snapped finger notes; lines that skip strings with the pick and middle finger; rhythms on and off the beat at slow, medium and fast tempos.', skills: ['hybrid-lines'], source: 4 },
+      { id: 'banjo', tier: 'advanced', step: 'Banjo rolls through chords and keys', how: 'Banjo-style rolls across three strings, ascending and descending, through chord changes.', skills: ['hybrid-banjo'], source: 1 },
+      { id: 'apply', tier: 'advanced', step: 'Arpeggio studies, comping and improvising', how: 'Seventh-chord arpeggios with pick and fingers, chords of the key as bass and pinches, comping, and improvising over backing tracks.', skills: ['hybrid-fusion', 'hybrid-adv-music'], source: 0 },
+      { id: 'tempo', tier: 'mastery', step: 'Hybrid-picked runs and rolls at tempo', how: 'Complex string skipping and runs across the neck, raised in tempo only as far as they stay clean.', skills: ['hybrid-speed', 'hybrid-random'], source: 0 },
+      { id: 'own', tier: 'mastery', step: 'Your own pieces and improvisation', how: 'Combine rolls, double stops, snaps and bass lines in your own parts and solos.', skills: ['hybrid-voice'], source: 2 }
+    ],
+    drills: ['Pick and middle finger alternating on two strings, slowly with a metronome', 'Pick, middle and ring across three strings', 'The claw: picked bass with a plucked chord', 'Down-up-up finger rolls over triads', 'Octaves and string-skipped intervals with pick and middle finger', 'Plucked 6ths and 3rds through the scale', 'Chicken picking: muted pick notes against snapped finger notes', 'Banjo rolls ascending and descending'],
+    mistakes: ['Changing the whole pick grip to make room for the fingers', 'Adding the ring finger before the middle finger is comfortable', 'Plucked notes quieter (or later) than picked ones', 'An anchored little finger limiting the fingers', 'Raising the tempo before the notes are clean', 'Letting the skipped string ring'],
+    sources: [
+      { title: 'Hybrid Picking Guitar: quick start and 30-day plan', author: 'London Guitar Academy', url: 'https://www.londonguitaracademy.com/hybrid-picking-guitar' },
+      { title: 'Hybrid Picking, Part 1', author: 'Rob Thorpe (Fundamental Changes)', url: 'https://www.fundamental-changes.com/hybrid-picking-part-1/' },
+      { title: 'Cosmic Country: Finger Rolls', author: 'Daniel Donato (Premier Guitar)', url: 'https://www.premierguitar.com/articles/23906-cosmic-country-finger-rolls' },
+      { title: 'Pluck ’Em: A Crash Course in Country Guitar', author: 'Troy Nelson (Premier Guitar)', url: 'https://www.premierguitar.com/pluck-em-a-crash-course-in-country-guitar' },
+      { title: 'Chicken Pickin’: Essential Techniques for Country Guitar, Part 1', author: 'Joseph Alexander (Fundamental Changes)', url: 'https://fundamental-changes.com/?p=5303' }
+    ]
+  },
   ctx: { key: 7, minor: false, prog: 'country' },
   stages: [
     stage('foundations', 'Pick and fingers together',
-      'Alternate pick and middle finger on every string pair at 90 BPM in 8ths with even volume, pinch two strings against a picked bass with no flam, play a scale line under a plucked pedal note, play p-m-p-a through the changes from memory, and play a short top-string melody over a picked root.', [
-        S('hybrid-pm', 'Pick and middle finger', 'picking', 'The first motion: pick on the lower string, middle finger on the next one up.', [c => pmPairs(c), c => pmChanges(c), c => pmEcho(c)]),
-        S('hybrid-pinch', 'Bass and pinches', 'picking', 'Middle and ring fingers pluck together against the pick.', [c => pinchSteps(c), c => hybridPinches(c)]),
-        S('hybrid-bass', 'Independence and recall', 'picking', 'A moving line under a plucked pedal; every finger’s string from memory.', [c => pedalPluck(c), c => fingerCall(c)]),
-        S('hybrid-first-music', 'First music', 'picking', 'A melody on top, the bass below.', [c => pinchMelody(c)])
+      'Alternate pick and middle finger on every string pair at 90 BPM in 8ths with even volume, add the ring finger on three strings through the changes, pinch two strings against a picked bass with no flam, play a scale line under a plucked pedal note and the p-m-p-a pattern through the changes, and play a short top-string melody over a picked root.', [
+        S('hybrid-pm', 'Pick and middle finger', 'picking', 'The first motion: pick on the lower string, middle finger on the next one up.', [c => pmPairs(c), c => pmChanges(c)],
+          ST('Hybrid picking keeps the pick between thumb and index and adds the free fingers: middle (m) and ring (a). The first step uses only the middle finger, on the string just above the pick.', 'It gives pick players fingerstyle sounds, wide intervals and plucked chords without putting the pick down.', ['Keep your normal pick grip; only the middle finger is new.', 'The plucked note should be as loud and as on time as the picked one.', 'The middle finger curls up toward the palm after the pluck.'])),
+        S('hybrid-ring', 'Adding the ring finger', 'picking', 'Pick, middle and ring, one string each.', [c => pmaThree(c)],
+          ST('The ring finger joins on the string above the middle finger, so each finger owns a string.', 'Three voices at once make rolls, pinches and arpeggios possible.', ['Add it only when the middle finger is comfortable.', 'The ring finger is usually weaker: match its volume to the others.'])),
+        S('hybrid-pinch', 'Bass and pinches', 'picking', 'Middle and ring fingers pluck together against the pick.', [c => pinchSteps(c), c => hybridPinches(c)],
+          ST('A pinch is two or more strings plucked at the same moment: the pick on the bass, the fingers on the chord, like a claw.', 'Fingers can sound a whole chord at once, which a strummed pick cannot; it is the base of country and jazz comping with the pick.', ['A flam (one finger late) is the main thing to listen for.', 'The bass note and the pinch can alternate (bass on the beat, pinch on the “and”).'])),
+        S('hybrid-bass', 'Independence: pedal and arpeggio patterns', 'picking', 'A moving line under a plucked pedal; the p-m-p-a pattern through the changes.', [c => pedalPluck(c), c => fingerCall(c)],
+          ST('The pick and the fingers now play different parts: a moving line under a repeated finger note, then a four-string arpeggio with the pick on two strings.', 'Independence between pick and fingers is what rolls, arpeggios and melodies over a bass need.', ['In the p-m-p-a pattern the pick takes the D and G strings, m the B, a the high e.', 'Slow and even first; speed only after it is clean.'])),
+        S('hybrid-first-music', 'First music', 'picking', 'A melody on top, the bass below.', [c => pinchMelody(c)],
+          ST('The fingers carry a melody on the top strings while the pick holds the bass.', 'Two parts from one guitar: the reason hybrid picking exists.', ['Melody louder than the bass.', 'Ring finger on the high e, middle on the B.']))
       ], [1, 3]),
     stage('intermediate', 'Rolls, skips and double stops',
-      'Roll pick-middle-ring across three strings as triplets at 100 BPM and in 16ths at 90, play octaves and string-skipped arpeggios with no middle string sounding, play 6ths and 3rds of the major scale up and back (6ths on two string pairs from memory), and snap middle-finger pops at even volume.', [
-        S('hybrid-rolls', 'Hybrid rolls', 'picking', 'Pick, middle, ring across strings 3-2-1.', [c => hybridRolls(c, { cross: false }), c => hybridRolls(c, { cross: true })]),
-        S('hybrid-skip', 'String skipping with the fingers', 'picking', 'The pick stays put, the fingers reach across.', [c => octaveSkips(c), c => skipArps(c)]),
-        S('hybrid-dstops', 'Double stops', 'picking', '6ths and 3rds of the scale, plucked.', [c => sixthsPluck(c), c => thirdsPinch(c)]),
-        S('hybrid-control', 'Pop and recall', 'picking', 'The snapped finger sound; 6ths on a second string pair from memory.', [c => popNotes(c), c => sixthsFourTwo(c)]),
-        S('hybrid-changes', 'Over the changes', 'improv', 'Chord-tone 6ths and a solo over country changes.', [c => sixthsOverChanges(c), M('transfer', ['targetSolo', { chords: '$country', scale: 'majorPent' }])])
+      'Roll pick-middle-ring across three strings as triplets at 100 BPM and in 16ths at 90, play octaves and string-skipped arpeggios with no middle string sounding, play 6ths and 3rds of the major scale up and back on two string pairs, and snap middle-finger pops at even volume.', [
+        S('hybrid-rolls', 'Hybrid rolls', 'picking', 'Pick, middle, ring across strings 3-2-1.', [c => hybridRolls(c, { cross: false }), c => hybridRolls(c, { cross: true })],
+          ST('A finger roll is a pick downstroke followed by the middle and ring fingers plucking upward on the next strings: down, up, up.', 'It turns triad shapes into a flowing, banjo-like cascade, a staple of country guitar.', ['As triplets the roll starts on every beat; in 16ths a three-note roll shifts against the beat.', 'Change triad shapes without stopping the roll.'])),
+        S('hybrid-skip', 'String skipping with the fingers', 'picking', 'The pick stays put, the fingers reach across.', [c => octaveSkips(c), c => skipArps(c)],
+          ST('With the pick on a low string and a finger two strings up, wide intervals need no pick jump; the string in between stays muted.', 'Octaves and spread arpeggios become as easy as adjacent strings.', ['Octaves on strings 5–3 are two frets apart; across the B string, three.', 'Mute the skipped string with the fretting hand.'])),
+        S('hybrid-dstops', 'Double stops', 'picking', '6ths and 3rds of the scale, plucked.', [c => sixthsPluck(c), c => thirdsPinch(c)],
+          ST('Double stops are two notes at once; plucked, the two strings sound together even when a string is skipped.', '6ths and 3rds are the sound of country, soul and Motown fills.', ['6ths on the G and high e skip the B string.', '3rds on the top two strings are pinched by middle and ring.'])),
+        S('hybrid-control', 'The pop and 6ths on the D and B strings', 'picking', 'The snapped finger sound; 6ths on a second string pair.', [c => popNotes(c), c => sixthsFourTwo(c)],
+          ST('A finger can hook under the string and let it snap against the frets for a bright pop; 6ths also lie on the D and B strings.', 'The pop is the bridge to chicken picking; a second string pair doubles where 6ths can go.', ['Hook the string slightly, then release it upward.', 'The D and B strings are tuned a major 6th apart, like the G and high e, so the 6th shapes are the same.'])),
+        S('hybrid-changes', 'Over the changes', 'improv', 'Chord-tone 6ths and a solo over country changes.', [c => sixthsOverChanges(c), M('transfer', ['targetSolo', { chords: '$country', scale: 'majorPent' }])],
+          ST('Each chord has two 6th shapes made of its own chord tones; sliding between them follows the harmony.', 'It is the classic country and soul fill over I–IV–V.', ['Both shapes use only the chord’s tones: over G, B with G above it, then D with B above it.', 'Slide both fingers together so the interval stays in tune.']))
       ], [4, 6]),
     stage('advanced', 'Country and fusion lines',
-      'Play the major pentatonic with pick-and-finger string skips in 16ths at 100 BPM, chicken-pick it with a clear cluck on every note, keep the 3 + 3 + 2 roll going through a key change every bar, roll seventh-chord arpeggios over ii–V–I in 16ths, find any diatonic chord from its name, and comp with off-beat pinches.', [
-        S('hybrid-lines', 'String-skipping pentatonic', 'picking', 'Wide intervals with the pick and the middle finger.', [c => skipPent(c), c => chickenSnap(c)]),
-        S('hybrid-banjo', 'Banjo rolls', 'picking', 'The 3 + 3 + 2 roll, through chords and keys.', [c => forwardRoll(c), c => rollKeys(c)]),
-        S('hybrid-fusion', 'Arpeggios and chords on demand', 'picking', 'Seventh-chord rolls over ii–V–I; any diatonic chord from its name.', [c => hybridArp7(c), c => pinchCalled(c)]),
-        S('hybrid-adv-music', 'Comping and soloing', 'rhythm', 'Hybrid picking as a rhythm part and a lead voice.', [c => hybridComp(c), M('transfer', ['callResponse', { chords: '$country', scale: 'majorPent' }])])
+      'Play the major pentatonic with pick-and-finger string skips in 16ths at 100 BPM, chicken-pick it with a clear cluck on every note, keep the 3 + 3 + 2 roll going through a key change every bar, roll seventh-chord arpeggios over ii–V–I in 16ths, play bass and pinches through the key’s chords out of order, and comp with off-beat pinches.', [
+        S('hybrid-lines', 'String-skipping pentatonic and chicken picking', 'picking', 'Wide intervals with the pick and the middle finger; muted and snapped notes.', [c => skipPent(c), c => chickenSnap(c)],
+          ST('Chicken picking sets a dead, muted pick stroke against a snapped finger note; string-skipped pentatonic lines use the pick and middle finger two strings apart.', 'The cluck of chicken picking is the signature sound of country lead guitar.', ['The muted stroke is a percussive “x”; the finger note is short and bright.', 'Practise the rhythms at slow, medium and fast tempos: the feel changes with speed.'])),
+        S('hybrid-banjo', 'Banjo rolls', 'picking', 'The 3 + 3 + 2 roll, through chords and keys.', [c => forwardRoll(c), c => rollKeys(c)],
+          ST('Banjo rolls repeat a three-string finger pattern that restarts every half bar, so the accents fall in a 3 + 3 + 2 grouping of 16ths.', 'Rolls carry the harmony and the rhythm at once, the banjo sound adapted to guitar.', ['Accent each pick stroke.', 'Keep the picking hand going while the fretting hand changes shape.'])),
+        S('hybrid-fusion', 'Arpeggios and the key’s chords', 'picking', 'Seventh-chord rolls over ii–V–I; bass and pinches through the diatonic chords.', [c => hybridArp7(c), c => pinchCalled(c)],
+          ST('Four strings, four chord tones: the pick takes the two lower strings, middle and ring the two higher.', 'Arpeggios become a roll instead of a sweep, and every chord of the key can be comped as bass and pinch.', ['ii–V–I in a major key: m7, 7, maj7.', 'Keep each new grip within a few frets of the last.'])),
+        S('hybrid-adv-music', 'Comping and soloing', 'rhythm', 'Hybrid picking as a rhythm part and a lead voice.', [c => hybridComp(c), M('transfer', ['callResponse', { chords: '$country', scale: 'majorPent' }])],
+          ST('Plucked chord stabs against a picked bass make a rhythm part; the same hand also plays the answers in a solo.', 'In a band the technique has to serve both jobs.', ['Short stabs: release the chord between hits.', 'Answer a phrase with a plucked double stop or a snapped note.']))
       ], [7, 8]),
     stage('mastery', 'Fluent, fast and your own',
       'Run the skipping pentatonic through three boxes at 108 BPM in 16ths, chicken-pick box 2 at 104, roll through random chords without a gap, solo over a blues with snaps and 6ths, and perform your own 8-bar hybrid-picking piece.', [
-        S('hybrid-speed', 'Performance tempo', 'picking', 'Skips and snaps across the neck at speed.', [c => skipPent(c, { boxes: [1, 2, 3] }), c => chickenSnap(c, { box: 2 })]),
-        S('hybrid-random', 'Any chord, any time', 'picking', 'Rolls on demand, and a solo over a blues.', [c => rollKeys(c, { random: true }), M('transfer', ['targetSolo', { chords: '$blues', scale: 'majorPent', name: 'Hybrid-picked blues solo: 6ths, snaps and rolls on the changes' }])]),
-        S('hybrid-voice', 'Your own voice', 'improv', 'A study that uses everything, then your version.', [c => hybridEtude(c), c => sixthsOverChanges(c, { prog: 'axis' })])
+        S('hybrid-speed', 'Performance tempo', 'picking', 'Skips and snaps across the neck at speed.', [c => skipPent(c, { boxes: [1, 2, 3] }), c => chickenSnap(c, { box: 2 })],
+          ST('The string-skipping and chicken-picking lines across the neck at performance tempo.', 'Clean at speed is the test of the whole technique.', ['Climb the tempo ladder only after clean passes.', 'Keep the plucked notes as loud as the picked ones at speed.'])),
+        S('hybrid-random', 'Any chord, any time', 'picking', 'Rolls on a new chord every bar, and a solo over a blues.', [c => rollKeys(c, { random: true }), M('transfer', ['targetSolo', { chords: '$blues', scale: 'majorPent', name: 'Hybrid-picked blues solo: 6ths, snaps and rolls on the changes' }])],
+          ST('Rolls on chords that change without a pattern, and a solo that mixes every texture.', 'In real music the picking hand carries on while the chords move.', ['Find each triad near the last one.', 'Lower the tempo rather than stop the roll.'])),
+        S('hybrid-voice', 'Your own voice', 'improv', 'A study that uses everything, then your version.', [c => hybridEtude(c), c => sixthsOverChanges(c, { prog: 'axis' })],
+          ST('An original 8-bar piece with pinches, rolls, 6ths and snaps; then your own.', 'Your own parts are where the textures become your style.', ['Two bars per texture.', 'Contrast warm pinches, driving rolls and percussive snaps.']))
       ], [9, 10])
   ]
 });
