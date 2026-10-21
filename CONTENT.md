@@ -310,7 +310,7 @@ The queue has three sections. Every run keeps them up to date.
 
 ### Research briefs (the player's Gemini Gem)
 
-Briefs arrive in Google Drive (`FretworkCoach/Briefs/Inbox`); the format and the merge step are in `content/briefs/SCHEMA.md`. **Gemini's sources are leads, not proof:** the content run verifies every lead it relies on by opening a real page that teaches the thing, cites that page's URL, and marks anything it can't verify `unconfirmed` (listed under "Needs your check"). A `primary` label is the run's own judgement from the page, never the Gem's. Details: `content/briefs/SCHEMA.md`, "Sources are leads".
+Briefs arrive in Google Drive (`FretworkCoach/Briefs/Inbox`); the format and the merge step are in `content/briefs/SCHEMA.md`. **Gemini's links are checked, not trusted:** the Gem gives the real URL of each page it opened and what the page teaches; the content run fetches every source it relies on, cites it only if the page loads and says that, otherwise searches for a real page or marks the claim `unconfirmed` (listed under "Needs your check"), and logs how many of the Gem's links checked out. A `primary` label is the run's own judgement from the page, never the Gem's. Details: `content/briefs/SCHEMA.md`, "Sources: the Gem links, the run checks".
 
 ## What every run does, in order
 
