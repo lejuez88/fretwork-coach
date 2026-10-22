@@ -136,17 +136,60 @@ export function sweepJoin(c) {
     watch: 'Letting the two downstrokes ring together like a chord: fret one, lift the other.', simplify: 'Quarter notes.', tab: { notes }
   });
 }
-/** The app plays a 2+2+1 group as a quintuplet, then two silent beats: echo it (hear it first). */
-export function fiveEcho(c) {
-  const k = minorKey(c), list = shape5(k, 'box', 1), rr = rng(83 + (c.lvl || 2)); if (!list) return null;
-  const notes = [];
-  for (let i = 0; i < 6; i++) { const dir = rr() < 0.5 ? 'down' : 'up', g = fives(list, 'econ', dir), grp = g[Math.floor(rr() * g.length)]; grp.forEach(([s, f], m) => notes.push(N(s, f, i * 4 + m * 0.4, m === 4 ? 1.2 : 0.4))); }
+/** Five even notes per click: the first five notes of box 1 (2 + 2 + 1), strict alternate, the same group every beat. */
+export function evenFive(c) {
+  const k = minorKey(c), list = shape5(k, 'box', 1); if (!list) return null;
+  const grp = list.slice(0, 5), notes = [];
+  for (let beat = 0; beat < 16; beat++) grp.forEach(([s, f], i) => notes.push(N(s, f, beat + i * 0.2, 0.2, null, beat < 2 ? { pick: (beat * 5 + i) % 2 ? 'u' : 'd' } : null)));
+  landOnRoot(notes, k, list);
   return make(c, {
-    id: 'r5-echo', name: `Hear five, play five: 2 + 2 + 1 echoes (${nameOf(k)} minor pentatonic)`, domain: 'ear', method: 'audiation',
-    unit: '8th-note quintuplets', goal: 72, start: 50, minutes: 4,
-    why: 'A group of five fills a space in time that two or four notes don’t: hearing it, then echoing it in the same space, builds the feel before the speed.',
-    instr: 'Cover the tab. Each group of five (two notes, two notes, one note across three strings) is played over two beats; the next two beats are silent: sing the group, then play it back in the same time. Pass: 4 of 6 echoes with the right notes and the same length, twice.',
-    watch: 'Squeezing the echo into one beat.', simplify: 'Echo only the direction (up or down) and the first note.', tab: { notes }
+    id: 'r5-even', name: `Five even notes per click: the first five notes of ${nameOf(k)} minor box 1, strict alternate`, domain: 'picking', method: 'accurate-reps', picking: 'strict',
+    unit: '16th-note quintuplets', goal: 72, start: 46, minutes: 4,
+    why: 'Five notes where you would usually play four is an unfamiliar spacing, and it must be even before any pattern is put on top. Because five is odd, strict alternate picking starts every other beat on an upstroke.',
+    instr: 'Play the same five notes (two on the low E string, two on the A string, one on the D string) once per click, strict alternate picking: down–up–down–up–down, then the next beat starts on an upstroke. Count the five evenly against the click. Pass: 16 beats in a row with the five notes evenly spaced and every beat landing on the click.',
+    watch: 'Squeezing the last note into the next beat, so the group is four notes long.', simplify: '8th notes (two clicks per group).', tab: { notes }
+  });
+}
+/** The same five-note group on the next three strings each bar. */
+export function evenFiveSets(c) {
+  const k = minorKey(c), list = shape5(k, 'box', 1); if (!list) return null;
+  const notes = [];
+  for (let bar = 0; bar < 4; bar++) for (let beat = 0; beat < 4; beat++) list.slice(bar * 2, bar * 2 + 5).forEach(([s, f], i) => notes.push(N(s, f, bar * 4 + beat + i * 0.2, 0.2, null, bar === 0 && beat < 2 ? { pick: (beat * 5 + i) % 2 ? 'u' : 'd' } : null)));
+  landOnRoot(notes, k, list);
+  return make(c, {
+    id: 'r5-even-sets', name: `The group on every string set: five even notes per click up ${nameOf(k)} minor box 1`, domain: 'picking', method: 'variable', picking: 'strict',
+    unit: '16th-note quintuplets', goal: 76, start: 48, minutes: 5,
+    why: 'The same two-two-one group on different strings feels different under the pick; moving it up one string per bar prepares the descending patterns that follow.',
+    instr: 'Four bars, four groups per bar, each group once per click in strict alternate picking. Bar 1: low E, A, D strings; bar 2: A, D, G; bar 3: D, G, B; bar 4: G, B, e. Pass: the four bars clean twice in a row.',
+    watch: 'Hesitating at the string-set change at the bar line.', simplify: 'Two bars.', tab: { notes }
+  });
+}
+/** The economy fives started a little after the beat: the accent falls somewhere new each bar. */
+export function offsetFives(c) {
+  const k = minorKey(c), list = shape5(k, 'box', 1); if (!list) return null;
+  const seq = fives(list, 'econ', 'down').flat(), notes = [];
+  [0, 2, 1, 3].forEach((off, bar) => { for (let i = 0; i < 16 - off; i++) { const [s, f] = seq[i % seq.length]; notes.push(N(s, f, bar * 4 + (off + i) * 0.25, 0.25, null, bar === 0 && i < 10 ? { pick: strokes(2, 'econ', 'down')[i] } : null)); } });
+  landOnRoot(notes, k, list);
+  return make(c, {
+    id: 'r5-offset', name: `Offset fives: the same ${nameOf(k)} minor box 1 groups started a 16th or an 8th after the beat`, domain: 'rhythm', method: 'variable',
+    unit: '16th notes (groups of 5)', goal: 92, start: 54, minutes: 6,
+    why: 'Starting the same phrase an 8th or a 16th later moves every accent against the click, so you hear that the pattern is five notes long and not tied to the bar.',
+    instr: ECON + 'Four bars of economy fives down box 1 in 16ths, each bar starting from the top of the box: bar 1 on beat 1, bar 2 an 8th note late, bar 3 a 16th late, bar 4 a dotted 8th late. Keep counting every 16th. Pass: the four bars twice with the 16ths even in every bar.',
+    watch: 'Letting the late start pull the notes into a different rhythm.', simplify: 'Bars 1 and 2 only.', tab: { notes }
+  });
+}
+/** Group sizes 3 to 7 in a row over steady 16ths (from the lesson goal: switch fluidly between groups of three to seven). */
+export function switchGroups(c) {
+  const k = minorKey(c), b1 = shape5(k, 'box', 1), b2 = shape5(k, 'box', 2); if (!b1 || !b2) return null;
+  const r = [...b2.slice().reverse(), ...b1.slice().reverse()], sizes = [3, 4, 5, 6, 7, 5], notes = [];
+  let t = 0; sizes.forEach((n, g) => r.slice(g * 2, g * 2 + n).forEach(([s, f]) => { notes.push(N(s, f, t, 0.25)); t += 0.25; }));
+  landOnRoot(notes, k, b1);
+  return make(c, {
+    id: 'r5-switch', name: `Changing group size over steady 16ths: 3, 4, 5, 6, 7, 5 down ${nameOf(k)} minor boxes 2 and 1`, domain: 'rhythm', method: 'variable', picking: 'economy',
+    unit: '16th notes (groups of 3 to 7)', goal: 88, start: 52, minutes: 7,
+    why: 'Fives are one grouping of many. Switching the group size while the 16ths stay steady is the harder skill, and it keeps the fives from becoming a habit.',
+    instr: 'Count every 16th. Play a group of 3 notes, then 4, 5, 6, 7 and 5, each starting two scale notes lower than the one before, down box 2 and into box 1, never stopping. Pass: the whole run twice with the 16th pulse unbroken.',
+    watch: 'Letting the larger groups speed up.', simplify: 'Groups 3, 4, 5 only.', tab: { notes }
   });
 }
 /** A phrase: rolling fives down the box into a bend and a held root (use in music). */
@@ -180,7 +223,7 @@ export function r5Random(c) {
     id: 'r5-random', name: 'Random access: rolling fives in a new key, box and version every bar', domain: 'fretboard', method: 'interleaving',
     unit: '16th-note quintuplets', goal: 88, start: 50, minutes: 5, dl: 1,
     why: 'At mastery level either version of the pattern should start from any box in any key the moment you need it.',
-    instr: `${names.join(' → ')}. Three quintuplet groups down from the top of the box (economy: each a string lower; jump-back: each from the previous group's second note), then a beat to find the next. Read only the names. Pass: all 8 bars from memory at the goal tempo.`,
+    instr: `${names.join(' → ')}. Three quintuplet groups down from the top of the box (economy: each a string lower; jump-back: each from the previous group's second note), then a beat to find the next. Read only the names. Pass: all 8 bars in time at the goal tempo, finding each box from its name.`,
     watch: 'Mixing the two versions up: say "sweep" or "jump" before each bar.', simplify: 'The first four bars.', tab: { notes }
   });
 }
@@ -216,17 +259,44 @@ export default entry({
   aliases: ['groups of five', 'pentatonic in fives', 'quintuplets', 'Eric Johnson fives'],
   summary: 'Eric Johnson’s five-note pentatonic pattern, two notes per string (2 + 2 + 1 across three strings), in its two picking versions (economy: sweep back one string; jump-back: strict alternate, back to the second note) against a 16th-note pulse so the accent rolls: from one counted group to quintuplets, rolling 16ths, every box and key, and the whole neck.',
   prereqs: ['pentatonic', 'alternatePicking'],
-  sources: ['https://www.guitarworld.com/lessons/cracking-code-eric-johnsons-pickslanting-pentatonics', 'https://troygrady.com/2015/01/14/eric-johnsons-pickslanting-pentatonics/', 'https://forum.troygrady.com/t/eric-johnson-five-note-pentatonic-pattern-what-is-it/47307', 'https://guitarcontrol.com/pentatonic-licks/eric-johnson-trademark-rolling-fives-lick/', 'https://www.premierguitar.com/eric-johnson-concepts-and-techniques', 'https://guitarworld.com/lessons/eric-johnson-fluid-streams-of-notes'],
+  pedagogy: {
+    date: '2026-10-22',
+    summary: 'Groups of five are taught as a spacing first (five even notes where four would sit, strict alternate picking flipping the starting stroke each group), then as an Eric Johnson pentatonic pattern played in 16ths so the accents shift, with a mini-sweep (two downstrokes) at string changes and a downward pick slant, in every pentatonic position, then offset against the beat, switched with other group sizes, and used in phrases.',
+    sequence: [
+      { id: 'spacing', tier: 'foundations', step: 'Five even notes per beat, strict alternate', how: 'A short pattern looped to a metronome, the odd count flipping the starting stroke each beat, then the same group on other strings.', skills: ['r5-even'], source: 2 },
+      { id: 'group', tier: 'foundations', step: 'The two-two-one group and its join', how: 'Count the five-note group through a pentatonic box with the string change picked as a mini-sweep, then the groups in quintuplets and in 16ths.', skills: ['r5-count', 'r5-feel'], source: 0 },
+      { id: 'phrase1', tier: 'foundations', step: 'A first phrase of fives', how: 'A run of fives that ends on a held or bent note.', skills: ['r5-first-music'], source: 1 },
+      { id: 'positions', tier: 'intermediate', step: 'Fives in the next positions, picked and slurred', how: 'The same ideas built in every pentatonic position; the legato version using only pick strokes where the strings change.', skills: ['r5-box'], source: 0 },
+      { id: 'versions', tier: 'intermediate', step: 'The second picking version', how: 'Strict alternate picking, each group starting on the opposite stroke, compared with the swept version.', skills: ['r5-jump'], source: 3 },
+      { id: 'offsets', tier: 'intermediate', step: 'Offsets, boxes and keys', how: 'Phrases moved by an 8th or a 16th, played in other positions and keys.', skills: ['r5-control'], source: 1 },
+      { id: 'phrase2', tier: 'intermediate', step: 'Fives in a phrase', how: 'A fast run landing on a chord tone or a bend.', skills: ['r5-music'], source: 1 },
+      { id: 'neck', tier: 'advanced', step: 'Along the neck', how: 'The same pattern through every position, climbing and falling.', skills: ['r5-neck'], source: 0 },
+      { id: 'range', tier: 'advanced', step: 'Bass strings and direction changes', how: 'The pattern in other string ranges and directions.', skills: ['r5-low'], source: 2 },
+      { id: 'switch', tier: 'advanced', step: 'Switching group sizes', how: 'Groups of three, four, five, six and seven over steady 16ths, counting every 16th.', skills: ['r5-adv-recall'], source: 0 },
+      { id: 'solo', tier: 'advanced', step: 'Runs inside a solo', how: 'One rolling run per phrase, answered by space.', skills: ['r5-adv-music'], source: 1 },
+      { id: 'tempo', tier: 'mastery', step: 'Performance tempo', how: 'Both versions raised in small tempo steps.', skills: ['r5-performance'], source: 3 },
+      { id: 'anywhere', tier: 'mastery', step: 'Any position, any key', how: 'The pattern started from every position and key.', skills: ['r5-random-access'], source: 0 },
+      { id: 'own', tier: 'mastery', step: 'Your own lines', how: 'An original study and your own groups of five in a solo.', skills: ['r5-voice'], source: 1 }
+    ],
+    drills: ['Five even notes per click, strict alternate picking', 'The two-two-one group counted one per bar', 'The join between groups looped (mini-sweep)', 'Groups in quintuplets, then 16ths', 'Every pentatonic position, up and down', 'The same group started an 8th or 16th late', 'Group sizes of 3 to 7 over steady 16ths', 'Strict alternate version against the swept version'],
+    mistakes: ['Squeezing the fifth note so the group becomes four', 'Losing the count of the 16ths when the groups shift against the beat', 'Mixing the swept and strictly alternated versions in one phrase', 'Drilling against a click without listening to the groups', 'Weak slurred notes when the pattern is played legato'],
+    sources: [
+      { title: '5 guitar tricks you can learn from Eric Johnson', author: 'MusicRadar', url: 'https://www.musicradar.com/how-to/5-guitar-tricks-you-can-learn-from-eric-johnson-today' },
+      { title: 'Beyond Blues: Eric Johnson vs. Joe Bonamassa', author: 'Premier Guitar', url: 'https://www.premierguitar.com/lessons/beyond-blues-eric-johnson-vs-joe-bonamassa' },
+      { title: 'A Beginner\'s Guide to Quintuplets', author: 'Guitar World', url: 'https://guitarworld.com/lessons/bent-out-shape-beginners-guide-quintuplets' },
+      { title: 'Next Level Techniques: Pentatonic Quintuplets', author: 'Riff Journal', url: 'https://riffjournal.com/next-level-techniques-pentatonic-quintuplets/' }
+    ]
+  },
+  sources: ['https://www.musicradar.com/how-to/5-guitar-tricks-you-can-learn-from-eric-johnson-today', 'https://www.premierguitar.com/lessons/beyond-blues-eric-johnson-vs-joe-bonamassa', 'https://guitarworld.com/lessons/bent-out-shape-beginners-guide-quintuplets', 'https://riffjournal.com/next-level-techniques-pentatonic-quintuplets/', 'https://guitarcontrol.com/pentatonic-licks/eric-johnson-trademark-rolling-fives-lick/', 'https://forum.troygrady.com/t/eric-johnson-five-note-pentatonic-pattern-what-is-it/47307'],
   ctx: { key: 9, minor: true, prog: 'minorRock' },
   stages: [
     stage('foundations', 'Feeling five, two notes per string',
-      'Count one 2 + 2 + 1 group per bar, loop the sweep join for 8 bars, play the economy version down box 1 as quintuplets at 70 BPM (one group per click), echo a group by ear, play the box in fives from memory, hear the accent roll in slow 16ths, climb in fives, and end a phrase with a run of fives.', [
+      'Count one 2 + 2 + 1 group per bar, loop the sweep join for 8 bars, play five even notes per click in strict alternate picking, play the economy version down box 1 as quintuplets at 70 BPM (one group per click), hear the accent roll in slow 16ths, climb in fives, and end a phrase with a run of fives.', [
         S('r5-count', 'One group at a time', 'picking', 'The 2 + 2 + 1 group, the sweep join, then one group per beat.', [c => fiveCount(c), c => sweepJoin(c),
           R5('r5-quint-slow', 'Economy fives: one group per click down box 1 ({key})', 'accurate-reps', { step: 0.2, goal: 72, start: 46, why: 'Five notes per click (quintuplets) line the group up with the beat, so its shape (two, two, one) is easy to feel. Getting it even, with the sweep in the right place, is the first real version of the technique.', instr: ECON + 'One group per click down box 1. Count “1 2 3 4 5” per beat. Count only clean bars. Pass: 4 clean bars in a row.', watch: 'Uneven groups (the sweep rushing the next note).', simplify: '8th notes.' })],
           ST('Eric Johnson’s five-note pattern lives in the pentatonic box, which has two notes on every string: a group is two notes on one string, two on the next and one on the third, and the next group starts one string lower.', 'Two notes per string is what lets the line run so evenly with a pick: every string gets the same down–up pair.', ['Descending in box 1 of A minor: e 8–5, B 8–5, G 7; then B 8–5, G 7–5, D 7; and so on.', 'Each group is down–up–down–up–down; the fifth note and the next group’s first note are two downstrokes: a small sweep back up one string.'])),
-        S('r5-hear', 'Hear and recall', 'ear', 'The group by ear and from memory.', [c => fiveEcho(c),
-          R5('r5-recall', 'From memory: box 1 in economy fives as quintuplets ({key})', 'retrieval', { step: 0.2, goal: 72, start: 46, marks: false, why: 'The rule (two, two, one, then a string lower) generates the whole run; recalling it from the box instead of reading is what makes it usable in a solo.', instr: ECON + 'All the way down box 1 as quintuplets. Play it once with the tab, then cover it and say the string each group starts on before you play it. Pass: down the box from memory, twice.', watch: 'Starting a group on the second note of a string: in this version every group starts on a string’s first note.', simplify: 'The top four strings.' })],
-          ST('A group of five has its own length in time; hearing it and recalling where each group starts (the next string down) makes it automatic.', 'Recall, not reading, is what lets you use the pattern while improvising.', ['In one box the economy version has four groups going down: starting on strings 1, 2, 3 and 4.'])),
+        S('r5-even', 'Five even notes per click', 'picking', 'The odd count under strict alternate picking, then on every string set.', [c => evenFive(c), c => evenFiveSets(c)],
+          ST('Five notes per click is a quintuplet: five evenly spaced notes where four would normally sit. With an odd count and alternate picking, each group starts on the opposite stroke from the one before.', 'The pattern cannot sound even until the spacing is even; this is the groundwork for the rolling sound.', ['Five notes per click, 20 per bar.', 'Strict alternate picking: group 1 starts down, group 2 up, group 3 down.'])),
         S('r5-feel', 'The roll', 'picking', 'The accent moving against the beat; climbing fives.', [
           R5('r5-roll-slow', 'Hear the roll: economy fives as slow 16ths down box 1 ({key})', 'external-focus', { step: 0.25, goal: 72, start: 46, why: 'The same groups of five played four notes per click no longer match the beat: the accent arrives a 16th later each time and comes round after five beats. That rolling sound is the point, so listen for it.', instr: ECON + 'In 16ths, accenting the first note of each group. Listen: the accents form a pattern that slides against the click. Pass: four bars where the accents are clearly audible and the 16ths stay even.', watch: 'Pausing after each group to line it up with the beat.', simplify: 'Quintuplets first, then switch to 16ths.' }),
           R5('r5-up-slow', 'Climbing fives: box 1 ascending as quintuplets ({key})', 'variable', { dir: 'up', step: 0.2, goal: 72, start: 46, why: 'Turned around, the groups climb (two notes on a string, two on the next, one on the third, then start a string higher), and the strokes flip to up–down–up–down–up so the sweep between groups goes up.', instr: 'Two notes per string, low fret first, five per group; each next group starts one string higher. Up–down–up–down–up in every group; the fifth note and the next group’s first note are two upstrokes in a row. One group per click. Pass: up the box twice clean.', watch: 'Rushing the last group of each string.', simplify: '8th notes.' })],
@@ -235,7 +305,7 @@ export default entry({
           ST('A run is only exciting when it lands: here two groups of fives fall into a bend and a held root.', 'Fast runs in a solo set up the long notes.', ['Bend the 4th up to the 5th on the G string, then rest on the root.']))
       ], [1, 3]),
     stage('intermediate', 'Rolling 16ths: both versions, every box',
-      'Roll economy fives down and up boxes 1 and 2 as 16ths at 100 BPM, picked and slurred, play the jump-back version (strict alternate) down box 1, switch between the two versions every bar, find box 2 from memory, change key every five beats, and play a fast rolling run into a bend over a minor progression.', [
+      'Roll economy fives down and up boxes 1 and 2 as 16ths at 100 BPM, picked and slurred, play the jump-back version (strict alternate) down box 1, switch between the two versions every bar, start the group an 8th or a 16th late, change key every five beats, and play a fast rolling run into a bend over a minor progression.', [
         S('r5-box', 'Economy fives in boxes 1 and 2', 'picking', 'Down, up, the next box, and the slurred sound.', [c => ejRolling5s(c, { dir: 'down' }), c => ejRolling5s(c, { dir: 'up' }),
           R5('r5-box2', 'Economy fives down box 2 ({key})', 'variable', { boxes: [2], step: 0.25, goal: 96, why: 'The same rule on box 2: the notes and the stretches change, the roll doesn’t.', instr: ECON + 'Down box 2 in 16ths, accent the first of each group. Pass: down the box clean at the goal tempo.', watch: 'The B-string shift in box 2 (its two notes sit a fret higher).', simplify: 'Quintuplets.' }),
           R5('r5-legato', 'Slurred fives: pick the first note on each string, pull off the second ({key})', 'external-focus', { boxes: [1, 2], legato: true, step: 0.25, goal: 100, why: 'Slurring the second note on each string gives the run its fluid, violin-like sound. It only works if the pulled notes are as loud as the picked ones, so the goal is a sound, not a motion.', instr: 'The economy fives down box 1, then box 2, in 16ths: pick the first note on each string, pull off to the second (marked p). Listen for an even stream with the group accents. Pass: down both boxes twice where no slurred note drops out.', watch: 'Weak pull-offs on the high strings.', simplify: 'Quintuplets.' })],
@@ -245,16 +315,16 @@ export default entry({
           R5('r5-jump', 'Jump-back fives as rolling 16ths, box 1 then box 2 ({key})', 'variable', { variant: 'jump', boxes: [1, 2], groups: 6, step: 0.25, goal: 96, why: 'In 16ths the jump-back version rolls against the beat like the economy one, but the jumps make it sound more angular. Two boxes make the jumps land on new frets.', instr: JUMP + 'Six groups down box 1, six down box 2, in 16ths, accenting each group’s first note. Pass: both boxes clean at the goal tempo.', watch: 'Accenting the stroke instead of the group: half the groups start on an upstroke, accent them anyway.', simplify: 'Quintuplets.' }),
           R5('r5-econ-jump', 'Sweep, then jump: the two versions alternating, box 1 then box 2 ({key})', 'interleaving', { variants: ['econ', 'jump'], groups: 4, boxes: [1, 1, 2, 2], dir: 'down', step: 0.25, goal: 92, why: 'Switching between the two versions makes you choose the picking on purpose instead of by habit.', instr: 'Four groups of the economy version down box 1, then four groups of the jump-back version from the top of box 1, then the same in box 2. Say “sweep” or “jump” before each block. Pass: the four blocks twice without mixing the versions.', watch: 'Mixing the two versions inside one bar.', simplify: 'Quintuplets.' })],
           ST('The jump-back version groups the same box differently: each group starts on the second note of the one before (the next note down), so the pick jumps back up after the fifth note (two strings back after a group that started on a string’s first note, one string after a group that started on its second), and strict alternate picking makes every other group start on an upstroke.', 'Two versions of one pattern give two sounds and two picking motions: smooth and swept, or angular and strictly alternate.', ['Box 1 of A minor, jump-back: e 8–5, B 8–5, G 7; then e 5, B 8–5, G 7–5; then B 8–5, G 7–5, D 7…', 'A twelve-note box gives four economy groups or eight jump-back groups going down.'])),
-        S('r5-control', 'Recall and keys', 'fretboard', 'Box 2 from memory, boxes mixed, other keys.', [
-          R5('r5-box2-recall', 'From memory: climbing economy fives in box 2 ({key})', 'retrieval', { boxes: [2], dir: 'up', step: 0.25, goal: 92, marks: false, why: 'Recalling the groups in box 2, climbing, without the tab proves you own the rule and the shape.', instr: 'Two notes per string, five per group, each next group a string higher (up–down–up–down–up). Play the box once as a scale, then cover the tab. Pass: twice from memory at the goal tempo.', watch: 'Starting from box 1’s notes.', simplify: 'Quintuplets.' }),
+        S('r5-control', 'Offsets, boxes and keys', 'fretboard', 'Late starts, boxes mixed, other keys.', [
           R5('r5-boxes12', 'Down box 1, up box 2: economy fives that change shape ({key})', 'interleaving', { boxes: [1, 2, 1, 2], dir: 'alt', step: 0.25, goal: 92, why: 'Switching box and direction every four groups makes the run a map of the neck, not one memorised shape.', instr: ECON + 'Four groups down box 1, four up box 2 (strokes reversed), and again. Pass: the cycle twice without stopping.', watch: 'Starting box 2 from the wrong note.', simplify: 'Quintuplets.' }),
+          c => offsetFives(c),
           R5('r5-keys', 'Rolling fives in four keys around the cycle of fourths', 'interleaving', { keys: [0, 5, 10, 3], step: 0.25, goal: 92, dl: 1, why: 'The rule moves to any key. Changing key every four groups (five beats) trains finding box 1 at once while the roll continues.', instr: ECON + 'Four groups down box 1 in each key, a 4th up each time. Name the key before it starts. Pass: all four keys without stopping.', watch: 'Stopping at the key change.', simplify: 'Two keys.' })],
           ST('The pattern belongs to the box, not to a key: find box 1 of the new key and the same groups follow.', 'Mixing boxes, directions and keys makes the pattern available anywhere.', ['Box 1 starts on the root on the low E string.', 'Up a 4th: the root moves five frets up (or seven down).'])),
         S('r5-music', 'In a phrase', 'improv', 'The fast run, and a solo.', [c => rollPhrase(c, { fast: true }), c => targetGuide(c, { prog: 'minorRock', scale: 'minorPent', name: 'Solo with one rolling run per phrase, landing on a chord tone' })],
           ST('In a solo, a rolling run is a burst that lands on a chord tone or a bend.', 'Speed is only effective next to space.', ['End runs on the root, the 5th or a bend into the 5th.']))
       ], [4, 6]),
     stage('advanced', 'Along the neck',
-      'Roll economy fives down and up through all five boxes at 100 BPM, on the bass strings, through boxes 1–3 alternating direction, the jump-back version through the boxes, boxes called out of order from memory, shape a cascade with a crescendo, and use rolling runs in a blues solo.', [
+      'Roll economy fives down and up through all five boxes at 100 BPM, on the bass strings, through boxes 1–3 alternating direction, the jump-back version through the boxes, groups of three to seven over steady 16ths, shape a cascade with a crescendo, and use rolling runs in a blues solo.', [
         S('r5-neck', 'Through the boxes', 'fretboard', 'Fives that travel along the neck.', [c => ejRolling5s(c, { dir: 'down', diagonal: true }),
           R5('r5-neck-up', 'Climbing economy fives through all five boxes ({key})', 'variable', { boxes: [1, 2, 3, 4, 5], dir: 'up', step: 0.25, goal: 92, why: 'Climbing in fives box by box moves the hand along the neck inside the run: the ascending answer to the cascade.', instr: 'Up each box in economy fives (up–down–up–down–up, the sweep going up): box 1, then 2, 3, 4 and 5, shifting on the first note of each box. Pass: clean at the goal tempo.', watch: 'Late shifts between boxes that break the 16ths.', simplify: 'Quintuplets.' }),
           R5('r5-jump-neck', 'Jump-back fives through boxes 1 to 3 ({key})', 'variable', { variant: 'jump', boxes: [1, 2, 3], groups: 6, step: 0.25, goal: 92, why: 'The jump-back version moved through the boxes: more groups per box, the jump after every fifth note, and a shift at each new box.', instr: JUMP + 'Six groups down each box: 1, 2, 3. Pass: clean at the goal tempo.', watch: 'Losing which stroke a group starts on after a shift: it simply continues the alternation.', simplify: 'Quintuplets.' })],
@@ -263,10 +333,10 @@ export default entry({
           R5('r5-low', 'Economy fives on the bass strings of boxes 1 and 2 ({key})', 'variable', { boxes: [1, 2], strings: [6, 5, 4, 3], step: 0.25, goal: 92, why: 'On strings 3–6 the roll sounds darker and heavier; the thick strings need a firmer sweep and more muting.', instr: ECON + 'Down the four bass strings of box 1, then box 2 (two groups each). Mute the strings above with the fretting hand. Pass: clean at the goal tempo.', watch: 'Open strings ringing.', simplify: 'Quintuplets.' }),
           R5('r5-alt', 'Down, up, down: economy fives through boxes 1 to 3 ({key})', 'interleaving', { boxes: [1, 2, 3], dir: 'alt', step: 0.25, goal: 92, why: 'Changing direction with every box gives a wave-like run and forces the strokes to reverse cleanly at speed.', instr: ECON + 'Down box 1, up box 2 (strokes reversed), down box 3. Pass: clean at the goal tempo.', watch: 'Losing the group at the turn.', simplify: 'Quintuplets.' })],
           ST('On the bass strings the same 2 + 2 + 1 groups need more muting; changing direction flips the strokes and the sweep.', 'Range and direction changes keep the pattern from sounding like one memorised run.', ['Going up: up–down–up–down–up, the sweep goes up.'])),
-        S('r5-adv-recall', 'Called boxes and dynamics', 'fretboard', 'Any box from memory; a shaped cascade.', [
-          R5('r5-boxes-called', 'Boxes called out of order: 3, 1, 5, 2, 4 ({key})', 'retrieval', { boxes: [3, 1, 5, 2, 4], step: 0.25, goal: 88, marks: false, why: 'Out of order, each box has to be recalled rather than slid into: exactly the skill a solo asks for.', instr: ECON + 'Four groups down each box: 3, 1, 5, 2, 4. Cover the tab. Pass: all five from memory at the goal tempo.', watch: 'Defaulting to the neighbouring box.', simplify: 'Boxes 1–3.' }),
+        S('r5-adv-recall', 'Group sizes and dynamics', 'rhythm', 'Groups of three to seven; a shaped cascade.', [
+          c => switchGroups(c),
           R5('r5-swell', 'A cascade with a shape: crescendo through boxes 3, 2 and 1 ({key})', 'external-focus', { boxes: [3, 2, 1], step: 0.25, goal: 92, why: 'A cascade that starts as a whisper and grows to full force as it falls is music; the same notes at one volume are an exercise.', instr: ECON + 'Down box 3, 2 and 1. Start very quietly and grow louder to the end, landing strongly. Listen for a smooth curve. Pass: twice with a smooth crescendo.', watch: 'Speeding up as you get louder.', simplify: 'Box 1.' })],
-          ST('Recalling a box by number and shaping the run’s volume are what turn a pattern into a phrase.', 'In a solo you need the box you are in, not the one you practised, and a run needs a shape.', ['A crescendo over a falling line makes it sound like it is going somewhere.'])),
+          ST('Switching between groups of three, four, five, six and seven over steady 16ths, and shaping the run’s volume, are what turn a pattern into a phrase.', 'A line that changes its grouping stays unpredictable, and a run needs a shape.', ['Groups of 3 to 7 over 16ths: the accents fall in a new place each time.', 'A crescendo over a falling line makes it sound like it is going somewhere.'])),
         S('r5-adv-music', 'In a solo', 'improv', 'Rolling runs between phrases.', [c => targetGuide(c, { prog: 'blues', scale: 'minorPent', name: 'Blues solo: one rolling run per chorus, then space' }), M('transfer', ['callResponse', { chords: '$slowBlues', scale: 'minorPent' }])],
           ST('Rolling runs work best as one event per chorus, answered by space.', 'Restraint makes the speed stand out.', ['Answer a run with a long, bent note.']))
       ], [7, 8]),

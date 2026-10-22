@@ -19,10 +19,10 @@ const boxOf = (k, b) => byString(pentBox(k, b));
 /**
  * The six-note cell of box b starting on string `top` (1–4): both box notes on strings top, top+1 and
  * top+2. Descending: high note then low note on each string, from the top string down; ascending: the
- * mirror. legato marks the second note of each string as a pull-off (down) or hammer-on (up).
+ * mirror. `len` is the number of strings (3 = six notes, 2 = the four-note half cell). legato marks the second note of each string as a pull-off (down) or hammer-on (up).
  */
-export function cellOf(k, b, top, dir = 'down', legato = false) {
-  const B = boxOf(k, b), strs = dir === 'down' ? [top, top + 1, top + 2] : [top + 2, top + 1, top];
+export function cellOf(k, b, top, dir = 'down', legato = false, len = 3) {
+  const B = boxOf(k, b), down = Array.from({ length: len }, (_, i) => top + i), strs = dir === 'down' ? down : down.slice().reverse();
   if (strs.some(s => !B[s])) return null;
   return strs.flatMap(s => (dir === 'down' ? [[s, B[s][1], null], [s, B[s][0], legato ? 'p' : null]] : [[s, B[s][0], null], [s, B[s][1], legato ? 'h' : null]]));
 }
@@ -43,7 +43,7 @@ export function spd(c, spec) {
   const k0 = minorKey(c), step = spec.step || 1 / 6, seq = []; let n = 0, lastK = k0, lastB = 1;
   for (const off of spec.keys || [0]) for (const b of spec.boxes || [1]) for (const top of spec.tops || [1]) {
     const k = mod12(k0 + off), dir = spec.dir === 'alt' ? (n % 2 ? 'up' : 'down') : spec.dir || 'down';
-    const cl = cellOf(k, b, top, dir, !!spec.legato); if (!cl) return null;
+    const cl = cellOf(k, b, top, dir, !!spec.legato, spec.len || 3); if (!cl) return null;
     for (let r = 0; r < (spec.reps || 1); r++) seq.push(...cl);
     n++; lastK = k; lastB = b;
   }
@@ -84,20 +84,36 @@ export function ejSixesAcross(c) {
 }
 
 /* ------------------------------- Generators ------------------------------- */
-/** The app plays a cell on a random set of strings, going down or up; the next bar is silent: name and play it (hear it first). */
-export function cellEcho(c) {
-  const k = minorKey(c), r = rng(59 + (c.lvl || 2)), notes = [], plan = [];
-  for (let i = 0; i < 4; i++) {
-    const top = 1 + Math.floor(r() * 4), dir = r() < 0.5 ? 'down' : 'up', cl = cellOf(k, 1, top, dir); if (!cl) return null;
-    plan.push(`strings ${top}–${top + 2} ${dir}`);
-    cl.forEach(([s, f], j) => notes.push(N(s, f, i * 8 + j / 3, 1 / 3))); notes.push(N(cl[5][0], cl[5][1], i * 8 + 2, 2));
+/** Speed bursts: four cells at sextuplet speed, then a "chill out" bar of one note per beat (the guitarworld burst format). */
+export function spdBurst(c) {
+  const k = minorKey(c), B = boxOf(k, 1), notes = []; let t = 0;
+  const rf = (B[4] || []).find(f => mod12(pitch(4, f) - k) === 0); if (rf == null) return null;
+  for (let rep = 0; rep < 3; rep++) {
+    for (const top of [1, 2, 1, 2]) { const cl = cellOf(k, 1, top, 'down', true); if (!cl) return null; cl.forEach(([s, f, x]) => { notes.push(N(s, f, t, 1 / 6, x)); t += 1 / 6; }); }
+    for (let i = 0; i < 4; i++) { notes.push(N(4, rf, t, 1)); t += 1; }
   }
   return make(c, {
-    id: 'spd-echo', name: `Hear the cell: which strings, which way? (${nameOf(k)} minor pentatonic)`, domain: 'ear', method: 'audiation',
-    unit: '8th-note triplets', goal: 80, start: 50, minutes: 4,
-    why: 'A cell high on the neck’s top strings sounds bright and thin; on the D, G and B strings it is darker. Hearing which strings and which direction ties the sound of a run to its shape.',
-    instr: 'Cover the tab. Each bar plays one cell; the next bar is silent. In the silence, say which three strings and whether it went down or up, then play it. Check afterwards. Pass: 3 of 4 named and played correctly, twice.',
-    watch: 'Looking at the tab.', simplify: 'Only descending cells.', tab: { notes }
+    id: 'spd-burst', name: `Speed bursts: four cells, then a bar of rest notes (${nameOf(k)} minor, box 1)`, domain: 'picking', method: 'edge',
+    unit: '16th-note sextuplets', goal: 100, start: 60, minutes: 6, dl: 1,
+    why: 'Short bursts at a speed you cannot yet hold, each followed by a slow bar to let the hands recover, are how speed is added without building tension.',
+    instr: 'Bar 1: four slurred cells (strings 1–3, 2–4, 1–3, 2–4), one per beat. Bar 2: the root on the D string, one note per beat, shaking the hands out. Three bursts in a row. When all three are clean, raise the metronome 10 BPM and start again. Pass: three clean bursts in a row at the goal tempo, relaxed.',
+    watch: 'Gripping through the rest bar: the rest bar is part of the drill.', simplify: 'Two cells per burst.', tab: { notes }
+  });
+}
+/** Groups of four and groups of six mixed: a two-string half cell in 16ths and a three-string cell in sextuplets. */
+export function spdMixed(c) {
+  const k = minorKey(c), notes = []; let t = 0;
+  const plan = [[2, 'down'], [3, 'down'], [2, 'down'], [3, 'down'], [2, 'up'], [3, 'up'], [2, 'up'], [3, 'up']];
+  for (const [i, [len, dir]] of plan.entries()) {
+    const top = dir === 'down' ? 1 + (i % 2) : 3 - (i % 2) - (len === 3 ? 1 : 0), cl = cellOf(k, 1, Math.max(1, top), dir, true, len); if (!cl) return null;
+    const step = len === 2 ? 0.25 : 1 / 6; cl.forEach(([s, f, x]) => { notes.push(N(s, f, t, step, x)); t += step; });
+  }
+  return make(c, {
+    id: 'spd-mixed', name: `Fours and sixes: a 16th-note group of four, then a sextuplet group of six (${nameOf(k)} minor)`, domain: 'rhythm', method: 'interleaving',
+    unit: '16th notes and sextuplets', goal: 88, start: 54, minutes: 7, dl: 0,
+    why: 'Fast players change how many notes they play to a beat. Here beat 1 holds four notes (two strings), beat 2 holds six (three strings), and the click stays steady underneath.',
+    instr: 'Slur every pair (pick the first note on each string). Count 1 2 3 4 and let each beat hold its own group: four notes on the odd beats, six on the even. First falling for two bars, then climbing. Pass: both bars clean, the beat steady, at the goal tempo.',
+    watch: 'Squeezing the six notes into the same speed as the four: the beat must stay even.', simplify: 'Fours only, then sixes only.', tab: { notes }
   });
 }
 /** A phrase: two cells down the box, then a bend into the 5th and a held root (use in music). */
@@ -132,7 +148,7 @@ export function spdRandom(c) {
     id: 'spd-random', name: 'Random access: the cell in a new key, box and string set every bar', domain: 'fretboard', method: 'interleaving',
     unit: '16th-note sextuplets', goal: 92, start: 50, minutes: 5, dl: 1,
     why: 'At mastery level the cell should appear anywhere, in any key, the moment you need it.',
-    instr: `${names.join(' → ')}. Three cells per bar, then a beat to find the next. Read only the names. Pass: all 8 bars from memory at the goal tempo.`,
+    instr: `${names.join(' → ')}. Three cells per bar, then a beat to find the next one. Pass: all 8 bars at the goal tempo, each box found from its name.`,
     watch: 'Freezing on boxes 4 and 5.', simplify: 'The first four bars.', tab: { notes }
   });
 }
@@ -160,54 +176,84 @@ function as(gen, over) { return c => { const x = gen(c); if (!x) return null; co
 
 /* --------------------------------- The path --------------------------------- */
 const CELL = 'The cell is both box notes on each of three neighbouring strings: ';
-export default entry({
+const entryDef = {
   id: 'speedPent', kind: 'technique', title: 'Speed pentatonics', domain: 'picking',
   re: /speed pentatonic|fast pentatonic|pentatonic (speed|runs?|sextuplets?|sixes)|sextuplets?|pentatonic sixes|\bsixes\b/,
   aliases: ['pentatonic sixes', 'six-note pentatonic cells', 'cascading pentatonic runs'],
   summary: 'The six-note pentatonic cell (two notes on each of three strings), one per beat: from the slow cell in one box to sextuplet runs, picked and slurred, that cascade through all five boxes in any key.',
   prereqs: ['pentatonic'],
-  sources: ['https://www.premierguitar.com/eric-johnson-concepts-and-techniques', 'https://guitarworld.com/lessons/eric-johnson-fluid-streams-of-notes', 'https://www.guitarworld.com/lessons/eric-johnson-tasty-solos', 'https://www.musicradar.com/how-to/5-guitar-tricks-you-can-learn-from-eric-johnson-today'],
+  sources: ['https://www.musicradar.com/how-to/5-guitar-tricks-you-can-learn-from-eric-johnson-today', 'https://www.guitarworld.com/lessons/guitar-101-how-play-fast-part-2', 'https://www.premierguitar.com/lessons/shred/full-on-pentatonic-shred', 'https://www.guitarworld.com/lessons/techniques/shred-speed-bursts', 'https://www.premierguitar.com/lessons/shred/pentatonic-scales-guitar-shred'],
+  pedagogy: {
+    date: '2026-10-22',
+    summary: 'Taught as short repeating pentatonic cells of two notes per string: first on two strings, then three, slowly with a metronome; picked or slurred (the pick tried every way, pull-offs resting the picking hand); moved through the boxes and keys; speed added in short bursts with a recovery bar, raising the metronome 10 to 20 BPM; then group sizes and positions varied and the runs used in solos.',
+    sequence: [
+      { id: 'two', tier: 'foundations', step: 'The two-notes-per-string pattern on two strings', how: 'Start with a short pentatonic lick of two notes per string on two neighbouring strings, slowly, both hands loose.', skills: ['spd-two'], source: 1 },
+      { id: 'three', tier: 'foundations', step: 'The six-note cell on three strings, slowly', how: 'The same pattern across three strings within one box, one cell per beat or two, with a metronome.', skills: ['spd-cell'], source: 1 },
+      { id: 'artic', tier: 'foundations', step: 'Picked, slurred and climbing', how: 'Pick every note, or pick the first of each pair and pull off; the pull-off version rests the picking hand; try the cell climbing too.', skills: ['spd-articulation'], source: 2 },
+      { id: 'music1', tier: 'foundations', step: 'The cell inside a phrase', how: 'A short run repeated over chord changes, ending on a held note.', skills: ['spd-first-music'], source: 1 },
+      { id: 'sext', tier: 'intermediate', step: 'Sextuplets, one cell per beat', how: 'Cells down the box and back up, one per beat, picked and slurred.', skills: ['spd-sextuplets'], source: 2 },
+      { id: 'boxes', tier: 'intermediate', step: 'Other boxes, shifting position inside the run', how: 'The same cells in the neighbouring pentatonic boxes, then switching box every few cells.', skills: ['spd-boxes'], source: 2 },
+      { id: 'speed', tier: 'intermediate', step: 'Counting, keys and speed bursts', how: 'Keep counting 16ths whatever the grouping; repeat the pattern in other keys; short fast bursts followed by a slow recovery bar; raise the metronome 10 to 20 BPM after a clean burst.', skills: ['spd-control'], source: 3 },
+      { id: 'music2', tier: 'intermediate', step: 'Runs in a phrase', how: 'A fast run launched into a bend or held note over a progression.', skills: ['spd-music'], source: 1 },
+      { id: 'neck', tier: 'advanced', step: 'Through every box and up the neck', how: 'The cell moved through all five positions, descending and climbing.', skills: ['spd-across'], source: 0 },
+      { id: 'low', tier: 'advanced', step: 'Other string sets and directions', how: 'The cell on the lower strings and alternating falling and climbing cells.', skills: ['spd-low'], source: 2 },
+      { id: 'groups', tier: 'advanced', step: 'Switching group sizes', how: 'Changing between 16th-note groups of different lengths while counting 16ths; boxes taken in a set order.', skills: ['spd-adv-groups'], source: 0 },
+      { id: 'music3', tier: 'advanced', step: 'Runs in a solo', how: 'A cascading run between vocal phrases in a blues.', skills: ['spd-adv-music'], source: 1 },
+      { id: 'tempo', tier: 'mastery', step: 'Performance tempo', how: 'Raising the metronome 10 to 20 BPM once the top speed is reached, in single repetitions with short breaks, staying relaxed.', skills: ['spd-performance'], source: 3 },
+      { id: 'any', tier: 'mastery', step: 'Any key, any box', how: 'The pattern in every key and position, switched on demand.', skills: ['spd-random-access'], source: 0 },
+      { id: 'own', tier: 'mastery', step: 'Your own lines', how: 'Short repeating patterns built into your own solo phrases.', skills: ['spd-voice'], source: 2 }
+    ],
+    drills: ['The two-notes-per-string lick on two neighbouring strings', 'The six-note cell on three strings with a metronome', 'The cell picked, then with pull-offs', 'The cell down and back up a box, one per beat', 'The same cell in the next box and in other keys', 'Speed bursts: a short fast pattern, then a slow recovery bar', 'Mixing groups of four and six notes against a steady beat'],
+    mistakes: ['Tension in the hands at speed', 'Weak or uneven pull-offs and hammer-ons', 'Pushing the tempo before the cell is clean', 'Weak upstrokes at string changes', 'Late position shifts', 'Losing the beat when the group size changes'],
+    sources: [
+      { title: '5 guitar tricks you can learn from Eric Johnson today', author: 'MusicRadar', url: 'https://www.musicradar.com/how-to/5-guitar-tricks-you-can-learn-from-eric-johnson-today' },
+      { title: 'Guitar 101: How To Play Fast, Part 2', author: 'Guitar World', url: 'https://www.guitarworld.com/lessons/guitar-101-how-play-fast-part-2' },
+      { title: 'Full-On Pentatonic Shred', author: 'Premier Guitar', url: 'https://www.premierguitar.com/lessons/shred/full-on-pentatonic-shred' },
+      { title: 'Shred Speed Bursts', author: 'Guitar World', url: 'https://www.guitarworld.com/lessons/techniques/shred-speed-bursts' },
+      { title: 'Pentatonic Scales for Shred Guitar', author: 'Sam Bell (Premier Guitar)', url: 'https://www.premierguitar.com/lessons/shred/pentatonic-scales-guitar-shred' }
+    ]
+  },
   ctx: { key: 9, minor: true, prog: 'minorRock' },
   stages: [
     stage('foundations', 'The cell, slowly',
-      'Play the six-note cell on the top strings 8 times in a row as triplets at 80 BPM, name a cell’s strings and direction by ear, play the cell on four string sets from memory, slur it with every note even, climb it as well as fall, and end a phrase with it.', [
+      'Play the four-note half cell on two string pairs, falling and climbing, then the six-note cell on the top strings 8 times in a row as triplets at 80 BPM, slur it with every note even, climb it as well as fall, and end a phrase with it.', [
+        S('spd-two', 'Two strings first', 'picking', 'The four-note half cell, falling and climbing.', [
+          P_('spd-two-down', 'Two strings, four notes, falling: the half cell on strings 1–2, then 2–3 ({key}, box 1)', 'chunking', { len: 2, tops: [1, 2, 3], reps: 4, step: 1 / 3, goal: 84, start: 50, why: 'Learn the two-notes-per-string pattern on two strings before three: four notes, high note then low note on each string, and a single string change to get right.', instr: 'Both box-1 notes on the high e string, high note then low note, then the same two notes on the B string. Four times, then the same on strings 2–3 and 3–4. Picking every note, alternate strokes, slowly as triplets. Pass: each string pair clean four times in a row.', watch: 'Rushing the string change.', simplify: '8th notes.' }, ),
+          P_('spd-two-up', 'Two strings, four notes, climbing ({key}, box 1)', 'chunking', { len: 2, tops: [3, 2, 1], dir: 'up', reps: 4, step: 1 / 3, goal: 84, start: 50, why: 'The same four notes turned round: low note then high note, string changing towards the top. The string change now goes the other way.', instr: 'Low note then high note on the lower string, then the same on the next string up. Four times per pair, strings 3–4, 2–3, 1–2. Alternate picking, slowly as triplets. Pass: each pair clean four times in a row.', watch: 'Tension in the picking arm on the way up.', simplify: '8th notes.' })]),
         S('spd-cell', 'The cell', 'picking', 'Six notes, three strings, two beats.', [
           P_('spd-cell-slow', 'Pentatonic sixes, slowly: the cell in two halves, then whole ({key}, box 1)', 'chunking', { tops: [1], reps: 4, step: 1 / 3, goal: 84, start: 50, why: 'Speed pentatonics are built from one cell: the two box-1 notes on the high e, the two on the B, the two on the G, falling. Slowly, as triplets, two beats per cell, the shape gets into the hand before the speed does.', instr: CELL + 'high e, B, G, each high note then low note. Loop the first four notes until even, then the whole cell, four times. Pass: 4 cells in a row with no hesitation at the string changes.', watch: 'Pausing at each string change.', simplify: '8th notes.' }),
           P_('spd-cell-count', 'Count the clean ones: the cell, eight in a row ({key})', 'accurate-reps', { tops: [1], reps: 8, step: 1 / 3, goal: 88, start: 52, why: 'Clean repetitions at a slow tempo build the motion you keep at speed. Count only the clean cells: a fumbled one teaches the fumble.', instr: CELL + 'eight in a row as triplets, picking every note. Count only clean cells. Pass: 8 clean cells in a row.', watch: 'Speeding up on the easy strings.', simplify: 'Four in a row.' })]),
-        S('spd-hear', 'Hear it, recall it', 'ear', 'The cell by ear and from memory.', [c => cellEcho(c),
-          P_('spd-cell-recall', 'From memory: the cell on four string sets ({key}, box 1)', 'retrieval', { tops: [1, 2, 3, 4], reps: 2, step: 1 / 3, goal: 84, start: 50, why: 'The same cell moves down a string at a time: strings 1–3, 2–4, 3–5, 4–6. Finding each from the box shape, not the tab, is what lets you move it in a run.', instr: CELL + 'play it twice on strings 1–3, then 2–4, 3–5, 4–6. After one pass, cover the tab and say the three strings before each. Pass: all four from memory.', watch: 'Losing the box on the B string.', simplify: 'Two string sets.' })]),
-        S('spd-articulation', 'Slurred and climbing', 'fretting', 'The legato version, and the cell turned around.', [
-          P_('spd-legato-slow', 'Slurred cells: pick one, pull off one ({key})', 'external-focus', { tops: [1, 2], legato: true, reps: 2, step: 1 / 3, goal: 84, start: 50, why: 'Eric Johnson slurs much of his speed pentatonics: pick the first note on a string, pull off to the second. The line only sounds fluid if the pulled-off notes are as loud as the picked ones, so listen for that.', instr: CELL + 'pick the high note on each string and pull off to the low one. Listen: every note the same volume, no gap at the pull-off. Pass: 4 cells in a row where you can’t hear which notes were picked.', watch: 'Weak pull-offs: pull slightly down toward the floor.', simplify: 'Pick every note first.' }),
+        S('spd-articulation', 'Picked, slurred and climbing', 'fretting', 'The legato version, and the cell turned around.', [
+          P_('spd-legato-slow', 'Slurred cells: pick one, pull off one ({key})', 'external-focus', { tops: [1, 2], legato: true, reps: 2, step: 1 / 3, goal: 84, start: 50, why: 'The same cell can be picked on every note or slurred (pick the first note on a string, pull off to the second). Slurring rests the picking hand, and the line only sounds even if the pulled-off notes are as loud as the picked ones.', instr: CELL + 'pick the high note on each string and pull off to the low one. Listen: every note the same volume, with even timing at the pull-off. Pass: 4 cells in a row where you can’t hear which notes were picked.', watch: 'Weak pull-offs: pull slightly down toward the floor.', simplify: 'Pick every note first.' }),
           P_('spd-up-slow', 'The cell climbing: strings 3 to 1 and higher sets ({key})', 'variable', { tops: [3, 2, 1], dir: 'up', reps: 2, step: 1 / 3, goal: 84, start: 50, why: 'Turned around (low string first, low note then high), the cell climbs. The string changes now go the other way, a new motion for the picking hand.', instr: CELL + 'from the lowest of the three strings up: low note, high note, next string up. Pass: all three string sets clean twice.', watch: 'Picking the hammered note too.', simplify: 'One string set.' })]),
         S('spd-first-music', 'First music', 'improv', 'Cells into a bend.', [c => cellPhrase(c), M('transfer', ['callResponse', { chords: '$minorRock', scale: 'minorPent' }])])
       ], [1, 3]),
     stage('intermediate', 'Sextuplets in every box',
-      'Play the cell down and back up the box as sextuplets at 90 BPM, picked and slurred, in boxes 2 and 3 and alternating boxes 1 and 2, box 2 from memory, cells in 16ths with the beat accented, the cell in four keys, and a fast run into a bend over a minor progression.', [
+      'Play the cell down and back up the box as sextuplets at 90 BPM, picked and slurred, in boxes 2 and 3 and alternating boxes 1 and 2, cells in 16ths with the beat accented, the cell in four keys, speed bursts with a rest bar, and a fast run into a bend over a minor progression.', [
         S('spd-sextuplets', 'One cell per beat', 'picking', 'Down and back up box 1 at speed.', [c => ejSixes(c), c => ejSixes(c, { legato: true })]),
         S('spd-boxes', 'Other boxes', 'fretboard', 'The same cell in new shapes.', [
           P_('spd-box2', 'Cells down box 2 ({key})', 'variable', { boxes: [2], tops: [1, 2, 3, 4], legato: true, step: 1 / 6, goal: 88, why: 'Box 2 moves the cell up the neck: the same picking and slurs over a new set of frets.', instr: CELL + 'in box 2, one per beat, from strings 1–3 down to 4–6. Pass: 4 times clean at the goal tempo.', watch: 'The B-string shift in box 2.', simplify: 'Triplets.' }),
           P_('spd-box12', 'Box 1, box 2, box 1, box 2: cells that move ({key})', 'interleaving', { boxes: [1, 2, 1, 2], tops: [1, 2], legato: true, step: 1 / 6, goal: 88, why: 'Switching box every two cells makes the hand move position inside the run, which is where speed pentatonics come alive.', instr: CELL + 'two cells in box 1 (strings 1–3, 2–4), two in box 2, and again. Pass: the cycle twice without a gap.', watch: 'Arriving late in box 2.', simplify: 'Triplets.' }),
           P_('spd-box3', 'Cells down box 3 ({key})', 'variable', { boxes: [3], tops: [1, 2, 3, 4], legato: true, step: 1 / 6, goal: 88, why: 'Box 3 has the widest finger spread on the top strings: the cell under a new hand shape.', instr: CELL + 'in box 3, one per beat. Pass: 4 times clean at the goal tempo.', watch: 'Pinky collapsing on the stretch.', simplify: 'Triplets.' })]),
-        S('spd-control', 'Recall and accents', 'picking', 'Box 2 from memory; the cell across the beat.', [
-          P_('spd-recall-box2', 'From memory: climbing cells in box 2 ({key})', 'retrieval', { boxes: [2], tops: [4, 3, 2, 1], dir: 'up', legato: true, step: 1 / 6, goal: 84, why: 'Recalling box 2’s cells climbing, without the tab, proves you know the shape from its sound and fingering, not from reading.', instr: CELL + 'from strings 4–6 up to 1–3, climbing. Play box 2 once as a scale, then cover the tab. Pass: twice from memory at the goal tempo.', watch: 'Slipping into box 1 on the low strings.', simplify: 'Triplets.' }),
-          P_('spd-accent', 'The cell in 16ths: accent the beat, not the cell ({key})', 'external-focus', { tops: [1, 2, 1, 2, 3, 2], step: 0.25, goal: 100, why: 'Played as 16ths the six-note cell drifts across the beat. Accenting each beat (not the start of each cell) makes a steady groove under a pattern that keeps shifting.', instr: CELL + 'in steady 16ths. Accent the note on every click whichever note of the cell it is. Listen for the pulse. Pass: four bars with every beat audible.', watch: 'Accenting the first note of each cell.', simplify: '8th notes.' }),
-          P_('spd-keys', 'The cell in four keys around the cycle of fourths', 'interleaving', { keys: [0, 5, 10, 3], tops: [1, 2, 3, 4], legato: true, step: 1 / 6, goal: 84, dl: 1, why: 'The cell is built from the box, so it works in any key. Changing key every bar trains finding box 1 at once while the run keeps going.', instr: CELL + 'down box 1, one bar per key, each a 4th up. Name the key before each bar. Pass: all four without stopping.', watch: 'Stopping to look for the new box.', simplify: 'Two keys, triplets.' })]),
+        S('spd-control', 'Accents, keys and bursts', 'picking', 'The cell across the beat; other keys; speed bursts.', [
+          P_('spd-accent', 'The cell in 16ths: accent the beat, not the cell ({key})', 'external-focus', { tops: [1, 2, 1, 2, 3, 2], step: 0.25, goal: 100, why: 'Played as 16ths the six-note cell drifts across the beat. Counting 16ths and accenting each beat (not the start of each cell) keeps a steady groove under a pattern that keeps shifting.', instr: CELL + 'in steady 16ths. Accent the note on every click whichever note of the cell it is. Listen for the pulse. Pass: four bars with every beat audible.', watch: 'Accenting the first note of each cell.', simplify: '8th notes.' }),
+          P_('spd-keys', 'The cell in four keys around the cycle of fourths', 'interleaving', { keys: [0, 5, 10, 3], tops: [1, 2, 3, 4], legato: true, step: 1 / 6, goal: 84, dl: 1, why: 'The cell is built from the box, so it works in any key. Changing key every bar trains finding box 1 at once while the run keeps going.', instr: CELL + 'down box 1, one bar per key, each a 4th up. Pass: all four without stopping.', watch: 'Stopping to look for the new box.', simplify: 'Two keys, triplets.' }),
+          c => spdBurst(c)]),
         S('spd-music', 'In a phrase', 'improv', 'The fast run, and a solo.', [c => cellPhrase(c, { fast: true }), c => targetGuide(c, { prog: 'minorRock', scale: 'minorPent', name: 'Solo with one cascading run per phrase' })])
       ], [4, 6]),
     stage('advanced', 'Across the neck',
-      'Run the cell through all five boxes down and up as sextuplets at 100 BPM, on the low strings, alternating direction cell by cell, through boxes called out of order from memory, with a crescendo across the neck, and drop runs into a blues solo.', [
+      'Run the cell through all five boxes down and up as sextuplets at 100 BPM, on the low strings, alternating direction cell by cell, mixing groups of four and six against a steady beat, through the boxes in a set order, and drop runs into a blues solo.', [
         S('spd-across', 'Through the boxes', 'fretboard', 'The cell travels the neck.', [c => ejSixesAcross(c),
           P_('spd-across-up', 'Climbing pentatonic sixes through boxes 1 to 5 ({key})', 'variable', { boxes: [1, 2, 3, 4, 5], tops: [3], dir: 'up', legato: true, step: 1 / 6, reps: 2, goal: 88, why: 'Climbing cells on strings 3–1, moving up a box every two beats: the ascending run that answers the cascade.', instr: CELL + 'climbing from the G string, two per box, boxes 1 to 5. Shift on the beat. Pass: clean at the goal tempo.', watch: 'Late shifts.', simplify: 'Boxes 1–3.' })]),
         S('spd-low', 'Low strings and both directions', 'picking', 'Darker cells; direction changes.', [
           P_('spd-low-strings', 'Cells on the bass strings, boxes 1 and 2 ({key})', 'variable', { boxes: [1, 2], tops: [3, 4], legato: true, step: 1 / 6, reps: 2, goal: 88, why: 'On strings 3–6 the cell is darker and the strings are heavier: the same run with a new sound and more muting work.', instr: CELL + 'strings 3–5 and 4–6, two of each, box 1 then box 2. Mute the strings above with the fretting hand. Pass: clean at the goal tempo.', watch: 'Open strings ringing.', simplify: 'Triplets.' }),
           P_('spd-zigzag', 'Down, up, down: alternating cells across the strings ({key})', 'interleaving', { tops: [1, 2, 3, 4, 3, 2], dir: 'alt', legato: true, step: 1 / 6, goal: 88, why: 'Alternating a falling cell and a climbing one means every beat reverses the motion: a much less predictable line and a real test of control.', instr: CELL + 'falling on strings 1–3, climbing on 2–4, falling on 3–5… Pass: four bars clean at the goal tempo.', watch: 'Picking the slurred note when the direction flips.', simplify: 'Triplets.' })]),
-        S('spd-adv-recall', 'Called boxes and dynamics', 'fretboard', 'Any box from memory; shaping the run.', [
-          P_('spd-boxes-called', 'Boxes called out of order: 3, 1, 5, 2, 4 ({key})', 'retrieval', { boxes: [3, 1, 5, 2, 4], tops: [1, 2], legato: true, step: 1 / 6, goal: 88, why: 'Out of order, each box has to come from memory instead of sliding from the last: what a solo actually asks.', instr: CELL + 'two cells (strings 1–3, 2–4) in box 3, then 1, 5, 2, 4. Cover the tab. Pass: all five from memory at the goal tempo.', watch: 'Defaulting to the neighbouring box.', simplify: 'Boxes 1–3.' }),
-          P_('spd-swell', 'A run with a shape: crescendo across the neck ({key})', 'external-focus', { boxes: [1, 2, 3, 4, 5], tops: [1], legato: true, step: 1 / 6, reps: 2, goal: 88, why: 'A fast run at one volume is an exercise; one that grows from a whisper to full force as it climbs the neck is a musical gesture.', instr: CELL + 'two per box from box 1 to 5. Start as quietly as possible and grow steadily louder to the end. Listen for a smooth curve. Pass: twice with a smooth crescendo at the goal tempo.', watch: 'Speeding up as you get louder.', simplify: 'Boxes 1–3.' })]),
+        S('spd-adv-groups', 'Groups of four and six; boxes in a set order', 'rhythm', 'Mixed group sizes; the boxes in an order you learn.', [c => spdMixed(c),
+          P_('spd-boxes-called', 'Boxes in a set order: 3, 1, 5, 2, 4 ({key})', 'variable', { boxes: [3, 1, 5, 2, 4], tops: [1, 2], legato: true, step: 1 / 6, goal: 88, why: 'Out of order, each box has to be found from the one before without sliding: what a solo asks.', instr: CELL + 'two cells (strings 1–3, 2–4) in box 3, then 1, 5, 2, 4. Learn the order first, then play it straight through. Pass: all five boxes in order at the goal tempo.', watch: 'Defaulting to the neighbouring box.', simplify: 'Boxes 3, 1, 2.' })]),
         S('spd-adv-music', 'In a solo', 'improv', 'Runs between vocal phrases.', [c => targetGuide(c, { prog: 'blues', scale: 'minorPent', name: 'Blues solo: one cascading run per chorus, then space' }), M('transfer', ['callResponse', { chords: '$slowBlues', scale: 'minorPent' }])])
       ], [7, 8]),
     stage('mastery', 'Fast, anywhere and your own',
-      'Play the cascade down and up box 1 at about 115 BPM and through all five boxes at 105 in sextuplets, a random key, box and string set every bar from memory, and perform your own 8-bar speed-pentatonic piece.', [
+      'Play the cascade down and up box 1 at about 115 BPM and through all five boxes at 105 in sextuplets, a random key, box and string set every bar from the names, and perform your own 8-bar speed-pentatonic piece.', [
         S('spd-performance', 'Performance tempo', 'picking', 'At speed.', [
           as(c => ejSixes(c, { legato: true }), { id: 'spd-fast-box1', method: 'edge', goal: 104, name: x => x.name + ', at performance tempo', instr: 'Down box 1 and back up, slurred, as sextuplets. Tempo ladder: start below the goal, add a few BPM after each clean pass. Pass: clean at the goal tempo.' }),
           P_('spd-fast-across', 'Through all five boxes and back at performance tempo ({key})', 'edge', { boxes: [1, 2, 3, 4, 5, 4, 3, 2, 1], tops: [1, 2], legato: true, step: 1 / 6, goal: 92, why: 'Two cells per box, up the neck and back down, at tempo: the complete speed-pentatonic run.', instr: CELL + 'two per box (strings 1–3 and 2–4), boxes 1 to 5 and back. Tempo ladder to the goal. Pass: clean at the goal tempo.', watch: 'Tension building over the long run.', simplify: 'Boxes 1–3.' })]),
@@ -215,4 +261,27 @@ export default entry({
         S('spd-voice', 'Your own voice', 'improv', 'A study, then your version.', [c => spdEtude(c), c => targetGuide(c, { prog: 'minorRock', scale: 'minorPent', name: 'Solo in his spirit: runs that cascade, then a singing held note' })])
       ], [9, 10])
   ]
-});
+};
+
+/* ------------------------------- Study notes ------------------------------- */
+const ST = (concept, why, theory) => ({ concept, why, theory });
+const STUDY = {
+  'spd-two': ST('The speed-pentatonic cell is built from two notes on each string. On two strings it is four notes: high note then low note on one string, then the same on the next.', 'Two strings is the smallest piece that contains the whole difficulty: the string change. Get it even here before adding a third string.', ['Falling: high then low on each string; climbing: low then high.', 'The notes are the two minor-pentatonic notes the box has on each string.']),
+  'spd-cell': ST('Three strings, two notes each: six notes that fit a beat as sextuplets or two beats as triplets. The cell moves down a string, or up the neck, and stays one beat long.', 'Because every cell is the same length, a long fast run stays locked to the click while it moves across strings and boxes.', ['Six notes per beat is a sextuplet; at triplet speed it takes two beats.', 'Loop the first four notes, then the whole cell.']),
+  'spd-articulation': ST('The cell can be picked on every note or slurred: pick the first note on a string and pull off (falling) or hammer on (climbing) to the second.', 'Slurring rests the picking hand and the fretting hand carries the speed, but only if the slurred notes are as loud and as even as the picked ones.', ['The climbing cell reverses the string changes and the slurs (hammer-ons).', 'Both versions are worth learning; keep the one that sounds and feels best.']),
+  'spd-first-music': ST('A run is only a lick when it lands: cells falling down the box into a bend and a held note, or answered by a phrase of your own.', 'Playing the cell in a phrase from the start keeps it musical.', ['The bend here goes from the 4th to the 5th.', 'Call and response: you answer the backing with your own phrase.']),
+  'spd-sextuplets': ST('One cell per beat as sextuplets, falling down the box from the top strings and climbing back up.', 'This is the basic speed-pentatonic run. A beat is always one cell, so the timing stays easy to check.', ['Six notes per beat at 90 BPM is 9 notes per second.', 'Pick every note, then slur; compare the sound.']),
+  'spd-boxes': ST('The same cell in the neighbouring pentatonic boxes: the finger pattern changes, the picking does not. Moving between boxes inside a run shifts the hand.', 'Runs rarely stay in one box. Shifting position on the first note of a beat keeps the run unbroken.', ['Box 3 has the widest spread on the top strings.', 'Shift with the finger that plays the first note of the beat.']),
+  'spd-control': ST('Keep counting 16ths whatever the grouping, play the cell in other keys, and add speed with short bursts followed by a slow recovery bar.', 'Counting keeps the groove under a shifting pattern; bursts add speed without building tension.', ['After a clean burst, raise the metronome 10 to 20 BPM.', 'The cycle of fourths moves the key a 4th each bar.']),
+  'spd-music': ST('Fast cells as a phrase: a cascade that launches a bend, and a solo with one run per phrase.', 'Speed is only useful when it leads somewhere.', ['Land on a chord tone of the backing at the end of the run.']),
+  'spd-across': ST('The cell moved through all five boxes, falling and climbing, so a run travels the whole neck.', 'It joins the five boxes into one long line at speed.', ['Shift on the beat.', 'Two cells per box keeps the pattern easy to follow.']),
+  'spd-low': ST('The cell on the bass strings, and falling and climbing cells alternated beat by beat.', 'It gives the run a darker sound and trains control when the direction flips every beat.', ['Strings 3–6 are heavier and need more muting.']),
+  'spd-adv-groups': ST('Groups of four notes (two strings, 16ths) and groups of six (three strings, sextuplets) mixed against a steady beat; the five boxes taken in a set order.', 'Fast players change how many notes they play to a beat without losing the pulse.', ['A group of four takes a beat in 16ths; a group of six takes a beat in sextuplets.']),
+  'spd-adv-music': ST('Cascading runs between vocal phrases in a blues, and a call-and-response over a slow blues.', 'Speed in a solo is a contrast to space.', ['One run per chorus, then space.']),
+  'spd-performance': ST('Performance tempo: the down-and-up run in box 1 and the whole-neck run at the top of your speed, raised in small steps once clean.', 'The top speed is only useful if it is relaxed.', ['After a clean pass, add a few BPM.', 'Stop and shake out the hands when tension builds.']),
+  'spd-random-access': ST('A new key, box and string set every bar, read only from the names, and a hard-rock solo that uses runs as launch pads.', 'It tests that the cell can be found anywhere.', ['Boxes 4 and 5 are the ones that usually cause hesitation.']),
+  'spd-voice': ST('A capstone study that uses every part of the path, then a solo of your own in the same spirit.', 'Mastery is making the technique yours.', ['Slow cells, the cascade, the boxes, a bend and a landing.'])
+};
+const e = entry(entryDef);
+e.stages.forEach(st => st.skills.forEach(sk => { if (STUDY[sk.id]) sk.study = STUDY[sk.id]; }));
+export default e;

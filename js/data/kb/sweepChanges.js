@@ -26,7 +26,8 @@ export const SETS = {
   '3top': { strings: [3, 2, 1], counts: [1, 1, 2], span: 5, name: 'strings 3-2-1' },
   '3mid': { strings: [4, 3, 2], counts: [1, 1, 2], span: 5, name: 'strings 4-3-2' },
   '4str': { strings: [4, 3, 2, 1], counts: [1, 1, 1, 2], span: 5, name: 'strings 4-3-2-1' },
-  '5str': { strings: [5, 4, 3, 2, 1], counts: [2, 1, 1, 1, 2], span: 5, name: 'strings 5-4-3-2-1' }
+  '5str': { strings: [5, 4, 3, 2, 1], counts: [2, 1, 1, 1, 2], span: 5, name: 'strings 5-4-3-2-1' },
+  '5top': { strings: [5, 4, 3, 2, 1], counts: [1, 1, 1, 1, 2], span: 5, name: 'strings 5-4-3-2-1' }
 };
 const INV = ['root position', '1st inversion', '2nd inversion'];
 /** Progressions as [semitones above the key root, quality]; minor ones are relative to the minor key. */
