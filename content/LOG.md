@@ -2,6 +2,88 @@
 
 One entry per content run, newest first: date, what was added or changed, sources consulted (URLs), validator result.
 
+## 2026-10-26 — content run (scheduled: `fingerstyleLead` built (★), Mark Knopfler built technique-first; 3 discovered topics)
+- **Player requests (Drive):** `Fretwork Coach research requests.json` unchanged since 2026-10-12 (both requests built). Nothing new queued.
+- **Briefs inbox:** only `chordChanges.core.json` (created 2026-10-23) is there; foundations, intermediate, advanced and mastery have still not arrived (fourth run in a row), so the topic is skipped and nothing was moved. Gem links: 0 given, 0 checked, 0 missed (no brief built).
+- **Pedagogy audit:** table empty (all paths audited). No path was below the standard, so the "two more paths" depth rule was met by building a new path (see below) rather than deepening; this is one new path, not two.
+- **Artist: Mark Knopfler built** (the planned artist; technique-first). Step 1, research (pages read): Premier Guitar "Mark Knopfler's Fingerstyle Finesse" (thumb on the bass with a light palm mute, index on string 3, middle on string 2; fingerstyle strum, alternating bass, p-i-m 16th rolls, double-stops with wide vibrato and pedal-steel bends, rock riff with fingers, lead with hammer-ons and pull-offs), Guitar Player interview (thumb and first two fingers, thumb and second finger striking together, a pick still used for strumming and some acoustic work), MusicRadar "5 guitar tricks" (a quick pluck with thumb and two fingers instead of a rake, pull-offs after a harder-picked note, pentatonic lines with triplets), Guitar World origins article (right-handed though left-handed, tried thumbpicks and steel fingerpicks and dropped them), Music Street (thumb bass, index and middle melody, dynamics from the touch, slides, rakes, phrasing and space), Britannica and Wikipedia (bio facts: born 1949 Glasgow, Dire Straits named 1977, debut 1978, Brothers in Arms 1985, "Money for Nothing"; checked against each other). Step 2-3: signature techniques mapped to paths: the one missing path **`fingerstyleLead`** (below), plus legato, doubleStops, bending, vibrato, phrasing (all ★). Step 4: `js/data/artists/knopfler.js` with six `PU` units and a closing unit (`kn-study`: two bars each of `fl-pm-2`, `fl-pinch-2`, `fl-16-b`, `fl-rake-b` joined; 96 builds over 12 keys, major and minor, 4 levels: 7,392 notes, every note a chord tone of the study's chords, 0 off) and two `targetGuide` solos. Bio 168 words. No `topVideo` (view counts could not be read).
+- **New path `fingerstyleLead`** (technique, domain picking, ★ 4/8 · 6/14 · 6/12 · 4/8, 20 skills with study notes, 20-step pedagogy, 6 sources). Model: the right hand assigned by string (thumb p on strings 6-4, index i on 3, middle m on 2, ring a on 1) with accompaniment patterns as a bar grid of string-role tokens on chord grips, and single-note lines drawn from the pentatonic scale of the key in one six-fret window with i and m alternating. **Check:** 112,632 notes over 12 keys, major and minor, every level of each stage: every sounding note is a tone of its chord or in the key's pentatonic, frets 0-22, no duplicate ids or names, 0 off. Sources read (pages fetched): https://jgmusiclessons.com/how-to-finger-pick-on-guitar-including-exercises (p/i/m/a, relaxed hand, i-m alternation first, thumb on lower strings), https://www.guitarworld.com/lessons/the-ultimate-fingerstyle-guitar-lesson (p-i-m-a variations, pinch, palm muting, common mistakes), https://www.premierguitar.com/lessons/mark-knopflers-fingerstyle-finesse, https://www.guitarplayer.com/players/i-was-doing-things-with-my-fingers-that-i-couldnt-do-with-a-pick-mark-knopfler-on-his-world-famous-picking-technique, https://www.musicradar.com/how-to/play-guitar-like-mark-knopfler, https://www.musicstreet.co.uk/blogs/blog-post/how-to-play-guitar-like-mark-knopfler-technique-gear-and-signature-sound.
+- **Discovery:** open tunings (DADGAD, open G), pedal-steel and behind-the-nut bends, harmonic minor / phrygian dominant. Added to QUEUE with sources from search results (the pages themselves were not read in this run).
+- **Coverage:** 45 of 45 paths complete; 45 meet the reference standard; 0 need more stages or lessons. 12 artists. (44 at the start of the run.) Pedagogy audit table: empty.
+- **Artist readiness:** see below.
+- **Tests:** 14 of 15 suites pass; `t_artists` still fails the same "artist + extra topic" check as in the 2026-10-24 and 2026-10-25 runs (it expects a unit titled `Sweep picking`); already in REQUESTS. No new failure from this run's content.
+- **Catalog:** the Drive doc "Gem knowledge: app catalog" (id 1ghoP67RFDA2tN3kPquIkul8OVRrRuqRrSGWEhi1fHJc) is out of date (new topic id: `fingerstyleLead`); the Drive connector cannot edit its text.
+- **Needs your check:** (1) every `fingerstyleLead` pattern (the rolls, pinches, fingerstyle strum, muted-bass, wide-roll, riff, rake and 16th patterns, and which chord shapes are used) is the run's own, built from the six pages; none gives exact tab. The foundations stage uses open chords in fixed keys (Em, Am, C, G, D). (2) The tab marks which finger plucks each note (p, i, m, a) but the app has no volume mark, so "melody louder than the bass", the palm mute depth and the quick-pluck rake timing are described in the lesson text only; the rake spreads three notes over about a quarter of a beat. (3) The index/middle alternation across string changes in lines is the run's choice (JG Music Lessons describes alternating i and m on single notes). (4) Several later study notes in `fingerstyleLead` (advanced and mastery) are short; they could be deepened in a later audit. (5) The Knopfler bio's "gave up the pick for lead and much rhythm work" rests on the Guitar Player and Guitar World pages; "mostly on a Stratocaster" is from the Guitar Player page; the riff notes (Sultans of Swing, Money for Nothing, Brothers in Arms, Romeo and Juliet, Telegraph Road) are written from general knowledge, not from a page read in this run.
+- **Coverage table and readiness (validator output):**
+
+```
+Learning-path coverage (skills/lessons per stage; ✓ = full: 3+ skills and 6+ lessons):
+entry                     Foundati Intermed Advanced Mastery  Reference standard
+alternatePicking          ✓4/8     ✓4/10    ✓4/8     ✓3/6     ★ meets it
+arpMelodies               ✓4/8     ✓4/10    ✓4/8     ✓3/6     ★ meets it
+bending                   ✓4/8     ✓4/10    ✓4/8     ✓3/6     ★ meets it
+chordEmbellish            ✓4/8     ✓6/12    ✓4/8     ✓3/6     ★ meets it
+chromaticPassing (subject)✓4/8     ✓4/10    ✓5/9     ✓3/6     ★ meets it
+djentRiffs (style)        ✓4/8     ✓5/10    ✓4/8     ✓3/6     ★ meets it
+doubleStops               ✓4/8     ✓4/10    ✓4/8     ✓3/6     ★ meets it
+economyPicking            ✓4/8     ✓4/10    ✓4/8     ✓3/6     ★ meets it
+fingerIndependence        ✓4/8     ✓5/12    ✓4/8     ✓3/6     ★ meets it
+fingerstyleLead           ✓4/8     ✓6/14    ✓6/12    ✓4/8     ★ meets it
+harmonics                 ✓4/8     ✓5/10    ✓4/8     ✓3/6     ★ meets it
+hexatonic                 ✓4/9     ✓4/11    ✓4/9     ✓3/7     ★ meets it
+hybridPicking             ✓5/8     ✓5/10    ✓4/8     ✓3/6     ★ meets it
+legato                    ✓4/8     ✓5/10    ✓4/8     ✓3/6     ★ meets it
+majMinPent (subject)      ✓4/9     ✓4/11    ✓4/9     ✓3/6     ★ meets it
+multiTap                  ✓4/8     ✓5/10    ✓4/8     ✓3/6     ★ meets it
+octaves                   ✓4/8     ✓5/10    ✓4/8     ✓3/6     ★ meets it
+oddTime (subject)         ✓4/9     ✓4/13    ✓4/8     ✓3/6     ★ meets it
+openPulls                 ✓4/8     ✓5/10    ✓4/8     ✓3/6     ★ meets it
+palmMuting                ✓4/8     ✓5/10    ✓4/8     ✓3/6     ★ meets it
+pent6s                    ✓4/8     ✓4/10    ✓4/8     ✓3/6     ★ meets it
+pentatonic                ✓4/10    ✓7/21    ✓4/10    ✓3/6     ★ meets it
+pgLick                    ✓4/10    ✓5/11    ✓4/8     ✓3/6     ★ meets it
+pgSix                     ✓4/8     ✓4/10    ✓4/8     ✓3/6     ★ meets it
+phrasing (subject)        ✓4/8     ✓5/11    ✓4/8     ✓3/6     ★ meets it
+positionShifts            ✓5/11    ✓4/11    ✓4/9     ✓3/6     ★ meets it
+raking                    ✓4/8     ✓5/10    ✓4/9     ✓3/6     ★ meets it
+rolling5s                 ✓4/9     ✓4/12    ✓4/9     ✓3/7     ★ meets it
+sharp9                    ✓4/8     ✓5/11    ✓4/8     ✓3/6     ★ meets it
+skipArps                  ✓4/9     ✓4/10    ✓4/8     ✓3/6     ★ meets it
+slides                    ✓4/9     ✓4/10    ✓4/8     ✓3/6     ★ meets it
+speedPent                 ✓4/8     ✓4/10    ✓4/8     ✓3/6     ★ meets it
+spreadTriads              ✓4/8     ✓4/11    ✓4/8     ✓3/6     ★ meets it
+stretchPent               ✓4/8     ✓4/10    ✓4/9     ✓3/7     ★ meets it
+stringMuting              ✓5/11    ✓5/10    ✓4/8     ✓3/6     ★ meets it
+strumming                 ✓4/8     ✓5/11    ✓4/8     ✓3/6     ★ meets it
+subdivisions (subject)    ✓4/8     ✓5/10    ✓4/8     ✓3/6     ★ meets it
+sweepChanges              ✓4/8     ✓5/11    ✓4/8     ✓3/6     ★ meets it
+sweepPicking              ✓4/8     ✓4/11    ✓4/8     ✓3/6     ★ meets it
+tapping                   ✓4/8     ✓6/12    ✓4/9     ✓3/6     ★ meets it
+texasShuffle (style)      ✓4/8     ✓5/10    ✓4/8     ✓3/6     ★ meets it
+thumbSlap                 ✓4/9     ✓4/12    ✓4/8     ✓3/6     ★ meets it
+thumping                  ✓4/8     ✓4/11    ✓4/8     ✓3/6     ★ meets it
+travis                    ✓4/12    ✓5/12    ✓5/10    ✓3/6     ★ meets it
+vibrato                   ✓4/8     ✓5/11    ✓4/8     ✓3/6     ★ meets it
+45 of 45 paths complete; 45 meet the reference standard; 0 need more stages or lessons. 12 artists.
+
+Pedagogy audit (CONTENT.md, "The pedagogy audit"): every path is audited.
+
+Artist readiness (technique-first: every signature technique a complete path):
+eric-johnson (built before the rule)  ready
+gilmour (built before the rule)       ready
+greg-howe (built before the rule)     ready
+guthrie-govan (built before the rule) ready
+hendrix (built before the rule)       ready
+john-mayer (built before the rule)    ready
+john-petrucci                         ready
+knopfler                              ready
+paul-gilbert (built before the rule)  ready
+srv (built before the rule)           ready
+tosin-abasi                           ready
+van-halen (built before the rule)     ready
+```
+- **Validator:** All content is valid (only the missing `topVideo` warnings remain, now 11).
+
 ## 2026-10-25 — content run (scheduled: `strumming` and `fingerIndependence` built, both ★; Mark Knopfler planned; 3 discovered topics)
 - **Player requests (Drive):** `Fretwork Coach research requests.json` unchanged since 2026-10-12 (both requests already built). Nothing new queued.
 - **Briefs inbox:** only `chordChanges.core.json` (created 2026-10-23) is there; the foundations, intermediate, advanced and mastery parts have not arrived (third run in a row), so the topic is skipped and nothing was moved. Gem links: 0 given, 0 checked, 0 missed (no brief built). The app-catalog Drive doc "Gem knowledge: app catalog" (id 1ghoP67RFDA2tN3kPquIkul8OVRrRuqRrSGWEhi1fHJc) is out of date: new topic ids `strumming`, `fingerIndependence` (the Drive connector cannot edit its text; `content/briefs/make-catalog.mjs` was not run because the connector cannot upload over it).
